@@ -77,6 +77,7 @@ export type Database = {
           location: string | null
           looking_for: string | null
           onboarded_at: string | null
+          path: Database["public"]["Enums"]["profile_path"] | null
           photo_url: string | null
           role: Database["public"]["Enums"]["founder_role"] | null
           skills: string[] | null
@@ -93,6 +94,7 @@ export type Database = {
           location?: string | null
           looking_for?: string | null
           onboarded_at?: string | null
+          path?: Database["public"]["Enums"]["profile_path"] | null
           photo_url?: string | null
           role?: Database["public"]["Enums"]["founder_role"] | null
           skills?: string[] | null
@@ -109,6 +111,7 @@ export type Database = {
           location?: string | null
           looking_for?: string | null
           onboarded_at?: string | null
+          path?: Database["public"]["Enums"]["profile_path"] | null
           photo_url?: string | null
           role?: Database["public"]["Enums"]["founder_role"] | null
           skills?: string[] | null
@@ -181,6 +184,7 @@ export type Database = {
       founder_commitment: "full_time" | "part_time" | "exploring"
       founder_role: "tech" | "business" | "product" | "design" | "other"
       founder_stage: "idea" | "mvp" | "revenue" | "scaling"
+      profile_path: "founder" | "joiner"
       swipe_direction: "like" | "pass"
     }
     CompositeTypes: {
@@ -313,6 +317,7 @@ export const Constants = {
       founder_commitment: ["full_time", "part_time", "exploring"],
       founder_role: ["tech", "business", "product", "design", "other"],
       founder_stage: ["idea", "mvp", "revenue", "scaling"],
+      profile_path: ["founder", "joiner"],
       swipe_direction: ["like", "pass"],
     },
   },
