@@ -92,6 +92,7 @@ function Discover() {
   const [fRole, setFRole] = useState<FilterValue>("all");
   const [fStage, setFStage] = useState<FilterValue>("all");
   const [fCommit, setFCommit] = useState<FilterValue>("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const filtered = queue.filter((p) =>
     (fPath === "all" || p.path === fPath) &&
