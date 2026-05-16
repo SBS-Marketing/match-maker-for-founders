@@ -56,21 +56,38 @@ function Landing() {
 
       {/* HOW */}
       <section className="border-b border-border">
-        <div className="mx-auto max-w-6xl px-6 py-24">
-          <div className="eyebrow mb-12">02 · So funktioniert es</div>
-          <div className="grid gap-12 md:grid-cols-3">
-            {[
-              { n: "01", t: "Profil erstellen", d: "Wer du bist, was du baust, was du suchst — in unter fünf Minuten." },
-              { n: "02", t: "Andere Founder entdecken", d: "Eine Person nach der anderen. Keine Listen, keine Algorithmen, die dich verkaufen." },
-              { n: "03", t: "Direkt schreiben", d: "Wenn ihr euch beide für einander interessiert, beginnt das Gespräch sofort." },
-            ].map((s) => (
-              <div key={s.n} className="border-t border-border pt-6">
-                <div className="eyebrow mb-4">{s.n}</div>
-                <h3 className="text-xl font-semibold tracking-tight">{s.t}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{s.d}</p>
-              </div>
-            ))}
+        <div className="mx-auto max-w-5xl px-6 py-28">
+          <div className="grid gap-10 sm:grid-cols-[200px_1fr] sm:gap-16">
+            <div className="eyebrow pt-2">02 · So funktioniert es</div>
+            <h2 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+              Drei Schritte.<br />
+              <span className="font-serif italic font-normal text-primary">Eine Begegnung.</span>
+            </h2>
           </div>
+
+          <ol className="mt-20 divide-y divide-border">
+            {[
+              { n: "01", t: "Profil erstellen", d: "Wer du bist, was du baust, was du suchst — in unter fünf Minuten. Keine Lebensläufe, keine Buzzwords." },
+              { n: "02", t: "Andere Founder entdecken", d: "Eine Person nach der anderen. Keine endlosen Listen, keine Algorithmen, die dich verkaufen." },
+              { n: "03", t: "Direkt schreiben", d: "Wenn ihr euch beide für einander interessiert, beginnt das Gespräch sofort — kein Umweg." },
+            ].map((s) => (
+              <li key={s.n} className="grid grid-cols-[64px_1fr] items-baseline gap-6 py-10 sm:grid-cols-[120px_1fr_auto] sm:gap-12">
+                <div
+                  className="font-serif italic text-5xl leading-none text-primary sm:text-6xl"
+                  aria-hidden="true"
+                >
+                  {s.n}
+                </div>
+                <div>
+                  <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">{s.t}</h3>
+                  <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+                    {s.d}
+                  </p>
+                </div>
+                <ArrowRight className="hidden h-5 w-5 text-muted-foreground sm:block" />
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
