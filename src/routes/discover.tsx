@@ -40,6 +40,7 @@ type Profile = {
   display_name: string | null;
   photo_url: string | null;
   location: string | null;
+  path: string | null;
   role: string | null;
   industry: string | null;
   stage: string | null;
@@ -54,12 +55,52 @@ const roleLabel: Record<string, string> = { tech: "Tech", business: "Business", 
 const stageLabel: Record<string, string> = { idea: "Idee", mvp: "MVP", revenue: "Umsatz", scaling: "Skalierung" };
 const commitLabel: Record<string, string> = { full_time: "Vollzeit", part_time: "Teilzeit", exploring: "Sondiert" };
 
+type FilterValue = string;
+const PATH_OPTIONS: { value: FilterValue; label: string }[] = [
+  { value: "all", label: "Alle" },
+  { value: "founder", label: "Founder" },
+  { value: "joiner", label: "Joiner" },
+];
+const ROLE_OPTIONS: { value: FilterValue; label: string }[] = [
+  { value: "all", label: "Alle Rollen" },
+  { value: "tech", label: "Tech" },
+  { value: "business", label: "Business" },
+  { value: "product", label: "Product" },
+  { value: "design", label: "Design" },
+];
+const STAGE_OPTIONS: { value: FilterValue; label: string }[] = [
+  { value: "all", label: "Jede Stage" },
+  { value: "idea", label: "Idee" },
+  { value: "mvp", label: "MVP" },
+  { value: "revenue", label: "Umsatz" },
+  { value: "scaling", label: "Skalierung" },
+];
+const COMMIT_OPTIONS: { value: FilterValue; label: string }[] = [
+  { value: "all", label: "Beliebig" },
+  { value: "full_time", label: "Vollzeit" },
+  { value: "part_time", label: "Teilzeit" },
+  { value: "exploring", label: "Sondiert" },
+];
+
 function Discover() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [queue, setQueue] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [meOnboarded, setMeOnboarded] = useState<boolean | null>(null);
+  const [fPath, setFPath] = useState<FilterValue>("all");
+  const [fRole, setFRole] = useState<FilterValue>("all");
+  const [fStage, setFStage] = useState<FilterValue>("all");
+  const [fCommit, setFCommit] = useState<FilterValue>("all");
+
+  const filtered = queue.filter((p) =>
+    (fPath === "all" || p.path === fPath) &&
+    (fRole === "all" || p.role === fRole) &&
+    (fStage === "all" || p.stage === fStage) &&
+    (fCommit === "all" || p.commitment === fCommit)
+  );
+  const activeCount = [fPath, fRole, fStage, fCommit].filter((v) => v !== "all").length;
+  const resetFilters = () => { setFPath("all"); setFRole("all"); setFStage("all"); setFCommit("all"); };
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -96,13 +137,12 @@ function Discover() {
   }, [load]);
 
   const swipe = async (direction: "like" | "pass") => {
-    if (!user || queue.length === 0) return;
-    const target = queue[0];
-    setQueue((q) => q.slice(1));
+    if (!user || filtered.length === 0) return;
+    const target = filtered[0];
+    setQueue((q) => q.filter((x) => x.id !== target.id));
     const { error } = await supabase.from("swipes").insert({ swiper_id: user.id, target_id: target.id, direction });
     if (error) return toast.error(error.message);
     if (direction === "like") {
-      // check if match created
       const ua = user.id < target.id ? user.id : target.id;
       const ub = user.id < target.id ? target.id : user.id;
       const { data: m } = await supabase.from("matches").select("id").eq("user_a", ua).eq("user_b", ub).maybeSingle();
@@ -155,16 +195,64 @@ function Discover() {
     );
   }
 
-  const p = queue[0];
+  const filterBar = (
+    <div className="glass-pane mt-8 p-5">
+      <div className="flex items-center justify-between">
+        <div className="eyebrow">Filter{activeCount > 0 ? ` · ${activeCount} aktiv` : ""}</div>
+        {activeCount > 0 && (
+          <button
+            onClick={resetFilters}
+            className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--ember-deep)] hover:underline"
+          >
+            Zurücksetzen
+          </button>
+        )}
+      </div>
+      <div className="mt-4 space-y-3">
+        <FilterRow label="Pfad" options={PATH_OPTIONS} value={fPath} onChange={setFPath} />
+        <FilterRow label="Rolle" options={ROLE_OPTIONS} value={fRole} onChange={setFRole} />
+        <FilterRow label="Stage" options={STAGE_OPTIONS} value={fStage} onChange={setFStage} />
+        <FilterRow label="Commit" options={COMMIT_OPTIONS} value={fCommit} onChange={setFCommit} />
+      </div>
+    </div>
+  );
+
+  if (filtered.length === 0) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 pt-10 pb-24 sm:px-6">
+        <div className="eyebrow">Entdecken</div>
+        <h1 className="mt-4 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+          Keine <span className="font-serif italic font-normal">Treffer</span>.
+        </h1>
+        {filterBar}
+        <div className="glass-pane mt-6 p-10 text-center">
+          <p className="text-[14px] text-[var(--smoke)]">
+            Keine Profile passen zu deinen aktuellen Filtern. Lockere sie oder setze sie zurück.
+          </p>
+          <Button
+            variant="ghost"
+            className="mt-5 rounded-xl"
+            onClick={resetFilters}
+          >
+            Filter zurücksetzen
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const p = filtered[0];
   const name = p.display_name ?? "?";
   return (
     <div className="mx-auto max-w-2xl px-4 pt-10 pb-24 sm:px-6">
-      <div className="eyebrow">Entdecken · {queue.length} im Stack</div>
+      <div className="eyebrow">Entdecken · {filtered.length} im Stack</div>
       <h1 className="mt-4 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
         Heute für <span className="font-serif italic font-normal">dich</span>.
       </h1>
 
-      <article className="glass-pane mt-10 p-8">
+      {filterBar}
+
+      <article className="glass-pane mt-6 p-8">
         <div className="flex items-center gap-4">
           <div
             className="flex h-14 w-14 items-center justify-center rounded-full font-mono text-[15px] font-semibold overflow-hidden"
@@ -252,5 +340,53 @@ function Chip({ children, muted = false }: { children: React.ReactNode; muted?: 
     >
       {children}
     </span>
+  );
+}
+
+function FilterRow({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="w-16 shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--smoke)]">
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map((o) => {
+          const active = o.value === value;
+          return (
+            <button
+              key={o.value}
+              onClick={() => onChange(o.value)}
+              className="rounded-full px-3 py-1 text-[12px] transition"
+              style={
+                active
+                  ? {
+                      background: "var(--ember)",
+                      color: "var(--cream)",
+                      border: "1px solid rgba(226,81,28,0.4)",
+                      boxShadow: "0 6px 16px -8px rgba(178,59,14,0.45)",
+                    }
+                  : {
+                      background: "rgba(255,255,255,0.55)",
+                      color: "var(--ink-soft)",
+                      border: "1px solid var(--ruled)",
+                    }
+              }
+            >
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
