@@ -1,12 +1,30 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { IconMF } from "@/components/Logo";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Play } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Landing,
 });
+
+const PREVIEW = [
+  { initials: "AW", name: "Anna Wojcik", role: "Technical · Backend Infra", city: "Berlin", quote: "Hat Payments bei Stripe gebaut.", fit: 94, color: "var(--ember-deep)" },
+  { initials: "MR", name: "Mathieu Royer", role: "Design + Product", city: "Paris", quote: "Sucht Technical Co-Founder.", fit: 87, color: "var(--ink-soft)" },
+  { initials: "PR", name: "Priya Ramanathan", role: "Sales + GTM", city: "London", quote: "Gleicher Markt. Andere Bewegung.", fit: 81, color: "var(--ember)" },
+];
+
+const STATS = [
+  { v: "14d", k: "Match in", d: "Median — vom Profil zum ersten Call" },
+  { v: "78%", k: "Über 6 Monate dabei", d: "Paare, die unterschrieben haben" },
+  { v: "8", k: "Cohorts", d: "Alle 6 Wochen, gecapped bei 60" },
+  { v: "2024", k: "Seit", d: "matchfoundr ist in 4 Städten" },
+];
+
+const STEPS = [
+  { n: "01", t: "Profil erstellen", d: "Wer du bist, was du baust, was du suchst — in unter fünf Minuten." },
+  { n: "02", t: "Founder entdecken", d: "Eine Person nach der anderen. Keine Listen, keine Algorithmen, die dich verkaufen." },
+  { n: "03", t: "Direkt schreiben", d: "Wenn ihr euch beide für einander interessiert, beginnt das Gespräch sofort." },
+];
 
 function Landing() {
   const { user } = useAuth();
@@ -14,119 +32,205 @@ function Landing() {
   const startCta = () => navigate({ to: user ? "/discover" : "/auth" });
 
   return (
-    <div>
+    <div className="mx-auto max-w-6xl px-4 pt-10 pb-24 sm:px-6">
       {/* HERO */}
-      <section className="border-b border-border">
-        <div className="mx-auto max-w-4xl px-6 pt-24 pb-24 text-center sm:pt-32 sm:pb-28">
-          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-mono uppercase tracking-[0.18em] text-muted-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-            01 · Die Plattform
+      <section className="grid gap-8 pt-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12 lg:pt-14">
+        {/* Hero left */}
+        <div>
+          <div className="glass-pill inline-flex items-center gap-2 py-1.5 pl-1.5 pr-3">
+            <span className="rounded-full bg-[var(--ember)] px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--cream)]">
+              Neu
+            </span>
+            <span className="eyebrow !text-[10px]">Spring Cohort · 412 Founder</span>
           </div>
 
-          <h1 className="text-balance text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
-            Finde den Co-Founder,
+          <h1 className="mt-7 text-balance text-5xl font-semibold leading-[1.02] tracking-tight sm:text-6xl lg:text-[80px]">
+            Finde den{" "}
+            <span className="font-serif italic font-normal">founder</span>,
             <br />
-            <span className="font-serif italic font-normal text-primary">
-              den du wirklich brauchst.
-            </span>
+            mit dem du es{" "}
+            <span className="font-serif italic font-normal">baust</span>
+            <span className="text-[var(--ember)]">.</span>
           </h1>
 
-          <p className="mx-auto mt-8 max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-            matchfoundr ist ein fokussiertes Netzwerk für Gründer:innen auf der Suche nach
-            ihrem ersten Partner. Echte Profile, kein Lebenslauf-Theater. Nur die eine Person,
-            die das Unternehmen möglich macht.
+          <p className="mt-7 max-w-xl text-pretty text-[17px] leading-relaxed text-[var(--smoke)]">
+            Wir sind keine Dating-App für Startups. Wir sind eine langsame,
+            bewusste Suche — drei Monate Gespräche, bevor jemand etwas unterschreibt.
           </p>
 
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            <Button size="lg" onClick={startCta} className="gap-2">
-              Founder-Profil erstellen <ArrowRight className="h-4 w-4" />
+          <div className="mt-9 flex flex-wrap items-center gap-3">
+            <Button
+              size="lg"
+              onClick={startCta}
+              className="shadow-ember h-12 gap-2 rounded-xl bg-[var(--ember)] px-5 text-[15px] text-[var(--cream)] hover:bg-[var(--ember-deep)]"
+            >
+              In 12 Minuten starten <ArrowRight className="h-4 w-4" />
             </Button>
-            <Link to="/auth">
-              <Button size="lg" variant="ghost">
-                Anmelden
-              </Button>
-            </Link>
+            <button
+              type="button"
+              className="glass-pill flex h-12 items-center gap-3 pl-1.5 pr-5 text-[14px] text-[var(--ink)] transition hover:bg-white/70"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--ink)] text-[var(--cream)]">
+                <Play className="h-3.5 w-3.5 fill-current" />
+              </span>
+              So funktioniert's
+              <span className="eyebrow !text-[10px] !tracking-[0.14em]">2:14</span>
+            </button>
           </div>
 
-          <div className="mt-16 flex justify-center">
-            <IconMF size={56} />
+          <div className="mt-14">
+            <div className="eyebrow mb-4">Founder von</div>
+            <div className="flex flex-wrap items-center gap-x-7 gap-y-3 text-[var(--ink)]/65">
+              <span className="font-mono text-sm font-semibold tracking-tight">Stripe</span>
+              <span className="text-sm font-medium italic" style={{ fontFamily: "var(--font-serif)" }}>Linear</span>
+              <span className="font-sans text-sm font-extrabold uppercase tracking-[0.2em]">Figma</span>
+              <span className="font-sans text-sm font-medium">vercel<span className="text-[var(--ember)]">/</span></span>
+              <span className="font-mono text-sm">n8n</span>
+            </div>
           </div>
+        </div>
+
+        {/* Hero right — live match preview */}
+        <div className="glass-pane p-5 sm:p-6">
+          <div className="flex items-center justify-between">
+            <div className="eyebrow">Heute · 3 likely fits</div>
+            <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-[0.18em] text-[var(--smoke)]">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              Live
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {PREVIEW.map((p) => (
+              <div key={p.initials} className="glass-pane-soft flex items-center gap-4 p-4">
+                <div
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-mono text-[13px] font-semibold text-[var(--cream)]"
+                  style={{ background: p.color, boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.18)" }}
+                >
+                  {p.initials}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-2">
+                    <div className="truncate text-[14px] font-semibold text-[var(--ink)]">{p.name}</div>
+                    <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--smoke)]">{p.city}</div>
+                  </div>
+                  <div className="mt-0.5 truncate text-[12px] text-[var(--smoke)]">{p.role}</div>
+                  <div
+                    className="mt-1.5 truncate text-[12px] italic text-[var(--ink-soft)]"
+                    style={{ fontFamily: "var(--font-serif)" }}
+                  >
+                    „{p.quote}"
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="eyebrow !text-[9px]">Fit</div>
+                  <div
+                    className="text-2xl font-semibold leading-none text-[var(--ember)]"
+                    style={{ letterSpacing: "-0.035em" }}
+                  >
+                    {p.fit}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 flex items-center justify-between text-[11px] font-mono uppercase tracking-[0.18em] text-[var(--smoke)]">
+            <span>Sample Feed · Live Preview</span>
+            <Link to="/entdecken" className="text-[var(--ink)] hover:text-[var(--ember)]">
+              Alle 11 →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* STATS */}
+      <section className="mt-20">
+        <div className="glass-pane grid grid-cols-2 divide-y divide-[var(--ruled)] sm:grid-cols-4 sm:divide-x sm:divide-y-0">
+          {STATS.map((s) => (
+            <div key={s.k} className="p-6 sm:p-7">
+              <div
+                className="text-4xl font-semibold text-[var(--ink)]"
+                style={{ letterSpacing: "-0.035em" }}
+              >
+                {s.v}
+              </div>
+              <div className="eyebrow mt-2">{s.k}</div>
+              <div className="mt-1 text-[12px] leading-relaxed text-[var(--smoke)]">{s.d}</div>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* HOW */}
-      <section className="border-b border-border">
-        <div className="mx-auto max-w-5xl px-6 py-28">
-          <div className="grid gap-10 sm:grid-cols-[200px_1fr] sm:gap-16">
-            <div className="eyebrow pt-2">02 · So funktioniert es</div>
-            <h2 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-              Drei Schritte.<br />
-              <span className="font-serif italic font-normal text-primary">Eine Begegnung.</span>
-            </h2>
-          </div>
-
-          <ol className="mt-20 divide-y divide-border">
-            {[
-              { n: "01", t: "Profil erstellen", d: "Wer du bist, was du baust, was du suchst — in unter fünf Minuten. Keine Lebensläufe, keine Buzzwords." },
-              { n: "02", t: "Andere Founder entdecken", d: "Eine Person nach der anderen. Keine endlosen Listen, keine Algorithmen, die dich verkaufen." },
-              { n: "03", t: "Direkt schreiben", d: "Wenn ihr euch beide für einander interessiert, beginnt das Gespräch sofort — kein Umweg." },
-            ].map((s) => (
-              <li key={s.n} className="grid grid-cols-[64px_1fr] items-baseline gap-6 py-10 sm:grid-cols-[120px_1fr_auto] sm:gap-12">
-                <div
-                  className="font-serif italic text-5xl leading-none text-primary sm:text-6xl"
-                  aria-hidden="true"
-                >
-                  {s.n}
-                </div>
-                <div>
-                  <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">{s.t}</h3>
-                  <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-                    {s.d}
-                  </p>
-                </div>
-                <ArrowRight className="hidden h-5 w-5 text-muted-foreground sm:block" />
-              </li>
-            ))}
-          </ol>
+      <section className="mt-24">
+        <div className="grid gap-10 sm:grid-cols-[200px_1fr] sm:gap-16">
+          <div className="eyebrow pt-2">02 · So funktioniert es</div>
+          <h2 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+            Drei Schritte.
+            <br />
+            <span className="font-serif italic font-normal text-[var(--ember)]">Eine Begegnung.</span>
+          </h2>
+        </div>
+        <div className="mt-12 grid gap-5 sm:grid-cols-3">
+          {STEPS.map((s) => (
+            <div key={s.n} className="glass-pane p-7">
+              <div
+                className="font-serif text-5xl italic text-[var(--ember)]"
+                style={{ letterSpacing: "-0.02em" }}
+              >
+                {s.n}
+              </div>
+              <h3 className="mt-5 text-xl font-semibold tracking-tight">{s.t}</h3>
+              <p className="mt-3 text-[14px] leading-relaxed text-[var(--smoke)]">{s.d}</p>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* DISCOVER TEASER */}
-      <section className="border-b border-border bg-secondary">
-        <div className="mx-auto max-w-6xl px-6 py-24">
-          <div className="grid gap-10 sm:grid-cols-[200px_1fr] sm:gap-16">
-            <div className="eyebrow pt-2">03 · Entdecken</div>
-            <div>
-              <h2 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-                Wirf einen Blick rein.<br />
-                <span className="font-serif italic font-normal text-primary">
-                  Bevor du dich anmeldest.
-                </span>
-              </h2>
-              <p className="mt-6 max-w-xl text-pretty text-[15px] leading-relaxed text-muted-foreground">
-                Eine kleine Auswahl an Foundern, die gerade bei matchfoundr unterwegs sind —
-                offen einsehbar, ohne Account.
-              </p>
-              <div className="mt-8">
-                <Link to="/entdecken">
-                  <Button size="lg" variant="outline" className="gap-2">
-                    Founder ansehen <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
+      <section className="mt-24">
+        <div className="glass-pane grid gap-8 p-8 sm:grid-cols-[200px_1fr] sm:gap-12 sm:p-12">
+          <div className="eyebrow pt-2">03 · Entdecken</div>
+          <div>
+            <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+              Wirf einen Blick rein.
+              <br />
+              <span className="font-serif italic font-normal text-[var(--ember)]">
+                Bevor du dich anmeldest.
+              </span>
+            </h2>
+            <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-[var(--smoke)]">
+              Eine kleine Auswahl an Foundern, die gerade bei matchfoundr unterwegs sind —
+              offen einsehbar, ohne Account.
+            </p>
+            <div className="mt-7">
+              <Link to="/entdecken">
+                <Button
+                  size="lg"
+                  className="shadow-ember h-11 gap-2 rounded-xl bg-[var(--ember)] text-[var(--cream)] hover:bg-[var(--ember-deep)]"
+                >
+                  Founder ansehen <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* MANIFESTO */}
-      <section className="border-b border-border bg-secondary">
-        <div className="mx-auto max-w-3xl px-6 py-28">
-          <div className="eyebrow mb-10">04 · Manifest</div>
-          <h2 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+      {/* MANIFEST */}
+      <section className="mt-24">
+        <div className="glass-pane-ink p-8 sm:p-12">
+          <div
+            className="eyebrow"
+            style={{ color: "rgba(251,250,247,0.55)" }}
+          >
+            04 · Manifest
+          </div>
+          <h2 className="mt-6 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
             Kein Lebenslauf-Theater.
           </h2>
-          <div className="mt-8 space-y-5 text-[17px] leading-relaxed text-muted-foreground">
+          <div className="mt-7 max-w-2xl space-y-5 text-[16px] leading-relaxed" style={{ color: "rgba(251,250,247,0.78)" }}>
             <p>
               Co-Founder finden ist keine Recruiting-Aufgabe. Es ist eine Entscheidung darüber,
               mit wem du die nächsten Jahre durchstehen willst — durch alles.
@@ -134,38 +238,40 @@ function Landing() {
             <p>
               Deshalb gibt es bei matchfoundr keine Punkte für Universitäten, keine Filter nach
               „Ex-FAANG", keine tausenden Profile zum Durchwischen. Stattdessen: ein klares
-              Founder-Profil, das zeigt, wer du wirklich bist, was du baust und was du in einem
-              Partner suchst.
+              Founder-Profil, das zeigt, wer du wirklich bist.
             </p>
           </div>
-          <p className="mt-10 font-serif italic text-3xl text-foreground">
+          <p
+            className="mt-10 font-serif text-3xl italic"
+            style={{ color: "var(--cream)" }}
+          >
             Eine Plattform. Eine Entscheidung. Eine Person.
           </p>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="border-b border-border">
-        <div className="mx-auto max-w-3xl px-6 py-24 text-center">
+      <section className="mt-24">
+        <div className="glass-pane p-10 text-center sm:p-14">
           <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
             Bereit anzufangen?
           </h2>
-          <p className="mt-4 text-muted-foreground">
+          <p className="mx-auto mt-4 max-w-md text-[15px] text-[var(--smoke)]">
             Erstelle dein Founder-Profil und finde die Person, die dein Unternehmen möglich macht.
           </p>
-          <Button size="lg" onClick={startCta} className="mt-8 gap-2">
+          <Button
+            size="lg"
+            onClick={startCta}
+            className="shadow-ember mt-8 h-12 gap-2 rounded-xl bg-[var(--ember)] px-6 text-[var(--cream)] hover:bg-[var(--ember-deep)]"
+          >
             Founder-Profil erstellen <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
       </section>
 
-      <footer>
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-10 text-xs text-muted-foreground">
-          <span className="font-mono uppercase tracking-[0.18em]">
-            © {new Date().getFullYear()} matchfoundr
-          </span>
-          <span className="font-mono uppercase tracking-[0.18em]">Made for founders</span>
-        </div>
+      <footer className="mt-16 flex items-center justify-between px-2 text-[11px] font-mono uppercase tracking-[0.18em] text-[var(--smoke)]">
+        <span>© {new Date().getFullYear()} matchfoundr</span>
+        <span>Made for founders</span>
       </footer>
     </div>
   );
