@@ -188,20 +188,33 @@ function Onboarding() {
       </div>
 
       {/* Progress dots */}
-      <div className="mx-auto mt-6 flex max-w-5xl flex-wrap items-center justify-center gap-x-3 gap-y-2">
+      <div
+        className="glass-pane-ink mx-auto mt-6 flex max-w-5xl flex-wrap items-center justify-center gap-x-2 gap-y-2 px-3 py-3 shadow-2xl"
+        style={{
+          background: "rgba(12,11,9,0.78)",
+          border: "1px solid rgba(255,255,255,0.22)",
+          boxShadow: "0 18px 60px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.10)",
+        }}
+      >
         {STEPS.map((s, i) => {
           const done = i < step;
           const active = i === step;
           return (
-            <div key={s} className="flex items-center gap-3">
+            <div key={s} className="flex items-center gap-2">
               <span
-                className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.12em]"
+                className="flex min-h-8 items-center gap-2 rounded-full px-2.5 font-mono text-[11px] uppercase tracking-[0.12em]"
                 style={{
+                  background: active
+                    ? "rgba(226,81,28,0.22)"
+                    : done
+                      ? "rgba(255,255,255,0.14)"
+                      : "rgba(255,255,255,0.10)",
+                  border: active ? "1px solid rgba(255,200,170,0.55)" : "1px solid rgba(255,255,255,0.18)",
                   color: active
                     ? "var(--cream)"
                     : done
-                      ? "rgba(255,255,255,0.75)"
-                      : "rgba(255,255,255,0.6)",
+                      ? "rgba(255,255,255,0.92)"
+                      : "rgba(255,255,255,0.84)",
                 }}
               >
                 <span
@@ -210,9 +223,9 @@ function Onboarding() {
                     background: active
                       ? "var(--ember)"
                       : done
-                        ? "rgba(255,255,255,0.25)"
-                        : "rgba(255,255,255,0.15)",
-                    border: `1px solid ${active ? "rgba(255,200,170,0.5)" : "rgba(255,255,255,0.3)"}`,
+                        ? "rgba(255,255,255,0.30)"
+                        : "rgba(255,255,255,0.22)",
+                    border: `1px solid ${active ? "rgba(255,200,170,0.65)" : "rgba(255,255,255,0.45)"}`,
                     color: "var(--cream)",
                   }}
                 >
@@ -221,7 +234,7 @@ function Onboarding() {
                 {s}
               </span>
               {i < STEPS.length - 1 && (
-                <span className="h-px w-6" style={{ background: "rgba(255,255,255,0.15)" }} />
+                <span className="hidden h-px w-3 sm:block" style={{ background: "rgba(255,255,255,0.35)" }} />
               )}
             </div>
           );
