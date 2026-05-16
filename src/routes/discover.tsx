@@ -373,8 +373,8 @@ function FilterRow({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="w-16 shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--smoke)]">
+    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+      <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--smoke)] sm:w-16 sm:shrink-0">
         {label}
       </span>
       <div className="flex flex-wrap gap-1.5">
