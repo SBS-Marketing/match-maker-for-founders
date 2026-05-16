@@ -228,7 +228,9 @@ function Onboarding() {
                       : done
                         ? "rgba(255,255,255,0.30)"
                         : "rgba(255,255,255,0.22)",
-                    border: `1px solid ${active ? "rgba(255,200,170,0.65)" : "rgba(255,255,255,0.45)"}`,
+                    border: `1px solid ${
+                      active ? "rgba(255,200,170,0.65)" : "rgba(255,255,255,0.45)"
+                    }`,
                     color: "var(--cream)",
                   }}
                 >
