@@ -91,6 +91,93 @@ function Landing() {
         </div>
       </section>
 
+      {/* DISCOVER PREVIEW */}
+      <section className="border-b border-border bg-secondary">
+        <div className="mx-auto max-w-6xl px-6 py-28">
+          <div className="grid gap-10 sm:grid-cols-[200px_1fr] sm:gap-16">
+            <div className="eyebrow pt-2">03 · Entdecken</div>
+            <h2 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+              Ein erster Blick.<br />
+              <span className="font-serif italic font-normal text-primary">
+                Mehr wartet hinter dem Login.
+              </span>
+            </h2>
+          </div>
+
+          <div className="relative mt-16">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                { name: "Lena, 29", role: "Technical Co-Founder", city: "Berlin", idea: "Klimadaten als API für mittelständische Industrie.", tags: ["AI", "B2B SaaS", "Climate"] },
+                { name: "Jonas, 34", role: "Business / Sales", city: "München", idea: "Marktplatz für ungenutzte Lagerflächen in Innenstädten.", tags: ["Marketplace", "Logistik"] },
+                { name: "Aylin, 27", role: "Product & Design", city: "Hamburg", idea: "Mental-Health-App für junge Eltern, kurze Sessions.", tags: ["Health", "Mobile", "B2C"] },
+                { name: "Marek, 31", role: "Technical Co-Founder", city: "Köln", idea: "Open-Source-Tooling für Audits in regulierten Branchen.", tags: ["DevTools", "Fintech"] },
+                { name: "Sofia, 26", role: "Growth / Marketing", city: "Leipzig", idea: "Kuratierte Reise-Editorials mit lokalem Handwerk.", tags: ["Travel", "Commerce"] },
+                { name: "Tim, 38", role: "Domain Expert", city: "Stuttgart", idea: "Predictive Maintenance für mittelständische Fertigung.", tags: ["Industrial", "AI"] },
+              ].map((p) => (
+                <article
+                  key={p.name}
+                  className="rounded-2xl border border-border bg-background p-6"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex h-10 w-10 items-center justify-center rounded-full font-mono text-sm font-medium"
+                        style={{ background: "var(--ember-tint)", color: "var(--ember-deep)" }}
+                      >
+                        {p.name.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold leading-tight">{p.name}</div>
+                        <div className="text-xs text-muted-foreground">{p.city}</div>
+                      </div>
+                    </div>
+                    <span className="eyebrow !text-[10px] text-right">{p.role}</span>
+                  </div>
+                  <p className="mt-5 text-[15px] leading-relaxed">„{p.idea}"</p>
+                  <div className="mt-5 flex flex-wrap gap-1.5">
+                    {p.tags.map((t) => (
+                      <span
+                        key={t}
+                        className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            {/* fade-to-blur overlay */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-3/4 backdrop-blur-[3px]"
+              style={{
+                background:
+                  "linear-gradient(to bottom, transparent 0%, color-mix(in oklab, var(--secondary) 70%, transparent) 50%, var(--secondary) 92%)",
+                maskImage:
+                  "linear-gradient(to bottom, transparent 0%, black 30%, black 100%)",
+                WebkitMaskImage:
+                  "linear-gradient(to bottom, transparent 0%, black 30%, black 100%)",
+              }}
+            />
+
+            {/* floating CTA */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-8 flex justify-center sm:bottom-14">
+              <div className="pointer-events-auto flex flex-col items-center gap-4 text-center">
+                <div className="eyebrow">+ 240 weitere Founder</div>
+                <h3 className="font-serif italic text-3xl text-foreground sm:text-4xl">
+                  Mehr Founder entdecken.
+                </h3>
+                <Button size="lg" onClick={startCta} className="gap-2">
+                  Jetzt anmelden <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* MANIFESTO */}
       <section className="border-b border-border bg-secondary">
         <div className="mx-auto max-w-3xl px-6 py-28">
