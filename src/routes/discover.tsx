@@ -4,11 +4,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthGate } from "@/components/AuthGate";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, X, MapPin } from "lucide-react";
 import { toast } from "sonner";
+
+const AVATAR_COLORS = [
+  "var(--ember)",
+  "var(--ember-deep)",
+  "var(--ink-soft)",
+  "var(--smoke)",
+  "var(--ember-light)",
+  "#8B5A3C",
+  "#3D5A4A",
+  "#5A4A2A",
+];
+
+function initials(name: string) {
+  return name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+}
+function colorFor(name: string) {
+  let h = 0;
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[h];
+}
 
 export const Route = createFileRoute("/discover")({
   component: () => (
