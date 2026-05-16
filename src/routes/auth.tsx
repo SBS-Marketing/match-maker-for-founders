@@ -83,8 +83,11 @@ function AuthPage() {
       </div>
 
       <Card className="p-6">
-        <Button variant="outline" className="w-full" onClick={google}>
+        <Button variant="outline" className="w-full" onClick={() => oauth("google")}>
           Mit Google fortfahren
+        </Button>
+        <Button variant="outline" className="mt-2 w-full" onClick={() => oauth("apple")}>
+          Mit Apple fortfahren
         </Button>
         <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
           <div className="h-px flex-1 bg-border" /> oder <div className="h-px flex-1 bg-border" />
