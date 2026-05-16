@@ -1,82 +1,59 @@
-# matchfoundr — Plan
+# Rebrand auf das matchfoundr Brand Book
 
-Eine fokussierte Plattform, auf der Gründer:innen ihren ersten Co-Founder finden. Dunkles, reduziertes Design (Linear/Vercel-Stil), klare deutsche Copy.
+Aktuell läuft die App in einem dunklen Theme mit grünem Akzent. Das Brand Book (`brand/brand-book.html`) definiert dagegen ein helles, redaktionelles System: warmes Cream als Bühne, schwarze Ink-Typo, Ember-Orange als einziger Akzent, plus ein klares Logo aus zwei Chevrons mit zentralem Punkt.
 
-## Umfang dieser Version
+## Was sich ändert
 
-1. **Landing Page** (öffentlich)
-   - Hero mit Headline „Finde den Co-Founder, den du wirklich brauchst."
-   - Sektionen: Wie es funktioniert (3 Schritte), Manifest („kein Lebenslauf-Theater"), FAQ, Footer
-   - CTA „Founder-Profil erstellen" → Signup
-
-2. **Auth** (Lovable Cloud)
-   - Email/Passwort + Google Sign-In
-   - Auto-Login nach Signup, Session-Persistierung
-   - Geschützte Routen via Auth-Guard
-
-3. **Onboarding / Founder-Profil**
-   - Mehrstufiges Formular: Name, Foto, Standort, Rolle (Tech/Business/Product/Design), Skills, Branche, Stage (Idee/MVP/Revenue), Commitment (Full-/Part-time), Vision (Freitext), was gesucht wird
-   - Validierung mit zod
-
-4. **Discover / Matching**
-   - Karten-Stack: ein Profil pro Karte, „Interessiert" / „Weiter"
-   - Filter: Rolle, Stage, Standort, Commitment
-   - Match entsteht, wenn beide Seiten „Interessiert" klicken
-
-5. **Matches & Chat (MVP)**
-   - Liste aller Matches
-   - 1:1 Chat pro Match (Realtime via Lovable Cloud)
-
-6. **Eigenes Profil**
-   - Anzeigen & Bearbeiten, Profilbild-Upload (Storage)
-
-## Technischer Aufbau
-
-**Frontend:** React + Tailwind + shadcn, dunkles Theme als Default, Inter/Geist-artige Typo, viel Whitespace, subtile Borders, keine bunten Akzente außer einem ruhigen Signal-Grün.
-
-**Routen:** `/`, `/auth`, `/onboarding`, `/discover`, `/matches`, `/matches/:id`, `/profile`, `/reset-password`
-
-**Datenmodell (Lovable Cloud / Postgres):**
+### 1. Farb-Tokens (`src/styles.css`)
+Die OKLCH-Token werden auf die Brand-Book-Palette gemappt, Default = hell:
 
 ```text
-profiles         (id=auth.users.id, display_name, photo_url, location,
-                  role, skills[], industry, stage, commitment, vision,
-                  looking_for, onboarded_at)
-swipes           (id, swiper_id, target_id, direction, created_at)
-matches          (id, user_a, user_b, created_at)  -- erstellt bei mutual like
-messages         (id, match_id, sender_id, body, created_at)
-user_roles       (id, user_id, role)               -- für später (admin)
+Ink         #15140f  → --foreground
+Ink Soft    #2A251F  → dunkle Surface-Varianten
+Smoke       #6B635A  → --muted-foreground
+Ember 500   #E2511C  → --primary, --ring
+Ember Deep  #B23B0E  → primary-hover
+Ember Light #F0843A  → highlight
+Ember Tint  #FCE4D5  → soft-badge-bg
+Cream       #FBFAF7  → --background
+Paper       #F3EFE6  → --card, --muted, --secondary
+Ruled       rgba(21,20,15,0.10) → --border, --input
 ```
 
-**Security:**
-- RLS auf allen Tabellen
-- `profiles`: jeder Eingeloggte kann lesen (für Discover), nur Owner schreibt
-- `swipes`: nur Owner liest/schreibt eigene
-- `matches`: nur Teilnehmer lesen
-- `messages`: nur Teilnehmer des Matches lesen/schreiben
-- Mutual-Match-Erstellung via Datenbank-Trigger auf `swipes`
-- Trigger erstellt `profiles`-Zeile bei Signup
+Dark-Variante ist im Brand Book nicht vorgesehen → entfällt zunächst.
 
-**Storage:** Bucket `avatars`, public read, write nur Owner.
+### 2. Typografie
+- Google-Fonts via `<link>` in `__root.tsx`: **Geist** (400–800), **Geist Mono** (400–600), **Instrument Serif** (regular + italic).
+- Tokens: `--font-sans: "Geist"`, neu `--font-mono: "Geist Mono"`, `--font-serif: "Instrument Serif"`.
+- Headlines: Geist 600/700, tight tracking (`-0.035em`).
+- Editorial-Akzente (Hero-Kicker, Zitate): Instrument Serif italic.
+- Labels / Eyebrows: Geist Mono uppercase, `letter-spacing: 0.18em`.
 
-**Realtime:** Postgres-Changes auf `messages` für Live-Chat.
+### 3. Logo-Komponente
+Neue `src/components/Logo.tsx` direkt aus dem Brand Book portiert:
+- `<IconMF />` — SVG, zwei Chevrons (links Ink, rechts Ember) + Ink-Dot in der Mitte, viewBox `0 0 140 100`.
+- `<Wordmark />` — „matchfoundr" in Geist 700, `-0.035em`, mit Ember-Punkt.
+- `<Lockup layout="horizontal|stacked" />` — Kombi für Nav/Hero/Auth.
+- Einsatz: `AppNav` (klein, horizontal), Landing-Hero (groß), Auth-Seite (stacked).
+- Favicon-SVG aus `IconMF` nach `public/favicon.svg`, im Root-Head verlinkt.
 
-## Vorgehen / Reihenfolge
+### 4. Seiten-Anpassungen (rein visuell, keine Logik)
+- **Landing (`/`)**: Cream-Hintergrund, riesige Wordmark + Icon im Hero, Instrument-Serif-Kicker, Ember nur für CTA und den Punkt, Mono-Eyebrows („01 · DIE PLATTFORM") wie im Brand Book.
+- **`AppNav`**: Cream-Bg, dünner ruled Border-Bottom, Logo links, Links in Ink/Smoke.
+- **Auth, Onboarding, Discover, Matches, Profile, Chat**: shadcn-Komponenten erben automatisch über die Tokens. Manuell harte Farbklassen (`text-white`, explizite Hex) ersetzen. Cards bekommen `--paper`-Surface, dünne ruled Borders, etwas größere Radii (16–20px).
+- **Buttons**: Primary = Ember auf Cream → Hover = Ember Deep. Sekundär = Ink-Outline.
 
-1. Lovable Cloud aktivieren, Schema + RLS + Trigger anlegen
-2. Auth-Seite + Provider + Guards
-3. Landing Page bauen
-4. Onboarding-Flow
-5. Discover-Stack + Swipe-Logik
-6. Matches-Liste + Realtime-Chat
-7. Profil-Seite + Avatar-Upload
-8. Polish, leere Zustände, Fehler-Handling
+### 5. Was unangetastet bleibt
+- Routing, Supabase-Schema, Auth-Flow (Email + Google + Apple), Matching-Logik, Realtime-Chat.
+- shadcn-Komponenten-API — nur Tokens ändern sich.
+- Keine neuen Pakete (Fonts via Google CDN).
 
-## Bewusst NICHT in V1
+## Reihenfolge
+1. `styles.css` Tokens + Font-Imports
+2. `Logo.tsx` Komponente + Favicon
+3. `__root.tsx` Head (Fonts, Favicon)
+4. `AppNav` + Landing umstylen
+5. Restliche Routen auf Token-Konsistenz prüfen
+6. Visuell QA auf `/`, `/auth`, `/discover`
 
-- Admin-Dashboard, Reporting/Moderation-Tools
-- E-Mail-Benachrichtigungen bei neuen Matches (kann später via Edge Function + Resend)
-- Erweiterte Matching-Algorithmen / Scoring
-- Mobile Apps
-
-Sag Bescheid, wenn etwas raus oder rein soll, sonst starte ich mit Schritt 1.
+Sag Bescheid, wenn ich loslegen soll — oder ob du an einzelnen Punkten (z. B. zusätzlich Dark-Variante, andere Akzent-Dosierung) nachjustieren willst.
