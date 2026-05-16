@@ -40,6 +40,7 @@ type Profile = {
   display_name: string | null;
   photo_url: string | null;
   location: string | null;
+  path: string | null;
   role: string | null;
   industry: string | null;
   stage: string | null;
@@ -53,6 +54,33 @@ type Profile = {
 const roleLabel: Record<string, string> = { tech: "Tech", business: "Business", product: "Product", design: "Design", other: "Andere" };
 const stageLabel: Record<string, string> = { idea: "Idee", mvp: "MVP", revenue: "Umsatz", scaling: "Skalierung" };
 const commitLabel: Record<string, string> = { full_time: "Vollzeit", part_time: "Teilzeit", exploring: "Sondiert" };
+
+type FilterValue = string;
+const PATH_OPTIONS: { value: FilterValue; label: string }[] = [
+  { value: "all", label: "Alle" },
+  { value: "founder", label: "Founder" },
+  { value: "joiner", label: "Joiner" },
+];
+const ROLE_OPTIONS: { value: FilterValue; label: string }[] = [
+  { value: "all", label: "Alle Rollen" },
+  { value: "tech", label: "Tech" },
+  { value: "business", label: "Business" },
+  { value: "product", label: "Product" },
+  { value: "design", label: "Design" },
+];
+const STAGE_OPTIONS: { value: FilterValue; label: string }[] = [
+  { value: "all", label: "Jede Stage" },
+  { value: "idea", label: "Idee" },
+  { value: "mvp", label: "MVP" },
+  { value: "revenue", label: "Umsatz" },
+  { value: "scaling", label: "Skalierung" },
+];
+const COMMIT_OPTIONS: { value: FilterValue; label: string }[] = [
+  { value: "all", label: "Beliebig" },
+  { value: "full_time", label: "Vollzeit" },
+  { value: "part_time", label: "Teilzeit" },
+  { value: "exploring", label: "Sondiert" },
+];
 
 function Discover() {
   const { user } = useAuth();
