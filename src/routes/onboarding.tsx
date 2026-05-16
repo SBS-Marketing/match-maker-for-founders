@@ -200,8 +200,8 @@ function Onboarding() {
                   color: active
                     ? "var(--cream)"
                     : done
-                      ? "rgba(255,255,255,0.6)"
-                      : "rgba(255,255,255,0.3)",
+                      ? "rgba(255,255,255,0.75)"
+                      : "rgba(255,255,255,0.6)",
                 }}
               >
                 <span
@@ -210,9 +210,9 @@ function Onboarding() {
                     background: active
                       ? "var(--ember)"
                       : done
-                        ? "rgba(255,255,255,0.15)"
-                        : "rgba(255,255,255,0.06)",
-                    border: `1px solid ${active ? "rgba(255,200,170,0.5)" : "rgba(255,255,255,0.12)"}`,
+                        ? "rgba(255,255,255,0.25)"
+                        : "rgba(255,255,255,0.15)",
+                    border: `1px solid ${active ? "rgba(255,200,170,0.5)" : "rgba(255,255,255,0.3)"}`,
                     color: "var(--cream)",
                   }}
                 >
