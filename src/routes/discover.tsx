@@ -137,17 +137,33 @@ function Discover() {
     load();
   }, [load]);
 
-  const swipe = async (direction: "like" | "pass") => {
-    if (!user || filtered.length === 0) return;
-    const target = filtered[0];
-    setQueue((q) => q.filter((x) => x.id !== target.id));
-    const { error } = await supabase.from("swipes").insert({ swiper_id: user.id, target_id: target.id, direction });
+  const swipe = async (targetId: string, direction: "like" | "pass") => {
+    if (!user) return;
+    setQueue((q) => q.filter((x) => x.id !== targetId));
+    const { error } = await supabase.from("swipes").insert({ swiper_id: user.id, target_id: targetId, direction });
     if (error) return toast.error(error.message);
     if (direction === "like") {
-      const ua = user.id < target.id ? user.id : target.id;
-      const ub = user.id < target.id ? target.id : user.id;
+      const ua = user.id < targetId ? user.id : targetId;
+      const ub = user.id < targetId ? targetId : user.id;
       const { data: m } = await supabase.from("matches").select("id").eq("user_a", ua).eq("user_b", ub).maybeSingle();
       if (m) toast.success("Es ist ein Match! 🎉");
+      else toast.success("Like gesendet");
+    }
+  };
+
+  const message = async (targetId: string) => {
+    if (!user) return;
+    // Sending a like; if reciprocal -> match created, navigate to chat
+    const { error } = await supabase.from("swipes").insert({ swiper_id: user.id, target_id: targetId, direction: "like" });
+    if (error && !error.message.includes("duplicate")) return toast.error(error.message);
+    setQueue((q) => q.filter((x) => x.id !== targetId));
+    const ua = user.id < targetId ? user.id : targetId;
+    const ub = user.id < targetId ? targetId : user.id;
+    const { data: m } = await supabase.from("matches").select("id").eq("user_a", ua).eq("user_b", ub).maybeSingle();
+    if (m) {
+      navigate({ to: "/matches/$id", params: { id: m.id } });
+    } else {
+      toast.info("Like gesendet. Du kannst schreiben, sobald es ein Match ist.");
     }
   };
 
