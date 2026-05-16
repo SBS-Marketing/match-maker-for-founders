@@ -29,35 +29,75 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Inter", "Segoe UI", sans-serif;
+  --font-sans: "Geist", -apple-system, system-ui, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+  --font-serif: "Instrument Serif", Georgia, serif;
 }
 
 :root {
-  --radius: 0.5rem;
-  /* Dark by default — Linear/Vercel-inspired */
-  --background: oklch(0.16 0.01 270);
-  --foreground: oklch(0.97 0.005 270);
-  --card: oklch(0.20 0.012 270);
-  --card-foreground: oklch(0.97 0.005 270);
-  --popover: oklch(0.20 0.012 270);
-  --popover-foreground: oklch(0.97 0.005 270);
-  --primary: oklch(0.78 0.16 150);
-  --primary-foreground: oklch(0.16 0.02 150);
-  --secondary: oklch(0.24 0.012 270);
-  --secondary-foreground: oklch(0.97 0.005 270);
-  --muted: oklch(0.24 0.012 270);
-  --muted-foreground: oklch(0.68 0.015 270);
-  --accent: oklch(0.26 0.015 270);
-  --accent-foreground: oklch(0.97 0.005 270);
-  --destructive: oklch(0.62 0.22 25);
-  --destructive-foreground: oklch(0.98 0.01 25);
-  --border: oklch(0.28 0.012 270);
-  --input: oklch(0.26 0.012 270);
-  --ring: oklch(0.78 0.16 150);
+  --radius: 0.875rem;
+
+  /* Brand Book palette (matchfoundr v1.0) */
+  --ink: #15140f;
+  --ink-soft: #2A251F;
+  --smoke: #6B635A;
+  --ember: #E2511C;
+  --ember-deep: #B23B0E;
+  --ember-light: #F0843A;
+  --ember-tint: #FCE4D5;
+  --cream: #FBFAF7;
+  --paper: #F3EFE6;
+  --ruled: rgba(21, 20, 15, 0.10);
+
+  /* Semantic tokens */
+  --background: var(--cream);
+  --foreground: var(--ink);
+  --card: var(--cream);
+  --card-foreground: var(--ink);
+  --popover: var(--cream);
+  --popover-foreground: var(--ink);
+  --primary: var(--ember);
+  --primary-foreground: var(--cream);
+  --secondary: var(--paper);
+  --secondary-foreground: var(--ink);
+  --muted: var(--paper);
+  --muted-foreground: var(--smoke);
+  --accent: var(--ember-tint);
+  --accent-foreground: var(--ember-deep);
+  --destructive: #B23B0E;
+  --destructive-foreground: var(--cream);
+  --border: var(--ruled);
+  --input: var(--ruled);
+  --ring: var(--ember);
 }
 
 @layer base {
   * { border-color: var(--color-border); }
-  html, body { background-color: var(--color-background); color: var(--color-foreground); }
-  body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+  html, body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+  ::selection { background: var(--ember); color: var(--cream); }
+  h1, h2, h3, h4 {
+    letter-spacing: -0.035em;
+    font-weight: 600;
+  }
+}
+
+@layer utilities {
+  .font-serif { font-family: var(--font-serif); }
+  .font-mono { font-family: var(--font-mono); }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--smoke);
+  }
 }

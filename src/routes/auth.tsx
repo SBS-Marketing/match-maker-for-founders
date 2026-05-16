@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { Lockup } from "@/components/Logo";
 
 export const Route = createFileRoute("/auth")({ component: AuthPage });
 
@@ -70,16 +71,19 @@ function AuthPage() {
   };
 
   return (
-    <div className="mx-auto flex max-w-md flex-col gap-6 px-4 py-16">
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {mode === "signup" ? "Founder-Profil erstellen" : "Willkommen zurück"}
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {mode === "signup"
-            ? "Beginne mit deinem matchfoundr-Konto."
-            : "Melde dich an, um weiterzumachen."}
-        </p>
+    <div className="mx-auto flex max-w-md flex-col gap-8 px-4 py-20">
+      <div className="flex flex-col items-center gap-6 text-center">
+        <Lockup layout="stacked" size={28} />
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {mode === "signup" ? "Founder-Profil erstellen" : "Willkommen zurück"}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {mode === "signup"
+              ? "Beginne mit deinem matchfoundr-Konto."
+              : "Melde dich an, um weiterzumachen."}
+          </p>
+        </div>
       </div>
 
       <Card className="p-6">
