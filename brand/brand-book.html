@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>matchfoundr · Brand Book v1.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #FBFAF7; font-family: "Geist", -apple-system, system-ui, sans-serif; color: #15140f; -webkit-font-smoothing: antialiased; }
+  ::selection { background: #E2511C; color: #FBFAF7; }
+  html { scroll-behavior: smooth; }
+  .side-nav {
+    position: fixed; top: 50%; left: 24px; transform: translateY(-50%);
+    z-index: 100; display: flex; flex-direction: column; gap: 4px;
+    padding: 14px 10px; border-radius: 999px;
+    background: rgba(251,250,247,0.85); backdrop-filter: blur(12px);
+    border: 1px solid rgba(21,20,15,0.08);
+    box-shadow: 0 8px 28px rgba(21,20,15,0.06);
+  }
+  .side-nav a {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    text-decoration: none;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10px; font-weight: 500; letter-spacing: 0.05em;
+    color: #6B635A; transition: background 0.15s, color 0.15s;
+  }
+  .side-nav a:hover { background: rgba(21,20,15,0.06); color: #15140f; }
+  .side-nav a.active { background: #E2511C; color: #FBFAF7; }
+  @media (max-width: 900px) { .side-nav { display: none; } }
+</style>
+</head>
+<body>
+
+<nav class="side-nav" id="side-nav">
+  <a href="#cover">00</a>
+  <a href="#mark">01</a>
+  <a href="#lockups">02</a>
+  <a href="#color">03</a>
+  <a href="#type">04</a>
+  <a href="#voice">05</a>
+  <a href="#applications">06</a>
+  <a href="#donts">07</a>
+</nav>
+
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+
+<script type="text/babel">
+const M = {
+  ink:         '#15140f',
+  inkSoft:     '#2A251F',
+  smoke:       '#6B635A',
+  ember:       '#E2511C',
+  emberDeep:   '#B23B0E',
+  emberLight:  '#F0843A',
+  emberTint:   '#FCE4D5',
+  cream:       '#FBFAF7',
+  paper:       '#F3EFE6',
+  ruled:       'rgba(21,20,15,0.10)',
+  fontSans:    '"Geist", -apple-system, system-ui, sans-serif',
+  fontMono:    '"Geist Mono", ui-monospace, monospace',
+  fontSerif:   '"Instrument Serif", Georgia, serif',
+};
+
+function IconMF({ size = 100, color, spark, showSpark = true, block = true }) {
+  const c = color || M.ink;
+  const sp = spark || M.ember;
+  const h = size;
+  const w = typeof size === 'number' ? size * 1.4 : size;
+  return (
+    <svg width={w} height={h} viewBox="0 0 140 100" fill="none"
+         style={block ? { display: 'block', aspectRatio: '1.4 / 1' } : { aspectRatio: '1.4 / 1' }}>
+      <path d="M8 14 L62 50 L8 86" stroke={c} strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      <path d="M132 14 L78 50 L132 86" stroke={sp} strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      {showSpark && <circle cx="70" cy="50" r="6" fill={c}/>}
+    </svg>
+  );
+}
+
+function Wordmark({ size = 44, color, dot, showDot = true, includeDomain = false }) {
+  const c = color || M.ink;
+  const d = dot || M.ember;
+  return (
+    <span style={{ fontFamily: M.fontSans, fontWeight: 700, fontSize: size, letterSpacing: '-0.035em', color: c, lineHeight: 1, whiteSpace: 'nowrap' }}>
+      matchfoundr{showDot && <span style={{ color: d }}>.</span>}
+      {includeDomain && <span style={{ color: c, opacity: 0.4, fontWeight: 500 }}>com</span>}
+    </span>
+  );
+}
+
+function Lockup({ layout = 'horizontal', size = 32, color, spark, gap }) {
+  const c = color || M.ink;
+  const sp = spark || M.ember;
+  const wordSize = size * 1.05;
+  if (layout === 'stacked') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: gap ?? size * 0.4 }}>
+        <IconMF size={size * 1.4} color={c} spark={sp} />
+        <Wordmark size={wordSize} color={c} dot={sp} />
+      </div>
+    );
+  }
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: gap ?? size * 0.45 }}>
+      <IconMF size={size} color={c} spark={sp} />
+      <Wordmark size={wordSize} color={c} dot={sp} />
+    </div>
+  );
+}
+
+function AppIcon({ size = 96, radius, bg, fg, spark, shadow = true }) {
+  const r = radius ?? size * 0.225;
+  const b = bg || M.ember;
+  const f = fg || M.cream;
+  const sp = spark || f;
+  return (
+    <div style={{ width: size, height: size, borderRadius: r, background: b, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: shadow ? `0 ${size*0.04}px ${size*0.18}px rgba(178,59,14,0.28), inset 0 1px 0 rgba(255,255,255,0.15)` : 'none' }}>
+      <IconMF size={size * 0.5} color={f} spark={sp} />
+    </div>
+  );
+}
+
+const sectionPad = { padding: '120px clamp(40px, 7vw, 120px)' };
+
+function SectionShell({ id, num, label, title, kicker, dark = false, accent = false, children, style }) {
+  const bg = accent ? M.ember : (dark ? M.ink : M.cream);
+  const fg = (dark || accent) ? M.cream : M.ink;
+  const muted = (dark || accent) ? 'rgba(255,255,255,0.55)' : M.smoke;
+  return (
+    <section id={id} style={{ background: bg, color: fg, ...sectionPad, borderTop: dark || accent ? 'none' : `1px solid ${M.ruled}`, ...style }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+        <header style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 32, alignItems: 'baseline', marginBottom: 80 }}>
+          <div style={{ fontFamily: M.fontMono, fontSize: 13, fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase', color: muted }}>{num}</div>
+          <div>
+            {label && <div style={{ fontFamily: M.fontMono, fontSize: 12, fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase', color: muted, marginBottom: 24 }}>{label}</div>}
+            <h2 style={{ fontFamily: M.fontSans, fontWeight: 600, fontSize: 'clamp(40px, 5.5vw, 72px)', letterSpacing: '-0.035em', lineHeight: 1.02, margin: 0, color: fg, textWrap: 'balance' }}>{title}</h2>
+            {kicker && <p style={{ fontFamily: M.fontSerif, fontStyle: 'italic', fontSize: 'clamp(22px, 2vw, 28px)', lineHeight: 1.4, color: muted, marginTop: 28, marginBottom: 0, maxWidth: 720, textWrap: 'pretty' }}>{kicker}</p>}
+          </div>
+        </header>
+        <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 32 }}>
+          <div></div>
+          <div>{children}</div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SectionCover() {
+  return (
+    <section id="cover" style={{ background: M.cream, color: M.ink, minHeight: '100vh', ...sectionPad, display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: M.fontMono, fontSize: 12, letterSpacing: '0.18em', textTransform: 'uppercase', color: M.smoke }}>
+        <span>matchfoundr.com</span>
+        <span>Brand Book · v1.0 · May 2026</span>
+      </div>
+      <div style={{ flex: 1, maxWidth: 1280, margin: '0 auto', width: '100%', display: 'grid', alignItems: 'center', paddingTop: 80, paddingBottom: 80 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 48, flexWrap: 'wrap' }}>
+          <IconMF size={220} />
+          <div style={{ fontFamily: M.fontSans, fontWeight: 700, fontSize: 'clamp(72px, 11vw, 168px)', letterSpacing: '-0.045em', lineHeight: 0.92 }}>
+            matchfoundr<span style={{ color: M.ember }}>.</span>
+          </div>
+        </div>
+      </div>
+      <div style={{ maxWidth: 1280, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr auto', gap: 60, alignItems: 'end', paddingBottom: 24 }}>
+        <p style={{ fontFamily: M.fontSerif, fontStyle: 'italic', fontSize: 'clamp(32px, 3.6vw, 52px)', lineHeight: 1.15, margin: 0, color: M.ink, maxWidth: 820, textWrap: 'balance' }}>
+          Find the founder<br/>you'll build with.
+        </p>
+        <div style={{ fontFamily: M.fontMono, fontSize: 12, fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase', color: M.smoke, textAlign: 'right' }}>
+          The brand system<br/>for a co-founder<br/>matching platform
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ConstructionGrid() {
+  const unit = 22, cols = 14, rows = 10;
+  return (
+    <svg width={cols * unit} height={rows * unit} viewBox={`0 0 ${cols * unit} ${rows * unit}`}>
+      {Array.from({ length: cols + 1 }, (_, i) => <line key={`v${i}`} x1={i*unit} y1={0} x2={i*unit} y2={rows*unit} stroke={M.ruled} strokeWidth={1}/>)}
+      {Array.from({ length: rows + 1 }, (_, i) => <line key={`h${i}`} x1={0} y1={i*unit} x2={cols*unit} y2={i*unit} stroke={M.ruled} strokeWidth={1}/>)}
+      <g transform={`scale(${unit/10})`}>
+        <path d="M8 14 L62 50 L8 86" stroke={M.ink} strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M132 14 L78 50 L132 86" stroke={M.ember} strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <circle cx="70" cy="50" r="6" fill={M.ink}/>
+      </g>
+    </svg>
+  );
+}
+
+function ClearSpaceDiagram() {
+  const sc = 2;
+  return (
+    <svg width={180*sc} height={140*sc} viewBox="0 0 180 140">
+      <rect x="0" y="0" width="180" height="140" fill="none" stroke={M.ember} strokeWidth="1" strokeDasharray="4 4"/>
+      {[[0,0],[160,0],[0,120],[160,120]].map(([x,y],i) => (
+        <g key={i} stroke={M.ember} strokeWidth="1.5" fill="none">
+          <line x1={x} y1={y+10} x2={x} y2={y}/><line x1={x} y1={y} x2={x+10} y2={y}/>
+        </g>
+      ))}
+      <g transform="translate(20,20)">
+        <path d="M8 14 L62 50 L8 86" stroke={M.ink} strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <path d="M132 14 L78 50 L132 86" stroke={M.ember} strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+        <circle cx="70" cy="50" r="6" fill={M.ink}/>
+      </g>
+      <text x="10" y="135" fontFamily={M.fontMono} fontSize="7" fill={M.smoke} textAnchor="middle">x</text>
+      <text x="170" y="135" fontFamily={M.fontMono} fontSize="7" fill={M.smoke} textAnchor="middle">x</text>
+      <text x="90" y="14" fontFamily={M.fontMono} fontSize="7" fill={M.smoke} textAnchor="middle">x</text>
+      <text x="90" y="135" fontFamily={M.fontMono} fontSize="7" fill={M.smoke} textAnchor="middle">x</text>
+    </svg>
+  );
+}
+
+function SectionMark() {
+  return (
+    <SectionShell id="mark" num="01" label="The mark" title="Two paths. One point." kicker="A founder's path and another founder's path, converging on a single point. The dot at the center is the moment the match is made — quiet, exact, unmissable.">
+      <div style={{ background: M.paper, borderRadius: 24, padding: '100px 60px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 80, position: 'relative' }}>
+        <IconMF size={240} />
+        <div style={{ position: 'absolute', top: 24, left: 24, fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: M.smoke }}>The mark · 1:1.4 ratio</div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32, marginBottom: 80 }}>
+        {[
+          { n: '01', t: 'Your path', d: 'The ink chevron, pointing inward from the left. Bold, anchored, certain — the founder you already are.' },
+          { n: '02', t: 'Their path', d: "The ember chevron, pointing inward from the right. The path of the partner you haven't met yet, drawn with energy." },
+          { n: '03', t: 'The meeting point', d: 'A single ink dot where the two paths converge. Five percent of the mark, one hundred percent of the meaning.' },
+        ].map(({ n, t, d }) => (
+          <div key={n} style={{ borderTop: `1px solid ${M.ruled}`, paddingTop: 20 }}>
+            <div style={{ fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: M.smoke, marginBottom: 12 }}>{n}</div>
+            <h3 style={{ fontFamily: M.fontSans, fontWeight: 600, fontSize: 22, letterSpacing: '-0.02em', margin: '0 0 10px' }}>{t}</h3>
+            <p style={{ fontFamily: M.fontSans, fontSize: 15, lineHeight: 1.55, color: M.smoke, margin: 0 }}>{d}</p>
+          </div>
+        ))}
+      </div>
+      <div style={{ background: M.cream, border: `1px solid ${M.ruled}`, borderRadius: 24, padding: 60, marginBottom: 40 }}>
+        <div style={{ fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: M.smoke, marginBottom: 32 }}>Construction · 14 × 10 unit grid</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ConstructionGrid /></div>
+      </div>
+      <div style={{ background: M.cream, border: `1px solid ${M.ruled}`, borderRadius: 24, padding: 60 }}>
+        <div style={{ fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: M.smoke, marginBottom: 32 }}>Clear space · one stroke (x) on every side</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ClearSpaceDiagram /></div>
+      </div>
+    </SectionShell>
+  );
+}
+
+function SectionLockups() {
+  const card = (label, bg, fg, children) => (
+    <div style={{ background: bg, color: fg, borderRadius: 20, padding: '60px 48px', minHeight: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', border: bg === M.cream || bg === M.paper ? `1px solid ${M.ruled}` : 'none' }}>
+      <div style={{ position: 'absolute', top: 16, left: 20, fontFamily: M.fontMono, fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', opacity: 0.55 }}>{label}</div>
+      {children}
+    </div>
+  );
+  return (
+    <SectionShell id="lockups" num="02" label="Lockups" title="Four ways to wear the mark." kicker="Primary horizontal is the default. Use the icon alone only where the wordmark already lives nearby — app icons, avatars, tab favicons.">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+        {card('Primary · horizontal', M.cream, M.ink, <Lockup layout="horizontal" size={56} />)}
+        {card('Stacked · centered', M.cream, M.ink, <Lockup layout="stacked" size={56} />)}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20, marginBottom: 20 }}>
+        {card('Wordmark only', M.cream, M.ink, <Wordmark size={72} />)}
+        {card('Icon only', M.cream, M.ink, <IconMF size={100} />)}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
+        {card('On ink', M.ink, M.cream, <Lockup layout="horizontal" size={44} color={M.cream} spark={M.ember} />)}
+        {card('On ember', M.ember, M.cream, <Lockup layout="horizontal" size={44} color={M.cream} spark={M.ink} />)}
+        {card('Monochrome', M.cream, M.ink, <Lockup layout="horizontal" size={44} color={M.ink} spark={M.ink} />)}
+      </div>
+      <div style={{ marginTop: 60 }}>
+        <div style={{ fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: M.smoke, marginBottom: 20 }}>Minimum sizes</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+          {[
+            { l: 'Icon · screen', m: '16px', n: 'Favicon, tiny UI' },
+            { l: 'Icon · print', m: '8mm', n: 'Business card, footer' },
+            { l: 'Lockup · screen', m: '120px wide', n: 'Below this, use stacked or icon alone' },
+          ].map(({ l, m, n }) => (
+            <div key={l} style={{ borderTop: `1px solid ${M.ruled}`, paddingTop: 16 }}>
+              <div style={{ fontFamily: M.fontSans, fontWeight: 600, fontSize: 15, marginBottom: 6 }}>{l}</div>
+              <div style={{ fontFamily: M.fontMono, fontSize: 22, color: M.ember, marginBottom: 8 }}>{m}</div>
+              <div style={{ fontFamily: M.fontSans, fontSize: 13, color: M.smoke }}>{n}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </SectionShell>
+  );
+}
+
+function SectionColor() {
+  const Swatch = ({ name, hex, rgb, role, big }) => (
+    <div>
+      <div style={{ background: hex, borderRadius: 16, aspectRatio: big ? '16/10' : '1', border: hex === M.cream || hex === M.paper ? `1px solid ${M.ruled}` : 'none', marginBottom: 16 }}/>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
+        <div style={{ fontFamily: M.fontSans, fontWeight: 600, fontSize: 17, color: M.ink }}>{name}</div>
+        <div style={{ fontFamily: M.fontMono, fontSize: 11, color: M.smoke, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{hex}</div>
+      </div>
+      <div style={{ fontFamily: M.fontMono, fontSize: 11, color: M.smoke, marginBottom: 10 }}>{rgb}</div>
+      <div style={{ fontFamily: M.fontSans, fontSize: 13, color: M.smoke, lineHeight: 1.5 }}>{role}</div>
+    </div>
+  );
+  return (
+    <SectionShell id="color" num="03" label="Color" title="Ember on ink. Cream as the room." kicker="One accent, used like seasoning. If the page looks orange, it's wrong — the ember should be the first thing the eye finds, not the loudest thing in the photo.">
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 24, marginBottom: 60 }}>
+        <Swatch name="Ember 500" hex={M.ember} rgb="rgb(226 81 28)" role="Primary accent. CTAs, the strike dot, key highlights. Cap at ~10% of any surface." big />
+        <Swatch name="Ink" hex={M.ink} rgb="rgb(21 20 15)" role="Primary type. Dark surfaces." />
+        <Swatch name="Cream" hex={M.cream} rgb="rgb(251 250 247)" role="Default surface. Warm white, never pure #FFF." />
+      </div>
+      <div style={{ fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: M.smoke, marginBottom: 20 }}>Ember tonal range</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 60 }}>
+        {[
+          { n: '100', h: M.emberTint, r: 'Tinted backgrounds, hover states on cream' },
+          { n: '300', h: M.emberLight, r: 'Hover, secondary CTAs, highlights' },
+          { n: '500', h: M.ember, r: 'Primary — the spark color' },
+          { n: '700', h: M.emberDeep, r: 'Pressed states, deep accents' },
+        ].map(({ n, h, r }) => (
+          <div key={n}>
+            <div style={{ background: h, borderRadius: 12, height: 80, marginBottom: 12 }}/>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontFamily: M.fontSans, fontWeight: 600, fontSize: 14 }}>Ember {n}</span>
+              <span style={{ fontFamily: M.fontMono, fontSize: 11, color: M.smoke }}>{h.toUpperCase()}</span>
+            </div>
+            <div style={{ fontFamily: M.fontSans, fontSize: 12, color: M.smoke, lineHeight: 1.5 }}>{r}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: M.smoke, marginBottom: 20 }}>Neutrals</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 60 }}>
+        {[
+          { n: 'Ink', h: M.ink, r: 'Primary type, dark surface' },
+          { n: 'Ink Soft', h: M.inkSoft, r: 'Alt dark surface, deep cards' },
+          { n: 'Smoke', h: M.smoke, r: 'Body text, secondary type' },
+          { n: 'Paper', h: M.paper, r: 'Secondary surface, cards' },
+        ].map(({ n, h, r }) => (
+          <div key={n}>
+            <div style={{ background: h, borderRadius: 12, height: 80, marginBottom: 12, border: h === M.paper ? `1px solid ${M.ruled}` : 'none' }}/>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontFamily: M.fontSans, fontWeight: 600, fontSize: 14 }}>{n}</span>
+              <span style={{ fontFamily: M.fontMono, fontSize: 11, color: M.smoke }}>{h.toUpperCase()}</span>
+            </div>
+            <div style={{ fontFamily: M.fontSans, fontSize: 12, color: M.smoke, lineHeight: 1.5 }}>{r}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ background: M.ink, color: M.cream, borderRadius: 20, padding: 40, display: 'grid', gridTemplateColumns: '1fr auto', gap: 32, alignItems: 'center' }}>
+        <div>
+          <div style={{ fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: 14 }}>Pairing rule</div>
+          <p style={{ fontFamily: M.fontSerif, fontStyle: 'italic', fontSize: 28, lineHeight: 1.3, margin: 0, color: M.cream, maxWidth: 540 }}>Ink and cream do the talking. Ember enters when something matters — a button, a name, a number that just changed.</p>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {[M.cream, M.ink, M.ember].map((c, i) => <div key={i} style={{ width: 56, height: 56, borderRadius: 12, background: c, border: c === M.ink ? '1px solid rgba(255,255,255,0.2)' : 'none' }}/>)}
+        </div>
+      </div>
+    </SectionShell>
+  );
+}
+
+function SectionType() {
+  const Specimen = ({ size, weight, label, sample, letter }) => (
+    <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: 32, paddingTop: 28, paddingBottom: 28, borderTop: `1px solid ${M.ruled}` }}>
+      <div>
+        <div style={{ fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: M.smoke, marginBottom: 8 }}>{label}</div>
+        <div style={{ fontFamily: M.fontMono, fontSize: 13, color: M.ink }}>{size}px · {weight}</div>
+        {letter && <div style={{ fontFamily: M.fontMono, fontSize: 12, color: M.smoke, marginTop: 4 }}>tracking {letter}</div>}
+      </div>
+      <div style={{ fontFamily: M.fontSans, fontWeight: weight, fontSize: size, letterSpacing: letter || '-0.02em', lineHeight: 1.1, color: M.ink }}>{sample}</div>
+    </div>
+  );
+  return (
+    <SectionShell id="type" num="04" label="Typography" title="Geist. Everywhere. Almost." kicker="One sans for the entire system. A single italic serif (Instrument Serif) shows up only for editorial pull-quotes and the tagline — never for UI, never for body.">
+      <div style={{ background: M.paper, borderRadius: 24, padding: 60, marginBottom: 60 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 20, marginBottom: 8 }}>
+          <span style={{ fontFamily: M.fontSans, fontWeight: 800, fontSize: 'clamp(80px,14vw,200px)', letterSpacing: '-0.06em', lineHeight: 0.85, color: M.ink }}>Aa</span>
+          <span style={{ fontFamily: M.fontSans, fontWeight: 400, fontSize: 'clamp(48px,7vw,96px)', letterSpacing: '-0.04em', lineHeight: 0.95, color: M.smoke }}>Geist</span>
+        </div>
+        <div style={{ fontFamily: M.fontSans, fontSize: 'clamp(20px,2vw,28px)', color: M.ink, letterSpacing: '-0.01em', marginTop: 24, marginBottom: 4 }}>ABCDEFGHIJKLMNOPQRSTUVWXYZ</div>
+        <div style={{ fontFamily: M.fontSans, fontSize: 'clamp(20px,2vw,28px)', color: M.ink, letterSpacing: '-0.01em', marginBottom: 4 }}>abcdefghijklmnopqrstuvwxyz</div>
+        <div style={{ fontFamily: M.fontSans, fontSize: 'clamp(20px,2vw,28px)', color: M.smoke, letterSpacing: '-0.01em' }}>0123456789 .,:;!?&#@*+−⟶</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 16, marginTop: 32, paddingTop: 24, borderTop: `1px solid ${M.ruled}` }}>
+          {[400,500,600,700,800].map(w => (
+            <div key={w}>
+              <div style={{ fontFamily: M.fontSans, fontWeight: w, fontSize: 36, lineHeight: 1, color: M.ink, marginBottom: 8 }}>Foundr</div>
+              <div style={{ fontFamily: M.fontMono, fontSize: 11, color: M.smoke, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{w} · {w===400?'Regular':w===500?'Medium':w===600?'SemiBold':w===700?'Bold':'ExtraBold'}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{ fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: M.smoke, marginBottom: 8 }}>Type scale</div>
+      <Specimen size={96} weight={600} label="Display" letter="-0.04em" sample="Strike the match." />
+      <Specimen size={56} weight={600} label="Headline" letter="-0.03em" sample="Find the founder you'll build with." />
+      <Specimen size={32} weight={600} label="Title" letter="-0.02em" sample="The mark, the wordmark, and what they're for." />
+      <Specimen size={18} weight={400} label="Body" letter="-0.005em" sample="We say what we mean. No buzzwords, no fluff. Conversational, never clinical. Confident, never loud." />
+      <Specimen size={13} weight={500} label="Caption" letter="0.02em" sample="Updated weekly · Last sync 2 minutes ago" />
+      <div style={{ marginTop: 32, padding: 32, background: M.cream, border: `1px solid ${M.ruled}`, borderRadius: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
+        <div>
+          <div style={{ fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: M.smoke, marginBottom: 12 }}>The editorial exception</div>
+          <p style={{ fontFamily: M.fontSerif, fontStyle: 'italic', fontSize: 36, lineHeight: 1.2, margin: 0, color: M.ink }}>"The match before<br/>the company."</p>
+        </div>
+        <div style={{ alignSelf: 'center' }}>
+          <p style={{ fontFamily: M.fontSans, fontSize: 15, lineHeight: 1.6, color: M.smoke, margin: 0 }}>Instrument Serif italic. Reserved for the tagline, a single editorial pull-quote per long-form page, and the cover of decks. Never for buttons, body, or labels.</p>
+        </div>
+      </div>
+    </SectionShell>
+  );
+}
+
+function SectionVoice() {
+  const principles = [
+    { n: '01', t: 'Direct', d: 'Say what you mean. Cut the qualifiers. "We help you find a co-founder" beats "We aim to facilitate connections between aspiring entrepreneurs."' },
+    { n: '02', t: 'Warm', d: "You're writing to a person about something hard. Conversational, never clinical. First name, not \"user.\" Second person, not \"the founder.\"" },
+    { n: '03', t: 'Confident', d: 'We know what a good match looks like. Be specific. "Three months of weekly calls before you sign anything" — not "take your time."' },
+  ];
+  const sayDont = [
+    { say: 'Find your co-founder', dont: 'Discover entrepreneurial partnerships' },
+    { say: 'You both shipped before', dont: 'Aligned on execution-oriented vision' },
+    { say: 'Talk for an hour', dont: 'Initiate a synchronous touchpoint' },
+    { say: '14 matches this week', dont: 'Multiple high-quality opportunities surfaced' },
+  ];
+  return (
+    <SectionShell id="voice" num="05" label="Voice" title="Three principles. One tagline." kicker="Co-founder hunting is intimate, slow, and high-stakes. Write like that — not like a recruiting funnel.">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24, marginBottom: 80 }}>
+        {principles.map(({ n, t, d }) => (
+          <div key={n} style={{ background: M.paper, borderRadius: 20, padding: 32 }}>
+            <div style={{ fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: M.smoke, marginBottom: 24 }}>{n}</div>
+            <h3 style={{ fontFamily: M.fontSans, fontWeight: 600, fontSize: 36, letterSpacing: '-0.03em', margin: '0 0 16px', color: M.ink }}>{t}</h3>
+            <p style={{ fontFamily: M.fontSans, fontSize: 15, lineHeight: 1.6, color: M.smoke, margin: 0 }}>{d}</p>
+          </div>
+        ))}
+      </div>
+      <div style={{ background: M.ink, color: M.cream, borderRadius: 24, padding: 64, marginBottom: 60 }}>
+        <div style={{ fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: 24 }}>Primary tagline</div>
+        <p style={{ fontFamily: M.fontSerif, fontStyle: 'italic', fontSize: 'clamp(40px,5vw,64px)', lineHeight: 1.05, letterSpacing: '-0.01em', margin: 0, color: M.cream, maxWidth: 900 }}>
+          Find the founder you'll build with<span style={{ color: M.ember }}>.</span>
+        </p>
+        <div style={{ marginTop: 60, paddingTop: 40, borderTop: '1px solid rgba(255,255,255,0.15)', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 32 }}>
+          {[
+            { l: 'Alt · short', t: 'Strike the right match.' },
+            { l: 'Alt · descriptive', t: 'The match before the company.' },
+            { l: 'Alt · sober', t: 'Co-founder, signed.' },
+          ].map(({ l, t }) => (
+            <div key={l}>
+              <div style={{ fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>{l}</div>
+              <div style={{ fontFamily: M.fontSerif, fontStyle: 'italic', fontSize: 26, lineHeight: 1.2, color: M.cream }}>{t}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{ fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: M.smoke, marginBottom: 20 }}>Say · Don't say</div>
+      <div style={{ background: M.cream, border: `1px solid ${M.ruled}`, borderRadius: 16, overflow: 'hidden' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: M.smoke, padding: '14px 28px', borderBottom: `1px solid ${M.ruled}` }}>
+          <span>Say</span><span>Don't say</span>
+        </div>
+        {sayDont.map(({ say, dont }, i) => (
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, padding: '20px 28px', borderBottom: i < sayDont.length-1 ? `1px solid ${M.ruled}` : 'none', fontFamily: M.fontSans, fontSize: 17 }}>
+            <span style={{ color: M.ink, fontWeight: 500 }}>{say}</span>
+            <span style={{ color: M.smoke, textDecoration: 'line-through', textDecorationColor: 'rgba(0,0,0,0.25)' }}>{dont}</span>
+          </div>
+        ))}
+      </div>
+    </SectionShell>
+  );
+}
+
+const cardChrome = { background: M.cream, border: `1px solid ${M.ruled}`, borderRadius: 20, padding: 32, position: 'relative' };
+const cardLabel = { position: 'absolute', top: 20, left: 28, fontFamily: M.fontMono, fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: M.smoke };
+
+function FakeTab({ fav, title, active }) {
+  return (
+    <div style={{ background: active ? M.cream : 'rgba(0,0,0,0.04)', padding: '10px 14px', borderRadius: '10px 10px 0 0', display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, maxWidth: 240, border: active ? `1px solid ${M.ruled}` : 'none', borderBottom: 'none' }}>
+      {fav}
+      <span style={{ fontFamily: M.fontSans, fontSize: 12, color: active ? M.ink : M.smoke, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>{title}</span>
+    </div>
+  );
+}
+
+function SectionApplications() {
+  const cardW = 320, cardH = 200;
+  return (
+    <SectionShell id="applications" num="06" label="Applications" title="Where the brand actually lives." kicker="Every surface a founder will touch — phone, tab, inbox, card, web. The mark holds at all of them.">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 24, marginBottom: 24 }}>
+        {/* App icon */}
+        <div style={{ ...cardChrome, padding: 0, overflow: 'hidden' }}>
+          <div style={{ ...cardLabel, top: 20, left: 28, zIndex: 1 }}>App icon · 1024 source</div>
+          <div style={{ background: M.paper, padding: '90px 40px 60px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
+            <AppIcon size={128} radius={28} />
+            <div style={{ display: 'flex', gap: 18, alignItems: 'flex-end' }}>
+              {[[76,18],[56,13],[40,9],[28,6]].map(([s,r]) => <AppIcon key={s} size={s} radius={r} />)}
+            </div>
+          </div>
+        </div>
+        {/* Browser tab */}
+        <div style={{ ...cardChrome, padding: 0, overflow: 'hidden' }}>
+          <div style={{ ...cardLabel, top: 20, left: 28, zIndex: 1 }}>Browser tab</div>
+          <div style={{ background: M.paper, padding: '90px 40px 50px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, padding: '0 8px' }}>
+              <FakeTab fav={<IconMF size={11}/>} title="matchfoundr · find a co-founder" active />
+              <FakeTab fav={<div style={{ width: 11, height: 11, borderRadius: 2, background: '#4285F4' }}/>} title="Inbox (3) — gmail" />
+              <FakeTab fav={<div style={{ width: 11, height: 11, borderRadius: 2, background: '#1DA1F2' }}/>} title="Notifications / X" />
+            </div>
+            <div style={{ background: M.cream, borderRadius: 999, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10, border: `1px solid ${M.ruled}` }}>
+              <IconMF size={14} />
+              <span style={{ fontFamily: M.fontMono, fontSize: 13, color: M.ink }}>matchfoundr.com</span>
+              <span style={{ fontFamily: M.fontMono, fontSize: 13, color: M.smoke }}>/match/anna-w</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Business card */}
+      <div style={{ ...cardChrome, padding: 0, overflow: 'hidden', marginBottom: 24 }}>
+        <div style={{ ...cardLabel, top: 20, left: 28, zIndex: 1 }}>Business card · 85 × 55 mm</div>
+        <div style={{ background: M.paper, padding: '90px 40px 60px', display: 'flex', gap: 24, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div style={{ width: cardW, height: cardH, background: M.ember, borderRadius: 8, boxShadow: '0 18px 40px rgba(178,59,14,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <IconMF size={88} color={M.cream} spark={M.cream} />
+          </div>
+          <div style={{ width: cardW, height: cardH, background: M.cream, borderRadius: 8, padding: 24, boxShadow: '0 18px 40px rgba(21,20,15,0.10)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontFamily: M.fontSans, fontWeight: 600, fontSize: 19, color: M.ink, letterSpacing: '-0.02em' }}>Lena Hoffmann</div>
+              <div style={{ fontFamily: M.fontSans, fontSize: 13, color: M.smoke, marginTop: 2 }}>Founder, matchfoundr</div>
+              <div style={{ marginTop: 18, fontFamily: M.fontMono, fontSize: 11, color: M.ink, lineHeight: 1.8 }}>
+                <div>lena@matchfoundr.com</div><div>+49 30 1234 5678</div><div>matchfoundr.com</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Lockup size={18} />
+              <span style={{ fontFamily: M.fontMono, fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: M.smoke }}>Berlin · est. 2026</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Web header */}
+      <div style={{ ...cardChrome, padding: 0, overflow: 'hidden', marginBottom: 24 }}>
+        <div style={{ ...cardLabel, top: 20, left: 28, zIndex: 1 }}>Web header · authenticated state</div>
+        <div style={{ paddingTop: 64, background: M.cream }}>
+          <div style={{ padding: '20px 32px', borderBottom: `1px solid ${M.ruled}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 36 }}>
+              <Lockup size={24} />
+              <nav style={{ display: 'flex', gap: 28 }}>
+                {['Matches','Inbox','Profile','Settings'].map((t,i) => <a key={t} style={{ fontFamily: M.fontSans, fontSize: 14, fontWeight: 500, color: i===0?M.ink:M.smoke, textDecoration: 'none' }}>{t}</a>)}
+              </nav>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <span style={{ fontFamily: M.fontMono, fontSize: 12, color: M.smoke }}>14 new</span>
+              <div style={{ padding: '8px 16px', background: M.ember, color: M.cream, borderRadius: 8, fontFamily: M.fontSans, fontWeight: 600, fontSize: 13 }}>New match</div>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: M.inkSoft, color: M.cream, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: M.fontSans, fontWeight: 600, fontSize: 12 }}>LH</div>
+            </div>
+          </div>
+          <div style={{ padding: '60px 32px 80px', display: 'grid', gridTemplateColumns: '1fr auto', gap: 40, alignItems: 'end' }}>
+            <div>
+              <div style={{ fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: M.smoke, marginBottom: 18 }}>Today · 7 new matches</div>
+              <h1 style={{ fontFamily: M.fontSans, fontWeight: 600, fontSize: 56, letterSpacing: '-0.035em', lineHeight: 1, margin: 0, color: M.ink }}>Good morning, Lena.<br/><span style={{ color: M.smoke }}>Three look like a real fit.</span></h1>
+            </div>
+            <IconMF size={92} />
+          </div>
+        </div>
+      </div>
+      {/* Social + Email */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 24 }}>
+        <div style={{ ...cardChrome, padding: 0, overflow: 'hidden' }}>
+          <div style={{ ...cardLabel, top: 20, left: 28, zIndex: 1 }}>Avatar · social</div>
+          <div style={{ background: M.paper, padding: '90px 40px 60px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
+            <div style={{ width: 128, height: 128, borderRadius: '50%', background: M.ember, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 30px rgba(178,59,14,0.25)' }}>
+              <IconMF size={64} color={M.cream} spark={M.cream} />
+            </div>
+            <div style={{ display: 'flex', gap: 14 }}>
+              {[60,44,32].map(s => <div key={s} style={{ width: s, height: s, borderRadius: '50%', background: M.ember, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconMF size={s*0.5} color={M.cream} spark={M.cream} /></div>)}
+            </div>
+          </div>
+        </div>
+        <div style={{ ...cardChrome, padding: 0, overflow: 'hidden' }}>
+          <div style={{ ...cardLabel, top: 20, left: 28, zIndex: 1 }}>Email signature</div>
+          <div style={{ background: M.paper, padding: '76px 40px 40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ background: M.cream, padding: '24px 28px', borderLeft: `3px solid ${M.ember}`, fontFamily: M.fontSans, fontSize: 13, lineHeight: 1.6, color: M.ink, maxWidth: 460, width: '100%' }}>
+              <div style={{ fontWeight: 600, fontSize: 15 }}>Lena Hoffmann</div>
+              <div style={{ color: M.smoke }}>Founder · matchfoundr</div>
+              <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <IconMF size={20} />
+                <span style={{ fontFamily: M.fontMono, fontSize: 12 }}>matchfoundr.com</span>
+                <span style={{ color: M.smoke }}>·</span>
+                <span style={{ fontFamily: M.fontMono, fontSize: 12, color: M.smoke }}>+49 30 1234 5678</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </SectionShell>
+  );
+}
+
+function SectionDonts() {
+  const OutlinedIcon = () => <svg width="78" height="56" viewBox="0 0 140 100" fill="none"><path d="M8 14 L62 50 L8 86" stroke={M.ink} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/><path d="M132 14 L78 50 L132 86" stroke={M.ember} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/><circle cx="70" cy="50" r="5" fill="none" stroke={M.ink} strokeWidth="2"/></svg>;
+  const ShadowIcon = () => <div style={{ filter: 'drop-shadow(0 6px 8px rgba(0,0,0,0.4))' }}><IconMF size={56} /></div>;
+  const MovedSparkIcon = () => <svg width="78" height="56" viewBox="0 0 140 100" fill="none"><path d="M8 14 L62 50 L8 86" stroke={M.ink} strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" fill="none"/><path d="M132 14 L78 50 L132 86" stroke={M.ember} strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" fill="none"/><circle cx="20" cy="20" r="8" fill={M.ember}/></svg>;
+  const GradientIcon = () => <svg width="78" height="56" viewBox="0 0 140 100" fill="none"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#E2511C"/><stop offset="1" stopColor="#7B2FE0"/></linearGradient></defs><path d="M8 14 L62 50 L8 86" stroke="url(#bg)" strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" fill="none"/><path d="M132 14 L78 50 L132 86" stroke="url(#bg)" strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" fill="none"/><circle cx="70" cy="50" r="6" fill="url(#bg)"/></svg>;
+  const FencedIcon = () => <div style={{ padding: 8, border: `2px solid ${M.ember}`, borderRadius: 12 }}><IconMF size={44} /></div>;
+
+  const donts = [
+    { t: "Don't recolor",        icon: <IconMF size={56} color="#3B82F6" spark="#22C55E" /> },
+    { t: "Don't outline",        icon: <OutlinedIcon /> },
+    { t: "Don't add effects",    icon: <ShadowIcon /> },
+    { t: "Don't rotate",         icon: <div style={{ transform: 'rotate(15deg)' }}><IconMF size={56} /></div> },
+    { t: "Don't squash",         icon: <div style={{ transform: 'scaleX(1.6)' }}><IconMF size={56} /></div> },
+    { t: "Don't move the spark", icon: <MovedSparkIcon /> },
+    { t: "Don't add gradient",   icon: <GradientIcon /> },
+    { t: "Don't fence the mark", icon: <FencedIcon /> },
+  ];
+  return (
+    <SectionShell id="donts" num="07" label="Misuse" title="Eight ways to break the mark." kicker="Hold the line. Every one of these has been tried; every one of these dilutes the system.">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }}>
+        {donts.map(({ t, icon }, i) => (
+          <div key={i} style={{ background: M.paper, borderRadius: 16, padding: 24, aspectRatio: '1', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+              {icon}
+              <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} viewBox="0 0 100 100" preserveAspectRatio="none">
+                <line x1="10" y1="90" x2="90" y2="10" stroke={M.ember} strokeWidth="0.8" opacity="0.9"/>
+              </svg>
+            </div>
+            <div style={{ fontFamily: M.fontSans, fontSize: 13, fontWeight: 500, color: M.smoke, textAlign: 'center', marginTop: 12 }}>{t}</div>
+          </div>
+        ))}
+      </div>
+    </SectionShell>
+  );
+}
+
+function SectionColophon() {
+  const FooterCol = ({ title, items }) => (
+    <div>
+      <div style={{ fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: 20 }}>{title}</div>
+      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 10 }}>
+        {items.map(i => <li key={i} style={{ fontFamily: M.fontSans, fontSize: 15, color: M.cream }}>{i}</li>)}
+      </ul>
+    </div>
+  );
+  return (
+    <section style={{ background: M.ink, color: M.cream, padding: '120px clamp(40px,7vw,120px) 60px' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr', gap: 48, paddingBottom: 80, borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
+          <div>
+            <Lockup size={32} color={M.cream} spark={M.ember} />
+            <p style={{ fontFamily: M.fontSerif, fontStyle: 'italic', fontSize: 22, lineHeight: 1.35, marginTop: 32, marginBottom: 0, color: 'rgba(255,255,255,0.75)', maxWidth: 360 }}>
+              Find the founder you'll build with<span style={{ color: M.ember }}>.</span>
+            </p>
+          </div>
+          <FooterCol title="Brand" items={['Mark','Lockups','Color','Type']} />
+          <FooterCol title="Voice" items={['Tagline','Principles',"Say / don't say"]} />
+          <FooterCol title="Assets" items={['SVG icon','Wordmark','App icon (PNG)','Color tokens']} />
+        </div>
+        <div style={{ marginTop: 40, display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: M.fontMono, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}>
+          <span>Brand Book · v1.0 · May 2026</span>
+          <span>matchfoundr.com · Berlin</span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function App() {
+  return (
+    <>
+      <SectionCover />
+      <SectionMark />
+      <SectionLockups />
+      <SectionColor />
+      <SectionType />
+      <SectionVoice />
+      <SectionApplications />
+      <SectionDonts />
+      <SectionColophon />
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+const navLinks = document.querySelectorAll('#side-nav a');
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+    }
+  });
+}, { rootMargin: '-40% 0px -55% 0px', threshold: 0 });
+setTimeout(() => { document.querySelectorAll('section[id]').forEach(s => obs.observe(s)); }, 200);
+</script>
+</body>
+</html>
