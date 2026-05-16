@@ -137,13 +137,12 @@ function Discover() {
   }, [load]);
 
   const swipe = async (direction: "like" | "pass") => {
-    if (!user || queue.length === 0) return;
-    const target = queue[0];
-    setQueue((q) => q.slice(1));
+    if (!user || filtered.length === 0) return;
+    const target = filtered[0];
+    setQueue((q) => q.filter((x) => x.id !== target.id));
     const { error } = await supabase.from("swipes").insert({ swiper_id: user.id, target_id: target.id, direction });
     if (error) return toast.error(error.message);
     if (direction === "like") {
-      // check if match created
       const ua = user.id < target.id ? user.id : target.id;
       const ub = user.id < target.id ? target.id : user.id;
       const { data: m } = await supabase.from("matches").select("id").eq("user_a", ua).eq("user_b", ub).maybeSingle();
