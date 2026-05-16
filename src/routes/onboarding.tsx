@@ -162,31 +162,6 @@ function Onboarding() {
 
   return (
     <div className="min-h-[calc(100vh-56px)] px-6 py-8 md:px-10">
-      {/* Top bar */}
-      <div
-        className="glass-pill mx-auto flex max-w-5xl items-center gap-4 px-5 py-2.5"
-        style={{
-          background: "rgba(21,20,15,0.45)",
-          border: "1px solid rgba(255,255,255,0.10)",
-          color: "var(--cream)",
-        }}
-      >
-        <span className="font-semibold tracking-tight">
-          matchfoundr<span style={{ color: "var(--ember)" }}>.</span>
-        </span>
-        <span className="flex-1" />
-        <span className="eyebrow" style={{ color: "rgba(255,255,255,0.6)" }}>
-          Setup · Schritt {step + 1} von {STEPS.length}
-        </span>
-        <button
-          className="text-sm"
-          style={{ color: "rgba(255,255,255,0.6)" }}
-          onClick={() => navigate({ to: "/" })}
-        >
-          Speichern & raus
-        </button>
-      </div>
-
       {/* Progress dots */}
       <div
         className="glass-pane-ink mx-auto mt-6 flex max-w-5xl flex-wrap items-center justify-center gap-x-2 gap-y-2 px-3 py-3 shadow-2xl"
