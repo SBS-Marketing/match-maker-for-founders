@@ -14,16 +14,174 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      matches: {
+        Row: {
+          created_at: string
+          id: string
+          user_a: string
+          user_b: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_a: string
+          user_b: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_a?: string
+          user_b?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          match_id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          match_id: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          match_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          commitment: Database["public"]["Enums"]["founder_commitment"] | null
+          created_at: string
+          display_name: string | null
+          id: string
+          industry: string | null
+          location: string | null
+          looking_for: string | null
+          onboarded_at: string | null
+          photo_url: string | null
+          role: Database["public"]["Enums"]["founder_role"] | null
+          skills: string[] | null
+          stage: Database["public"]["Enums"]["founder_stage"] | null
+          updated_at: string
+          vision: string | null
+        }
+        Insert: {
+          commitment?: Database["public"]["Enums"]["founder_commitment"] | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          industry?: string | null
+          location?: string | null
+          looking_for?: string | null
+          onboarded_at?: string | null
+          photo_url?: string | null
+          role?: Database["public"]["Enums"]["founder_role"] | null
+          skills?: string[] | null
+          stage?: Database["public"]["Enums"]["founder_stage"] | null
+          updated_at?: string
+          vision?: string | null
+        }
+        Update: {
+          commitment?: Database["public"]["Enums"]["founder_commitment"] | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          industry?: string | null
+          location?: string | null
+          looking_for?: string | null
+          onboarded_at?: string | null
+          photo_url?: string | null
+          role?: Database["public"]["Enums"]["founder_role"] | null
+          skills?: string[] | null
+          stage?: Database["public"]["Enums"]["founder_stage"] | null
+          updated_at?: string
+          vision?: string | null
+        }
+        Relationships: []
+      }
+      swipes: {
+        Row: {
+          created_at: string
+          direction: Database["public"]["Enums"]["swipe_direction"]
+          id: string
+          swiper_id: string
+          target_id: string
+        }
+        Insert: {
+          created_at?: string
+          direction: Database["public"]["Enums"]["swipe_direction"]
+          id?: string
+          swiper_id: string
+          target_id: string
+        }
+        Update: {
+          created_at?: string
+          direction?: Database["public"]["Enums"]["swipe_direction"]
+          id?: string
+          swiper_id?: string
+          target_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
+      founder_commitment: "full_time" | "part_time" | "exploring"
+      founder_role: "tech" | "business" | "product" | "design" | "other"
+      founder_stage: "idea" | "mvp" | "revenue" | "scaling"
+      swipe_direction: "like" | "pass"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +308,12 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+      founder_commitment: ["full_time", "part_time", "exploring"],
+      founder_role: ["tech", "business", "product", "design", "other"],
+      founder_stage: ["idea", "mvp", "revenue", "scaling"],
+      swipe_direction: ["like", "pass"],
+    },
   },
 } as const
