@@ -7,6 +7,9 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { AuthProvider } from "@/hooks/useAuth";
+import { Toaster } from "@/components/ui/sonner";
+import { AppNav } from "@/components/AppNav";
 
 import appCss from "../styles.css?url";
 
@@ -72,11 +75,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "matchfoundr — Finde deinen Co-Founder" },
+      { name: "description", content: "Ein fokussiertes Netzwerk für Gründer:innen auf der Suche nach ihrem ersten Partner. Echte Profile, kein Lebenslauf-Theater." },
+      { name: "author", content: "matchfoundr" },
+      { property: "og:title", content: "matchfoundr — Finde deinen Co-Founder" },
+      { property: "og:description", content: "Echte Profile, kein Lebenslauf-Theater. Nur die eine Person, die dein Unternehmen möglich macht." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
@@ -113,7 +116,15 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <AuthProvider>
+        <div className="min-h-screen flex flex-col">
+          <AppNav />
+          <main className="flex-1">
+            <Outlet />
+          </main>
+        </div>
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
