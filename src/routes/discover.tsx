@@ -275,88 +275,99 @@ function Discover() {
     );
   }
 
-  const p = filtered[0];
-  const name = p.display_name ?? "?";
   return (
-    <div className="mx-auto max-w-2xl px-4 pt-10 pb-24 sm:px-6">
-      <div className="eyebrow">Entdecken · {filtered.length} im Stack</div>
+    <div className="mx-auto max-w-6xl px-4 pt-10 pb-24 sm:px-6">
+      <div className="eyebrow">Entdecken · {filtered.length} Founder</div>
       <h1 className="mt-4 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-        Heute für <span className="font-serif italic font-normal">dich</span>.
+        Menschen für <span className="font-serif italic font-normal">dich</span>.
       </h1>
 
       {filterBar}
 
-      <article className="glass-pane mt-6 p-8">
-        <div className="flex items-center gap-4">
-          <div
-            className="flex h-14 w-14 items-center justify-center rounded-full font-mono text-[15px] font-semibold overflow-hidden"
-            style={{
-              background: colorFor(name),
-              color: "var(--cream)",
-              boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.2)",
-            }}
-          >
-            {p.photo_url ? (
-              <img src={p.photo_url} alt={name} className="h-full w-full object-cover" />
-            ) : (
-              initials(name)
-            )}
-          </div>
-          <div>
-            <h2 className="text-[18px] font-semibold leading-tight text-[var(--ink)]">{name}</h2>
-            {p.location && (
-              <p className="mt-1 flex items-center gap-1 text-[12px] text-[var(--smoke)]">
-                <MapPin className="h-3.5 w-3.5" /> {p.location}
-              </p>
-            )}
-          </div>
-        </div>
+      <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {filtered.map((p) => {
+          const name = p.display_name ?? "?";
+          return (
+            <article key={p.id} className="glass-pane flex flex-col p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="flex h-11 w-11 items-center justify-center rounded-full overflow-hidden font-mono text-[13px] font-semibold"
+                    style={{
+                      background: colorFor(name),
+                      color: "var(--cream)",
+                      boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.2)",
+                    }}
+                  >
+                    {p.photo_url ? (
+                      <img src={p.photo_url} alt={name} className="h-full w-full object-cover" />
+                    ) : (
+                      initials(name)
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-[15px] font-semibold leading-tight text-[var(--ink)]">{name}</div>
+                    {p.location && (
+                      <div className="mt-0.5 flex items-center gap-1 text-[12px] text-[var(--smoke)]">
+                        <MapPin className="h-3 w-3" /> {p.location}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => swipe(p.id, "pass")}
+                  aria-label="Überspringen"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--smoke)] transition hover:bg-[rgba(21,20,15,0.06)] hover:text-[var(--ink)]"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
 
-        <div className="mt-6 flex flex-wrap gap-1.5">
-          {p.role && <Chip>{roleLabel[p.role]}</Chip>}
-          {p.stage && <Chip>{stageLabel[p.stage]}</Chip>}
-          {p.commitment && <Chip>{commitLabel[p.commitment]}</Chip>}
-          {p.industry && <Chip>{p.industry}</Chip>}
-        </div>
+              <div className="mt-4 flex flex-wrap gap-1.5">
+                {p.role && <Chip>{roleLabel[p.role]}</Chip>}
+                {p.stage && <Chip>{stageLabel[p.stage]}</Chip>}
+                {p.commitment && <Chip>{commitLabel[p.commitment]}</Chip>}
+              </div>
 
-        {p.skills && p.skills.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-1.5">
-            {p.skills.map((s) => (
-              <Chip key={s} muted>{s}</Chip>
-            ))}
-          </div>
-        )}
+              {p.vision && (
+                <p className="mt-4 text-[13px] leading-relaxed text-[var(--ink-soft)] line-clamp-4">
+                  „{p.vision}"
+                </p>
+              )}
+              {!p.vision && p.looking_for && (
+                <p className="mt-4 text-[13px] leading-relaxed text-[var(--ink-soft)] line-clamp-4">
+                  {p.looking_for}
+                </p>
+              )}
 
-        {p.vision && (
-          <div className="mt-7">
-            <div className="eyebrow">Vision</div>
-            <p className="mt-2 text-[14px] leading-relaxed text-[var(--ink-soft)]">„{p.vision}"</p>
-          </div>
-        )}
-        {p.looking_for && (
-          <div className="mt-5">
-            <div className="eyebrow">Sucht</div>
-            <p className="mt-2 text-[14px] leading-relaxed text-[var(--ink-soft)]">{p.looking_for}</p>
-          </div>
-        )}
-      </article>
+              {p.skills && p.skills.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {p.skills.slice(0, 4).map((s) => (
+                    <Chip key={s} muted>{s}</Chip>
+                  ))}
+                </div>
+              )}
 
-      <div className="mt-6 flex items-center justify-center gap-3">
-        <Button
-          size="lg"
-          variant="ghost"
-          className="glass-pill h-12 gap-2 px-5 text-[var(--ink)]"
-          onClick={() => swipe("pass")}
-        >
-          <X className="h-4 w-4" /> Weiter
-        </Button>
-        <Button
-          size="lg"
-          className="shadow-ember h-12 gap-2 rounded-full bg-[var(--ember)] px-6 text-[var(--cream)] hover:bg-[var(--ember-deep)]"
-          onClick={() => swipe("like")}
-        >
-          <Heart className="h-4 w-4" /> Interessiert
-        </Button>
+              <div className="mt-auto flex items-center gap-2 border-t border-[rgba(21,20,15,0.08)] pt-4">
+                <Button
+                  size="sm"
+                  onClick={() => swipe(p.id, "like")}
+                  className="shadow-ember h-9 flex-1 gap-1.5 rounded-full bg-[var(--ember)] text-[13px] text-[var(--cream)] hover:bg-[var(--ember-deep)]"
+                >
+                  <Heart className="h-3.5 w-3.5" /> Interessiert
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => message(p.id)}
+                  className="glass-pill h-9 gap-1.5 px-3 text-[13px] text-[var(--ink)]"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" /> Schreiben
+                </Button>
+              </div>
+            </article>
+          );
+        })}
       </div>
     </div>
   );
