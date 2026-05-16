@@ -23,14 +23,35 @@ export const Route = createFileRoute("/entdecken")({
   component: DiscoverPage,
 });
 
-const FOUNDERS = [
-  { name: "Lena, 29", role: "Technical Co-Founder", city: "Berlin", idea: "Klimadaten als API für mittelständische Industrie.", tags: ["AI", "B2B SaaS", "Climate"] },
-  { name: "Jonas, 34", role: "Business / Sales", city: "München", idea: "Marktplatz für ungenutzte Lagerflächen in Innenstädten.", tags: ["Marketplace", "Logistik"] },
-  { name: "Aylin, 27", role: "Product & Design", city: "Hamburg", idea: "Mental-Health-App für junge Eltern, kurze Sessions.", tags: ["Health", "Mobile", "B2C"] },
-  { name: "Marek, 31", role: "Technical Co-Founder", city: "Köln", idea: "Open-Source-Tooling für Audits in regulierten Branchen.", tags: ["DevTools", "Fintech"] },
-  { name: "Sofia, 26", role: "Growth / Marketing", city: "Leipzig", idea: "Kuratierte Reise-Editorials mit lokalem Handwerk.", tags: ["Travel", "Commerce"] },
-  { name: "Tim, 38", role: "Domain Expert", city: "Stuttgart", idea: "Predictive Maintenance für mittelständische Fertigung.", tags: ["Industrial", "AI"] },
+const AVATAR_COLORS = [
+  "var(--ember)",
+  "var(--ember-deep)",
+  "var(--ink-soft)",
+  "var(--smoke)",
+  "var(--ember-light)",
+  "#8B5A3C",
+  "#3D5A4A",
+  "#5A4A2A",
 ];
+
+const FOUNDERS = [
+  { name: "Lena Brandt", age: 29, role: "Technical Co-Founder", city: "Berlin", fit: 94, idea: "Klimadaten als API für mittelständische Industrie. Skaliert seit 2 Jahren — sucht jetzt jemand für GTM.", tags: ["AI", "B2B SaaS", "Climate"] },
+  { name: "Jonas Kessler", age: 34, role: "Business / Sales", city: "München", fit: 87, idea: "Marktplatz für ungenutzte Lagerflächen in Innenstädten. Erste Pilotkunden in DACH.", tags: ["Marketplace", "Logistik"] },
+  { name: "Aylin Demir", age: 27, role: "Product & Design", city: "Hamburg", fit: 82, idea: "Mental-Health-App für junge Eltern. Kurze Sessions, hohe Retention im Pilot.", tags: ["Health", "Mobile", "B2C"] },
+  { name: "Marek Nowak", age: 31, role: "Technical Co-Founder", city: "Köln", fit: 79, idea: "Open-Source-Tooling für Audits in regulierten Branchen. Stark wachsende Community.", tags: ["DevTools", "Fintech"] },
+  { name: "Sofia Hellström", age: 26, role: "Growth / Marketing", city: "Leipzig", fit: 76, idea: "Kuratierte Reise-Editorials mit lokalem Handwerk. Erste Magazin-Ausgabe sold out.", tags: ["Travel", "Commerce"] },
+  { name: "Tim Berger", age: 38, role: "Domain Expert", city: "Stuttgart", fit: 73, idea: "Predictive Maintenance für mittelständische Fertigung. 15 Jahre Domain, sucht Tech.", tags: ["Industrial", "AI"] },
+];
+
+function initials(name: string) {
+  return name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+}
+
+function colorFor(name: string) {
+  let h = 0;
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[h];
+}
 
 function DiscoverPage() {
   const { user } = useAuth();
@@ -38,85 +59,135 @@ function DiscoverPage() {
   const startCta = () => navigate({ to: user ? "/discover" : "/auth" });
 
   return (
-    <div>
+    <div className="mx-auto max-w-6xl px-4 pt-10 pb-24 sm:px-6">
       {/* HEADER */}
-      <section className="border-b border-border">
-        <div className="mx-auto max-w-6xl px-6 pt-24 pb-16 sm:pt-32">
-          <div className="grid gap-10 sm:grid-cols-[200px_1fr] sm:gap-16">
-            <div className="eyebrow pt-2">Entdecken</div>
-            <div>
-              <h1 className="text-balance text-5xl font-semibold tracking-tight sm:text-6xl">
-                Ein erster Blick.<br />
-                <span className="font-serif italic font-normal text-primary">
-                  Mehr wartet hinter dem Login.
-                </span>
-              </h1>
-              <p className="mt-6 max-w-2xl text-pretty text-[17px] leading-relaxed text-muted-foreground">
-                Eine kleine Auswahl an Foundern, die gerade bei matchfoundr unterwegs sind.
-                Wenn dich jemand interessiert — melde dich an und schreib direkt.
-              </p>
-            </div>
-          </div>
-        </div>
+      <section className="pt-10">
+        <div className="eyebrow">Entdecken · 6 Profile zur Vorschau</div>
+        <h1 className="mt-5 text-balance text-5xl font-semibold tracking-tight sm:text-6xl">
+          Menschen, die du{" "}
+          <span className="font-serif italic font-normal">treffen solltest</span>.
+        </h1>
+        <p className="mt-6 max-w-2xl text-pretty text-[16px] leading-relaxed text-[var(--smoke)]">
+          Eine kleine Auswahl an Foundern, die gerade bei matchfoundr unterwegs sind.
+          Wenn dich jemand interessiert — melde dich an und schreib direkt.
+        </p>
       </section>
 
       {/* GRID */}
-      <section className="border-b border-border bg-secondary">
-        <div className="mx-auto max-w-6xl px-6 py-20">
-          <div className="relative">
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {FOUNDERS.map((p) => (
-                <article
-                  key={p.name}
-                  className="rounded-2xl border border-border bg-background p-6"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="flex h-10 w-10 items-center justify-center rounded-full font-mono text-sm font-medium"
-                        style={{ background: "var(--ember-tint)", color: "var(--ember-deep)" }}
-                      >
-                        {p.name.charAt(0)}
+      <section className="mt-14">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {FOUNDERS.map((p, idx) => {
+            const highlighted = idx === 0;
+            return (
+              <article
+                key={p.name}
+                className={`${highlighted ? "glass-pane-ember" : "glass-pane"} p-6`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="flex h-11 w-11 items-center justify-center rounded-full font-mono text-[13px] font-semibold"
+                      style={{
+                        background: highlighted ? "rgba(251,250,247,0.18)" : colorFor(p.name),
+                        color: "var(--cream)",
+                        boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.2)",
+                      }}
+                    >
+                      {initials(p.name)}
+                    </div>
+                    <div>
+                      <div className={`text-[15px] font-semibold leading-tight ${highlighted ? "text-[var(--cream)]" : "text-[var(--ink)]"}`}>
+                        {p.name}
                       </div>
-                      <div>
-                        <div className="text-sm font-semibold leading-tight">{p.name}</div>
-                        <div className="text-xs text-muted-foreground">{p.city}</div>
+                      <div
+                        className="mt-0.5 text-[12px]"
+                        style={{ color: highlighted ? "rgba(251,250,247,0.78)" : "var(--smoke)" }}
+                      >
+                        {p.role} · {p.city}
                       </div>
                     </div>
-                    <span className="eyebrow !text-[10px] text-right">{p.role}</span>
                   </div>
-                  <p className="mt-5 text-[15px] leading-relaxed">„{p.idea}"</p>
-                  <div className="mt-5 flex flex-wrap gap-1.5">
-                    {p.tags.map((t) => (
-                      <span
-                        key={t}
-                        className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground"
-                      >
-                        {t}
-                      </span>
-                    ))}
+                  <div
+                    className="rounded-full px-2.5 py-1 font-mono text-[11px] font-semibold"
+                    style={{
+                      background: highlighted ? "rgba(251,250,247,0.18)" : "var(--ember-tint)",
+                      color: highlighted ? "var(--cream)" : "var(--ember-deep)",
+                    }}
+                  >
+                    {p.fit}/100
                   </div>
-                </article>
-              ))}
-            </div>
-          </div>
+                </div>
 
-          {/* CTA */}
-          <div className="mt-20 flex flex-col items-center gap-4 text-center">
-            <div className="eyebrow">+ 240 weitere Founder</div>
-            <h3 className="font-serif italic text-3xl text-foreground sm:text-4xl">
-              Mehr Founder entdecken.
-            </h3>
-            <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
-              <Button size="lg" onClick={startCta} className="gap-2">
-                Jetzt anmelden <ArrowRight className="h-4 w-4" />
+                <p
+                  className="mt-5 text-[14px] leading-relaxed"
+                  style={{ color: highlighted ? "rgba(251,250,247,0.92)" : "var(--ink-soft)" }}
+                >
+                  „{p.idea}"
+                </p>
+
+                <div className="mt-5 flex flex-wrap gap-1.5">
+                  {p.tags.map((t) => (
+                    <span
+                      key={t}
+                      className="rounded-full px-2.5 py-1 text-[11px]"
+                      style={{
+                        background: highlighted ? "rgba(251,250,247,0.16)" : "rgba(255,255,255,0.5)",
+                        border: highlighted ? "1px solid rgba(255,200,170,0.4)" : "1px solid var(--ruled)",
+                        color: highlighted ? "var(--cream)" : "var(--smoke)",
+                      }}
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="mt-6 flex items-center justify-between border-t border-[rgba(255,255,255,0.18)] pt-4">
+                  <span
+                    className="text-[11px] font-mono uppercase tracking-[0.16em]"
+                    style={{ color: highlighted ? "rgba(251,250,247,0.65)" : "var(--smoke)" }}
+                  >
+                    Aktiv · vor 2h
+                  </span>
+                  <Button
+                    size="sm"
+                    onClick={startCta}
+                    className={
+                      highlighted
+                        ? "h-8 rounded-full bg-[var(--cream)] px-3 text-[12px] text-[var(--ember-deep)] hover:bg-[var(--cream)]/90"
+                        : "shadow-ember h-8 rounded-full bg-[var(--ember)] px-3 text-[12px] text-[var(--cream)] hover:bg-[var(--ember-deep)]"
+                    }
+                  >
+                    Anschreiben <ArrowRight className="ml-1 h-3 w-3" />
+                  </Button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
+        {/* CTA */}
+        <div className="glass-pane mt-14 p-10 text-center sm:p-14">
+          <div className="eyebrow">+ 240 weitere Founder</div>
+          <h3 className="mt-4 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+            Mehr Founder{" "}
+            <span className="font-serif italic font-normal text-[var(--ember)]">entdecken</span>.
+          </h3>
+          <p className="mx-auto mt-4 max-w-md text-[14px] text-[var(--smoke)]">
+            Melde dich an, um das vollständige Feed zu sehen und direkt zu schreiben.
+          </p>
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+            <Button
+              size="lg"
+              onClick={startCta}
+              className="shadow-ember h-12 gap-2 rounded-xl bg-[var(--ember)] px-5 text-[var(--cream)] hover:bg-[var(--ember-deep)]"
+            >
+              Jetzt anmelden <ArrowRight className="h-4 w-4" />
+            </Button>
+            <Link to="/">
+              <Button size="lg" variant="ghost" className="rounded-xl">
+                Zurück zur Startseite
               </Button>
-              <Link to="/">
-                <Button size="lg" variant="ghost">
-                  Zurück zur Startseite
-                </Button>
-              </Link>
-            </div>
+            </Link>
           </div>
         </div>
       </section>

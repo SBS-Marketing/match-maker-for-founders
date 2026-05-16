@@ -10,6 +10,8 @@ import {
 import { AuthProvider } from "@/hooks/useAuth";
 import { Toaster } from "@/components/ui/sonner";
 import { AppNav } from "@/components/AppNav";
+import { PageBackdrop } from "@/components/PageBackdrop";
+import { useRouterState } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
 
@@ -117,11 +119,14 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const variant = pathname.startsWith("/onboarding") ? "dusk" : "sunrise";
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="min-h-screen flex flex-col">
+        <PageBackdrop variant={variant} />
+        <div className="relative z-10 flex min-h-screen flex-col">
           <AppNav />
           <main className="flex-1">
             <Outlet />
