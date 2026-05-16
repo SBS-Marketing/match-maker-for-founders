@@ -181,7 +181,7 @@ function Landing() {
       {/* MANIFESTO */}
       <section className="border-b border-border bg-secondary">
         <div className="mx-auto max-w-3xl px-6 py-28">
-          <div className="eyebrow mb-10">03 · Manifest</div>
+          <div className="eyebrow mb-10">04 · Manifest</div>
           <h2 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
             Kein Lebenslauf-Theater.
           </h2>
