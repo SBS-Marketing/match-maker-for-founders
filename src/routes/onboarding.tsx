@@ -762,11 +762,11 @@ function LogistikRolle({
             placeholder="Fintech, B2B SaaS, …"
           />
         </Field>
-        <Field label="Skills (Komma-getrennt)">
-          <Input
-            value={form.skills}
-            onChange={(e) => setForm({ ...form, skills: e.target.value })}
-            placeholder="React, Sales, Pitching"
+        <Field label="Skills">
+          <SkillsInput
+            value={skillsToArray(form.skills)}
+            onChange={(arr) => setForm({ ...form, skills: arr.join(", ") })}
+            placeholder="z. B. React, Sales, Pitching"
           />
         </Field>
       </div>
