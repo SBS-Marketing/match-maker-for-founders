@@ -111,89 +111,146 @@ function Discover() {
   };
 
   if (loading) {
-    return <div className="flex min-h-[60vh] items-center justify-center text-sm text-muted-foreground">Lade Profile…</div>;
+    return <div className="mx-auto max-w-xl px-4 py-20 text-center text-sm text-[var(--smoke)]">Lade Profile…</div>;
   }
 
   if (meOnboarded === false) {
     return (
-      <div className="mx-auto max-w-md px-4 py-20 text-center">
-        <h2 className="text-2xl font-semibold tracking-tight">Erst dein Profil</h2>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Vervollständige dein Founder-Profil, bevor du andere Founder triffst.
-        </p>
-        <Button className="mt-6" onClick={() => navigate({ to: "/onboarding" })}>Zum Profil</Button>
+      <div className="mx-auto max-w-md px-4 py-20">
+        <div className="glass-pane p-10 text-center">
+          <div className="eyebrow">Profil unvollständig</div>
+          <h2 className="mt-4 text-balance text-3xl font-semibold tracking-tight">
+            Erst dein <span className="font-serif italic font-normal text-[var(--ember)]">Profil</span>
+          </h2>
+          <p className="mt-4 text-[14px] text-[var(--smoke)]">
+            Vervollständige dein Founder-Profil, bevor du andere Founder triffst.
+          </p>
+          <Button
+            className="shadow-ember mt-7 h-11 rounded-xl bg-[var(--ember)] px-5 text-[var(--cream)] hover:bg-[var(--ember-deep)]"
+            onClick={() => navigate({ to: "/onboarding" })}
+          >
+            Zum Profil
+          </Button>
+        </div>
       </div>
     );
   }
 
   if (queue.length === 0) {
     return (
-      <div className="mx-auto max-w-md px-4 py-20 text-center">
-        <h2 className="text-2xl font-semibold tracking-tight">Keine neuen Profile</h2>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Du hast alle aktuellen Founder gesehen. Schau später wieder vorbei.
-        </p>
-        <Link to="/matches"><Button variant="outline" className="mt-6">Zu deinen Matches</Button></Link>
+      <div className="mx-auto max-w-md px-4 py-20">
+        <div className="glass-pane p-10 text-center">
+          <div className="eyebrow">Alles gesehen</div>
+          <h2 className="mt-4 text-balance text-3xl font-semibold tracking-tight">
+            Keine neuen <span className="font-serif italic font-normal">Profile</span>
+          </h2>
+          <p className="mt-4 text-[14px] text-[var(--smoke)]">
+            Du hast alle aktuellen Founder gesehen. Schau später wieder vorbei.
+          </p>
+          <Link to="/matches">
+            <Button variant="ghost" className="mt-7 rounded-xl">Zu deinen Matches</Button>
+          </Link>
+        </div>
       </div>
     );
   }
 
   const p = queue[0];
+  const name = p.display_name ?? "?";
   return (
-    <div className="mx-auto max-w-xl px-4 py-10">
-      <Card className="overflow-hidden p-6">
+    <div className="mx-auto max-w-2xl px-4 pt-10 pb-24 sm:px-6">
+      <div className="eyebrow">Entdecken · {queue.length} im Stack</div>
+      <h1 className="mt-4 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+        Heute für <span className="font-serif italic font-normal">dich</span>.
+      </h1>
+
+      <article className="glass-pane mt-10 p-8">
         <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16">
-            {p.photo_url && <AvatarImage src={p.photo_url} />}
-            <AvatarFallback>{(p.display_name ?? "?").slice(0, 2).toUpperCase()}</AvatarFallback>
-          </Avatar>
+          <div
+            className="flex h-14 w-14 items-center justify-center rounded-full font-mono text-[15px] font-semibold overflow-hidden"
+            style={{
+              background: colorFor(name),
+              color: "var(--cream)",
+              boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.2)",
+            }}
+          >
+            {p.photo_url ? (
+              <img src={p.photo_url} alt={name} className="h-full w-full object-cover" />
+            ) : (
+              initials(name)
+            )}
+          </div>
           <div>
-            <h2 className="text-xl font-semibold tracking-tight">{p.display_name}</h2>
+            <h2 className="text-[18px] font-semibold leading-tight text-[var(--ink)]">{name}</h2>
             {p.location && (
-              <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+              <p className="mt-1 flex items-center gap-1 text-[12px] text-[var(--smoke)]">
                 <MapPin className="h-3.5 w-3.5" /> {p.location}
               </p>
             )}
           </div>
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-2">
-          {p.role && <Badge variant="secondary">{roleLabel[p.role]}</Badge>}
-          {p.stage && <Badge variant="secondary">{stageLabel[p.stage]}</Badge>}
-          {p.commitment && <Badge variant="secondary">{commitLabel[p.commitment]}</Badge>}
-          {p.industry && <Badge variant="outline">{p.industry}</Badge>}
+        <div className="mt-6 flex flex-wrap gap-1.5">
+          {p.role && <Chip>{roleLabel[p.role]}</Chip>}
+          {p.stage && <Chip>{stageLabel[p.stage]}</Chip>}
+          {p.commitment && <Chip>{commitLabel[p.commitment]}</Chip>}
+          {p.industry && <Chip>{p.industry}</Chip>}
         </div>
 
         {p.skills && p.skills.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-1.5">
             {p.skills.map((s) => (
-              <span key={s} className="rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground">{s}</span>
+              <Chip key={s} muted>{s}</Chip>
             ))}
           </div>
         )}
 
         {p.vision && (
-          <div className="mt-6">
-            <h3 className="text-xs uppercase tracking-wider text-muted-foreground">Vision</h3>
-            <p className="mt-2 text-sm">{p.vision}</p>
+          <div className="mt-7">
+            <div className="eyebrow">Vision</div>
+            <p className="mt-2 text-[14px] leading-relaxed text-[var(--ink-soft)]">„{p.vision}"</p>
           </div>
         )}
         {p.looking_for && (
           <div className="mt-5">
-            <h3 className="text-xs uppercase tracking-wider text-muted-foreground">Sucht</h3>
-            <p className="mt-2 text-sm">{p.looking_for}</p>
+            <div className="eyebrow">Sucht</div>
+            <p className="mt-2 text-[14px] leading-relaxed text-[var(--ink-soft)]">{p.looking_for}</p>
           </div>
         )}
-      </Card>
+      </article>
 
-      <div className="mt-6 flex items-center justify-center gap-4">
-        <Button variant="outline" size="lg" className="gap-2" onClick={() => swipe("pass")}>
+      <div className="mt-6 flex items-center justify-center gap-3">
+        <Button
+          size="lg"
+          variant="ghost"
+          className="glass-pill h-12 gap-2 px-5 text-[var(--ink)]"
+          onClick={() => swipe("pass")}
+        >
           <X className="h-4 w-4" /> Weiter
         </Button>
-        <Button size="lg" className="gap-2" onClick={() => swipe("like")}>
+        <Button
+          size="lg"
+          className="shadow-ember h-12 gap-2 rounded-full bg-[var(--ember)] px-6 text-[var(--cream)] hover:bg-[var(--ember-deep)]"
+          onClick={() => swipe("like")}
+        >
           <Heart className="h-4 w-4" /> Interessiert
         </Button>
       </div>
     </div>
+  );
+}
+
+function Chip({ children, muted = false }: { children: React.ReactNode; muted?: boolean }) {
+  return (
+    <span
+      className="rounded-full px-2.5 py-1 text-[11px]"
+      style={{
+        background: muted ? "rgba(255,255,255,0.5)" : "var(--ember-tint)",
+        border: muted ? "1px solid var(--ruled)" : "1px solid rgba(226,81,28,0.25)",
+        color: muted ? "var(--smoke)" : "var(--ember-deep)",
+      }}
+    >
+      {children}
+    </span>
   );
 }
