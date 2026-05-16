@@ -106,13 +106,22 @@ function Onboarding() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-12">
-      <h1 className="text-3xl font-semibold tracking-tight">Dein Founder-Profil</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
+    <div className="mx-auto max-w-2xl px-4 py-16">
+      <div className="eyebrow" style={{ color: "rgba(251,250,247,0.6)" }}>
+        Setup · Schritt 1 von 1
+      </div>
+      <h1 className="mt-4 text-4xl font-semibold tracking-tight text-[var(--cream)]">
+        Dein{" "}
+        <span className="font-serif italic font-normal">Founder-Profil</span>
+      </h1>
+      <p className="mt-3 text-sm" style={{ color: "rgba(251,250,247,0.7)" }}>
         Echt sein lohnt sich. Andere Gründer:innen sehen genau das hier.
       </p>
 
-      <Card className="mt-8 p-6">
+      <div
+        className="glass-pane mt-10 p-7"
+        style={{ background: "rgba(251,250,247,0.82)" }}
+      >
         <form onSubmit={submit} className="space-y-5">
           <Field label="Name">
             <Input value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} placeholder="Vor- und Nachname" />
@@ -175,11 +184,11 @@ function Onboarding() {
             <Textarea rows={4} value={form.looking_for} onChange={(e) => setForm({ ...form, looking_for: e.target.value })} />
           </Field>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="shadow-ember h-11 w-full rounded-xl bg-[var(--ember)] text-[var(--cream)] hover:bg-[var(--ember-deep)]" disabled={loading}>
             {loading ? "Speichere…" : "Profil speichern"}
           </Button>
         </form>
-      </Card>
+      </div>
     </div>
   );
 }

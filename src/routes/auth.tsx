@@ -75,10 +75,20 @@ function AuthPage() {
       <div className="flex flex-col items-center gap-6 text-center">
         <Lockup layout="stacked" size={28} />
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {mode === "signup" ? "Founder-Profil erstellen" : "Willkommen zurück"}
+          <h1 className="text-3xl font-semibold tracking-tight">
+            {mode === "signup" ? (
+              <>
+                Founder-Profil{" "}
+                <span className="font-serif italic font-normal text-[var(--ember)]">erstellen</span>
+              </>
+            ) : (
+              <>
+                Willkommen{" "}
+                <span className="font-serif italic font-normal text-[var(--ember)]">zurück</span>
+              </>
+            )}
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="mt-3 text-sm text-[var(--smoke)]">
             {mode === "signup"
               ? "Beginne mit deinem matchfoundr-Konto."
               : "Melde dich an, um weiterzumachen."}
@@ -86,17 +96,17 @@ function AuthPage() {
         </div>
       </div>
 
-      <Card className="p-6">
-        <Button variant="outline" className="w-full gap-2" onClick={() => oauth("google")}>
+      <div className="glass-pane p-7">
+        <Button variant="outline" className="h-11 w-full gap-2 rounded-xl border-white/60 bg-white/40 backdrop-blur" onClick={() => oauth("google")}>
           <GoogleIcon className="h-4 w-4" />
           Mit Google fortfahren
         </Button>
-        <Button variant="outline" className="mt-2 w-full gap-2" onClick={() => oauth("apple")}>
+        <Button variant="outline" className="mt-2 h-11 w-full gap-2 rounded-xl border-white/60 bg-white/40 backdrop-blur" onClick={() => oauth("apple")}>
           <AppleIcon className="h-4 w-4" />
           Mit Apple fortfahren
         </Button>
-        <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
-          <div className="h-px flex-1 bg-border" /> oder <div className="h-px flex-1 bg-border" />
+        <div className="my-5 flex items-center gap-3 text-[11px] font-mono uppercase tracking-[0.18em] text-[var(--smoke)]">
+          <div className="h-px flex-1 bg-[var(--ruled)]" /> oder <div className="h-px flex-1 bg-[var(--ruled)]" />
         </div>
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
@@ -107,11 +117,11 @@ function AuthPage() {
             <Label htmlFor="password">Passwort</Label>
             <Input id="password" type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="shadow-ember h-11 w-full rounded-xl bg-[var(--ember)] text-[var(--cream)] hover:bg-[var(--ember-deep)]" disabled={loading}>
             {loading ? "Bitte warten…" : mode === "signup" ? "Konto erstellen" : "Anmelden"}
           </Button>
         </form>
-      </Card>
+      </div>
 
       <div className="text-center text-sm text-muted-foreground">
         {mode === "signup" ? "Schon ein Konto?" : "Noch kein Konto?"}{" "}
