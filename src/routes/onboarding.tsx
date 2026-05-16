@@ -9,6 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ArrowRight, Check, Lightbulb, Wrench } from "lucide-react";
+import { SkillsInput } from "@/components/SkillsInput";
+
+const skillsToArray = (s: string) =>
+  s ? s.split(",").map((x) => x.trim()).filter(Boolean) : [];
 
 export const Route = createFileRoute("/onboarding")({
   component: () => (
