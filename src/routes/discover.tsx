@@ -88,6 +88,19 @@ function Discover() {
   const [queue, setQueue] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [meOnboarded, setMeOnboarded] = useState<boolean | null>(null);
+  const [fPath, setFPath] = useState<FilterValue>("all");
+  const [fRole, setFRole] = useState<FilterValue>("all");
+  const [fStage, setFStage] = useState<FilterValue>("all");
+  const [fCommit, setFCommit] = useState<FilterValue>("all");
+
+  const filtered = queue.filter((p) =>
+    (fPath === "all" || p.path === fPath) &&
+    (fRole === "all" || p.role === fRole) &&
+    (fStage === "all" || p.stage === fStage) &&
+    (fCommit === "all" || p.commitment === fCommit)
+  );
+  const activeCount = [fPath, fRole, fStage, fCommit].filter((v) => v !== "all").length;
+  const resetFilters = () => { setFPath("all"); setFRole("all"); setFStage("all"); setFCommit("all"); };
 
   const load = useCallback(async () => {
     if (!user) return;
