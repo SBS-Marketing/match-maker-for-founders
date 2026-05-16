@@ -252,7 +252,7 @@ function Discover() {
 
       {filterBar}
 
-      <article className="glass-pane mt-10 p-8">
+      <article className="glass-pane mt-6 p-8">
         <div className="flex items-center gap-4">
           <div
             className="flex h-14 w-14 items-center justify-center rounded-full font-mono text-[15px] font-semibold overflow-hidden"
