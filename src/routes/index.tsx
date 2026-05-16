@@ -17,32 +17,27 @@ function Landing() {
     <div>
       {/* HERO */}
       <section className="border-b border-border">
-        <div className="mx-auto max-w-6xl px-6 pt-24 pb-24 sm:pt-32 sm:pb-32">
-          <div className="eyebrow mb-10">01 · Die Plattform</div>
-
-          <div className="flex flex-col items-start gap-10 sm:flex-row sm:items-center sm:gap-14">
-            <IconMF size={120} className="shrink-0" />
-            <h1 className="text-balance text-[clamp(48px,8vw,112px)] font-bold leading-[0.95]">
-              matchfoundr<span style={{ color: "var(--ember)" }}>.</span>
-            </h1>
+        <div className="mx-auto max-w-4xl px-6 pt-24 pb-24 text-center sm:pt-32 sm:pb-28">
+          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 text-xs font-mono uppercase tracking-[0.18em] text-muted-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+            01 · Die Plattform
           </div>
 
-          <div className="mt-16 grid gap-10 sm:grid-cols-[1fr_auto] sm:items-end">
-            <p className="font-serif italic text-balance text-[clamp(28px,4vw,52px)] leading-[1.1] text-foreground max-w-3xl">
-              Finde den Co-Founder,<br />
+          <h1 className="text-balance text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
+            Finde den Co-Founder,
+            <br />
+            <span className="font-serif italic font-normal text-primary">
               den du wirklich brauchst.
-            </p>
-            <div className="eyebrow sm:text-right">
-              Ein fokussiertes Netzwerk<br />für Gründer:innen
-            </div>
-          </div>
+            </span>
+          </h1>
 
-          <p className="mt-12 max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Echte Profile, kein Lebenslauf-Theater. Nur die eine Person, die das Unternehmen
-            möglich macht.
+          <p className="mx-auto mt-8 max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
+            matchfoundr ist ein fokussiertes Netzwerk für Gründer:innen auf der Suche nach
+            ihrem ersten Partner. Echte Profile, kein Lebenslauf-Theater. Nur die eine Person,
+            die das Unternehmen möglich macht.
           </p>
 
-          <div className="mt-10 flex flex-wrap items-center gap-3">
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <Button size="lg" onClick={startCta} className="gap-2">
               Founder-Profil erstellen <ArrowRight className="h-4 w-4" />
             </Button>
@@ -51,6 +46,10 @@ function Landing() {
                 Anmelden
               </Button>
             </Link>
+          </div>
+
+          <div className="mt-16 flex justify-center">
+            <IconMF size={56} />
           </div>
         </div>
       </section>
