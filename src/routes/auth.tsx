@@ -87,10 +87,12 @@ function AuthPage() {
       </div>
 
       <Card className="p-6">
-        <Button variant="outline" className="w-full" onClick={() => oauth("google")}>
+        <Button variant="outline" className="w-full gap-2" onClick={() => oauth("google")}>
+          <GoogleIcon className="h-4 w-4" />
           Mit Google fortfahren
         </Button>
-        <Button variant="outline" className="mt-2 w-full" onClick={() => oauth("apple")}>
+        <Button variant="outline" className="mt-2 w-full gap-2" onClick={() => oauth("apple")}>
+          <AppleIcon className="h-4 w-4" />
           Mit Apple fortfahren
         </Button>
         <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
