@@ -9,6 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ArrowRight, Check, Lightbulb, Wrench } from "lucide-react";
+import { SkillsInput } from "@/components/SkillsInput";
+
+const skillsToArray = (s: string) =>
+  s ? s.split(",").map((x) => x.trim()).filter(Boolean) : [];
 
 export const Route = createFileRoute("/onboarding")({
   component: () => (
@@ -433,11 +437,11 @@ function Onboarding() {
                 ))}
               </div>
               <div className="mt-6 grid gap-5">
-                <Field label="Skills (Komma-getrennt)">
-                  <Input
-                    value={form.skills}
-                    onChange={(e) => setForm({ ...form, skills: e.target.value })}
-                    placeholder="React, Sales, Pitching"
+                <Field label="Skills">
+                  <SkillsInput
+                    value={skillsToArray(form.skills)}
+                    onChange={(arr) => setForm({ ...form, skills: arr.join(", ") })}
+                    placeholder="z. B. React, Sales, Pitching"
                   />
                 </Field>
                 <Field label="Branche / Erfahrung (optional)">
@@ -758,11 +762,11 @@ function LogistikRolle({
             placeholder="Fintech, B2B SaaS, …"
           />
         </Field>
-        <Field label="Skills (Komma-getrennt)">
-          <Input
-            value={form.skills}
-            onChange={(e) => setForm({ ...form, skills: e.target.value })}
-            placeholder="React, Sales, Pitching"
+        <Field label="Skills">
+          <SkillsInput
+            value={skillsToArray(form.skills)}
+            onChange={(arr) => setForm({ ...form, skills: arr.join(", ") })}
+            placeholder="z. B. React, Sales, Pitching"
           />
         </Field>
       </div>
