@@ -342,3 +342,51 @@ function Chip({ children, muted = false }: { children: React.ReactNode; muted?: 
     </span>
   );
 }
+
+function FilterRow({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="w-16 shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--smoke)]">
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map((o) => {
+          const active = o.value === value;
+          return (
+            <button
+              key={o.value}
+              onClick={() => onChange(o.value)}
+              className="rounded-full px-3 py-1 text-[12px] transition"
+              style={
+                active
+                  ? {
+                      background: "var(--ember)",
+                      color: "var(--cream)",
+                      border: "1px solid rgba(226,81,28,0.4)",
+                      boxShadow: "0 6px 16px -8px rgba(178,59,14,0.45)",
+                    }
+                  : {
+                      background: "rgba(255,255,255,0.55)",
+                      color: "var(--ink-soft)",
+                      border: "1px solid var(--ruled)",
+                    }
+              }
+            >
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
