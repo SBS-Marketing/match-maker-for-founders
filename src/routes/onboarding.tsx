@@ -193,7 +193,8 @@ function Onboarding() {
         style={{
           background: "rgba(12,11,9,0.78)",
           border: "1px solid rgba(255,255,255,0.22)",
-          boxShadow: "0 18px 60px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.10)",
+          boxShadow:
+            "0 18px 60px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.10)",
         }}
       >
         {STEPS.map((s, i) => {
@@ -209,7 +210,9 @@ function Onboarding() {
                     : done
                       ? "rgba(255,255,255,0.14)"
                       : "rgba(255,255,255,0.10)",
-                  border: active ? "1px solid rgba(255,200,170,0.55)" : "1px solid rgba(255,255,255,0.18)",
+                  border: active
+                    ? "1px solid rgba(255,200,170,0.55)"
+                    : "1px solid rgba(255,255,255,0.18)",
                   color: active
                     ? "var(--cream)"
                     : done
@@ -234,7 +237,10 @@ function Onboarding() {
                 {s}
               </span>
               {i < STEPS.length - 1 && (
-                <span className="hidden h-px w-3 sm:block" style={{ background: "rgba(255,255,255,0.35)" }} />
+                <span
+                  className="hidden h-px w-3 sm:block"
+                  style={{ background: "rgba(255,255,255,0.35)" }}
+                />
               )}
             </div>
           );
