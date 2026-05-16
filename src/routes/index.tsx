@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, Users, MessageSquare } from "lucide-react";
+import { IconMF } from "@/components/Logo";
+import { ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Landing,
@@ -11,33 +11,38 @@ export const Route = createFileRoute("/")({
 function Landing() {
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  // If logged in, send to discover
-  useEffect(() => {
-    // no auto-redirect — let user see landing
-  }, [user]);
-
   const startCta = () => navigate({ to: user ? "/discover" : "/auth" });
 
   return (
     <div>
       {/* HERO */}
-      <section className="relative">
-        <div className="mx-auto max-w-4xl px-6 pt-24 pb-20 text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card/40 px-3 py-1 text-xs text-muted-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-            01 — Die Plattform
+      <section className="border-b border-border">
+        <div className="mx-auto max-w-6xl px-6 pt-24 pb-24 sm:pt-32 sm:pb-32">
+          <div className="eyebrow mb-10">01 · Die Plattform</div>
+
+          <div className="flex flex-col items-start gap-10 sm:flex-row sm:items-center sm:gap-14">
+            <IconMF size={120} className="shrink-0" />
+            <h1 className="text-balance text-[clamp(48px,8vw,112px)] font-bold leading-[0.95]">
+              matchfoundr<span style={{ color: "var(--ember)" }}>.</span>
+            </h1>
           </div>
-          <h1 className="text-balance text-5xl font-semibold tracking-tight sm:text-6xl">
-            Finde den Co-Founder,
-            <br />
-            <span className="text-primary">den du wirklich brauchst.</span>
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-pretty text-base text-muted-foreground sm:text-lg">
-            matchfoundr ist ein fokussiertes Netzwerk für Gründer:innen auf der Suche nach ihrem ersten Partner.
-            Echte Profile, kein Lebenslauf-Theater. Nur die eine Person, die das Unternehmen möglich macht.
+
+          <div className="mt-16 grid gap-10 sm:grid-cols-[1fr_auto] sm:items-end">
+            <p className="font-serif italic text-balance text-[clamp(28px,4vw,52px)] leading-[1.1] text-foreground max-w-3xl">
+              Finde den Co-Founder,<br />
+              den du wirklich brauchst.
+            </p>
+            <div className="eyebrow sm:text-right">
+              Ein fokussiertes Netzwerk<br />für Gründer:innen
+            </div>
+          </div>
+
+          <p className="mt-12 max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
+            Echte Profile, kein Lebenslauf-Theater. Nur die eine Person, die das Unternehmen
+            möglich macht.
           </p>
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+
+          <div className="mt-10 flex flex-wrap items-center gap-3">
             <Button size="lg" onClick={startCta} className="gap-2">
               Founder-Profil erstellen <ArrowRight className="h-4 w-4" />
             </Button>
@@ -48,52 +53,60 @@ function Landing() {
             </Link>
           </div>
         </div>
-
-        {/* subtle grid bg */}
-        <div className="pointer-events-none absolute inset-0 -z-10 opacity-[0.035] [background:radial-gradient(circle_at_50%_0,white,transparent_60%)]" />
       </section>
 
       {/* HOW */}
-      <section className="border-t border-border">
-        <div className="mx-auto grid max-w-5xl gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-3 mt-20">
-          {[
-            { icon: Sparkles, title: "Profil erstellen", text: "Wer du bist, was du baust, was du suchst — in unter fünf Minuten." },
-            { icon: Users, title: "Andere Founder entdecken", text: "Eine Person nach der anderen. Keine Listen, keine Algorithmen, die dich verkaufen." },
-            { icon: MessageSquare, title: "Direkt schreiben", text: "Wenn ihr euch beide für einander interessiert, beginnt das Gespräch sofort." },
-          ].map((s) => (
-            <div key={s.title} className="bg-background p-8">
-              <s.icon className="h-5 w-5 text-primary" />
-              <h3 className="mt-4 font-medium">{s.title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{s.text}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* MANIFESTO */}
-      <section className="border-t border-border mt-20">
-        <div className="mx-auto max-w-3xl px-6 py-24">
-          <h2 className="text-3xl font-semibold tracking-tight">Kein Lebenslauf-Theater.</h2>
-          <div className="mt-6 space-y-4 text-muted-foreground">
-            <p>
-              Co-Founder finden ist keine Recruiting-Aufgabe. Es ist eine Entscheidung darüber, mit wem du
-              die nächsten Jahre durchstehen willst — durch alles.
-            </p>
-            <p>
-              Deshalb gibt es bei matchfoundr keine Punkte für Universitäten, keine Filter nach „Ex-FAANG", keine
-              Tausende Profile zum Durchwischen. Stattdessen: ein klares Founder-Profil, das zeigt, wer du wirklich bist,
-              was du baust und was du in einem Partner suchst.
-            </p>
-            <p className="text-foreground">Eine Plattform. Eine Entscheidung. Eine Person.</p>
+      <section className="border-b border-border">
+        <div className="mx-auto max-w-6xl px-6 py-24">
+          <div className="eyebrow mb-12">02 · So funktioniert es</div>
+          <div className="grid gap-12 md:grid-cols-3">
+            {[
+              { n: "01", t: "Profil erstellen", d: "Wer du bist, was du baust, was du suchst — in unter fünf Minuten." },
+              { n: "02", t: "Andere Founder entdecken", d: "Eine Person nach der anderen. Keine Listen, keine Algorithmen, die dich verkaufen." },
+              { n: "03", t: "Direkt schreiben", d: "Wenn ihr euch beide für einander interessiert, beginnt das Gespräch sofort." },
+            ].map((s) => (
+              <div key={s.n} className="border-t border-border pt-6">
+                <div className="eyebrow mb-4">{s.n}</div>
+                <h3 className="text-xl font-semibold tracking-tight">{s.t}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{s.d}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
+      {/* MANIFESTO */}
+      <section className="border-b border-border bg-secondary">
+        <div className="mx-auto max-w-3xl px-6 py-28">
+          <div className="eyebrow mb-10">03 · Manifest</div>
+          <h2 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+            Kein Lebenslauf-Theater.
+          </h2>
+          <div className="mt-8 space-y-5 text-[17px] leading-relaxed text-muted-foreground">
+            <p>
+              Co-Founder finden ist keine Recruiting-Aufgabe. Es ist eine Entscheidung darüber,
+              mit wem du die nächsten Jahre durchstehen willst — durch alles.
+            </p>
+            <p>
+              Deshalb gibt es bei matchfoundr keine Punkte für Universitäten, keine Filter nach
+              „Ex-FAANG", keine tausenden Profile zum Durchwischen. Stattdessen: ein klares
+              Founder-Profil, das zeigt, wer du wirklich bist, was du baust und was du in einem
+              Partner suchst.
+            </p>
+          </div>
+          <p className="mt-10 font-serif italic text-3xl text-foreground">
+            Eine Plattform. Eine Entscheidung. Eine Person.
+          </p>
+        </div>
+      </section>
+
       {/* CTA */}
-      <section className="border-t border-border">
-        <div className="mx-auto max-w-3xl px-6 py-20 text-center">
-          <h2 className="text-3xl font-semibold tracking-tight">Bereit anzufangen?</h2>
-          <p className="mt-3 text-muted-foreground">
+      <section className="border-b border-border">
+        <div className="mx-auto max-w-3xl px-6 py-24 text-center">
+          <h2 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+            Bereit anzufangen?
+          </h2>
+          <p className="mt-4 text-muted-foreground">
             Erstelle dein Founder-Profil und finde die Person, die dein Unternehmen möglich macht.
           </p>
           <Button size="lg" onClick={startCta} className="mt-8 gap-2">
@@ -102,10 +115,12 @@ function Landing() {
         </div>
       </section>
 
-      <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-8 text-xs text-muted-foreground">
-          <span>© {new Date().getFullYear()} matchfoundr</span>
-          <span>Made for founders.</span>
+      <footer>
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-10 text-xs text-muted-foreground">
+          <span className="font-mono uppercase tracking-[0.18em]">
+            © {new Date().getFullYear()} matchfoundr
+          </span>
+          <span className="font-mono uppercase tracking-[0.18em]">Made for founders</span>
         </div>
       </footer>
     </div>
