@@ -48,9 +48,18 @@ export function AppNav() {
               </Button>
             </>
           ) : (
-            <Link to="/auth">
-              <Button size="sm">Anmelden</Button>
-            </Link>
+            <>
+              <Link
+                to="/entdecken"
+                className="rounded-md px-3 py-1.5 text-muted-foreground transition-colors hover:text-foreground"
+                activeProps={{ className: "text-foreground" }}
+              >
+                Entdecken
+              </Link>
+              <Link to="/auth">
+                <Button size="sm">Anmelden</Button>
+              </Link>
+            </>
           )}
         </nav>
       </div>
