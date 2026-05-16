@@ -195,14 +195,62 @@ function Discover() {
     );
   }
 
-  const p = queue[0];
+  const filterBar = (
+    <div className="glass-pane mt-8 p-5">
+      <div className="flex items-center justify-between">
+        <div className="eyebrow">Filter{activeCount > 0 ? ` · ${activeCount} aktiv` : ""}</div>
+        {activeCount > 0 && (
+          <button
+            onClick={resetFilters}
+            className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--ember-deep)] hover:underline"
+          >
+            Zurücksetzen
+          </button>
+        )}
+      </div>
+      <div className="mt-4 space-y-3">
+        <FilterRow label="Pfad" options={PATH_OPTIONS} value={fPath} onChange={setFPath} />
+        <FilterRow label="Rolle" options={ROLE_OPTIONS} value={fRole} onChange={setFRole} />
+        <FilterRow label="Stage" options={STAGE_OPTIONS} value={fStage} onChange={setFStage} />
+        <FilterRow label="Commit" options={COMMIT_OPTIONS} value={fCommit} onChange={setFCommit} />
+      </div>
+    </div>
+  );
+
+  if (filtered.length === 0) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 pt-10 pb-24 sm:px-6">
+        <div className="eyebrow">Entdecken</div>
+        <h1 className="mt-4 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+          Keine <span className="font-serif italic font-normal">Treffer</span>.
+        </h1>
+        {filterBar}
+        <div className="glass-pane mt-6 p-10 text-center">
+          <p className="text-[14px] text-[var(--smoke)]">
+            Keine Profile passen zu deinen aktuellen Filtern. Lockere sie oder setze sie zurück.
+          </p>
+          <Button
+            variant="ghost"
+            className="mt-5 rounded-xl"
+            onClick={resetFilters}
+          >
+            Filter zurücksetzen
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const p = filtered[0];
   const name = p.display_name ?? "?";
   return (
     <div className="mx-auto max-w-2xl px-4 pt-10 pb-24 sm:px-6">
-      <div className="eyebrow">Entdecken · {queue.length} im Stack</div>
+      <div className="eyebrow">Entdecken · {filtered.length} im Stack</div>
       <h1 className="mt-4 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
         Heute für <span className="font-serif italic font-normal">dich</span>.
       </h1>
+
+      {filterBar}
 
       <article className="glass-pane mt-10 p-8">
         <div className="flex items-center gap-4">
