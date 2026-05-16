@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthGate } from "@/components/AuthGate";
 import { Button } from "@/components/ui/button";
-import { Heart, X, MapPin } from "lucide-react";
+import { Heart, X, MapPin, SlidersHorizontal, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 const AVATAR_COLORS = [
