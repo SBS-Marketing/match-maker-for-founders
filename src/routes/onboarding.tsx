@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Lightbulb, Wrench } from "lucide-react";
 
 export const Route = createFileRoute("/onboarding")({
   component: () => (
@@ -18,7 +18,10 @@ export const Route = createFileRoute("/onboarding")({
   ),
 });
 
+type Path = "" | "founder" | "joiner";
+
 type Form = {
+  path: Path;
   display_name: string;
   location: string;
   photo_url: string;
@@ -31,13 +34,20 @@ type Form = {
   skills: string;
 };
 
-const STEPS = ["Identity", "Deine Story", "Stage", "Was du suchst", "Logistik", "Review"] as const;
+const FOUNDER_STEPS = ["Pfad", "Identity", "Deine Idee", "Stage", "Co-Founder gesucht", "Logistik", "Review"] as const;
+const JOINER_STEPS = ["Pfad", "Identity", "Deine Skills", "Was du suchst", "Logistik", "Review"] as const;
 
 const stageOptions: { value: Form["stage"]; l: string; d: string }[] = [
   { value: "idea", l: "Nur am Überlegen", d: "Ein paar Stunden pro Woche. Noch kein Prototyp, keine Nutzer." },
   { value: "mvp", l: "Baue nachts", d: "Ein echter Prototyp nimmt nach Feierabend Form an." },
   { value: "revenue", l: "Steige bald aus", d: "Kündigung ist raus oder in den nächsten 60 Tagen." },
   { value: "scaling", l: "Schon Vollzeit", d: "Job ist gekündigt. Die Runway-Uhr tickt." },
+];
+const joinerStageOptions: { value: Form["stage"]; l: string; d: string }[] = [
+  { value: "idea", l: "Ganz früh dabei", d: "Idee-Phase, gemeinsam von Null formen." },
+  { value: "mvp", l: "Beim MVP einsteigen", d: "Prototyp steht, jetzt richtig bauen." },
+  { value: "revenue", l: "Wenn Umsatz da ist", d: "Erste zahlende Kund:innen, jetzt skalieren." },
+  { value: "scaling", l: "Egal, Hauptsache passt", d: "Stage zweitrangig, Chemie zählt." },
 ];
 const commitmentChips: { value: Form["commitment"]; l: string }[] = [
   { value: "full_time", l: "In 30 Tagen" },
@@ -60,6 +70,7 @@ function Onboarding() {
   const [saving, setSaving] = useState(false);
   const [autosave, setAutosave] = useState<string>("");
   const [form, setForm] = useState<Form>({
+    path: "",
     display_name: "",
     location: "",
     photo_url: "",
@@ -73,6 +84,9 @@ function Onboarding() {
   });
   const [commitChip, setCommitChip] = useState<number | null>(null);
 
+  const STEPS = form.path === "joiner" ? JOINER_STEPS : FOUNDER_STEPS;
+  const isJoiner = form.path === "joiner";
+
   useEffect(() => {
     if (!user) return;
     supabase
@@ -83,6 +97,7 @@ function Onboarding() {
       .then(({ data }) => {
         if (!data) return;
         setForm({
+          path: ((data as any).path as Path) ?? "",
           display_name: data.display_name ?? "",
           location: data.location ?? "",
           photo_url: data.photo_url ?? "",
@@ -97,22 +112,35 @@ function Onboarding() {
       });
   }, [user]);
 
-  // autosave indicator (debounced visual only)
   useEffect(() => {
     const t = setTimeout(() => setAutosave("vor 4s"), 1200);
     return () => clearTimeout(t);
   }, [form, step]);
 
   const validateStep = (): string | null => {
+    // Step 0: Pfad — always
     if (step === 0) {
-      if (form.display_name.trim().length < 2) return "Name zu kurz";
+      if (!form.path) return "Wähle einen Pfad";
+      return null;
     }
-    if (step === 1) {
-      if (form.vision.trim().length < 20) return "Mindestens 20 Zeichen für deine Story";
+    if (isJoiner) {
+      // 1 Identity, 2 Skills, 3 Was du suchst, 4 Logistik, 5 Review
+      if (step === 1 && form.display_name.trim().length < 2) return "Name zu kurz";
+      if (step === 2) {
+        if (!form.role) return "Wähle deine Rolle";
+        if (form.skills.trim().length < 2) return "Mindestens ein Skill";
+      }
+      if (step === 3 && form.looking_for.trim().length < 20)
+        return "Mindestens 20 Zeichen — beschreib das Projekt";
+      if (step === 4 && !form.commitment) return "Wann kannst du loslegen?";
+      return null;
     }
-    if (step === 2 && !form.stage) return "Wähle eine Stage";
-    if (step === 3 && form.looking_for.trim().length < 20) return "Mindestens 20 Zeichen";
-    if (step === 4 && !form.role) return "Wähle deine Rolle";
+    // Founder
+    if (step === 1 && form.display_name.trim().length < 2) return "Name zu kurz";
+    if (step === 2 && form.vision.trim().length < 20) return "Mindestens 20 Zeichen für deine Idee";
+    if (step === 3 && !form.stage) return "Wähle eine Stage";
+    if (step === 4 && form.looking_for.trim().length < 20) return "Mindestens 20 Zeichen";
+    if (step === 5 && !form.role) return "Wähle deine Rolle";
     return null;
   };
 
@@ -124,15 +152,22 @@ function Onboarding() {
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
   const submit = async () => {
-    const schema = z.object({
+    const baseSchema = z.object({
+      path: z.enum(["founder", "joiner"]),
       display_name: z.string().trim().min(2).max(80),
-      vision: z.string().trim().min(20).max(1000),
-      looking_for: z.string().trim().min(20).max(1000),
       role: z.enum(["tech", "business", "product", "design", "other"]),
-      stage: z.enum(["idea", "mvp", "revenue", "scaling"]),
       commitment: z.enum(["full_time", "part_time", "exploring"]),
+      looking_for: z.string().trim().min(20).max(1000),
     });
-    const parsed = schema.safeParse(form);
+    const founderSchema = baseSchema.extend({
+      vision: z.string().trim().min(20).max(1000),
+      stage: z.enum(["idea", "mvp", "revenue", "scaling"]),
+    });
+    const joinerSchema = baseSchema.extend({
+      vision: z.string().max(1000).optional().or(z.literal("")),
+      stage: z.enum(["idea", "mvp", "revenue", "scaling"]).optional().or(z.literal("")),
+    });
+    const parsed = (isJoiner ? joinerSchema : founderSchema).safeParse(form);
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setSaving(true);
     const skills = form.skills
@@ -141,10 +176,11 @@ function Onboarding() {
     const { error } = await supabase
       .from("profiles")
       .update({
+        path: form.path || null,
         display_name: form.display_name,
         location: form.location || null,
         photo_url: form.photo_url || null,
-        vision: form.vision,
+        vision: form.vision || null,
         looking_for: form.looking_for,
         role: form.role || null,
         stage: form.stage || null,
@@ -152,7 +188,7 @@ function Onboarding() {
         industry: form.industry || null,
         skills,
         onboarded_at: new Date().toISOString(),
-      })
+      } as any)
       .eq("id", user!.id);
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -234,7 +270,36 @@ function Onboarding() {
             {String(step + 1).padStart(2, "0")} · {STEPS[step]}
           </div>
 
+          {/* STEP 0 — Pfad */}
           {step === 0 && (
+            <>
+              <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
+                Was bringst du <span className="font-serif italic font-normal">mit?</span>
+              </h2>
+              <p className="mt-3 max-w-[560px] text-[15px] leading-relaxed text-[var(--smoke)]">
+                Diese Wahl entscheidet den Rest. Du kannst sie später ändern.
+              </p>
+              <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <PathCard
+                  active={form.path === "founder"}
+                  onClick={() => setForm({ ...form, path: "founder" })}
+                  icon={<Lightbulb className="h-5 w-5" />}
+                  title="Ich hab eine Idee"
+                  desc="Du baust an etwas und suchst eine Mitgründer:in, die mit dir loslegt."
+                />
+                <PathCard
+                  active={form.path === "joiner"}
+                  onClick={() => setForm({ ...form, path: "joiner" })}
+                  icon={<Wrench className="h-5 w-5" />}
+                  title="Ich biete Skills an"
+                  desc="Du hast noch keine eigene Idee, willst aber bei einem Projekt einsteigen."
+                />
+              </div>
+            </>
+          )}
+
+          {/* STEP 1 — Identity (both paths) */}
+          {step === 1 && (
             <>
               <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
                 Wer bist <span className="font-serif italic font-normal">du?</span>
@@ -268,7 +333,8 @@ function Onboarding() {
             </>
           )}
 
-          {step === 1 && (
+          {/* FOUNDER: STEP 2 — Vision */}
+          {!isJoiner && step === 2 && (
             <>
               <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
                 Was baust du, <span className="font-serif italic font-normal">ehrlich?</span>
@@ -277,7 +343,7 @@ function Onboarding() {
                 Keine Pitch-Folie. Schreib so wie du einer Freundin am Abend erzählen würdest, was dich packt.
               </p>
               <div className="mt-7">
-                <Field label="Deine Geschichte (mind. 20 Zeichen)">
+                <Field label="Deine Idee (mind. 20 Zeichen)">
                   <Textarea
                     rows={7}
                     value={form.vision}
@@ -289,89 +355,38 @@ function Onboarding() {
             </>
           )}
 
-          {step === 2 && (
+          {/* FOUNDER: STEP 3 — Stage */}
+          {!isJoiner && step === 3 && (
             <>
               <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
                 Wo stehst du, <span className="font-serif italic font-normal">ehrlich?</span>
               </h2>
               <p className="mt-3 max-w-[560px] text-[15px] leading-relaxed text-[var(--smoke)]">
-                Wir matchen Founder die ungefähr gleich weit sind. Lügen hilft niemandem — wähl die nächstgelegene Wahrheit.
+                Wir matchen Founder die ungefähr gleich weit sind. Lügen hilft niemandem.
               </p>
               <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {stageOptions.map((opt) => {
-                  const sel = form.stage === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setForm({ ...form, stage: opt.value })}
-                      className="flex items-start gap-3.5 rounded-2xl p-5 text-left transition"
-                      style={{
-                        background: sel ? "rgba(226,81,28,0.10)" : "rgba(255,255,255,0.55)",
-                        border: sel
-                          ? "1.5px solid var(--ember)"
-                          : "1px solid rgba(21,20,15,0.10)",
-                        boxShadow: sel
-                          ? "0 10px 24px -10px rgba(178,59,14,0.30)"
-                          : "none",
-                      }}
-                    >
-                      <span
-                        className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md"
-                        style={{
-                          background: sel ? "var(--ember)" : "transparent",
-                          border: sel ? "none" : "1.5px solid rgba(21,20,15,0.25)",
-                        }}
-                      >
-                        {sel && <Check className="h-3.5 w-3.5" style={{ color: "var(--cream)" }} />}
-                      </span>
-                      <span>
-                        <div className="text-base font-semibold tracking-tight">{opt.l}</div>
-                        <div className="mt-1 text-[13px] leading-snug text-[var(--smoke)]">{opt.d}</div>
-                      </span>
-                    </button>
-                  );
-                })}
+                {stageOptions.map((opt) => (
+                  <SelectCard
+                    key={opt.value}
+                    selected={form.stage === opt.value}
+                    onClick={() => setForm({ ...form, stage: opt.value })}
+                    title={opt.l}
+                    desc={opt.d}
+                  />
+                ))}
               </div>
-
-              <div
-                className="mt-6 rounded-2xl px-5 py-4"
-                style={{
-                  background: "rgba(21,20,15,0.04)",
-                  border: "1px solid rgba(21,20,15,0.06)",
+              <CommitmentRow
+                commitChip={commitChip}
+                setChip={(i, v) => {
+                  setCommitChip(i);
+                  setForm({ ...form, commitment: v });
                 }}
-              >
-                <div className="eyebrow mb-3">Wann gehst du Vollzeit?</div>
-                <div className="flex flex-wrap gap-2">
-                  {commitmentChips.map((c, i) => {
-                    const sel = commitChip === i;
-                    return (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => {
-                          setCommitChip(i);
-                          setForm({ ...form, commitment: c.value });
-                        }}
-                        className="rounded-full px-3.5 py-2 text-sm font-medium transition"
-                        style={{
-                          background: sel ? "var(--ink)" : "rgba(255,255,255,0.7)",
-                          color: sel ? "var(--cream)" : "var(--ink)",
-                          border: sel
-                            ? "1px solid transparent"
-                            : "1px solid rgba(21,20,15,0.10)",
-                        }}
-                      >
-                        {c.l}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              />
             </>
           )}
 
-          {step === 3 && (
+          {/* FOUNDER: STEP 4 — Was du suchst */}
+          {!isJoiner && step === 4 && (
             <>
               <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
                 Wen suchst du, <span className="font-serif italic font-normal">wirklich?</span>
@@ -392,55 +407,32 @@ function Onboarding() {
             </>
           )}
 
-          {step === 4 && (
+          {/* FOUNDER: STEP 5 — Logistik (Rolle) */}
+          {!isJoiner && step === 5 && (
+            <LogistikRolle form={form} setForm={setForm} />
+          )}
+
+          {/* JOINER: STEP 2 — Skills */}
+          {isJoiner && step === 2 && (
             <>
               <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
                 Was bringst du <span className="font-serif italic font-normal">mit?</span>
               </h2>
               <p className="mt-3 max-w-[560px] text-[15px] leading-relaxed text-[var(--smoke)]">
-                Deine Rolle, deine Branche, deine Skills. Knapp.
+                Deine Rolle und Skills sind dein Pitch. Konkret schlägt allgemein.
               </p>
               <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {roleOptions.map((opt) => {
-                  const sel = form.role === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setForm({ ...form, role: opt.value })}
-                      className="flex items-start gap-3.5 rounded-2xl p-5 text-left transition"
-                      style={{
-                        background: sel ? "rgba(226,81,28,0.10)" : "rgba(255,255,255,0.55)",
-                        border: sel
-                          ? "1.5px solid var(--ember)"
-                          : "1px solid rgba(21,20,15,0.10)",
-                      }}
-                    >
-                      <span
-                        className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md"
-                        style={{
-                          background: sel ? "var(--ember)" : "transparent",
-                          border: sel ? "none" : "1.5px solid rgba(21,20,15,0.25)",
-                        }}
-                      >
-                        {sel && <Check className="h-3.5 w-3.5" style={{ color: "var(--cream)" }} />}
-                      </span>
-                      <span>
-                        <div className="text-base font-semibold tracking-tight">{opt.l}</div>
-                        <div className="mt-1 text-[13px] leading-snug text-[var(--smoke)]">{opt.d}</div>
-                      </span>
-                    </button>
-                  );
-                })}
+                {roleOptions.map((opt) => (
+                  <SelectCard
+                    key={opt.value}
+                    selected={form.role === opt.value}
+                    onClick={() => setForm({ ...form, role: opt.value })}
+                    title={opt.l}
+                    desc={opt.d}
+                  />
+                ))}
               </div>
               <div className="mt-6 grid gap-5">
-                <Field label="Branche (optional)">
-                  <Input
-                    value={form.industry}
-                    onChange={(e) => setForm({ ...form, industry: e.target.value })}
-                    placeholder="Fintech, B2B SaaS, …"
-                  />
-                </Field>
                 <Field label="Skills (Komma-getrennt)">
                   <Input
                     value={form.skills}
@@ -448,11 +440,80 @@ function Onboarding() {
                     placeholder="React, Sales, Pitching"
                   />
                 </Field>
+                <Field label="Branche / Erfahrung (optional)">
+                  <Input
+                    value={form.industry}
+                    onChange={(e) => setForm({ ...form, industry: e.target.value })}
+                    placeholder="Fintech, B2B SaaS, …"
+                  />
+                </Field>
+                <Field label="Kurz zu dir (optional)">
+                  <Textarea
+                    rows={4}
+                    value={form.vision}
+                    onChange={(e) => setForm({ ...form, vision: e.target.value })}
+                    placeholder="5 Jahre Engineering bei … habe schon zwei Produkte von 0→1 gebracht …"
+                  />
+                </Field>
               </div>
             </>
           )}
 
-          {step === 5 && (
+          {/* JOINER: STEP 3 — Was für ein Projekt */}
+          {isJoiner && step === 3 && (
+            <>
+              <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
+                In was willst du <span className="font-serif italic font-normal">einsteigen?</span>
+              </h2>
+              <p className="mt-3 max-w-[560px] text-[15px] leading-relaxed text-[var(--smoke)]">
+                Welche Phase passt zu dir? Und was muss das Projekt mitbringen, damit du All-in gehst?
+              </p>
+              <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {joinerStageOptions.map((opt) => (
+                  <SelectCard
+                    key={opt.value}
+                    selected={form.stage === opt.value}
+                    onClick={() => setForm({ ...form, stage: opt.value })}
+                    title={opt.l}
+                    desc={opt.d}
+                  />
+                ))}
+              </div>
+              <div className="mt-6">
+                <Field label="Was muss das Projekt mitbringen? (mind. 20 Zeichen)">
+                  <Textarea
+                    rows={6}
+                    value={form.looking_for}
+                    onChange={(e) => setForm({ ...form, looking_for: e.target.value })}
+                    placeholder="B2B, technisch ambitioniert, Gründer:in mit Domain-Expertise …"
+                  />
+                </Field>
+              </div>
+            </>
+          )}
+
+          {/* JOINER: STEP 4 — Logistik */}
+          {isJoiner && step === 4 && (
+            <>
+              <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
+                Wann kannst du <span className="font-serif italic font-normal">loslegen?</span>
+              </h2>
+              <p className="mt-3 max-w-[560px] text-[15px] leading-relaxed text-[var(--smoke)]">
+                Sag ehrlich, wie viel du investieren kannst. Founder filtern hart auf Commitment.
+              </p>
+              <CommitmentRow
+                commitChip={commitChip}
+                setChip={(i, v) => {
+                  setCommitChip(i);
+                  setForm({ ...form, commitment: v });
+                }}
+                bare
+              />
+            </>
+          )}
+
+          {/* REVIEW — last step for both paths */}
+          {step === STEPS.length - 1 && (
             <>
               <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
                 Bereit zum <span className="font-serif italic font-normal">veröffentlichen?</span>
@@ -467,15 +528,31 @@ function Onboarding() {
                   border: "1px solid rgba(21,20,15,0.06)",
                 }}
               >
+                <ReviewRow label="Pfad" value={form.path === "founder" ? "Founder mit Idee" : "Joiner mit Skills"} />
                 <ReviewRow label="Name" value={form.display_name} />
                 <ReviewRow label="Standort" value={form.location || "—"} />
-                <ReviewRow label="Stage" value={form.stage || "—"} />
+                {!isJoiner && <ReviewRow label="Stage" value={form.stage || "—"} />}
+                {isJoiner && <ReviewRow label="Wunsch-Stage" value={form.stage || "—"} />}
                 <ReviewRow label="Commitment" value={form.commitment || "—"} />
                 <ReviewRow label="Rolle" value={form.role || "—"} />
                 <ReviewRow label="Branche" value={form.industry || "—"} />
                 <ReviewRow label="Skills" value={form.skills || "—"} />
-                <ReviewRow label="Story" value={form.vision.slice(0, 120) + (form.vision.length > 120 ? "…" : "")} />
-                <ReviewRow label="Sucht" value={form.looking_for.slice(0, 120) + (form.looking_for.length > 120 ? "…" : "")} />
+                {!isJoiner && (
+                  <ReviewRow
+                    label="Idee"
+                    value={form.vision.slice(0, 120) + (form.vision.length > 120 ? "…" : "")}
+                  />
+                )}
+                {isJoiner && form.vision && (
+                  <ReviewRow
+                    label="Kurz zu dir"
+                    value={form.vision.slice(0, 120) + (form.vision.length > 120 ? "…" : "")}
+                  />
+                )}
+                <ReviewRow
+                  label={isJoiner ? "Projekt-Wunsch" : "Sucht"}
+                  value={form.looking_for.slice(0, 120) + (form.looking_for.length > 120 ? "…" : "")}
+                />
               </div>
             </>
           )}
@@ -521,6 +598,175 @@ function Onboarding() {
         </div>
       </div>
     </div>
+  );
+}
+
+function PathCard({
+  active,
+  onClick,
+  icon,
+  title,
+  desc,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex flex-col gap-3 rounded-2xl p-6 text-left transition"
+      style={{
+        background: active ? "rgba(226,81,28,0.10)" : "rgba(255,255,255,0.55)",
+        border: active ? "1.5px solid var(--ember)" : "1px solid rgba(21,20,15,0.10)",
+        boxShadow: active ? "0 12px 28px -12px rgba(178,59,14,0.32)" : "none",
+      }}
+    >
+      <span
+        className="flex h-10 w-10 items-center justify-center rounded-xl"
+        style={{
+          background: active ? "var(--ember)" : "rgba(21,20,15,0.06)",
+          color: active ? "var(--cream)" : "var(--ink)",
+        }}
+      >
+        {icon}
+      </span>
+      <div>
+        <div className="text-lg font-semibold tracking-tight">{title}</div>
+        <div className="mt-1 text-[13px] leading-snug text-[var(--smoke)]">{desc}</div>
+      </div>
+    </button>
+  );
+}
+
+function SelectCard({
+  selected,
+  onClick,
+  title,
+  desc,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-start gap-3.5 rounded-2xl p-5 text-left transition"
+      style={{
+        background: selected ? "rgba(226,81,28,0.10)" : "rgba(255,255,255,0.55)",
+        border: selected ? "1.5px solid var(--ember)" : "1px solid rgba(21,20,15,0.10)",
+        boxShadow: selected ? "0 10px 24px -10px rgba(178,59,14,0.30)" : "none",
+      }}
+    >
+      <span
+        className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md"
+        style={{
+          background: selected ? "var(--ember)" : "transparent",
+          border: selected ? "none" : "1.5px solid rgba(21,20,15,0.25)",
+        }}
+      >
+        {selected && <Check className="h-3.5 w-3.5" style={{ color: "var(--cream)" }} />}
+      </span>
+      <span>
+        <div className="text-base font-semibold tracking-tight">{title}</div>
+        <div className="mt-1 text-[13px] leading-snug text-[var(--smoke)]">{desc}</div>
+      </span>
+    </button>
+  );
+}
+
+function CommitmentRow({
+  commitChip,
+  setChip,
+  bare = false,
+}: {
+  commitChip: number | null;
+  setChip: (i: number, v: Form["commitment"]) => void;
+  bare?: boolean;
+}) {
+  return (
+    <div
+      className={bare ? "mt-7" : "mt-6 rounded-2xl px-5 py-4"}
+      style={
+        bare
+          ? undefined
+          : { background: "rgba(21,20,15,0.04)", border: "1px solid rgba(21,20,15,0.06)" }
+      }
+    >
+      {!bare && <div className="eyebrow mb-3">Wann gehst du Vollzeit?</div>}
+      <div className="flex flex-wrap gap-2">
+        {commitmentChips.map((c, i) => {
+          const sel = commitChip === i;
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setChip(i, c.value)}
+              className="rounded-full px-3.5 py-2 text-sm font-medium transition"
+              style={{
+                background: sel ? "var(--ink)" : "rgba(255,255,255,0.7)",
+                color: sel ? "var(--cream)" : "var(--ink)",
+                border: sel ? "1px solid transparent" : "1px solid rgba(21,20,15,0.10)",
+              }}
+            >
+              {c.l}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function LogistikRolle({
+  form,
+  setForm,
+}: {
+  form: Form;
+  setForm: (f: Form) => void;
+}) {
+  return (
+    <>
+      <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
+        Was bringst du <span className="font-serif italic font-normal">mit?</span>
+      </h2>
+      <p className="mt-3 max-w-[560px] text-[15px] leading-relaxed text-[var(--smoke)]">
+        Deine Rolle, deine Branche, deine Skills. Knapp.
+      </p>
+      <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {roleOptions.map((opt) => (
+          <SelectCard
+            key={opt.value}
+            selected={form.role === opt.value}
+            onClick={() => setForm({ ...form, role: opt.value })}
+            title={opt.l}
+            desc={opt.d}
+          />
+        ))}
+      </div>
+      <div className="mt-6 grid gap-5">
+        <Field label="Branche (optional)">
+          <Input
+            value={form.industry}
+            onChange={(e) => setForm({ ...form, industry: e.target.value })}
+            placeholder="Fintech, B2B SaaS, …"
+          />
+        </Field>
+        <Field label="Skills (Komma-getrennt)">
+          <Input
+            value={form.skills}
+            onChange={(e) => setForm({ ...form, skills: e.target.value })}
+            placeholder="React, Sales, Pitching"
+          />
+        </Field>
+      </div>
+    </>
   );
 }
 
