@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthGate } from "@/components/AuthGate";
 import { Button } from "@/components/ui/button";
-import { Heart, X, MapPin } from "lucide-react";
+import { Heart, X, MapPin, SlidersHorizontal, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 const AVATAR_COLORS = [
@@ -92,6 +92,7 @@ function Discover() {
   const [fRole, setFRole] = useState<FilterValue>("all");
   const [fStage, setFStage] = useState<FilterValue>("all");
   const [fCommit, setFCommit] = useState<FilterValue>("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const filtered = queue.filter((p) =>
     (fPath === "all" || p.path === fPath) &&
@@ -196,24 +197,41 @@ function Discover() {
   }
 
   const filterBar = (
-    <div className="glass-pane mt-8 p-5">
-      <div className="flex items-center justify-between">
-        <div className="eyebrow">Filter{activeCount > 0 ? ` · ${activeCount} aktiv` : ""}</div>
-        {activeCount > 0 && (
-          <button
-            onClick={resetFilters}
-            className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--ember-deep)] hover:underline"
-          >
-            Zurücksetzen
-          </button>
-        )}
-      </div>
-      <div className="mt-4 space-y-3">
-        <FilterRow label="Pfad" options={PATH_OPTIONS} value={fPath} onChange={setFPath} />
-        <FilterRow label="Rolle" options={ROLE_OPTIONS} value={fRole} onChange={setFRole} />
-        <FilterRow label="Stage" options={STAGE_OPTIONS} value={fStage} onChange={setFStage} />
-        <FilterRow label="Commit" options={COMMIT_OPTIONS} value={fCommit} onChange={setFCommit} />
-      </div>
+    <div className="glass-pane mt-8 p-4 sm:p-5">
+      <button
+        onClick={() => setFiltersOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 text-left"
+        aria-expanded={filtersOpen}
+      >
+        <div className="flex items-center gap-2">
+          <SlidersHorizontal className="h-4 w-4 text-[var(--ember-deep)]" />
+          <span className="eyebrow">
+            Filter{activeCount > 0 ? ` · ${activeCount} aktiv` : ""}
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          {activeCount > 0 && (
+            <span
+              onClick={(e) => { e.stopPropagation(); resetFilters(); }}
+              className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--ember-deep)] hover:underline"
+              role="button"
+            >
+              Reset
+            </span>
+          )}
+          <ChevronDown
+            className={`h-4 w-4 text-[var(--smoke)] transition-transform ${filtersOpen ? "rotate-180" : ""}`}
+          />
+        </div>
+      </button>
+      {filtersOpen && (
+        <div className="mt-4 space-y-3">
+          <FilterRow label="Pfad" options={PATH_OPTIONS} value={fPath} onChange={setFPath} />
+          <FilterRow label="Rolle" options={ROLE_OPTIONS} value={fRole} onChange={setFRole} />
+          <FilterRow label="Stage" options={STAGE_OPTIONS} value={fStage} onChange={setFStage} />
+          <FilterRow label="Commit" options={COMMIT_OPTIONS} value={fCommit} onChange={setFCommit} />
+        </div>
+      )}
     </div>
   );
 
@@ -355,8 +373,8 @@ function FilterRow({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="w-16 shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--smoke)]">
+    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+      <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--smoke)] sm:w-16 sm:shrink-0">
         {label}
       </span>
       <div className="flex flex-wrap gap-1.5">
