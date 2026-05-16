@@ -56,13 +56,13 @@ function AuthPage() {
     }
   };
 
-  const google = async () => {
+  const oauth = async (provider: "google" | "apple") => {
     const { lovable } = await import("@/integrations/lovable/index");
-    const result = await lovable.auth.signInWithOAuth("google", {
+    const result = await lovable.auth.signInWithOAuth(provider, {
       redirect_uri: `${window.location.origin}/onboarding`,
     });
     if (result.error) {
-      toast.error(result.error.message ?? "Google-Login fehlgeschlagen");
+      toast.error(result.error.message ?? "Login fehlgeschlagen");
       return;
     }
     if (result.redirected) return;
