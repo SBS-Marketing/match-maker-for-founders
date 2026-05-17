@@ -9,15 +9,38 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TalentRouteImport } from './routes/talent'
+import { Route as SteuerRouteImport } from './routes/steuer'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as MentorenRouteImport } from './routes/mentoren'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as KapitalRouteImport } from './routes/kapital'
+import { Route as HeuteRouteImport } from './routes/heute'
+import { Route as GrowthRouteImport } from './routes/growth'
 import { Route as EntdeckenRouteImport } from './routes/entdecken'
 import { Route as DiscoverRouteImport } from './routes/discover'
+import { Route as CoPilotRouteImport } from './routes/co-pilot'
+import { Route as CoFounderRouteImport } from './routes/co-founder'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RechtIndexRouteImport } from './routes/recht.index'
 import { Route as MatchesIndexRouteImport } from './routes/matches.index'
+import { Route as FoerderungIndexRouteImport } from './routes/foerderung.index'
+import { Route as RechtSlugRouteImport } from './routes/recht.$slug'
 import { Route as MatchesIdRouteImport } from './routes/matches.$id'
+import { Route as FoerderungSlugRouteImport } from './routes/foerderung.$slug'
 
+const TalentRoute = TalentRouteImport.update({
+  id: '/talent',
+  path: '/talent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SteuerRoute = SteuerRouteImport.update({
+  id: '/steuer',
+  path: '/steuer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -26,6 +49,31 @@ const ProfileRoute = ProfileRouteImport.update({
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MentorenRoute = MentorenRouteImport.update({
+  id: '/mentoren',
+  path: '/mentoren',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KapitalRoute = KapitalRouteImport.update({
+  id: '/kapital',
+  path: '/kapital',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HeuteRoute = HeuteRouteImport.update({
+  id: '/heute',
+  path: '/heute',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GrowthRoute = GrowthRouteImport.update({
+  id: '/growth',
+  path: '/growth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EntdeckenRoute = EntdeckenRouteImport.update({
@@ -38,6 +86,16 @@ const DiscoverRoute = DiscoverRouteImport.update({
   path: '/discover',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CoPilotRoute = CoPilotRouteImport.update({
+  id: '/co-pilot',
+  path: '/co-pilot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoFounderRoute = CoFounderRouteImport.update({
+  id: '/co-founder',
+  path: '/co-founder',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -48,9 +106,24 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RechtIndexRoute = RechtIndexRouteImport.update({
+  id: '/recht/',
+  path: '/recht/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MatchesIndexRoute = MatchesIndexRouteImport.update({
   id: '/matches/',
   path: '/matches/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FoerderungIndexRoute = FoerderungIndexRouteImport.update({
+  id: '/foerderung/',
+  path: '/foerderung/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RechtSlugRoute = RechtSlugRouteImport.update({
+  id: '/recht/$slug',
+  path: '/recht/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MatchesIdRoute = MatchesIdRouteImport.update({
@@ -58,84 +131,194 @@ const MatchesIdRoute = MatchesIdRouteImport.update({
   path: '/matches/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FoerderungSlugRoute = FoerderungSlugRouteImport.update({
+  id: '/foerderung/$slug',
+  path: '/foerderung/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/co-founder': typeof CoFounderRoute
+  '/co-pilot': typeof CoPilotRoute
   '/discover': typeof DiscoverRoute
   '/entdecken': typeof EntdeckenRoute
+  '/growth': typeof GrowthRoute
+  '/heute': typeof HeuteRoute
+  '/kapital': typeof KapitalRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/mentoren': typeof MentorenRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
+  '/steuer': typeof SteuerRoute
+  '/talent': typeof TalentRoute
+  '/foerderung/$slug': typeof FoerderungSlugRoute
   '/matches/$id': typeof MatchesIdRoute
+  '/recht/$slug': typeof RechtSlugRoute
+  '/foerderung/': typeof FoerderungIndexRoute
   '/matches/': typeof MatchesIndexRoute
+  '/recht/': typeof RechtIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/co-founder': typeof CoFounderRoute
+  '/co-pilot': typeof CoPilotRoute
   '/discover': typeof DiscoverRoute
   '/entdecken': typeof EntdeckenRoute
+  '/growth': typeof GrowthRoute
+  '/heute': typeof HeuteRoute
+  '/kapital': typeof KapitalRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/mentoren': typeof MentorenRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
+  '/steuer': typeof SteuerRoute
+  '/talent': typeof TalentRoute
+  '/foerderung/$slug': typeof FoerderungSlugRoute
   '/matches/$id': typeof MatchesIdRoute
+  '/recht/$slug': typeof RechtSlugRoute
+  '/foerderung': typeof FoerderungIndexRoute
   '/matches': typeof MatchesIndexRoute
+  '/recht': typeof RechtIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/co-founder': typeof CoFounderRoute
+  '/co-pilot': typeof CoPilotRoute
   '/discover': typeof DiscoverRoute
   '/entdecken': typeof EntdeckenRoute
+  '/growth': typeof GrowthRoute
+  '/heute': typeof HeuteRoute
+  '/kapital': typeof KapitalRoute
+  '/marketplace': typeof MarketplaceRoute
+  '/mentoren': typeof MentorenRoute
   '/onboarding': typeof OnboardingRoute
   '/profile': typeof ProfileRoute
+  '/steuer': typeof SteuerRoute
+  '/talent': typeof TalentRoute
+  '/foerderung/$slug': typeof FoerderungSlugRoute
   '/matches/$id': typeof MatchesIdRoute
+  '/recht/$slug': typeof RechtSlugRoute
+  '/foerderung/': typeof FoerderungIndexRoute
   '/matches/': typeof MatchesIndexRoute
+  '/recht/': typeof RechtIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
+    | '/co-founder'
+    | '/co-pilot'
     | '/discover'
     | '/entdecken'
+    | '/growth'
+    | '/heute'
+    | '/kapital'
+    | '/marketplace'
+    | '/mentoren'
     | '/onboarding'
     | '/profile'
+    | '/steuer'
+    | '/talent'
+    | '/foerderung/$slug'
     | '/matches/$id'
+    | '/recht/$slug'
+    | '/foerderung/'
     | '/matches/'
+    | '/recht/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/co-founder'
+    | '/co-pilot'
     | '/discover'
     | '/entdecken'
+    | '/growth'
+    | '/heute'
+    | '/kapital'
+    | '/marketplace'
+    | '/mentoren'
     | '/onboarding'
     | '/profile'
+    | '/steuer'
+    | '/talent'
+    | '/foerderung/$slug'
     | '/matches/$id'
+    | '/recht/$slug'
+    | '/foerderung'
     | '/matches'
+    | '/recht'
   id:
     | '__root__'
     | '/'
     | '/auth'
+    | '/co-founder'
+    | '/co-pilot'
     | '/discover'
     | '/entdecken'
+    | '/growth'
+    | '/heute'
+    | '/kapital'
+    | '/marketplace'
+    | '/mentoren'
     | '/onboarding'
     | '/profile'
+    | '/steuer'
+    | '/talent'
+    | '/foerderung/$slug'
     | '/matches/$id'
+    | '/recht/$slug'
+    | '/foerderung/'
     | '/matches/'
+    | '/recht/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  CoFounderRoute: typeof CoFounderRoute
+  CoPilotRoute: typeof CoPilotRoute
   DiscoverRoute: typeof DiscoverRoute
   EntdeckenRoute: typeof EntdeckenRoute
+  GrowthRoute: typeof GrowthRoute
+  HeuteRoute: typeof HeuteRoute
+  KapitalRoute: typeof KapitalRoute
+  MarketplaceRoute: typeof MarketplaceRoute
+  MentorenRoute: typeof MentorenRoute
   OnboardingRoute: typeof OnboardingRoute
   ProfileRoute: typeof ProfileRoute
+  SteuerRoute: typeof SteuerRoute
+  TalentRoute: typeof TalentRoute
+  FoerderungSlugRoute: typeof FoerderungSlugRoute
   MatchesIdRoute: typeof MatchesIdRoute
+  RechtSlugRoute: typeof RechtSlugRoute
+  FoerderungIndexRoute: typeof FoerderungIndexRoute
   MatchesIndexRoute: typeof MatchesIndexRoute
+  RechtIndexRoute: typeof RechtIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/talent': {
+      id: '/talent'
+      path: '/talent'
+      fullPath: '/talent'
+      preLoaderRoute: typeof TalentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/steuer': {
+      id: '/steuer'
+      path: '/steuer'
+      fullPath: '/steuer'
+      preLoaderRoute: typeof SteuerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -148,6 +331,41 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mentoren': {
+      id: '/mentoren'
+      path: '/mentoren'
+      fullPath: '/mentoren'
+      preLoaderRoute: typeof MentorenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kapital': {
+      id: '/kapital'
+      path: '/kapital'
+      fullPath: '/kapital'
+      preLoaderRoute: typeof KapitalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/heute': {
+      id: '/heute'
+      path: '/heute'
+      fullPath: '/heute'
+      preLoaderRoute: typeof HeuteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/growth': {
+      id: '/growth'
+      path: '/growth'
+      fullPath: '/growth'
+      preLoaderRoute: typeof GrowthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/entdecken': {
@@ -164,6 +382,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DiscoverRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/co-pilot': {
+      id: '/co-pilot'
+      path: '/co-pilot'
+      fullPath: '/co-pilot'
+      preLoaderRoute: typeof CoPilotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/co-founder': {
+      id: '/co-founder'
+      path: '/co-founder'
+      fullPath: '/co-founder'
+      preLoaderRoute: typeof CoFounderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -178,11 +410,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/recht/': {
+      id: '/recht/'
+      path: '/recht'
+      fullPath: '/recht/'
+      preLoaderRoute: typeof RechtIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/matches/': {
       id: '/matches/'
       path: '/matches'
       fullPath: '/matches/'
       preLoaderRoute: typeof MatchesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/foerderung/': {
+      id: '/foerderung/'
+      path: '/foerderung'
+      fullPath: '/foerderung/'
+      preLoaderRoute: typeof FoerderungIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recht/$slug': {
+      id: '/recht/$slug'
+      path: '/recht/$slug'
+      fullPath: '/recht/$slug'
+      preLoaderRoute: typeof RechtSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/matches/$id': {
@@ -192,19 +445,49 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MatchesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/foerderung/$slug': {
+      id: '/foerderung/$slug'
+      path: '/foerderung/$slug'
+      fullPath: '/foerderung/$slug'
+      preLoaderRoute: typeof FoerderungSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  CoFounderRoute: CoFounderRoute,
+  CoPilotRoute: CoPilotRoute,
   DiscoverRoute: DiscoverRoute,
   EntdeckenRoute: EntdeckenRoute,
+  GrowthRoute: GrowthRoute,
+  HeuteRoute: HeuteRoute,
+  KapitalRoute: KapitalRoute,
+  MarketplaceRoute: MarketplaceRoute,
+  MentorenRoute: MentorenRoute,
   OnboardingRoute: OnboardingRoute,
   ProfileRoute: ProfileRoute,
+  SteuerRoute: SteuerRoute,
+  TalentRoute: TalentRoute,
+  FoerderungSlugRoute: FoerderungSlugRoute,
   MatchesIdRoute: MatchesIdRoute,
+  RechtSlugRoute: RechtSlugRoute,
+  FoerderungIndexRoute: FoerderungIndexRoute,
   MatchesIndexRoute: MatchesIndexRoute,
+  RechtIndexRoute: RechtIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
