@@ -17,11 +17,11 @@ export const Route = createFileRoute("/heute")({
 
 type Row = { sId: ServiceId; name: string; status: string; note: string; t: string; hot?: boolean };
 const FEED: Row[] = [
-  { sId: "cofounder", name: "Anna Wojcik", status: "Tag 6 von 90", note: "„Freitag passt — Doku kommt vorher."", t: "2m", hot: true },
-  { sId: "legal", name: "Dr. Lena Heller", status: "Vertragsentwurf", note: "„ESOP-Pool auf 12,5% — passt das?"", t: "1h", hot: true },
+  { sId: "cofounder", name: "Anna Wojcik", status: "Tag 6 von 90", note: "„Freitag passt — Doku kommt vorher.", t: "2m", hot: true },
+  { sId: "legal", name: "Dr. Lena Heller", status: "Vertragsentwurf", note: "„ESOP-Pool auf 12,5% — passt das?", t: "1h", hot: true },
   { sId: "funding", name: "EXIST · DLR", status: "Antrag offen", note: "Co-Pilot: 3 Felder fehlen", t: "3h" },
   { sId: "mentor", name: "Felix Krämer", status: "Office Hour", note: "Termin Mittwoch 17:00", t: "1d" },
-  { sId: "tax", name: "Marek Lewandowski", status: "Erstgespräch", note: "„Schick mir Cap Table Draft"", t: "2d" },
+  { sId: "tax", name: "Marek Lewandowski", status: "Erstgespräch", note: "„Schick mir Cap Table Draft", t: "2d" },
 ];
 
 function CommandCenter() {
