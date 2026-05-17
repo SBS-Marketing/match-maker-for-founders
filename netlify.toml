@@ -1,0 +1,23 @@
+[build]
+  command   = ""        # kein Build-Schritt — pure HTML
+  publish   = "public"
+
+[[redirects]]
+  from = "/board"
+  to   = "/board.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin"
+  to   = "/admin.html"
+  status = 200
+
+[[redirects]]
+  from = "/deals"
+  to   = "/deals.html"
+  status = 200
+
+[[headers]]
+  for = "/deals.json"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
