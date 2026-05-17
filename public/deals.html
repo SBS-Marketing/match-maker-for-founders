@@ -377,8 +377,8 @@
         <div class="stat-label">Kategorien</div>
       </div>
       <div class="stat-item">
-        <div class="stat-value">↻ täglich</div>
-        <div class="stat-label">Aktualisiert</div>
+        <div class="stat-value">↻ weekly</div>
+        <div class="stat-label" id="data-status" style="color:rgba(251,250,247,0.45);transition:color .5s">Pipeline lädt…</div>
       </div>
     </div>
   </div>
@@ -484,8 +484,8 @@
 <div class="toast" id="toast">✓ <span id="toast-msg">Gespeichert!</span></div>
 
 <script>
-// ── Data ───────────────────────────────────────────────────────────────────
-const DEALS = [
+// ── Data (Fallback – wird durch /deals.json überschrieben) ─────────────────
+const DEALS_FALLBACK = [
   // ── CLOUD & INFRA ──────────────────────────────────────────────────────
   {
     id: 'aws-activate', cat: 'cloud', tier: 'epic',
@@ -931,9 +931,39 @@ const DEALS = [
 ];
 
 // ── State ──────────────────────────────────────────────────────────────────
+let DEALS = DEALS_FALLBACK;
 let currentFilter = 'all';
 let currentSearch = '';
 let saved = new Set(JSON.parse(localStorage.getItem('mf_saved_deals') || '[]'));
+let lastUpdated = null;
+
+// ── Load from /deals.json ──────────────────────────────────────────────────
+async function loadDeals() {
+  const statusEl = document.getElementById('data-status');
+  try {
+    const res = await fetch('/deals.json?' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    // Normalisiere Feldnamen (Pipeline nutzt snake_case, Fallback camelCase)
+    DEALS = (data.deals || []).map(d => ({
+      ...d,
+      badgeClass: d.badge_class || d.badgeClass || 'good',
+      valueClass: d.value_class || d.valueClass || '',
+    }));
+    lastUpdated = data.stats?.last_updated;
+    if (statusEl) {
+      statusEl.textContent = `${DEALS.length} Deals · aktualisiert ${lastUpdated || 'kürzlich'}`;
+      statusEl.style.color = 'rgba(34,197,94,0.7)';
+    }
+    render();
+  } catch {
+    // Kein deals.json → Fallback-Daten nutzen (Pipeline noch nicht gelaufen)
+    if (statusEl) {
+      statusEl.textContent = `${DEALS_FALLBACK.length} Deals · curated (Pipeline noch nicht gelaufen)`;
+    }
+    render();
+  }
+}
 
 // ── Render ─────────────────────────────────────────────────────────────────
 function render() {
@@ -1133,7 +1163,7 @@ document.getElementById('submit-modal').addEventListener('click', function(e) {
 });
 
 // ── Init ───────────────────────────────────────────────────────────────────
-render();
+loadDeals();
 </script>
 </body>
 </html>
