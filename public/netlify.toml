@@ -1,0 +1,35 @@
+# Netlify-Konfiguration für matchfoundr Tools
+
+[build]
+  publish = "."   # Dieses File liegt in public/, also public/ selbst deployen
+
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/board"
+  to = "/board.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+
+[[redirects]]
+  from = "/deals"
+  to = "/deals.html"
+  status = 200
+
+[[headers]]
+  for = "/deals.json"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"

@@ -1,0 +1,27 @@
+name: Deploy Tools zu Netlify
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "public/**"
+      - "data/deals/**"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Netlify CLI installieren
+        run: npm install -g netlify-cli
+
+      - name: Deploy public/ → Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: netlify deploy --prod --dir=public --message "Deploy $(date +%Y-%m-%d\ %H:%M)"
+
+      - name: Deploy-URL ausgeben
+        run: echo "✓ Live unter https://$(echo ${{ secrets.NETLIFY_SITE_ID }} | cut -c1-8).netlify.app"
