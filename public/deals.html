@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>matchfoundr · Gründer-Deals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ember: #e2511c;
+    --ember-light: #f4845f;
+    --ember-dark: #b83d12;
+    --cream: #fbfaf7;
+    --ink: #15140f;
+    --ink-60: rgba(21,20,15,0.6);
+    --ink-30: rgba(21,20,15,0.3);
+    --ink-10: rgba(21,20,15,0.1);
+    --glass: rgba(251,250,247,0.06);
+    --glass-border: rgba(251,250,247,0.12);
+    --success: #22c55e;
+    --warn: #f59e0b;
+    --info: #3b82f6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Geist', sans-serif;
+    background: #0e0d09;
+    color: var(--cream);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background */
+  .bg {
+    position: fixed; inset: 0; z-index: 0; overflow: hidden;
+    background: radial-gradient(ellipse 80% 60% at 20% 10%, rgba(226,81,28,0.18) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 80% at 80% 80%, rgba(226,81,28,0.10) 0%, transparent 50%),
+                #0e0d09;
+  }
+  .bg-blob {
+    position: absolute; border-radius: 50%; filter: blur(80px); animation: float 20s ease-in-out infinite;
+  }
+  .bg-blob.b1 { width: 600px; height: 400px; background: rgba(226,81,28,0.12); top: -100px; left: -100px; animation-delay: 0s; }
+  .bg-blob.b2 { width: 400px; height: 400px; background: rgba(226,81,28,0.08); bottom: 100px; right: -50px; animation-delay: -8s; }
+  .bg-blob.b3 { width: 300px; height: 300px; background: rgba(244,132,95,0.06); top: 40%; left: 50%; animation-delay: -15s; }
+  @keyframes float {
+    0%,100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(30px,-20px) scale(1.05); }
+    66% { transform: translate(-20px,15px) scale(0.97); }
+  }
+
+  /* Layout */
+  .app { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* Nav */
+  nav {
+    display: flex; align-items: center; gap: 16px; padding: 16px 32px;
+    border-bottom: 1px solid var(--glass-border);
+    background: rgba(14,13,9,0.6); backdrop-filter: blur(20px);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+  .logo span { color: var(--ember); }
+  .nav-badge {
+    font-size: 10px; font-weight: 600; background: var(--ember); color: #fff;
+    padding: 2px 7px; border-radius: 20px; letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  nav .sep { flex: 1; }
+  .nav-links { display: flex; gap: 8px; }
+  .nav-link {
+    font-size: 13px; color: rgba(251,250,247,0.5); text-decoration: none;
+    padding: 6px 12px; border-radius: 8px; transition: all 0.2s;
+  }
+  .nav-link:hover { color: var(--cream); background: var(--glass); }
+  .nav-link.active { color: var(--ember); }
+  .submit-btn {
+    display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600;
+    background: var(--ember); color: #fff; border: none; border-radius: 8px;
+    padding: 8px 16px; cursor: pointer; transition: all 0.2s; font-family: 'Geist', sans-serif;
+  }
+  .submit-btn:hover { background: var(--ember-light); transform: translateY(-1px); }
+
+  /* Hero */
+  .hero {
+    padding: 64px 32px 40px;
+    max-width: 1200px; margin: 0 auto; width: 100%;
+  }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 600; color: var(--ember);
+    background: rgba(226,81,28,0.12); border: 1px solid rgba(226,81,28,0.25);
+    padding: 4px 12px; border-radius: 20px; letter-spacing: 0.5px;
+    text-transform: uppercase; margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-size: clamp(32px, 5vw, 52px); font-weight: 700; letter-spacing: -1.5px;
+    line-height: 1.1; margin-bottom: 16px;
+  }
+  .hero h1 em { font-style: normal; color: var(--ember); }
+  .hero p {
+    font-size: 17px; color: rgba(251,250,247,0.6); max-width: 580px; line-height: 1.6;
+    margin-bottom: 40px;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex; gap: 40px; padding: 24px 0; border-top: 1px solid var(--glass-border);
+    border-bottom: 1px solid var(--glass-border); margin-bottom: 48px;
+    flex-wrap: wrap;
+  }
+  .stat-item { display: flex; flex-direction: column; gap: 4px; }
+  .stat-value { font-size: 28px; font-weight: 700; letter-spacing: -1px; }
+  .stat-value.ember { color: var(--ember); }
+  .stat-label { font-size: 12px; color: rgba(251,250,247,0.45); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Main content */
+  .main {
+    padding: 0 32px 80px;
+    max-width: 1200px; margin: 0 auto; width: 100%;
+  }
+
+  /* Filter bar */
+  .filter-bar {
+    display: flex; gap: 12px; margin-bottom: 32px; flex-wrap: wrap; align-items: center;
+  }
+  .filter-label { font-size: 12px; color: rgba(251,250,247,0.4); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-right: 4px; }
+  .filter-btn {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 500; font-family: 'Geist', sans-serif;
+    background: var(--glass); border: 1px solid var(--glass-border);
+    color: rgba(251,250,247,0.6); padding: 8px 14px; border-radius: 20px;
+    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .filter-btn:hover { border-color: rgba(251,250,247,0.25); color: var(--cream); }
+  .filter-btn.active {
+    background: rgba(226,81,28,0.15); border-color: rgba(226,81,28,0.4);
+    color: var(--ember);
+  }
+  .filter-count {
+    font-size: 10px; font-weight: 700; background: rgba(226,81,28,0.3);
+    color: var(--ember); padding: 1px 6px; border-radius: 10px;
+  }
+  .filter-btn.active .filter-count { background: rgba(226,81,28,0.4); }
+
+  /* Search */
+  .search-wrap { margin-left: auto; }
+  .search-input {
+    background: var(--glass); border: 1px solid var(--glass-border);
+    color: var(--cream); padding: 8px 14px 8px 36px; border-radius: 20px;
+    font-size: 13px; font-family: 'Geist', sans-serif; width: 220px;
+    outline: none; transition: all 0.2s;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='rgba(251,250,247,0.3)' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: 12px center;
+  }
+  .search-input:focus { border-color: rgba(226,81,28,0.4); background-color: rgba(251,250,247,0.08); }
+  .search-input::placeholder { color: rgba(251,250,247,0.25); }
+
+  /* Category header */
+  .cat-section { margin-bottom: 48px; }
+  .cat-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+  }
+  .cat-icon { font-size: 20px; }
+  .cat-title { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+  .cat-count {
+    font-size: 11px; color: rgba(251,250,247,0.4); background: var(--glass);
+    border: 1px solid var(--glass-border); padding: 2px 8px; border-radius: 10px;
+  }
+  .cat-line { flex: 1; height: 1px; background: var(--glass-border); }
+
+  /* Deals grid */
+  .deals-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;
+  }
+
+  /* Deal card */
+  .deal-card {
+    background: rgba(251,250,247,0.04); border: 1px solid var(--glass-border);
+    border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 14px;
+    transition: all 0.25s; cursor: pointer; position: relative; overflow: hidden;
+  }
+  .deal-card::before {
+    content: ''; position: absolute; inset: 0; border-radius: 16px;
+    background: linear-gradient(135deg, rgba(226,81,28,0.06) 0%, transparent 60%);
+    opacity: 0; transition: opacity 0.25s;
+  }
+  .deal-card:hover { border-color: rgba(226,81,28,0.35); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(226,81,28,0.1); }
+  .deal-card:hover::before { opacity: 1; }
+
+  /* Tier badge */
+  .deal-card.tier-epic { border-color: rgba(226,81,28,0.3); background: rgba(226,81,28,0.06); }
+  .deal-card.tier-epic::before { opacity: 1; }
+
+  .card-top { display: flex; align-items: flex-start; gap: 12px; }
+  .card-logo {
+    width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center;
+    justify-content: center; font-size: 22px; flex-shrink: 0;
+    background: rgba(251,250,247,0.08); border: 1px solid var(--glass-border);
+  }
+  .card-info { flex: 1; min-width: 0; }
+  .card-company { font-size: 14px; font-weight: 700; letter-spacing: -0.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-product { font-size: 11px; color: rgba(251,250,247,0.4); margin-top: 2px; }
+
+  .deal-badge {
+    font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px;
+    white-space: nowrap; letter-spacing: 0.2px; flex-shrink: 0;
+  }
+  .deal-badge.epic { background: rgba(226,81,28,0.2); color: var(--ember); border: 1px solid rgba(226,81,28,0.3); }
+  .deal-badge.big { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+  .deal-badge.good { background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.2); }
+  .deal-badge.free { background: rgba(251,250,247,0.1); color: rgba(251,250,247,0.7); border: 1px solid var(--glass-border); }
+
+  .deal-value {
+    font-size: 22px; font-weight: 700; letter-spacing: -0.5px;
+    color: var(--ember);
+  }
+  .deal-value.big-num { font-size: 26px; }
+
+  .deal-desc { font-size: 13px; color: rgba(251,250,247,0.55); line-height: 1.5; }
+
+  .deal-meta { display: flex; flex-direction: column; gap: 6px; }
+  .deal-meta-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: rgba(251,250,247,0.45); }
+  .deal-meta-row svg { opacity: 0.4; flex-shrink: 0; }
+  .deal-meta-row strong { color: rgba(251,250,247,0.7); font-weight: 500; }
+
+  .card-footer { display: flex; gap: 8px; margin-top: auto; }
+  .claim-btn {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+    font-size: 13px; font-weight: 600; font-family: 'Geist', sans-serif;
+    background: var(--ember); color: #fff; border: none; border-radius: 10px;
+    padding: 9px 16px; cursor: pointer; text-decoration: none; transition: all 0.2s;
+  }
+  .claim-btn:hover { background: var(--ember-light); }
+  .save-btn {
+    width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+    background: var(--glass); border: 1px solid var(--glass-border); border-radius: 10px;
+    cursor: pointer; font-size: 16px; transition: all 0.2s; color: rgba(251,250,247,0.4);
+    flex-shrink: 0;
+  }
+  .save-btn:hover { border-color: rgba(226,81,28,0.4); color: var(--ember); }
+  .save-btn.saved { color: var(--ember); border-color: rgba(226,81,28,0.4); background: rgba(226,81,28,0.08); }
+
+  /* Tag pills */
+  .card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag-pill {
+    font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 10px;
+    background: rgba(251,250,247,0.08); color: rgba(251,250,247,0.45); border: 1px solid var(--glass-border);
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center; padding: 80px 32px; color: rgba(251,250,247,0.3);
+    display: none;
+  }
+  .empty-state.visible { display: block; }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+  .empty-text { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .empty-sub { font-size: 14px; }
+
+  /* Submit modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+    z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #1a1915; border: 1px solid var(--glass-border); border-radius: 20px;
+    padding: 32px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+  }
+  .modal h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .modal p { font-size: 13px; color: rgba(251,250,247,0.5); margin-bottom: 24px; line-height: 1.5; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12px; font-weight: 600; color: rgba(251,250,247,0.5); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-input, .form-textarea, .form-select {
+    width: 100%; background: rgba(251,250,247,0.06); border: 1px solid var(--glass-border);
+    color: var(--cream); padding: 10px 14px; border-radius: 10px;
+    font-size: 13px; font-family: 'Geist', sans-serif; outline: none; transition: border-color 0.2s;
+  }
+  .form-input:focus, .form-textarea:focus, .form-select:focus { border-color: rgba(226,81,28,0.4); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  .form-select option { background: #1a1915; }
+  .modal-footer { display: flex; gap: 8px; margin-top: 24px; }
+  .modal-cancel {
+    flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border);
+    background: transparent; color: rgba(251,250,247,0.5); font-size: 13px; font-weight: 600;
+    font-family: 'Geist', sans-serif; cursor: pointer; transition: all 0.2s;
+  }
+  .modal-cancel:hover { border-color: rgba(251,250,247,0.25); color: var(--cream); }
+  .modal-submit {
+    flex: 2; padding: 10px; border-radius: 10px; border: none;
+    background: var(--ember); color: #fff; font-size: 13px; font-weight: 600;
+    font-family: 'Geist', sans-serif; cursor: pointer; transition: all 0.2s;
+  }
+  .modal-submit:hover { background: var(--ember-light); }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 300;
+    background: #1a1915; border: 1px solid rgba(34,197,94,0.3);
+    color: #4ade80; padding: 12px 20px; border-radius: 12px;
+    font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;
+    transform: translateY(80px); opacity: 0; transition: all 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* Saved section */
+  .saved-bar {
+    display: none; align-items: center; gap: 12px; padding: 12px 20px;
+    background: rgba(226,81,28,0.1); border: 1px solid rgba(226,81,28,0.2);
+    border-radius: 12px; margin-bottom: 24px;
+  }
+  .saved-bar.visible { display: flex; }
+  .saved-bar-text { font-size: 13px; color: rgba(251,250,247,0.7); }
+  .saved-bar-count { font-weight: 700; color: var(--ember); }
+  .clear-saved { margin-left: auto; font-size: 12px; color: rgba(251,250,247,0.4); background: none; border: none; cursor: pointer; font-family: 'Geist', sans-serif; transition: color 0.2s; }
+  .clear-saved:hover { color: var(--cream); }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    nav { padding: 12px 16px; }
+    .hero, .main { padding-left: 16px; padding-right: 16px; }
+    .hero { padding-top: 40px; }
+    .filter-bar { gap: 8px; }
+    .search-wrap { width: 100%; }
+    .search-input { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg">
+  <div class="bg-blob b1"></div>
+  <div class="bg-blob b2"></div>
+  <div class="bg-blob b3"></div>
+</div>
+
+<div class="app">
+
+  <!-- Nav -->
+  <nav>
+    <div class="logo">match<span>foundr</span></div>
+    <div class="nav-badge">Beta</div>
+    <div class="sep"></div>
+    <div class="nav-links">
+      <a href="matchfoundr_board.html" class="nav-link">Board</a>
+      <a href="matchfoundr_admin.html" class="nav-link">Admin</a>
+      <a href="#" class="nav-link active">Deals</a>
+    </div>
+    <button class="submit-btn" onclick="openModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Deal einreichen
+    </button>
+  </nav>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-eyebrow">🎁 Exklusiv für Gründer</div>
+    <h1>Die besten <em>Deals & Rabatte</em><br>für dein Startup</h1>
+    <p>Verifizierte Angebote von Technologie-, SaaS- und Service-Unternehmen — speziell für Gründer und Early-Stage-Startups. Spare tausende Euro von Tag 1.</p>
+
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-value ember" id="total-value">$2M+</div>
+        <div class="stat-label">Gesamtwert verfügbar</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="deal-count">36</div>
+        <div class="stat-label">Aktive Deals</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">8</div>
+        <div class="stat-label">Kategorien</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">↻ täglich</div>
+        <div class="stat-label">Aktualisiert</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <span class="filter-label">Filter:</span>
+      <button class="filter-btn active" data-cat="all" onclick="setFilter('all',this)">
+        Alle <span class="filter-count" id="fc-all">36</span>
+      </button>
+      <button class="filter-btn" data-cat="cloud" onclick="setFilter('cloud',this)">
+        ☁️ Cloud & Infra <span class="filter-count" id="fc-cloud"></span>
+      </button>
+      <button class="filter-btn" data-cat="saas" onclick="setFilter('saas',this)">
+        🛠 SaaS & Tools <span class="filter-count" id="fc-saas"></span>
+      </button>
+      <button class="filter-btn" data-cat="ai" onclick="setFilter('ai',this)">
+        🤖 AI & ML <span class="filter-count" id="fc-ai"></span>
+      </button>
+      <button class="filter-btn" data-cat="legal" onclick="setFilter('legal',this)">
+        ⚖️ Legal & Finance <span class="filter-count" id="fc-legal"></span>
+      </button>
+      <button class="filter-btn" data-cat="marketing" onclick="setFilter('marketing',this)">
+        📣 Marketing <span class="filter-count" id="fc-marketing"></span>
+      </button>
+      <button class="filter-btn" data-cat="community" onclick="setFilter('community',this)">
+        🤝 Community <span class="filter-count" id="fc-community"></span>
+      </button>
+      <button class="filter-btn" data-cat="hr" onclick="setFilter('hr',this)">
+        👥 HR & Talent <span class="filter-count" id="fc-hr"></span>
+      </button>
+      <button class="filter-btn" data-cat="saved" onclick="setFilter('saved',this)">
+        ♡ Gespeichert <span class="filter-count" id="fc-saved">0</span>
+      </button>
+      <div class="search-wrap">
+        <input class="search-input" type="text" placeholder="Suche..." oninput="onSearch(this.value)">
+      </div>
+    </div>
+
+    <!-- Saved bar -->
+    <div class="saved-bar" id="saved-bar">
+      <span>♡</span>
+      <span class="saved-bar-text"><span class="saved-bar-count" id="saved-count">0</span> Deals gespeichert</span>
+      <button class="clear-saved" onclick="clearSaved()">Alle entfernen</button>
+    </div>
+
+    <!-- Deals rendered here -->
+    <div id="deals-container"></div>
+
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-text">Keine Deals gefunden</div>
+      <div class="empty-sub">Versuche eine andere Suchanfrage oder einen anderen Filter</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Submit modal -->
+<div class="modal-overlay" id="submit-modal">
+  <div class="modal">
+    <h2>🎁 Deal einreichen</h2>
+    <p>Kennst du ein Startup-Angebot, das hier fehlt? Reiche es ein und wir prüfen es für die Liste.</p>
+    <div class="form-group">
+      <label class="form-label">Unternehmen *</label>
+      <input class="form-input" id="f-company" type="text" placeholder="z.B. Notion">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Kategorie *</label>
+      <select class="form-select" id="f-cat">
+        <option value="">Bitte wählen...</option>
+        <option value="cloud">Cloud & Infra</option>
+        <option value="saas">SaaS & Tools</option>
+        <option value="ai">AI & ML</option>
+        <option value="legal">Legal & Finance</option>
+        <option value="marketing">Marketing</option>
+        <option value="community">Community</option>
+        <option value="hr">HR & Talent</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Angebotswert *</label>
+      <input class="form-input" id="f-value" type="text" placeholder="z.B. $1.000 Credits oder 6 Monate kostenlos">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Beschreibung</label>
+      <textarea class="form-textarea" id="f-desc" placeholder="Kurze Beschreibung des Angebots und der Bedingungen..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Link zum Angebot</label>
+      <input class="form-input" id="f-url" type="url" placeholder="https://...">
+    </div>
+    <div class="modal-footer">
+      <button class="modal-cancel" onclick="closeModal()">Abbrechen</button>
+      <button class="modal-submit" onclick="submitDeal()">Deal einreichen ✓</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ <span id="toast-msg">Gespeichert!</span></div>
+
+<script>
+// ── Data ───────────────────────────────────────────────────────────────────
+const DEALS = [
+  // ── CLOUD & INFRA ──────────────────────────────────────────────────────
+  {
+    id: 'aws-activate', cat: 'cloud', tier: 'epic',
+    company: 'Amazon Web Services', product: 'AWS Activate',
+    logo: '🟠', value: 'bis $100.000', valueClass: 'big-num',
+    badge: 'EPIC', badgeClass: 'epic',
+    desc: 'Credits für AWS-Services inkl. EC2, S3, RDS & mehr. Für Early-Stage-Startups (Founders-Paket $1K, Portfolio-Paket bis $100K).',
+    eligibility: 'Startup mit ext. Finanzierung od. in Accelerator',
+    duration: 'Einmalig',
+    url: 'https://aws.amazon.com/activate/',
+    tags: ['Credits', 'Cloud', 'Free Tier'],
+  },
+  {
+    id: 'gcp-startup', cat: 'cloud', tier: 'epic',
+    company: 'Google Cloud', product: 'Google for Startups',
+    logo: '🔵', value: 'bis $200.000', valueClass: 'big-num',
+    badge: 'EPIC', badgeClass: 'epic',
+    desc: '$200K in GCP Credits über 2 Jahre + Zugang zu Google-Mentoren und KI-Produkten.',
+    eligibility: 'Startup < Series A',
+    duration: '2 Jahre',
+    url: 'https://cloud.google.com/startup',
+    tags: ['Credits', 'GCP', 'Mentoring'],
+  },
+  {
+    id: 'azure-startup', cat: 'cloud', tier: 'epic',
+    company: 'Microsoft Azure', product: 'Microsoft for Startups Founders Hub',
+    logo: '🔷', value: 'bis $150.000', valueClass: 'big-num',
+    badge: 'EPIC', badgeClass: 'epic',
+    desc: 'Azure Credits, GitHub Enterprise, OpenAI-Zugang und Microsoft 365 – ohne Pitch oder VC-Backing erforderlich.',
+    eligibility: 'Jedes Startup (selbst anmelden)',
+    duration: '1–2 Jahre',
+    url: 'https://www.microsoft.com/en-us/startups',
+    tags: ['Credits', 'Azure', 'OpenAI', 'GitHub'],
+  },
+  {
+    id: 'vercel-startup', cat: 'cloud', tier: 'big',
+    company: 'Vercel', product: 'Vercel Startup Plan',
+    logo: '▲', value: '1 Jahr kostenlos', valueClass: '',
+    badge: '~$960/J', badgeClass: 'big',
+    desc: 'Pro-Plan kostenlos für 1 Jahr. Unbegrenzte Deployments, Edge Network, Analytics.',
+    eligibility: 'Startup < 2 Jahre, kein Enterprise-Deal',
+    duration: '12 Monate',
+    url: 'https://vercel.com/solutions/startups',
+    tags: ['Hosting', 'CI/CD', 'Next.js'],
+  },
+  {
+    id: 'digitalocean', cat: 'cloud', tier: 'big',
+    company: 'DigitalOcean', product: 'Hatch Startup Program',
+    logo: '🌊', value: '$10.000 Credits', valueClass: '',
+    badge: '$10K', badgeClass: 'big',
+    desc: '$10K in DO Credits über 12 Monate + managed databases, Kubernetes & App Platform.',
+    eligibility: 'Pre-Seed bis Series A',
+    duration: '12 Monate',
+    url: 'https://www.digitalocean.com/hatch',
+    tags: ['Credits', 'Kubernetes', 'Cloud'],
+  },
+  {
+    id: 'cloudflare', cat: 'cloud', tier: 'good',
+    company: 'Cloudflare', product: 'Workers Free Tier + Project Galileo',
+    logo: '🟡', value: 'Kostenlos', valueClass: '',
+    badge: 'Free', badgeClass: 'free',
+    desc: 'Großzügiges Free Tier: 100K Worker Requests/Tag, 10GB R2 Storage, CDN, DDoS-Schutz.',
+    eligibility: 'Alle',
+    duration: 'Dauerhaft',
+    url: 'https://www.cloudflare.com/plans/',
+    tags: ['CDN', 'Workers', 'DNS', 'Security'],
+  },
+  {
+    id: 'supabase', cat: 'cloud', tier: 'good',
+    company: 'Supabase', product: 'Startup Program',
+    logo: '⚡', value: '$300 Credits', valueClass: '',
+    badge: 'Tech-Stack', badgeClass: 'good',
+    desc: '$300 in Supabase-Credits + Priority Support. Postgres, Auth, Storage, Realtime & Edge Functions.',
+    eligibility: 'Über VC / Accelerator-Partner',
+    duration: '6 Monate',
+    url: 'https://supabase.com/docs/guides/getting-started/startups',
+    tags: ['Database', 'Auth', 'BaaS'],
+  },
+  {
+    id: 'railway', cat: 'cloud', tier: 'good',
+    company: 'Railway', product: 'Startup-Credits',
+    logo: '🚂', value: '$500 Credits', valueClass: '',
+    badge: '$500', badgeClass: 'good',
+    desc: 'Einfaches Deployment für alle Sprachen. $500 Credits für Early-Stage-Startups.',
+    eligibility: 'Startup, per E-Mail anfragen',
+    duration: 'Einmalig',
+    url: 'https://railway.app/',
+    tags: ['Hosting', 'Deploy', 'DevOps'],
+  },
+
+  // ── SAAS & TOOLS ──────────────────────────────────────────────────────
+  {
+    id: 'notion', cat: 'saas', tier: 'big',
+    company: 'Notion', product: 'Notion for Startups',
+    logo: '📓', value: '6 Monate Plus kostenlos', valueClass: '',
+    badge: '~$96 Wert', badgeClass: 'big',
+    desc: '6 Monate Plus-Plan für das gesamte Team kostenlos. Danach 50% Rabatt für weitere 6 Monate.',
+    eligibility: 'Startup < 2 Jahre, Bewerbung über Partner',
+    duration: '6 (+6) Monate',
+    url: 'https://www.notion.so/startups',
+    tags: ['Produktivität', 'Wiki', 'Docs'],
+  },
+  {
+    id: 'hubspot', cat: 'saas', tier: 'epic',
+    company: 'HubSpot', product: 'HubSpot for Startups',
+    logo: '🟠', value: 'bis 90% Rabatt', valueClass: '',
+    badge: 'EPIC', badgeClass: 'epic',
+    desc: '90% Rabatt im Jahr 1, 50% im Jahr 2, 25% ab Jahr 3. CRM, Marketing Hub, Sales Hub.',
+    eligibility: 'Pre-Series A + VC/Accelerator-backing',
+    duration: 'Dauerhaft gestaffelt',
+    url: 'https://www.hubspot.com/startups',
+    tags: ['CRM', 'Marketing', 'Sales'],
+  },
+  {
+    id: 'intercom', cat: 'saas', tier: 'big',
+    company: 'Intercom', product: 'Early Stage Program',
+    logo: '💬', value: '95% Rabatt (Jahr 1)', valueClass: '',
+    badge: '95% off', badgeClass: 'big',
+    desc: '$65/Monat statt $1.295. Customer Support, Live-Chat, Produkttouren & Onboarding.',
+    eligibility: 'Startup < $1M ARR, < 2 Jahre alt',
+    duration: 'Jahr 1, dann 50% off',
+    url: 'https://www.intercom.com/early-stage',
+    tags: ['Support', 'Chat', 'Onboarding'],
+  },
+  {
+    id: 'figma', cat: 'saas', tier: 'big',
+    company: 'Figma', product: 'Figma for Startups',
+    logo: '🎨', value: '1 Jahr kostenlos', valueClass: '',
+    badge: '~$540/J', badgeClass: 'big',
+    desc: 'Figma Professional Team Plan kostenlos für 1 Jahr. Unbegrenzte Projekte, Version History.',
+    eligibility: 'Startup < 2 Jahre, über YC / Accelerator',
+    duration: '12 Monate',
+    url: 'https://www.figma.com/startups/',
+    tags: ['Design', 'UI/UX', 'Prototyping'],
+  },
+  {
+    id: 'linear', cat: 'saas', tier: 'good',
+    company: 'Linear', product: 'Startup Plan',
+    logo: '🔷', value: '1 Jahr kostenlos', valueClass: '',
+    badge: '~$480/J', badgeClass: 'big',
+    desc: 'Linear Business Plan kostenlos für qualifizierte Startups. Issue Tracking, Roadmaps, Sprints.',
+    eligibility: 'Startup, Bewerbung direkt',
+    duration: '12 Monate',
+    url: 'https://linear.app/startups',
+    tags: ['Projekt-Management', 'Issues', 'Agile'],
+  },
+  {
+    id: 'slack', cat: 'saas', tier: 'good',
+    company: 'Slack', product: 'Slack for Startups',
+    logo: '💼', value: '6 Monate Pro kostenlos', valueClass: '',
+    badge: '~$420 Wert', badgeClass: 'good',
+    desc: 'Pro-Plan kostenlos für 6 Monate via ausgewählte Accelerator-Partner.',
+    eligibility: 'Über Accelerator (z.B. YC, Techstars, etc.)',
+    duration: '6 Monate',
+    url: 'https://slack.com/intl/en-gb/partners/accelerators',
+    tags: ['Kommunikation', 'Team', 'Channels'],
+  },
+  {
+    id: 'airtable', cat: 'saas', tier: 'good',
+    company: 'Airtable', product: 'Startup Program',
+    logo: '📊', value: '50% Rabatt', valueClass: '',
+    badge: '50% off', badgeClass: 'good',
+    desc: '50% Rabatt auf Team-Plan für 1 Jahr. Datenbank, No-Code-Apps, Automation.',
+    eligibility: 'Startup < Series A',
+    duration: '12 Monate',
+    url: 'https://www.airtable.com/solution/startup-program',
+    tags: ['No-Code', 'Datenbank', 'Automation'],
+  },
+  {
+    id: 'retool', cat: 'saas', tier: 'good',
+    company: 'Retool', product: 'Startup Plan',
+    logo: '🛠', value: '3 Monate kostenlos', valueClass: '',
+    badge: 'Gratis', badgeClass: 'free',
+    desc: 'Team Plan 3 Monate gratis. Internal Tools, Admin Panels & Dashboards per Drag & Drop bauen.',
+    eligibility: 'Startup, Bewerbung direkt',
+    duration: '3 Monate',
+    url: 'https://retool.com/startups',
+    tags: ['Internal Tools', 'No-Code', 'Dashboard'],
+  },
+  {
+    id: '1password', cat: 'saas', tier: 'good',
+    company: '1Password', product: '1Password for Startups',
+    logo: '🔑', value: '1 Jahr kostenlos', valueClass: '',
+    badge: '~$200/J', badgeClass: 'good',
+    desc: 'Teams-Plan für das gesamte Team kostenlos für 1 Jahr. Sicheres Passwort-Management.',
+    eligibility: 'Startup < $10M Funding',
+    duration: '12 Monate',
+    url: 'https://start.1password.com/sign-up/team',
+    tags: ['Security', 'Passwörter', 'Team'],
+  },
+  {
+    id: 'monday', cat: 'saas', tier: 'good',
+    company: 'monday.com', product: 'monday.com for Startups',
+    logo: '📅', value: '6 Monate Pro kostenlos', valueClass: '',
+    badge: '~$300 Wert', badgeClass: 'good',
+    desc: 'Pro Plan gratis für Startups in qualifizierten Accelerators. CRM, PM & Automatisierungen.',
+    eligibility: 'Über Partner-Accelerator',
+    duration: '6 Monate',
+    url: 'https://monday.com/startups',
+    tags: ['PM', 'CRM', 'Automation'],
+  },
+
+  // ── AI & ML ───────────────────────────────────────────────────────────
+  {
+    id: 'anthropic', cat: 'ai', tier: 'epic',
+    company: 'Anthropic', product: 'Claude for Startups',
+    logo: '🤖', value: '$25.000 API Credits', valueClass: '',
+    badge: 'EPIC', badgeClass: 'epic',
+    desc: '$25.000 in API-Credits für Claude-Modelle. Zugang zu allen Modellen inkl. Claude Opus.',
+    eligibility: 'Startup, Bewerbung via AWS Activate od. direkt',
+    duration: 'Einmalig',
+    url: 'https://www.anthropic.com/startups',
+    tags: ['LLM', 'API', 'AI-Credits'],
+  },
+  {
+    id: 'openai', cat: 'ai', tier: 'big',
+    company: 'OpenAI', product: 'OpenAI for Startups',
+    logo: '🟢', value: '$2.500 Credits', valueClass: '',
+    badge: '$2.5K', badgeClass: 'big',
+    desc: '$2.500 in GPT-4-API-Credits für Startups über ausgewählte Accelerator-Partner.',
+    eligibility: 'Über Accelerator-Partner',
+    duration: 'Einmalig',
+    url: 'https://openai.com/startups',
+    tags: ['GPT-4', 'API', 'LLM'],
+  },
+  {
+    id: 'huggingface', cat: 'ai', tier: 'good',
+    company: 'Hugging Face', product: 'Startup Program',
+    logo: '🤗', value: '$10.000 Credits', valueClass: '',
+    badge: '$10K', badgeClass: 'big',
+    desc: '$10K in Inference Endpoints & GPU-Credits. Zugang zu 500K+ Open-Source-Modellen.',
+    eligibility: 'Startup, Bewerbung direkt',
+    duration: '12 Monate',
+    url: 'https://huggingface.co/startups',
+    tags: ['Open Source', 'Models', 'Inference'],
+  },
+  {
+    id: 'mistral', cat: 'ai', tier: 'good',
+    company: 'Mistral AI', product: 'Startup Credits',
+    logo: '🌀', value: '6 Monate kostenlos', valueClass: '',
+    badge: 'EU-First', badgeClass: 'good',
+    desc: 'Free API-Zugang zu Mistral-Modellen für Early-Stage-Startups. Europäische Alternative.',
+    eligibility: 'EU-Startups bevorzugt',
+    duration: '6 Monate',
+    url: 'https://mistral.ai/startups/',
+    tags: ['EU', 'LLM', 'Open-Weight'],
+  },
+  {
+    id: 'cohere', cat: 'ai', tier: 'good',
+    company: 'Cohere', product: 'Startup Program',
+    logo: '🌐', value: '$5.000 Credits', valueClass: '',
+    badge: '$5K', badgeClass: 'good',
+    desc: 'API-Credits für Embeddings, Generierung und Reranking. Ideal für RAG-Applikationen.',
+    eligibility: 'Startup mit AI-Produkt',
+    duration: '12 Monate',
+    url: 'https://cohere.com/startups',
+    tags: ['Embeddings', 'RAG', 'NLP'],
+  },
+
+  // ── LEGAL & FINANCE ──────────────────────────────────────────────────
+  {
+    id: 'stripe', cat: 'legal', tier: 'epic',
+    company: 'Stripe', product: 'Stripe Atlas + Startup Deal',
+    logo: '💳', value: 'bis $50.000 Cashback', valueClass: '',
+    badge: '$50K', badgeClass: 'epic',
+    desc: '$50K Stripe-Gebühren-Erstattung über 1 Jahr ($15K) + Partner-Deals (AWS, etc.) im Wert von >$50K.',
+    eligibility: 'Über Accelerator-Partner (YC, etc.)',
+    duration: '12 Monate',
+    url: 'https://stripe.com/de/atlas',
+    tags: ['Payments', 'Company Formation', 'Deal Stack'],
+  },
+  {
+    id: 'brex', cat: 'legal', tier: 'big',
+    company: 'Brex', product: 'Brex für Startups',
+    logo: '💰', value: '$10.000 Rewards', valueClass: '',
+    badge: '$10K', badgeClass: 'big',
+    desc: 'Firmenkreditkarte ohne persönliche Bürgschaft + $10K in Partner-Deals. Ideal für US-Startups.',
+    eligibility: 'VC-backed Startups (US)',
+    duration: 'Dauerhaft',
+    url: 'https://www.brex.com/startups',
+    tags: ['Finance', 'Kreditkarte', 'US'],
+  },
+  {
+    id: 'lexoffice', cat: 'legal', tier: 'good',
+    company: 'Lexoffice', product: 'Gründer-Starter',
+    logo: '📋', value: '3 Monate kostenlos', valueClass: '',
+    badge: 'DE', badgeClass: 'good',
+    desc: 'Deutsche Buchhaltungssoftware: Rechnungen, DATEV-Export, Steuererklärung. Kostenlos im ersten Quartal.',
+    eligibility: 'Neugründungen (Deutschland)',
+    duration: '3 Monate',
+    url: 'https://www.lexoffice.de/',
+    tags: ['Buchhaltung', 'DATEV', 'Deutschland'],
+  },
+  {
+    id: 'sevdesk', cat: 'legal', tier: 'good',
+    company: 'sevDesk', product: 'Startup-Tarif',
+    logo: '🧾', value: '6 Monate 50% off', valueClass: '',
+    badge: 'DE', badgeClass: 'good',
+    desc: 'Deutsche Cloud-Buchhaltung. GOBD-konform, Steuerbüro-Anbindung. 6 Monate mit 50% Rabatt.',
+    eligibility: 'Neugründungen (Deutschland)',
+    duration: '6 Monate',
+    url: 'https://sevdesk.de/',
+    tags: ['Buchhaltung', 'Finanzen', 'Deutschland'],
+  },
+  {
+    id: 'rocket-lawyer', cat: 'legal', tier: 'good',
+    company: 'Rocket Lawyer', product: 'Legal Documents',
+    logo: '⚖️', value: '1 Monat Premium kostenlos', valueClass: '',
+    badge: 'Legal', badgeClass: 'free',
+    desc: 'Rechtsdokumente, Vertragsvorlagen, Impressum, AGB & Datenschutz auf Knopfdruck.',
+    eligibility: 'Alle',
+    duration: '1 Monat Trial',
+    url: 'https://www.rocketlawyer.com/de/de',
+    tags: ['Legal', 'Verträge', 'DSGVO'],
+  },
+
+  // ── MARKETING ────────────────────────────────────────────────────────
+  {
+    id: 'mailchimp', cat: 'marketing', tier: 'good',
+    company: 'Mailchimp', product: 'Standard Plan Free Trial',
+    logo: '🐵', value: '1 Monat gratis', valueClass: '',
+    badge: 'Email', badgeClass: 'free',
+    desc: 'Email-Marketing, Automations, Landing Pages & CRM. 500 Kontakte im Free-Plan dauerhaft.',
+    eligibility: 'Alle',
+    duration: 'Dauerhaft Free Tier',
+    url: 'https://mailchimp.com/',
+    tags: ['Email', 'Automation', 'Newsletter'],
+  },
+  {
+    id: 'semrush', cat: 'marketing', tier: 'good',
+    company: 'Semrush', product: 'Semrush for Startups',
+    logo: '📈', value: '14 Tage kostenlos', valueClass: '',
+    badge: 'SEO', badgeClass: 'good',
+    desc: 'SEO, PPC, Content Marketing, Keyword Research & Competitive Intelligence. Erweiterter Trial.',
+    eligibility: 'Über Accelerator-Partner',
+    duration: '14 Tage (erweiterbar)',
+    url: 'https://www.semrush.com/kb/1038-startup-program',
+    tags: ['SEO', 'PPC', 'Analytics'],
+  },
+  {
+    id: 'clearbit', cat: 'marketing', tier: 'big',
+    company: 'Clearbit', product: 'Startup Program',
+    logo: '🔍', value: '$1.000 Credits', valueClass: '',
+    badge: '$1K', badgeClass: 'good',
+    desc: 'B2B-Datenanreicherung, Lead Intelligence & Firmographic Data. Für Startups < $1M ARR.',
+    eligibility: 'Startup < $1M ARR',
+    duration: '6 Monate',
+    url: 'https://clearbit.com/resources/startup-discount',
+    tags: ['B2B', 'Leads', 'Data Enrichment'],
+  },
+  {
+    id: 'producthunt', cat: 'marketing', tier: 'good',
+    company: 'Product Hunt', product: 'Ship / Premium',
+    logo: '🐱', value: 'Kostenloser Launch', valueClass: '',
+    badge: 'Reichweite', badgeClass: 'free',
+    desc: 'Kostenloser Produkt-Launch auf einer der einflussreichsten Startup-Discovery-Plattformen.',
+    eligibility: 'Alle',
+    duration: 'Einmalig',
+    url: 'https://www.producthunt.com/ship',
+    tags: ['Launch', 'Sichtbarkeit', 'Community'],
+  },
+  {
+    id: 'phantom', cat: 'marketing', tier: 'good',
+    company: 'Phantombuster', product: 'Startup Plan',
+    logo: '👻', value: '20% Rabatt', valueClass: '',
+    badge: '20% off', badgeClass: 'good',
+    desc: 'LinkedIn & Social Media Automation, Lead-Generierung. 20% Startup-Rabatt auf alle Pläne.',
+    eligibility: 'Startup, per E-Mail anfragen',
+    duration: '12 Monate',
+    url: 'https://phantombuster.com/',
+    tags: ['LinkedIn', 'Automation', 'Lead Gen'],
+  },
+
+  // ── COMMUNITY ────────────────────────────────────────────────────────
+  {
+    id: 'yc', cat: 'community', tier: 'epic',
+    company: 'Y Combinator', product: 'YC Deal Stack',
+    logo: '🟠', value: '>$400.000 Wert', valueClass: 'big-num',
+    badge: 'EPIC', badgeClass: 'epic',
+    desc: 'YC-Alumnis erhalten Zugang zu Deals bei AWS, Stripe, Heroku, Brex & 100+ weiteren Partnern.',
+    eligibility: 'YC-Batch-Teilnehmer (Bewerbung nötig)',
+    duration: 'Dauerhaft (Alumni)',
+    url: 'https://www.ycombinator.com/apply',
+    tags: ['Accelerator', 'Network', 'Deal Stack'],
+  },
+  {
+    id: 'gründerszene', cat: 'community', tier: 'good',
+    company: 'Gründerszene', product: 'Community + Job-Anzeigen',
+    logo: '🇩🇪', value: 'Kostenlose Listings',
+    badge: 'DE', badgeClass: 'good',
+    desc: 'Deutschlands größtes Startup-Medium. Kostenlose Jobanzeigen für Startups in der Frühphase.',
+    eligibility: 'Deutsche Startups',
+    duration: 'Dauerhaft',
+    url: 'https://www.gruenderszene.de/karriere',
+    tags: ['Community', 'Jobs', 'PR'],
+  },
+  {
+    id: 'startup-verband', cat: 'community', tier: 'good',
+    company: 'Startup-Verband', product: 'Mitgliedschaft',
+    logo: '🏛', value: 'Vergünstigte Mitgliedschaft', valueClass: '',
+    badge: 'DE', badgeClass: 'good',
+    desc: 'Lobbyarbeit, Netzwerk, Events & Gründer-Rabatte über den deutschen Startup-Verband.',
+    eligibility: 'Deutsche Startups',
+    duration: 'Jährlich',
+    url: 'https://startupverband.de/mitgliedschaft/',
+    tags: ['Verband', 'Networking', 'Policy'],
+  },
+
+  // ── HR & TALENT ──────────────────────────────────────────────────────
+  {
+    id: 'deel', cat: 'hr', tier: 'big',
+    company: 'Deel', product: 'Startup Program',
+    logo: '🌍', value: '3 Monate kostenlos', valueClass: '',
+    badge: 'Global HR', badgeClass: 'big',
+    desc: '3 Monate Contractor Management gratis. Global Hiring, Compliance, Payroll in 150+ Ländern.',
+    eligibility: 'Startup < $1M ARR',
+    duration: '3 Monate',
+    url: 'https://www.deel.com/startups',
+    tags: ['Global Hiring', 'Payroll', 'Remote'],
+  },
+  {
+    id: 'remote', cat: 'hr', tier: 'good',
+    company: 'Remote', product: 'Startup Deal',
+    logo: '💻', value: '2 Monate kostenlos', valueClass: '',
+    badge: 'HR', badgeClass: 'good',
+    desc: 'Remote-EOR für internationale Mitarbeiter. 2 Monate Employer of Record gratis bei Jahreszahlung.',
+    eligibility: 'Startup, Jahreszahlung',
+    duration: '2 Monate',
+    url: 'https://remote.com/startups',
+    tags: ['EOR', 'Remote Work', 'Compliance'],
+  },
+  {
+    id: 'personio', cat: 'hr', tier: 'good',
+    company: 'Personio', product: 'HR Startup Package',
+    logo: '👔', value: '3 Monate gratis', valueClass: '',
+    badge: 'DE', badgeClass: 'good',
+    desc: 'Deutsche HR-Software: Recruiting, Onboarding, Zeiterfassung, Payroll. 3 Monate kostenlos.',
+    eligibility: 'Startup < 20 Mitarbeiter (Deutschland)',
+    duration: '3 Monate',
+    url: 'https://www.personio.de/startup/',
+    tags: ['HR', 'Recruiting', 'Deutschland'],
+  },
+];
+
+// ── State ──────────────────────────────────────────────────────────────────
+let currentFilter = 'all';
+let currentSearch = '';
+let saved = new Set(JSON.parse(localStorage.getItem('mf_saved_deals') || '[]'));
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function render() {
+  const container = document.getElementById('deals-container');
+  const search = currentSearch.toLowerCase();
+
+  // Filter
+  let filtered = DEALS.filter(d => {
+    if (currentFilter === 'saved') return saved.has(d.id);
+    if (currentFilter !== 'all' && d.cat !== currentFilter) return false;
+    if (search) {
+      const haystack = `${d.company} ${d.product} ${d.desc} ${d.tags.join(' ')}`.toLowerCase();
+      if (!haystack.includes(search)) return false;
+    }
+    return true;
+  });
+
+  // Update count display
+  document.getElementById('deal-count').textContent = filtered.length;
+
+  // Group by category (or flat if filtered)
+  let html = '';
+  if (currentFilter !== 'all' && currentFilter !== 'saved') {
+    html += renderSection(filtered);
+  } else {
+    const cats = {
+      cloud: { icon: '☁️', label: 'Cloud & Infra' },
+      saas: { icon: '🛠', label: 'SaaS & Tools' },
+      ai: { icon: '🤖', label: 'AI & ML' },
+      legal: { icon: '⚖️', label: 'Legal & Finance' },
+      marketing: { icon: '📣', label: 'Marketing' },
+      community: { icon: '🤝', label: 'Community' },
+      hr: { icon: '👥', label: 'HR & Talent' },
+    };
+    for (const [catKey, catInfo] of Object.entries(cats)) {
+      const catDeals = filtered.filter(d => d.cat === catKey);
+      if (!catDeals.length) continue;
+      html += `
+        <div class="cat-section" data-cat-section="${catKey}">
+          <div class="cat-header">
+            <span class="cat-icon">${catInfo.icon}</span>
+            <span class="cat-title">${catInfo.label}</span>
+            <span class="cat-count">${catDeals.length}</span>
+            <div class="cat-line"></div>
+          </div>
+          <div class="deals-grid">${catDeals.map(renderCard).join('')}</div>
+        </div>`;
+    }
+  }
+
+  container.innerHTML = html || '';
+  const empty = document.getElementById('empty-state');
+  if (!filtered.length) {
+    empty.classList.add('visible');
+  } else {
+    empty.classList.remove('visible');
+  }
+
+  updateCounts();
+  updateSavedBar();
+}
+
+function renderSection(deals) {
+  if (!deals.length) return '';
+  return `<div class="deals-grid">${deals.map(renderCard).join('')}</div>`;
+}
+
+function renderCard(d) {
+  const isSaved = saved.has(d.id);
+  return `
+    <div class="deal-card ${d.tier === 'epic' ? 'tier-epic' : ''}" id="card-${d.id}">
+      <div class="card-top">
+        <div class="card-logo">${d.logo}</div>
+        <div class="card-info">
+          <div class="card-company">${d.company}</div>
+          <div class="card-product">${d.product}</div>
+        </div>
+        <div class="deal-badge ${d.badgeClass}">${d.badge}</div>
+      </div>
+      <div class="deal-value ${d.valueClass || ''}">${d.value}</div>
+      <div class="deal-desc">${d.desc}</div>
+      <div class="deal-meta">
+        <div class="deal-meta-row">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          <strong>Für:</strong> ${d.eligibility}
+        </div>
+        <div class="deal-meta-row">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <strong>Dauer:</strong> ${d.duration}
+        </div>
+      </div>
+      <div class="card-tags">${d.tags.map(t => `<span class="tag-pill">${t}</span>`).join('')}</div>
+      <div class="card-footer">
+        <a class="claim-btn" href="${d.url}" target="_blank" rel="noopener">
+          Jetzt sichern
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <button class="save-btn ${isSaved ? 'saved' : ''}" onclick="toggleSave('${d.id}',this)" title="${isSaved ? 'Gespeichert' : 'Merken'}">
+          ${isSaved ? '♥' : '♡'}
+        </button>
+      </div>
+    </div>`;
+}
+
+// ── Filter & Search ────────────────────────────────────────────────────────
+function setFilter(cat, el) {
+  currentFilter = cat;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+function onSearch(val) {
+  currentSearch = val;
+  render();
+}
+
+function updateCounts() {
+  const cats = ['all','cloud','saas','ai','legal','marketing','community','hr'];
+  cats.forEach(cat => {
+    const el = document.getElementById(`fc-${cat}`);
+    if (!el) return;
+    const count = cat === 'all' ? DEALS.length : DEALS.filter(d => d.cat === cat).length;
+    el.textContent = count;
+  });
+  document.getElementById('fc-saved').textContent = saved.size;
+}
+
+// ── Save ───────────────────────────────────────────────────────────────────
+function toggleSave(id, btn) {
+  if (saved.has(id)) {
+    saved.delete(id);
+    btn.classList.remove('saved');
+    btn.textContent = '♡';
+  } else {
+    saved.add(id);
+    btn.classList.add('saved');
+    btn.textContent = '♥';
+    showToast('Deal gespeichert!');
+  }
+  localStorage.setItem('mf_saved_deals', JSON.stringify([...saved]));
+  updateCounts();
+  updateSavedBar();
+}
+
+function clearSaved() {
+  saved.clear();
+  localStorage.setItem('mf_saved_deals', '[]');
+  updateCounts();
+  updateSavedBar();
+  if (currentFilter === 'saved') render();
+  else {
+    document.querySelectorAll('.save-btn').forEach(b => {
+      b.classList.remove('saved');
+      b.textContent = '♡';
+    });
+  }
+}
+
+function updateSavedBar() {
+  const bar = document.getElementById('saved-bar');
+  const count = document.getElementById('saved-count');
+  count.textContent = saved.size;
+  if (saved.size > 0) bar.classList.add('visible');
+  else bar.classList.remove('visible');
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Submit Modal ───────────────────────────────────────────────────────────
+function openModal() { document.getElementById('submit-modal').classList.add('open'); }
+function closeModal() { document.getElementById('submit-modal').classList.remove('open'); }
+function submitDeal() {
+  const company = document.getElementById('f-company').value.trim();
+  const cat = document.getElementById('f-cat').value;
+  const value = document.getElementById('f-value').value.trim();
+  if (!company || !cat || !value) { showToast('Bitte Pflichtfelder ausfüllen'); return; }
+  closeModal();
+  showToast(`"${company}" eingereicht – danke! 🎉`);
+  ['f-company','f-cat','f-value','f-desc','f-url'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+// Close modal on overlay click
+document.getElementById('submit-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ── Init ───────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
