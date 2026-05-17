@@ -163,7 +163,7 @@ function Landing() {
       </section>
 
       {/* HOW */}
-      <section className="mt-24">
+      <section id="how-it-works" className="mt-24 scroll-mt-28">
         <div className="grid gap-10 sm:grid-cols-[200px_1fr] sm:gap-16">
           <div className="eyebrow pt-2">02 · So funktioniert es</div>
           <h2 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
@@ -189,7 +189,7 @@ function Landing() {
       </section>
 
       {/* DISCOVER TEASER */}
-      <section className="mt-24">
+      <section id="find-a-match" className="mt-24 scroll-mt-28">
         <div className="glass-pane grid gap-8 p-8 sm:grid-cols-[200px_1fr] sm:gap-12 sm:p-12">
           <div className="eyebrow pt-2">03 · Entdecken</div>
           <div>
@@ -219,7 +219,7 @@ function Landing() {
       </section>
 
       {/* MANIFEST */}
-      <section className="mt-24">
+      <section id="stories" className="mt-24 scroll-mt-28">
         <div className="glass-pane-ink p-8 sm:p-12">
           <div
             className="eyebrow"
@@ -247,6 +247,33 @@ function Landing() {
           >
             Eine Plattform. Eine Entscheidung. Eine Person.
           </p>
+        </div>
+      </section>
+
+      {/* PRICING */}
+      <section id="pricing" className="mt-24 scroll-mt-28">
+        <div className="grid gap-10 sm:grid-cols-[200px_1fr] sm:gap-16">
+          <div className="eyebrow pt-2">05 · Pricing</div>
+          <h2 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+            Fair.{" "}
+            <span className="font-serif italic font-normal text-[var(--ember)]">Transparent.</span>
+          </h2>
+        </div>
+        <div className="mt-12 grid gap-5 sm:grid-cols-2">
+          <div className="glass-pane p-7">
+            <div className="eyebrow">Explorer</div>
+            <div className="mt-4 text-5xl font-semibold tracking-tight" style={{ letterSpacing: "-0.035em" }}>
+              €0
+            </div>
+            <p className="mt-3 text-[13px] text-[var(--smoke)]">Profil erstellen, Founder entdecken, erste Gespräche.</p>
+          </div>
+          <div className="glass-pane p-7 ring-1 ring-[var(--ember)]/30">
+            <div className="eyebrow text-[var(--ember)]">Cohort</div>
+            <div className="mt-4 text-5xl font-semibold tracking-tight" style={{ letterSpacing: "-0.035em" }}>
+              €49<span className="text-base font-normal text-[var(--smoke)]">/Monat</span>
+            </div>
+            <p className="mt-3 text-[13px] text-[var(--smoke)]">Volle Cohort-Teilnahme, alle 6 Wochen, gecapped bei 60.</p>
+          </div>
         </div>
       </section>
 
