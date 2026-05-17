@@ -49,6 +49,16 @@
   --paper: #F3EFE6;
   --ruled: rgba(21, 20, 15, 0.10);
 
+  /* service category hues */
+  --svc-cofounder: #E2511C;
+  --svc-legal:     #3D5A4A;
+  --svc-tax:       #8B5A3C;
+  --svc-funding:   #B23B0E;
+  --svc-capital:   #2A251F;
+  --svc-mentor:    #F0843A;
+  --svc-talent:    #5A4A2A;
+  --svc-growth:    #6B635A;
+
   /* semantic */
   --background: var(--paper);
   --foreground: var(--ink);
