@@ -41,7 +41,10 @@ export function AppNav() {
             </>
           ) : (
             <>
-              <NavLink to="/entdecken">Entdecken</NavLink>
+              <HashLink href="/#find-a-match">Find a match</HashLink>
+              <HashLink href="/#how-it-works">How it works</HashLink>
+              <HashLink href="/#stories">Stories</HashLink>
+              <HashLink href="/#pricing">Pricing</HashLink>
               <Link to="/auth">
                 <Button
                   size="sm"
@@ -106,9 +109,18 @@ export function AppNav() {
                   </>
                 ) : (
                   <>
-                    <MobileLink to="/entdecken" onNavigate={close}>
-                      Entdecken
-                    </MobileLink>
+                    <MobileHashLink href="/#find-a-match" onNavigate={close}>
+                      Find a match
+                    </MobileHashLink>
+                    <MobileHashLink href="/#how-it-works" onNavigate={close}>
+                      How it works
+                    </MobileHashLink>
+                    <MobileHashLink href="/#stories" onNavigate={close}>
+                      Stories
+                    </MobileHashLink>
+                    <MobileHashLink href="/#pricing" onNavigate={close}>
+                      Pricing
+                    </MobileHashLink>
                     <MobileLink to="/auth" onNavigate={close}>
                       Anmelden
                     </MobileLink>
@@ -155,3 +167,35 @@ function MobileLink({
     </Link>
   );
 }
+
+function HashLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      className="rounded-full px-3 py-1.5 text-[13px] text-[var(--smoke)] transition-colors hover:text-[var(--ink)]"
+    >
+      {children}
+    </a>
+  );
+}
+
+function MobileHashLink({
+  href,
+  children,
+  onNavigate,
+}: {
+  href: string;
+  children: React.ReactNode;
+  onNavigate: () => void;
+}) {
+  return (
+    <a
+      href={href}
+      onClick={onNavigate}
+      className="rounded-xl px-4 py-3 text-[var(--cream)] transition hover:bg-white/5"
+    >
+      {children}
+    </a>
+  );
+}
+
