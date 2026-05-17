@@ -197,13 +197,3 @@ function MobileHashLink({
       {children}
     </a>
   );
-}
-      to={to}
-      onClick={onNavigate}
-      className="rounded-xl px-4 py-3 text-[var(--cream)] transition hover:bg-white/5"
-      activeProps={{ className: "bg-white/10 font-medium" }}
-    >
-      {children}
-    </Link>
-  );
-}
