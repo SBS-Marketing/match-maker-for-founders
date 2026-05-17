@@ -29,7 +29,7 @@ const INITIAL: Msg[] = [
     t: "09:48",
     think:
       "B2B vertikal · SMB · niedriger ACV · vermutlich pre-revenue · Berlin → GmbH · Q3 → 8–10 Wochen Vorlauf",
-    body: "„Klar. Das, was du beschreibst, hat drei parallele Bewegungen — sonst wirst du im September gefangen sein."",
+    body: "„Klar. Das, was du beschreibst, hat drei parallele Bewegungen — sonst wirst du im September gefangen sein.",
     plan: [
       { sId: "cofounder", t: "Spur 1 · Co-Founder", d: "3 Profile heute, 1. Call in 5 Tagen. Zielzeit zum Sign: 8 Wo.", cta: "3 Profile öffnen" },
       { sId: "legal", t: "Spur 2 · Anwalt für Gründung", d: "GmbH + Gründervertrag + ESOP-Pool. Top-Match: Dr. Heller, Berlin.", cta: "Brief versenden" },
@@ -75,7 +75,7 @@ function CoPilot() {
         who: "ai",
         t: now,
         think: "verstanden · prüfe Netzwerk · ranke nach Fit & Verfügbarkeit",
-        body: "„Geht klar — ich schaue mir das an und schlage dir gleich konkrete Schritte vor."",
+        body: "„Geht klar — ich schaue mir das an und schlage dir gleich konkrete Schritte vor.",
       },
     ]);
     setInput("");
