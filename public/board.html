@@ -171,7 +171,7 @@
   </div>
   <button class="nav-btn" onclick="openNewIssueModal()">+ Issue</button>
   <button class="nav-btn" onclick="refreshAll()" title="Refresh from GitHub">↻</button>
-  <button class="nav-btn" onclick="openConnectModal()" title="GitHub-Einstellungen">⚙</button>
+  <button class="nav-btn" onclick="openConnectModal()" title="GitHub-Einstellungen (lokal)" style="display:none" id="settings-btn">⚙</button>
   <a class="nav-btn" href="https://github.com/SBS-Marketing/match-maker-for-founders/issues" target="_blank" rel="noopener">GitHub ↗</a>
 </nav>
 
@@ -360,7 +360,9 @@
 // ── Config ──────────────────────────────────────────────────────────────────
 const REPO = 'SBS-Marketing/match-maker-for-founders';
 const REPO_URL = `https://github.com/${REPO}`;
-const API = `https://api.github.com/repos/${REPO}`;
+// Proxy-Modus: Token liegt server-seitig bei Netlify → kein Token im Browser nötig
+const USE_PROXY = window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0');
+const API = USE_PROXY ? `/api/github/repos/${REPO}` : `https://api.github.com/repos/${REPO}`;
 let TOKEN = localStorage.getItem('mf_gh_token') || '';
 
 // Label maps
@@ -388,7 +390,9 @@ function headers() {
 }
 
 async function ghFetch(path, opts = {}) {
-  const res = await fetch(`https://api.github.com${path}`, { ...opts, headers: { ...headers(), ...(opts.headers||{}) } });
+  const base = USE_PROXY ? '/api/github' : 'https://api.github.com';
+  const fetchOpts = USE_PROXY ? opts : { ...opts, headers: { ...headers(), ...(opts.headers||{}) } };
+  const res = await fetch(`${base}${path}`, fetchOpts);
   if (!res.ok) throw new Error(`GitHub API ${res.status}: ${await res.text()}`);
   return res.status === 204 ? null : res.json();
 }
@@ -845,12 +849,19 @@ function showToast(msg, err) {
 
 // ── Init ───────────────────────────────────────────────────────────────────
 (async function init() {
-  if (!TOKEN) {
-    setGhStatus('err', 'Kein Token');
-    openConnectModal();
-    return;
+  if (USE_PROXY) {
+    // Token liegt server-seitig → einfach laden
+    setGhStatus('loading', 'Verbinde…');
+    await refreshAll();
+  } else {
+    // Lokale Entwicklung → Token aus localStorage
+    if (!TOKEN) {
+      setGhStatus('err', 'Kein Token (lokal)');
+      openConnectModal();
+      return;
+    }
+    await refreshAll();
   }
-  await refreshAll();
 })();
 </script>
 </body>

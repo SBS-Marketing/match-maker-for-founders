@@ -2,6 +2,13 @@
   command   = ""        # kein Build-Schritt — pure HTML
   publish   = "public"
 
+[functions]
+  directory = "netlify/edge-functions"
+
+[[edge_functions]]
+  path     = "/api/github/*"
+  function = "github-proxy"
+
 [[redirects]]
   from = "/board"
   to   = "/board.html"
