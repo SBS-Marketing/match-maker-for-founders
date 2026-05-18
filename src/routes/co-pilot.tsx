@@ -1,227 +1,518 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { SERVICE_BY_ID, type ServiceId } from "@/data/services";
-import { ServiceIcon } from "@/components/ServiceIcon";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { AuthGate } from "@/components/AuthGate";
 import { CopilotMark, AITag, ThinkingTrace } from "@/components/Copilot";
-import { ArrowRight, Send } from "lucide-react";
+import { Send, Save, Pencil, FileText, Globe, Database } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/co-pilot")({
   head: () => ({
-    meta: [{ title: "Co-Pilot — matchfoundr" }, { name: "description", content: "Die KI, die deinen Founder-Plan baut." }],
+    meta: [
+      { title: "Co-Pilot — matchfoundr" },
+      { name: "description", content: "Die KI, die deinen Founder-Plan baut." },
+    ],
   }),
-  component: CoPilot,
+  component: () => (
+    <AuthGate>
+      <CoPilotPage />
+    </AuthGate>
+  ),
 });
 
-type Msg =
-  | { who: "me"; t: string; body: string }
-  | { who: "ai"; t: string; think?: string; body: string; plan?: PlanRow[] };
+type Source = { typ?: string; type?: string; titel?: string; title?: string; url?: string };
+type Msg = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  sources?: Source[] | null;
+  created_at: string;
+};
+type Ctx = {
+  role?: string | null;
+  idea?: string | null;
+  stage?: string | null;
+  city?: string | null;
+  goal?: string | null;
+  risk?: string | null;
+};
 
-type PlanRow = { sId: ServiceId; t: string; d: string; cta: string };
-
-const INITIAL: Msg[] = [
-  {
-    who: "me",
-    t: "09:48",
-    body: "Ich bin Designer/Product, hab einen B2B-SaaS-Prototyp für Buchhaltung in Friseur-Salons. Zwei Monate alt. Ich brauche jemand Technisches und will Q3 ausgründen — Berlin.",
-  },
-  {
-    who: "ai",
-    t: "09:48",
-    think:
-      "B2B vertikal · SMB · niedriger ACV · vermutlich pre-revenue · Berlin → GmbH · Q3 → 8–10 Wochen Vorlauf",
-    body: "„Klar. Das, was du beschreibst, hat drei parallele Bewegungen — sonst wirst du im September gefangen sein.",
-    plan: [
-      { sId: "cofounder", t: "Spur 1 · Co-Founder", d: "3 Profile heute, 1. Call in 5 Tagen. Zielzeit zum Sign: 8 Wo.", cta: "3 Profile öffnen" },
-      { sId: "legal", t: "Spur 2 · Anwalt für Gründung", d: "GmbH + Gründervertrag + ESOP-Pool. Top-Match: Dr. Heller, Berlin.", cta: "Brief versenden" },
-      { sId: "funding", t: "Spur 3 · Förderung", d: "EXIST passt. Deadline in 12 Tagen — Antrag zu 78% von mir vorausgefüllt.", cta: "Antrag öffnen" },
-    ],
-  },
-];
-
-const SUGGESTIONS = [
+const DEFAULT_QA = [
   "Wer hilft mir mit dem ESOP-Pool?",
+  "Welche Förderung passt für mich?",
+  "Erstelle mir einen 3-Spur-Plan",
   "Mein Co-Founder springt ab — was jetzt?",
-  "Welche Förderung passt für Hardware?",
-  "Erster Sales-Hire — Profil + Recruiter",
 ];
 
-const SOURCES = [
-  "EXIST-Förderrichtlinie 2025",
-  "Senat Berlin · Gründerberatung",
-  "matchfoundr · 38 vergleichbare Fälle",
-  "Profil Dr. Lena Heller",
-];
-
-const UNDERSTOOD = [
-  "B2B SaaS · Vertikale: Friseur",
-  "Solo · Designer/Product",
-  "Pre-Revenue · 2 Mo Prototyp",
-  "Berlin · GmbH geplant",
-  "Q3 2026 Ausgründung",
-];
-
-function CoPilot() {
-  const [messages, setMessages] = useState<Msg[]>(INITIAL);
+function CoPilotPage() {
+  const { user } = useAuth();
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionTitle, setSessionTitle] = useState("Neue Session");
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [messages, setMessages] = useState<Msg[]>([]);
+  const [ctx, setCtx] = useState<Ctx | null>(null);
   const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [quickActions, setQuickActions] = useState<string[]>(DEFAULT_QA);
+  const [editingCtx, setEditingCtx] = useState(false);
+  const [ctxDraft, setCtxDraft] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const send = (text?: string) => {
+  // bootstrap: session + context + messages
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      // session: latest or new
+      const { data: sessions } = await supabase
+        .from("copilot_sessions")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(1);
+      let sid: string;
+      let title = "Neue Session";
+      if (sessions && sessions.length > 0) {
+        sid = sessions[0].id;
+        title = sessions[0].title;
+      } else {
+        const { data: created, error } = await supabase
+          .from("copilot_sessions")
+          .insert({ user_id: user.id, title: "Neue Session" })
+          .select()
+          .single();
+        if (error || !created) {
+          toast.error("Session konnte nicht erstellt werden");
+          return;
+        }
+        sid = created.id;
+      }
+      setSessionId(sid);
+      setSessionTitle(title);
+
+      const { data: ctxRow } = await supabase
+        .from("copilot_context")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (ctxRow) setCtx(ctxRow);
+
+      const { data: msgs } = await supabase
+        .from("copilot_messages")
+        .select("*")
+        .eq("session_id", sid)
+        .order("created_at", { ascending: true });
+      if (msgs) setMessages(msgs as Msg[]);
+    })();
+  }, [user]);
+
+  // autoscroll
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, sending]);
+
+  const allSources = useMemo(() => {
+    const seen = new Set<string>();
+    const out: Source[] = [];
+    for (const m of messages) {
+      if (!m.sources) continue;
+      for (const s of m.sources) {
+        const k = (s.titel || s.title || "") + (s.url || "");
+        if (!k || seen.has(k)) continue;
+        seen.add(k);
+        out.push(s);
+      }
+    }
+    return out.slice(0, 12);
+  }, [messages]);
+
+  async function send(text?: string) {
     const body = (text ?? input).trim();
-    if (!body) return;
-    const now = new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-    setMessages((m) => [
-      ...m,
-      { who: "me", t: now, body },
-      {
-        who: "ai",
-        t: now,
-        think: "verstanden · prüfe Netzwerk · ranke nach Fit & Verfügbarkeit",
-        body: "„Geht klar — ich schaue mir das an und schlage dir gleich konkrete Schritte vor.",
-      },
-    ]);
+    if (!body || !sessionId || !user || sending) return;
+
+    setSending(true);
     setInput("");
-  };
+
+    // Optimistic user msg + persist
+    const tempId = `tmp-${Date.now()}`;
+    const userMsg: Msg = {
+      id: tempId,
+      role: "user",
+      content: body,
+      created_at: new Date().toISOString(),
+    };
+    setMessages((m) => [...m, userMsg]);
+
+    const { data: inserted } = await supabase
+      .from("copilot_messages")
+      .insert({ session_id: sessionId, user_id: user.id, role: "user", content: body })
+      .select()
+      .single();
+    if (inserted) {
+      setMessages((m) => m.map((x) => (x.id === tempId ? (inserted as Msg) : x)));
+    }
+
+    // If no context yet, parse it from the first user message in background
+    if (!ctx) {
+      supabase.functions
+        .invoke("copilot", { body: { task: "context_parse", session_id: sessionId, message: body } })
+        .then(async () => {
+          const { data: ctxRow } = await supabase
+            .from("copilot_context")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("updated_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (ctxRow) setCtx(ctxRow);
+        })
+        .catch(() => {});
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke("copilot", {
+        body: { task: "chat", session_id: sessionId, message: body },
+      });
+      if (error) throw error;
+
+      const answer = (data?.answer as string) || "…";
+      const sources = (data?.sources as Source[]) || [];
+      const qa = (data?.quick_actions as string[]) || [];
+
+      // Edge function already inserts the assistant message — refetch to get the persisted row
+      const { data: msgs } = await supabase
+        .from("copilot_messages")
+        .select("*")
+        .eq("session_id", sessionId)
+        .order("created_at", { ascending: true });
+      if (msgs) setMessages(msgs as Msg[]);
+      else {
+        setMessages((m) => [
+          ...m,
+          {
+            id: `a-${Date.now()}`,
+            role: "assistant",
+            content: answer,
+            sources,
+            created_at: new Date().toISOString(),
+          },
+        ]);
+      }
+      if (qa.length) setQuickActions(qa);
+
+      await supabase
+        .from("copilot_sessions")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", sessionId);
+    } catch (e: any) {
+      const msg = e?.message || "";
+      if (msg.includes("429")) toast.error("Limit erreicht — bitte später erneut versuchen.");
+      else if (msg.includes("402")) toast.error("Credits aufgebraucht.");
+      else toast.error("Co-Pilot antwortet gerade nicht.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function saveSessionTitle() {
+    if (!sessionId) return;
+    await supabase.from("copilot_sessions").update({ title: sessionTitle }).eq("id", sessionId);
+    setEditingTitle(false);
+    toast.success("Session gespeichert");
+  }
+
+  async function reparseContext() {
+    if (!sessionId || !ctxDraft.trim()) return;
+    setEditingCtx(false);
+    const { error } = await supabase.functions.invoke("copilot", {
+      body: { task: "context_parse", session_id: sessionId, message: ctxDraft },
+    });
+    if (error) {
+      toast.error("Konnte Kontext nicht aktualisieren");
+      return;
+    }
+    const { data: ctxRow } = await supabase
+      .from("copilot_context")
+      .select("*")
+      .eq("user_id", user!.id)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (ctxRow) setCtx(ctxRow);
+    setCtxDraft("");
+    toast.success("Kontext aktualisiert");
+  }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-8 pb-16 sm:px-6">
-      <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-        {/* Chat */}
-        <div className="glass-pane-ink flex h-[78vh] flex-col overflow-hidden p-0">
-          <div className="flex items-center gap-3 border-b border-white/10 p-5">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--ember)] text-[var(--cream)] shadow-ember">
-              <CopilotMark size={18} color="var(--cream)" spark="var(--cream)" />
-            </span>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-[15px] font-semibold tracking-tight text-[var(--cream)]">Co-Pilot</span>
-                <AITag tone="dark">online</AITag>
+    <div
+      className="min-h-[calc(100vh-4rem)] w-full"
+      style={{ background: "var(--ink)", color: "var(--cream)" }}
+    >
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+        <div className="grid gap-5 lg:grid-cols-[65fr_35fr]">
+          {/* LEFT — Chat */}
+          <div
+            className="flex h-[82vh] flex-col overflow-hidden rounded-2xl border border-white/10"
+            style={{ background: "rgba(255,255,255,0.02)" }}
+          >
+            {/* Header */}
+            <div className="flex items-center gap-3 border-b border-white/10 px-5 py-4">
+              <span
+                className="flex h-10 w-10 items-center justify-center rounded-xl"
+                style={{ background: "var(--ember)" }}
+              >
+                <CopilotMark size={18} color="var(--cream)" spark="var(--cream)" />
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[15px] font-semibold tracking-tight">Co-Pilot</span>
+                  <AITag tone="dark">online</AITag>
+                </div>
+                {editingTitle ? (
+                  <input
+                    autoFocus
+                    value={sessionTitle}
+                    onChange={(e) => setSessionTitle(e.target.value)}
+                    onBlur={saveSessionTitle}
+                    onKeyDown={(e) => e.key === "Enter" && saveSessionTitle()}
+                    className="mt-0.5 w-full bg-transparent font-mono text-[10.5px] uppercase tracking-[0.12em] text-white/70 outline-none"
+                  />
+                ) : (
+                  <button
+                    onClick={() => setEditingTitle(true)}
+                    className="mt-0.5 truncate text-left font-mono text-[10.5px] uppercase tracking-[0.12em] text-white/55 hover:text-white/80"
+                  >
+                    Session · {sessionTitle}
+                  </button>
+                )}
               </div>
-              <div className="mt-0.5 font-mono text-[10.5px] uppercase tracking-[0.12em] text-white/55">
-                Session · Plan für Q3-Ausgründung
+              <button
+                onClick={saveSessionTitle}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[11.5px] font-semibold text-white/85 hover:bg-white/10"
+              >
+                <Save className="h-3.5 w-3.5" /> Session speichern
+              </button>
+            </div>
+
+            {/* Messages */}
+            <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-6">
+              {messages.length === 0 && !sending && (
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-[14px] text-white/70">
+                  <div className="mb-1 font-serif italic text-[var(--cream)]">
+                    „Erzähl mir kurz, was du gerade baust und wo du stehst — ich höre zu und mache dir
+                    einen konkreten nächsten Schritt."
+                  </div>
+                  <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white/40">
+                    Co-Pilot · bereit
+                  </div>
+                </div>
+              )}
+
+              {messages.map((m) =>
+                m.role === "user" ? (
+                  <div key={m.id} className="ml-auto max-w-[78%]">
+                    <div
+                      className="rounded-2xl rounded-br-sm px-4 py-3 text-[14px] leading-snug"
+                      style={{ background: "var(--cream)", color: "var(--ink)" }}
+                    >
+                      {m.content}
+                    </div>
+                    <div className="mt-1 text-right font-mono text-[10px] text-white/40">
+                      {formatTime(m.created_at)}
+                    </div>
+                  </div>
+                ) : (
+                  <div key={m.id} className="max-w-[90%]">
+                    <div className="rounded-2xl rounded-bl-sm border border-white/10 bg-white/5 px-4 py-3.5 font-serif text-[16px] italic leading-snug text-[var(--cream)] whitespace-pre-wrap">
+                      {m.content}
+                    </div>
+                    {m.sources && m.sources.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {m.sources.map((s, i) => (
+                          <SourcePill key={i} source={s} />
+                        ))}
+                      </div>
+                    )}
+                    <div className="mt-1 font-mono text-[10px] text-white/40">
+                      Co-Pilot · {formatTime(m.created_at)}
+                    </div>
+                  </div>
+                ),
+              )}
+
+              {sending && (
+                <div className="max-w-[60%]">
+                  <ThinkingTrace tone="dark">
+                    analysiere · rufe Quellen ab · formuliere Antwort
+                  </ThinkingTrace>
+                </div>
+              )}
+            </div>
+
+            {/* Composer */}
+            <div className="border-t border-white/10 p-4">
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                {quickActions.slice(0, 4).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => send(s)}
+                    disabled={sending}
+                    className="rounded-full border border-white/12 bg-white/5 px-3 py-1 text-[11.5px] text-white/75 hover:bg-white/10 disabled:opacity-50"
+                  >
+                    {s}
+                  </button>
+                ))}
               </div>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  send();
+                }}
+                className="flex items-end gap-2"
+              >
+                <textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e: KeyboardEvent<HTMLTextAreaElement>) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      send();
+                    }
+                  }}
+                  rows={1}
+                  placeholder="Frag etwas — oder lass mich den Plan ausarbeiten…"
+                  className="flex-1 resize-none rounded-xl border border-white/12 bg-white/5 px-4 py-3 text-[14px] text-[var(--cream)] placeholder:text-white/40 focus:border-white/25 focus:outline-none"
+                  style={{ maxHeight: 160 }}
+                />
+                <button
+                  type="submit"
+                  disabled={sending || !input.trim()}
+                  className="flex h-11 w-11 items-center justify-center rounded-xl text-[var(--cream)] disabled:opacity-50"
+                  style={{ background: "var(--ember)" }}
+                  aria-label="Senden"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </form>
             </div>
           </div>
 
-          <div className="flex-1 space-y-4 overflow-y-auto p-6">
-            {messages.map((m, i) =>
-              m.who === "me" ? (
-                <div key={i} className="ml-auto max-w-[78%]">
-                  <div className="rounded-2xl rounded-br-sm bg-[var(--cream)] px-4 py-3 text-[14px] leading-snug text-[var(--ink)]">
-                    {m.body}
+          {/* RIGHT — Context panel */}
+          <div className="flex flex-col gap-4">
+            <div className="rounded-2xl border border-white/10 p-5" style={{ background: "rgba(255,255,255,0.03)" }}>
+              <div className="flex items-center justify-between">
+                <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/55">
+                  So habe ich dich verstanden
+                </div>
+                <button
+                  onClick={() => {
+                    setEditingCtx((v) => !v);
+                    setCtxDraft("");
+                  }}
+                  className="inline-flex items-center gap-1 text-[11px] text-white/60 hover:text-white/90"
+                >
+                  <Pencil className="h-3 w-3" /> Etwas korrigieren
+                </button>
+              </div>
+
+              {editingCtx ? (
+                <div className="mt-4 space-y-2">
+                  <textarea
+                    autoFocus
+                    value={ctxDraft}
+                    onChange={(e) => setCtxDraft(e.target.value)}
+                    rows={5}
+                    placeholder="Beschreibe kurz dich, deine Idee, Stand, Stadt, Ziel, Risiko…"
+                    className="w-full resize-none rounded-lg border border-white/15 bg-white/5 p-3 text-[13px] text-white/85 placeholder:text-white/40 focus:outline-none"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => setEditingCtx(false)}
+                      className="rounded-lg px-3 py-1.5 text-[11.5px] text-white/60 hover:text-white/90"
+                    >
+                      Abbrechen
+                    </button>
+                    <button
+                      onClick={reparseContext}
+                      className="rounded-lg px-3 py-1.5 text-[11.5px] font-semibold text-[var(--cream)]"
+                      style={{ background: "var(--ember)" }}
+                    >
+                      Speichern
+                    </button>
                   </div>
-                  <div className="mt-1 text-right font-mono text-[10px] text-white/40">{m.t}</div>
                 </div>
               ) : (
-                <div key={i} className="max-w-[90%]">
-                  {m.think && (
-                    <div className="mb-2">
-                      <ThinkingTrace tone="dark">{m.think}</ThinkingTrace>
-                    </div>
-                  )}
-                  <div className="rounded-2xl rounded-bl-sm border border-white/10 bg-white/5 px-4 py-3.5 font-serif text-[16px] italic leading-snug text-[var(--cream)]">
-                    {m.body}
-                  </div>
-                  <div className="mt-1 font-mono text-[10px] text-white/40">Co-Pilot · {m.t}</div>
-
-                  {m.plan && (
-                    <div className="mt-3 rounded-2xl border border-white/12 bg-white/[0.07] p-4">
-                      <div className="mb-3 flex items-center gap-2">
-                        <ServiceIcon name="layers" size={14} stroke={2} className="text-[var(--cream)]" />
-                        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/60">
-                          Vorgeschlagener 3-Spur-Plan
-                        </span>
-                      </div>
-                      {m.plan.map((row, j) => {
-                        const s = SERVICE_BY_ID[row.sId];
-                        return (
-                          <div
-                            key={j}
-                            className={`grid grid-cols-[32px_1fr_auto] items-center gap-3 py-3 ${j === 0 ? "" : "border-t border-white/8"}`}
-                          >
-                            <span
-                              className="flex h-8 w-8 items-center justify-center rounded-[9px] text-[var(--cream)]"
-                              style={{ background: s.hue, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2)" }}
-                            >
-                              <ServiceIcon name={s.icon} size={15} stroke={2} />
-                            </span>
-                            <div className="min-w-0">
-                              <div className="text-[13.5px] font-semibold tracking-tight text-[var(--cream)]">{row.t}</div>
-                              <div className="mt-0.5 text-[12px] leading-snug text-white/70">{row.d}</div>
-                            </div>
-                            <button className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-[11.5px] font-semibold text-[var(--cream)] hover:bg-white/15">
-                              {row.cta} <ArrowRight className="h-3 w-3" />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                <div className="mt-4 space-y-3">
+                  <Field label="Du" value={ctx?.role} />
+                  <Field label="Idee" value={ctx?.idea} />
+                  <Field label="Stand" value={ctx?.stage} />
+                  <Field label="Stadt" value={ctx?.city} />
+                  <Field label="Ziel" value={ctx?.goal} />
+                  <Field label="Risiko" value={ctx?.risk} />
                 </div>
-              ),
-            )}
-          </div>
-
-          {/* composer */}
-          <div className="border-t border-white/10 p-4">
-            <div className="mb-3 flex flex-wrap gap-1.5">
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => send(s)}
-                  className="rounded-full border border-white/12 bg-white/5 px-3 py-1 text-[11.5px] text-white/75 hover:bg-white/10"
-                >
-                  {s}
-                </button>
-              ))}
+              )}
             </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                send();
-              }}
-              className="flex items-center gap-2"
-            >
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Schreib dem Co-Pilot, was du gerade brauchst…"
-                className="flex-1 rounded-xl border border-white/12 bg-white/5 px-4 py-3 text-[14px] text-[var(--cream)] placeholder:text-white/40 focus:border-white/25 focus:outline-none"
-              />
-              <button
-                type="submit"
-                className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--ember)] text-[var(--cream)] hover:bg-[var(--ember-deep)]"
-                aria-label="Senden"
-              >
-                <Send className="h-4 w-4" />
-              </button>
-            </form>
-          </div>
-        </div>
 
-        {/* Sidebar */}
-        <div className="flex flex-col gap-4">
-          <div className="glass-pane p-5">
-            <div className="eyebrow">Was der Co-Pilot verstanden hat</div>
-            <ul className="mt-4 space-y-2">
-              {UNDERSTOOD.map((u) => (
-                <li key={u} className="flex items-start gap-2 text-[13.5px] text-[var(--ink-soft)]">
-                  <span className="mt-1.5 inline-block h-1.5 w-1.5 rounded-full bg-[var(--ember)]" />
-                  {u}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="glass-pane p-5">
-            <div className="eyebrow">Quellen</div>
-            <ul className="mt-4 space-y-2">
-              {SOURCES.map((s) => (
-                <li key={s} className="text-[13px] text-[var(--smoke)]">
-                  <span className="font-mono text-[10px] tracking-[0.14em] text-[var(--ember-deep)]">SRC</span> · {s}
-                </li>
-              ))}
-            </ul>
+            <div className="rounded-2xl border border-white/10 p-5" style={{ background: "rgba(255,255,255,0.03)" }}>
+              <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/55">
+                Quellen, auf die ich mich stütze
+              </div>
+              <ul className="mt-4 space-y-2">
+                {allSources.length === 0 && (
+                  <li className="text-[12px] text-white/40">Noch keine Quellen — frag etwas.</li>
+                )}
+                {allSources.map((s, i) => (
+                  <li key={i} className="flex items-start gap-2 text-[12.5px] text-white/75">
+                    <SourceIcon source={s} />
+                    <span className="min-w-0 truncate">{s.titel || s.title || s.url}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+function Field({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div>
+      <div className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-white/40">{label}</div>
+      <div className="mt-0.5 text-[13.5px] leading-snug text-white/85">
+        {value || <span className="text-white/35">— noch unbekannt —</span>}
+      </div>
+    </div>
+  );
+}
+
+function SourcePill({ source }: { source: Source }) {
+  const typ = (source.typ || source.type || "Intern").toString();
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-white/70"
+      title={source.url}
+    >
+      <SourceIcon source={source} />
+      {typ} · {source.titel || source.title}
+    </span>
+  );
+}
+
+function SourceIcon({ source }: { source: Source }) {
+  const typ = (source.typ || source.type || "").toLowerCase();
+  if (typ.includes("pdf")) return <FileText className="h-3 w-3 text-[var(--ember-light)]" />;
+  if (typ.includes("web")) return <Globe className="h-3 w-3 text-[var(--ember-light)]" />;
+  return <Database className="h-3 w-3 text-[var(--ember-light)]" />;
+}
+
+function formatTime(iso: string) {
+  try {
+    return new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "";
+  }
 }
