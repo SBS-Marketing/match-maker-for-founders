@@ -121,13 +121,14 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const variant = pathname.startsWith("/onboarding") ? "dusk" : "sunrise";
+  const isLanding = pathname === "/";
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <PageBackdrop variant={variant} />
+        {!isLanding && <PageBackdrop variant={variant} />}
         <div className="relative z-10 flex min-h-screen flex-col">
-          <AppNav />
+          {!isLanding && <AppNav />}
           <main className="flex-1">
             <Outlet />
           </main>
