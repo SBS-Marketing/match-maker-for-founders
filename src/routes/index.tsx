@@ -1533,6 +1533,7 @@ function LCoPilotMoment() {
         }}
       />
       <div
+        className="landing-two-col landing-section-inner"
         style={{
           position: "relative",
           maxWidth: 1240,
