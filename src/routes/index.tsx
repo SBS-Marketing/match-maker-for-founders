@@ -3248,6 +3248,27 @@ const RESPONSIVE_CSS = `
     font-size: clamp(72px, 14vw, 140px) !important;
     line-height: 0.95 !important;
   }
+  .landing-funding-card {
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 24px !important;
+  }
+  .landing-funding-card-head,
+  .landing-grant-actions {
+    align-items: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+  .landing-funding-card-title,
+  .landing-grant-meta,
+  .landing-grant-note > div {
+    overflow-wrap: anywhere !important;
+  }
+  .landing-grant-amount {
+    font-size: clamp(50px, 13vw, 72px) !important;
+    letter-spacing: 0 !important;
+    line-height: 0.95 !important;
+  }
 }
 
 /* ════════ PHONE PORTRAIT  ≤ 640px ════════ */
@@ -3329,6 +3350,25 @@ const RESPONSIVE_CSS = `
   }
   .landing-funding-bignum {
     font-size: clamp(64px, 18vw, 96px) !important;
+  }
+  .landing-funding-card {
+    padding: 20px !important;
+    border-radius: 18px !important;
+  }
+  .landing-funding-card-head,
+  .landing-grant-progress-labels,
+  .landing-grant-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    justify-items: start !important;
+  }
+  .landing-grant-amount {
+    font-size: clamp(44px, 16vw, 64px) !important;
+  }
+  .landing-grant-meta { font-size: 13.5px !important; }
+  .landing-grant-note {
+    padding: 12px !important;
+    gap: 10px !important;
   }
 }
 `;
