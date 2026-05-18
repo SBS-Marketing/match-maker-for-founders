@@ -44,12 +44,27 @@ const callSonnet = (prompt: string) => callOpenRouter(SONNET_MODEL, prompt, 1024
 
 // ─── Parse JSON safely ───────────────────────────────────────
 function parseJSON(text: string): Record<string, unknown> {
+  if (!text || text.trim() === '') return { raw: '' }
   try {
-    const match = text.match(/\{[\s\S]*\}/)
-    return match ? JSON.parse(match[0]) : { raw: text }
+    // Try direct parse first
+    return JSON.parse(text)
   } catch {
-    return { raw: text }
+    try {
+      // Try extracting JSON block
+      const match = text.match(/\{[\s\S]*\}/)
+      if (match) return JSON.parse(match[0])
+    } catch { /* fall through */ }
   }
+  // Fallback: return raw text so pipeline never breaks
+  return { raw: text, antwort: text }
+}
+
+// ─── Extract best text from Kimi response ────────────────────
+function extractDraft(kimiData: Record<string, unknown>, kimiRaw: string): string {
+  const draft = kimiData.antwort ?? kimiData.raw ?? kimiRaw
+  const text = String(draft ?? '').trim()
+  if (!text || text === 'undefined' || text === 'null') return kimiRaw
+  return text
 }
 
 // ─── Main handler ────────────────────────────────────────────
@@ -130,43 +145,53 @@ Deno.serve(async (req) => {
     }
 
     else if (task === 'chat') {
+      if (!message || message.trim() === '') {
+        return new Response(
+          JSON.stringify({ error: 'message darf nicht leer sein' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
       // Stage 1: Kimi analyzes + answers
       const kimiPrompt = KIMI_PROMPTS.chat(ctx, message)
       const kimiRaw = await callKimi(kimiPrompt)
       const kimiData = parseJSON(kimiRaw)
 
+      // Extract draft — never pass empty string to Sonnet
+      const draft = extractDraft(kimiData, kimiRaw)
+
       // Stage 2: Sonnet polishes the answer text
-      const sonnetPrompt = SONNET_PROMPTS.chat(ctx, String(kimiData.antwort || kimiRaw))
+      const sonnetPrompt = SONNET_PROMPTS.chat(ctx, draft)
       const polishedAnswer = await callSonnet(sonnetPrompt)
 
-      // Save message
+      // Save assistant message to DB
       if (session_id) {
         await supabase.from('copilot_messages').insert({
           session_id,
-          user_id: user.id,
-          role: 'assistant',
-          content: polishedAnswer,
+          user_id:    user.id,
+          role:       'assistant',
+          content:    polishedAnswer,
           model_used: 'kimi+sonnet',
-          sources: kimiData.quellen || [],
+          sources:    Array.isArray(kimiData.quellen) ? kimiData.quellen : [],
         })
 
-        // Extract deadlines if found
-        if (kimiData.neue_deadline_erkannt) {
-          const deadlineData = kimiData.neue_deadline_erkannt as Record<string, unknown>
+        // Save deadline if Kimi detected one
+        const deadline = kimiData.neue_deadline_erkannt as Record<string, unknown> | null
+        if (deadline?.titel && deadline?.datum) {
           await supabase.from('deadlines').insert({
             user_id:   user.id,
             session_id,
-            title:     deadlineData.titel,
-            due_date:  deadlineData.datum,
-            priority:  deadlineData.priorität || 'medium',
+            title:     deadline.titel,
+            due_date:  deadline.datum,
+            priority:  deadline.priorität || 'medium',
           })
         }
       }
 
       result = {
-        answer:       polishedAnswer,
-        sources:      kimiData.quellen || [],
-        quick_actions: kimiData.follow_up_aktionen || [],
+        answer:        polishedAnswer,
+        sources:       Array.isArray(kimiData.quellen) ? kimiData.quellen : [],
+        quick_actions: Array.isArray(kimiData.follow_up_aktionen) ? kimiData.follow_up_aktionen : [],
       }
     }
 
