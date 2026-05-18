@@ -539,7 +539,9 @@ function LNav() {
             gap: 8,
           }}
         >
-          Plattform starten <SvcIcon name="arrowR" size={13} color={M.cream} stroke={2.2} />
+          <span className="landing-nav-cta-label">Plattform starten</span>
+          <span className="landing-nav-cta-short">Start</span>
+          <SvcIcon name="arrowR" size={13} color={M.cream} stroke={2.2} />
         </Link>
       </div>
     </div>
