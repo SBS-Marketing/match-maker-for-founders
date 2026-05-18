@@ -580,9 +580,11 @@ function LNav() {
             style={{
               position: "absolute",
               top: "calc(100% + 10px)",
-              left: 0,
               right: 0,
-              ...GLASS.pill,
+              minWidth: 240,
+              background: M.cream,
+              border: "1px solid rgba(21,20,15,0.10)",
+              boxShadow: "0 20px 50px -12px rgba(21,20,15,0.25)",
               borderRadius: 20,
               padding: 14,
               display: "flex",
