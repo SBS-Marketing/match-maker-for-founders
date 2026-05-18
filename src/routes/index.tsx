@@ -3348,6 +3348,7 @@ const RESPONSIVE_CSS = `
   .landing-nav-cta { padding: 9px 14px !important; font-size: 12.5px !important; }
   .landing-nav-cta-label { display: none !important; }
   .landing-nav-cta-short { display: inline !important; }
+  .landing-nav-burger { display: inline-flex !important; }
 
   /* Hero preview card compact */
   .hero-copilot { padding: 18px !important; border-radius: 18px !important; }
