@@ -3055,6 +3055,30 @@ const RESPONSIVE_CSS = `
 /* Nav CTA short label hidden by default */
 .landing-nav-cta-short { display: none; }
 
+/* Problem chip cloud: keep all chips visible on compact desktop/tablet widths */
+@media (max-width: 1100px) {
+  .landing-problem-cloud {
+    min-height: 0 !important;
+    height: auto !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-content: flex-start !important;
+    gap: 10px !important;
+    transform: none !important;
+    margin-bottom: 0 !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+  .landing-problem-chip {
+    position: static !important;
+    transform: none !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+  .landing-problem-lines { display: none !important; }
+}
+
 /* ════════ TABLET / LARGE PHONE LANDSCAPE  ≤ 900px ════════ */
 @media (max-width: 900px) {
   /* Section rhythm */
