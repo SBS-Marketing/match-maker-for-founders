@@ -2728,7 +2728,7 @@ function LCta() {
             Fünf Minuten reichen. Du sprichst, er sortiert. Am Ende hast du drei konkrete Schritte und Menschen, die sie
             mit dir gehen.
           </p>
-          <div style={{ display: "flex", gap: 12, marginTop: 36, flexWrap: "wrap" }}>
+          <div className="landing-cta-actions" style={{ display: "flex", gap: 12, marginTop: 36, flexWrap: "wrap" }}>
             <Link
               to="/co-pilot"
               style={{
