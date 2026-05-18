@@ -3280,6 +3280,22 @@ const RESPONSIVE_CSS = `
     width: 100% !important;
     justify-content: center !important;
   }
+
+  /* Section inner / CTA pane on phone */
+  .landing-section-inner {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+    gap: 24px !important;
+  }
+  .landing-cta-pane { padding: 22px !important; }
+  .landing-cta-actions {
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+  }
+  .landing-funding-bignum {
+    font-size: clamp(64px, 18vw, 96px) !important;
+  }
 }
 `;
 
