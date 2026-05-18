@@ -969,6 +969,7 @@ function LHero() {
 function LogoWall() {
   return (
     <div
+      className="landing-logo-wall"
       style={{
         position: "relative",
         borderTop: "1px solid rgba(21,20,15,0.08)",
@@ -979,6 +980,7 @@ function LogoWall() {
       }}
     >
       <div
+        className="landing-logo-wall-inner"
         style={{
           maxWidth: 1240,
           margin: "0 auto",
@@ -989,6 +991,7 @@ function LogoWall() {
         }}
       >
         <span
+          className="landing-logo-wall-label"
           style={{
             fontFamily: M.fontMono,
             fontSize: 11,
@@ -999,17 +1002,17 @@ function LogoWall() {
         >
           Partner-Netzwerk
         </span>
-        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 38, opacity: 0.85, flexWrap: "wrap" }}>
-          <span style={{ fontFamily: M.fontSans, fontSize: 18, fontWeight: 700, letterSpacing: "-0.03em" }}>EXIST</span>
-          <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontSize: 19 }}>Bird &amp; Bird</span>
-          <span style={{ fontFamily: M.fontSans, fontSize: 14, fontWeight: 700, letterSpacing: "0.32em" }}>PROFIT</span>
-          <span style={{ fontFamily: M.fontMono, fontSize: 14 }}>bafa /</span>
-          <span style={{ fontFamily: M.fontSans, fontSize: 17, fontWeight: 600, letterSpacing: "-0.02em" }}>KfW</span>
-          <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontSize: 18 }}>Osborne Clarke</span>
-          <span style={{ fontFamily: M.fontSans, fontSize: 15, fontWeight: 600, letterSpacing: "-0.015em" }}>
+        <div className="landing-logo-wall-logos" style={{ flex: 1, display: "flex", alignItems: "center", gap: 38, opacity: 0.85, flexWrap: "wrap" }}>
+          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontSans, fontSize: 18, fontWeight: 700, letterSpacing: "-0.03em" }}>EXIST</span>
+          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontSize: 19 }}>Bird &amp; Bird</span>
+          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontSans, fontSize: 14, fontWeight: 700, letterSpacing: "0.32em" }}>PROFIT</span>
+          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontMono, fontSize: 14 }}>bafa /</span>
+          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontSans, fontSize: 17, fontWeight: 600, letterSpacing: "-0.02em" }}>KfW</span>
+          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontSize: 18 }}>Osborne Clarke</span>
+          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontSans, fontSize: 15, fontWeight: 600, letterSpacing: "-0.015em" }}>
             SignalIduna
           </span>
-          <span style={{ fontFamily: M.fontMono, fontSize: 13, textTransform: "lowercase" }}>n26·labs</span>
+          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontMono, fontSize: 13, textTransform: "lowercase" }}>n26·labs</span>
         </div>
       </div>
     </div>
@@ -3207,6 +3210,22 @@ const RESPONSIVE_CSS = `
   .landing-root h1 { font-size: clamp(40px, 11vw, 64px) !important; line-height: 1.0 !important; }
   .landing-root h2 { font-size: clamp(28px, 7vw, 44px) !important; line-height: 1.05 !important; }
   .landing-root h2 span { display: inline !important; }
+
+  /* Logo wall centered on tablet/mobile */
+  .landing-logo-wall { padding: 36px 22px !important; }
+  .landing-logo-wall-inner {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    justify-items: center !important;
+    gap: 28px !important;
+    text-align: center !important;
+  }
+  .landing-logo-wall-logos {
+    justify-content: center !important;
+    gap: 24px 34px !important;
+  }
+  .landing-logo-wall-label { width: 100% !important; }
+
   /* €2.4M giant number */
   .landing-root [style*="font-size: 180px"] { font-size: 92px !important; line-height: 0.9 !important; }
   .landing-root [style*="font-size: 72px"] { font-size: 48px !important; line-height: 1.05 !important; }
@@ -3312,6 +3331,19 @@ const RESPONSIVE_CSS = `
     padding-right: 18px !important;
   }
   .landing-hero-grid { padding: 36px 18px 56px !important; gap: 32px !important; }
+
+  /* Logo wall → centered brand stack */
+  .landing-logo-wall { padding: 42px 18px !important; }
+  .landing-logo-wall-inner { gap: 30px !important; }
+  .landing-logo-wall-logos {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    justify-items: center !important;
+    gap: 26px !important;
+    width: 100% !important;
+  }
+  .landing-logo-wall-logo { display: block !important; }
+  .landing-logo-wall-label { font-size: 10.5px !important; }
 
   /* Problem chips → one column on phone */
   .landing-problem-cloud {
