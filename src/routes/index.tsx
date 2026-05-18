@@ -3344,10 +3344,10 @@ const RESPONSIVE_CSS = `
   .landing-nav-shell { padding-left: 16px !important; padding-right: 16px !important; top: 12px !important; margin-top: 12px !important; }
   .landing-nav-inner { padding: 8px 6px 8px 14px !important; gap: 10px !important; width: 100% !important; max-width: none !important; }
   .landing-nav-links,
-  .landing-nav-signin,
-  .landing-nav-spacer { display: none !important; }
+  .landing-nav-signin { display: none !important; }
+  .landing-nav-spacer { flex: 1 !important; }
   .landing-brand > span:last-child { display: none !important; }
-  .landing-nav-cta { padding: 9px 14px !important; font-size: 12.5px !important; }
+  .landing-nav-cta { padding: 9px 14px !important; font-size: 12.5px !important; margin-left: auto !important; }
   .landing-nav-cta-label { display: none !important; }
   .landing-nav-cta-short { display: inline !important; }
   .landing-nav-burger { display: inline-flex !important; }
