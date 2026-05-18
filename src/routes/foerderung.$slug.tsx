@@ -77,7 +77,7 @@ function GrantDetail() {
           <div className="glass-pane mt-5 p-5">
             <div className="eyebrow">Timeline</div>
             <div className="mt-4 space-y-3">
-              {grant.timeline.map((p, i) => (
+              {grant.timeline.map((p: any, i: number) => (
                 <div key={p.phase} className="grid grid-cols-[60px_1fr] gap-3">
                   <div>
                     <div className="font-mono text-[11px] font-semibold text-[var(--ember-deep)]">{`0${i + 1}`}</div>
