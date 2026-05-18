@@ -55,7 +55,7 @@ function AdvisorDetail() {
               <AITag tone="dark">Co-Pilot · warum dieses Match</AITag>
             </div>
             <ul className="mt-3 space-y-2">
-              {advisor.why.map((w) => (
+              {advisor.why.map((w: string) => (
                 <li key={w} className="flex items-start gap-2 text-[13.5px] leading-snug text-[var(--cream)]/90">
                   <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--ember-light)]" />
                   {w}
