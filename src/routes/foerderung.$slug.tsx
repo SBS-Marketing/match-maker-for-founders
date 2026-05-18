@@ -51,7 +51,7 @@ function GrantDetail() {
               <AITag tone="dark">Co-Pilot · Eligibility-Check</AITag>
             </div>
             <ul className="space-y-2.5">
-              {grant.eligibility.map((e) => {
+              {grant.eligibility.map((e: any) => {
                 const isOk = e.ok === true;
                 const isWarn = e.ok === "warn";
                 return (
@@ -77,7 +77,7 @@ function GrantDetail() {
           <div className="glass-pane mt-5 p-5">
             <div className="eyebrow">Timeline</div>
             <div className="mt-4 space-y-3">
-              {grant.timeline.map((p, i) => (
+              {grant.timeline.map((p: any, i: number) => (
                 <div key={p.phase} className="grid grid-cols-[60px_1fr] gap-3">
                   <div>
                     <div className="font-mono text-[11px] font-semibold text-[var(--ember-deep)]">{`0${i + 1}`}</div>
@@ -110,7 +110,7 @@ function GrantDetail() {
           <div className="glass-pane p-5">
             <div className="eyebrow">Materialien</div>
             <ul className="mt-4 space-y-2.5">
-              {grant.materials.map((m) => (
+              {grant.materials.map((m: any) => (
                 <li key={m.item} className="flex items-start gap-2 text-[13px]">
                   <span
                     className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border"

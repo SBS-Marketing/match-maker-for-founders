@@ -55,7 +55,7 @@ function AdvisorDetail() {
               <AITag tone="dark">Co-Pilot · warum dieses Match</AITag>
             </div>
             <ul className="mt-3 space-y-2">
-              {advisor.why.map((w) => (
+              {advisor.why.map((w: string) => (
                 <li key={w} className="flex items-start gap-2 text-[13.5px] leading-snug text-[var(--cream)]/90">
                   <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--ember-light)]" />
                   {w}
@@ -68,7 +68,7 @@ function AdvisorDetail() {
           <div className="glass-pane mt-5 p-5">
             <div className="eyebrow">Fachgebiete</div>
             <div className="mt-4 space-y-3">
-              {advisor.specialties.map((sp) => (
+              {advisor.specialties.map((sp: any) => (
                 <div key={sp.label}>
                   <div className="flex justify-between text-[13px]">
                     <span>{sp.label}</span>
@@ -86,7 +86,7 @@ function AdvisorDetail() {
           <div className="glass-pane mt-5 p-5">
             <div className="eyebrow">Network-Vouches</div>
             <div className="mt-4 space-y-4">
-              {advisor.vouches.map((v) => (
+              {advisor.vouches.map((v: any) => (
                 <div key={v.from}>
                   <p className="font-serif text-[16px] italic leading-snug">„{v.quote}"</p>
                   <div className="mt-2 text-[12px] text-[var(--smoke)]">
@@ -103,7 +103,7 @@ function AdvisorDetail() {
           <div className="glass-pane p-5">
             <div className="eyebrow">Pakete</div>
             <div className="mt-4 space-y-3">
-              {advisor.packages.map((p) => (
+              {advisor.packages.map((p: any) => (
                 <div key={p.name} className="rounded-xl border border-[var(--ruled)] bg-white/40 p-4">
                   <div className="flex items-baseline justify-between">
                     <span className="text-[14px] font-semibold">{p.name}</span>
