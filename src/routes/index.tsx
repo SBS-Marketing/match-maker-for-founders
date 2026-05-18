@@ -1351,8 +1351,7 @@ function LHowItWorks() {
             color: M.ink,
           }}
         >
-          Drei Schritte.{" "}
-          <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400, color: M.smoke }}>
+          Drei Schritte. <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400, color: M.smoke }}>
             Kein Dashboard zu pflegen.
           </span>
         </h2>
@@ -1554,8 +1553,7 @@ function LCoPilotMoment() {
               color: M.cream,
             }}
           >
-            Er versteht, wo du{" "}
-            <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>wirklich</span> stehst
+            Er versteht, wo du <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>wirklich</span> stehst
             <span style={{ color: M.ember }}>.</span>
           </h2>
           <p style={{ marginTop: 24, fontSize: 17, lineHeight: 1.6, color: "rgba(251,250,247,0.7)", maxWidth: 460 }}>
@@ -2060,8 +2058,7 @@ function LCompare() {
             color: M.ink,
           }}
         >
-          Wie viel Zeit du{" "}
-          <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>zurück</span> bekommst
+          Wie viel Zeit du <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>zurück</span> bekommst
           <span style={{ color: M.ember }}>.</span>
         </h2>
       </div>
@@ -2478,8 +2475,7 @@ function LPricing() {
             color: M.ink,
           }}
         >
-          Ein Co-Pilot kostet weniger als{" "}
-          <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>eine Erstberatung</span>
+          Ein Co-Pilot kostet weniger als <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>eine Erstberatung</span>
           <span style={{ color: M.ember }}>.</span>
         </h2>
         <p style={{ fontSize: 16.5, lineHeight: 1.55, color: M.smoke, maxWidth: 540, margin: "16px auto 0" }}>
