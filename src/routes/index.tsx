@@ -2531,7 +2531,7 @@ function LFaq() {
   ];
   return (
     <Section tone="cream" pad="140px 0">
-      <div style={{ display: "grid", gridTemplateColumns: "0.85fr 1.15fr", gap: 80, alignItems: "flex-start" }}>
+      <div className="landing-two-col landing-faq-grid" style={{ display: "grid", gridTemplateColumns: "0.85fr 1.15fr", gap: 80, alignItems: "flex-start" }}>
         <div style={{ position: "sticky", top: 100 }}>
           <Eyebrow>09 · Was Founder uns fragen</Eyebrow>
           <h2
@@ -2788,6 +2788,7 @@ function LCta() {
         </div>
 
         <div
+          className="landing-cta-grid"
           style={{
             ...GLASS.paneInk,
             padding: 28,
@@ -2923,7 +2924,7 @@ function LFooter() {
   return (
     <footer style={{ background: M.ink, color: M.cream, padding: "80px 0 36px" }}>
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 64px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1.4fr repeat(4, 1fr)", gap: 36, marginBottom: 56 }}>
+        <div className="landing-footer-grid" style={{ display: "grid", gridTemplateColumns: "1.4fr repeat(4, 1fr)", gap: 36, marginBottom: 56 }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <IconMF size={28} color={M.cream} spark={M.ember} />
