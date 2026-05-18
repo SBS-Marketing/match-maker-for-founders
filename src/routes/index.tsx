@@ -3281,6 +3281,18 @@ const RESPONSIVE_CSS = `
   }
   .landing-hero-grid { padding: 36px 18px 56px !important; gap: 32px !important; }
 
+  /* Problem chips → one column on phone */
+  .landing-problem-cloud {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 9px !important;
+  }
+  .landing-problem-chip {
+    width: 100% !important;
+    padding: 11px 14px !important;
+    font-size: 13px !important;
+  }
+
   /* Compare row padding */
   .landing-compare-row { padding: 16px 18px !important; }
 
