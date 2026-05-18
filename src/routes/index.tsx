@@ -3215,6 +3215,17 @@ const RESPONSIVE_CSS = `
   /* Hero actions full-width on tablet */
   .landing-hero-actions { flex-wrap: wrap !important; }
   .landing-hero-primary, .landing-hero-secondary { justify-content: center !important; }
+
+  /* Section inner padding/gap on tablet */
+  .landing-section-inner {
+    padding-left: 22px !important;
+    padding-right: 22px !important;
+    gap: 32px !important;
+  }
+  .landing-funding-bignum {
+    font-size: clamp(72px, 14vw, 140px) !important;
+    line-height: 0.95 !important;
+  }
 }
 
 /* ════════ PHONE PORTRAIT  ≤ 640px ════════ */
