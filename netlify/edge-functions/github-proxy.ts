@@ -1,6 +1,6 @@
 // GitHub API Proxy — Token bleibt server-seitig, nie im Browser
-export default async (request: Request, context: { env: Record<string, string> }) => {
-  const token = context.env.GITHUB_TOKEN;
+export default async (request: Request) => {
+  const token = Deno.env.get("GITHUB_TOKEN");
   if (!token) {
     return new Response(JSON.stringify({ error: "GITHUB_TOKEN not configured" }), {
       status: 500,
