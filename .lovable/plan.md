@@ -1,68 +1,68 @@
-# Co-Pilot Chat (/co-pilot) — Implementierungsplan
-
 ## Ziel
-`src/routes/co-pilot.tsx` von Mock-Daten auf einen funktionsfähigen, auth-geschützten Chat umstellen, der mit der bereits deployten Edge Function `copilot` spricht und Session/Kontext/Messages in Supabase persistiert.
 
-## UI (matchfoundr Brand)
+Die Landingpage `src/routes/index.tsx` ist auf Mobile/Tablet immer noch nicht sauber. Das hochgeladene Konzept (`Co_Founder_Plattofrm_3.zip`) enthält jetzt eine **fertige, getestete Mobile-/Tablet-Spezifikation** inklusive konkreter CSS-Regeln und 12 Mobile-Screens (390 px). Plan: diese Spezifikation 1:1 in die bestehende Landingpage übernehmen.
 
-Layout zwei Spalten (65% / 35%, auf mobil gestapelt). Tokens aus `styles.css`: `--ink #15140f`, `--ember #E2511C`, `--cream #FBFAF7`, Font Geist.
+## Vorlage aus dem Upload
 
-**Linke Spalte — Chat**
-- Header-Bar: `CopilotMark` Badge + Titel "Co-Pilot" + `AITag` "ONLINE" + Session-Titel (editable inline) + "Session speichern" Button (rechts).
-- Scroll-Bereich mit Messages:
-  - User → rechts, cream Bubble auf ink Background.
-  - Assistant → links, dunkle Bubble mit ember Akzent, serif italic für die Antwort.
-  - Unter Assistant-Bubble: Quellen-Pills (PDF / Web / Intern) gerendert aus `sources[]`.
-  - Thinking-Trace während Streaming (Reuse `ThinkingTrace`).
-- Composer unten: Textarea mit Placeholder „Frag etwas — oder lass mich den Plan ausarbeiten…", Senden-Button (ember).
-- Quick-Action Chips unter dem Composer, dynamisch aus letzter Assistant-Response `quick_actions[]`.
+- Zwei Breakpoints (aus `reference_html/matchfoundr Landing.html`):
+  - `≤ 900 px` → Tablet / großes Phone-Landscape
+  - `≤ 640 px` → Phone-Portrait
+- Mobile-Screens unter `screens/mobile/01-section.png … 12-section.png` als visuelle Referenz pro Section.
+- Vollständige Regelliste im Anhang dieser Datei (Container-Padding, 2-/3-/4-Spalten kollabieren, Marketplace 4×2 → 2×4 → 1×8, Stats 4 → 2 → 1, Footer 5 → 2 → 1, Comparison-Tabelle wird zu Karten mit „Solo"/„Mit Co-Pilot"-Labels via `::before`, FAQ-Sticky-Heading wird statisch, Hero/CTA-Buttons full-width auf Phone, Headline-Caps `clamp(40px,11vw,64px)` bzw. `clamp(36px,12vw,56px)`, €2.4M-Riesenzahl 92 px / 72 px, Chaos-Cloud wird gescalter Flourish).
 
-**Rechte Spalte — Kontext-Panel**
-- `glass-pane-ink` Card:
-  - Eyebrow „SO HABE ICH DICH VERSTANDEN"
-  - Felder DU / IDEE / STAND / STADT / ZIEL / RISIKO (aus `copilot_context`)
-  - Button „Etwas korrigieren" → öffnet Inline-Edit Dialog (Phase 2 als simples Dialog mit Textarea, schickt `context_parse`).
-- Zweite Card: „QUELLEN, AUF DIE ICH MICH STÜTZE" — aggregiert distinct `sources` aus allen Messages der Session.
+## Was geändert wird
 
-## Datenfluss
+Nur `src/routes/index.tsx`. Keine Logik, kein Backend, keine anderen Routen.
 
-1. **Auth Gate**: Komponente in `<AuthGate>` einwickeln.
-2. **Mount**:
-   - `copilot_sessions` für `user_id` laden → letzte Session nehmen oder neue anlegen (`INSERT title:"Neue Session"`), `session_id` im State.
-   - `copilot_context` für `user_id` laden (ORDER BY updated_at DESC LIMIT 1). Wenn leer → Panel zeigt Empty-State + CTA „Erzähl mir kurz von dir".
-   - `copilot_messages` für `session_id` laden (ASC). Falls leer, Welcome-Message anzeigen.
-3. **Senden**:
-   - Optimistisch User-Message in State + INSERT in `copilot_messages` (`role:'user'`).
-   - `supabase.functions.invoke('copilot', { body: { task: 'chat', session_id, message } })`.
-   - Response `{ answer, sources, quick_actions }` → INSERT Assistant Message (`role:'assistant'`, `sources`, `model_used`).
-   - State aktualisieren, scroll-to-bottom.
-4. **Context Parse**: Wenn kein `copilot_context` existiert und User die erste lange Nachricht schickt, parallel `task:'context_parse'` aufrufen, Resultat upserten in `copilot_context`.
-5. **Session speichern**: Button setzt `title` über Prompt/Input und UPDATE auf `copilot_sessions`.
+### 1. `RESPONSIVE_CSS` neu aufsetzen (zwei Media-Queries, Klassen-basiert)
 
-## Technische Details
+Der heutige Block mischt eigene Werte mit fragilen Attribut-Selektoren. Wir ersetzen ihn durch eine saubere Portierung der Referenz-Regeln, aber konsequent klassenbasiert (die Klassen sind teils schon vergeben):
 
-- TanStack Query Hooks:
-  - `useSession()` → ensures session, returns `{ sessionId }`.
-  - `useContext()` → SELECT copilot_context.
-  - `useMessages(sessionId)` → SELECT + Realtime subscription auf `copilot_messages` filter `session_id`.
-  - `useSendMessage()` → mutation: insert user msg → invoke edge fn → insert assistant msg → invalidate.
-- Realtime: optional `supabase.channel('copilot:'+sessionId)` für `copilot_messages` INSERT.
-- Edge Function Aufruf via Browser-Client (`supabase.functions.invoke`) — die Function ist bereits deployed; sie sollte mit JWT laufen (RLS-konformer Insert macht sie selbst oder Client). Erwartetes Body-Schema: `{ task, session_id, message, context? }`, Response: `{ answer, sources: [{type,title,url?}], quick_actions: string[] }`.
-- Fehlerbehandlung: Toast bei Edge-Function-Fehler (429 → "Limit erreicht", 402 → "Credits aufgebraucht", sonst generisch).
-- Auto-Scroll: ref + `useEffect` auf messages.length.
-- Composer: Enter sendet, Shift+Enter neue Zeile.
+- **`@media (max-width: 900px)`**
+  - Container `[max-width:1240][padding:0 64px]` → `padding: 0 22px`
+  - Hero-Grid-Wrapper → `48px 22px 64px`, `gap: 40px`
+  - `section` Vertikal-Rhythmus: 140 → 72, 120 → 64
+  - Alle zweispaltigen Grids (`landing-hero-grid`, `landing-two-col`, `landing-cta-grid`, `landing-faq-grid`) → 1 Spalte, gap 40, `align-items: start`
+  - 3-Spalter (`landing-card-grid-3`) → 1 Spalte, gap 16
+  - `landing-market-grid` → `1fr 1fr`, `grid-auto-rows: auto`, gap 12
+  - `landing-hero-stats` (4-Spalter) → `1fr 1fr`, gap `22px 18px`, Border-Left entfernen + Border-Top für Zeile 2
+  - `landing-quote-grid` (1.4/1/1) → 1 Spalte, gap 14
+  - `landing-footer-grid` (1.4 + 4×1) → `1fr 1fr`, Brand-Spalte `grid-column: 1 / -1`
+  - Comparison: `.landing-compare-head { display:none }`, `.landing-compare-row` zu Card, `::before`-Pseudos „Solo" / „Mit Co-Pilot" auf `.l-compare-solo` / `.l-compare-mf`
+  - Typo-Caps: `h1 clamp(40px,11vw,64px)`, `h2 clamp(28px,7vw,44px)`, €-Zahl 92 px
+  - Chaos-Cloud (`min-height:480`) → `height:200px`, `transform:scale(.55)`, `margin-bottom:-120px`, `opacity:.55`
+  - FAQ-Sticky → `position:static`
+  - Pricing-Featured `translateY(-8px)` → none
+  - Nav: `.landing-nav-inner` Padding/Gap reduzieren, `.landing-nav-links`, `.landing-nav-signin`, Plattform-Pill ausblenden, `.landing-nav-cta` kompakt (kurzes Label „Start")
 
-## Dateien
+- **`@media (max-width: 640px)`**
+  - `landing-market-grid` → 1 Spalte
+  - `landing-footer-grid` → 1 Spalte
+  - `landing-hero-stats` → 1 Spalte
+  - €-Zahl → 72 px
+  - `h1 clamp(36px,12vw,56px)`
+  - `section[padding:140 0]` → `56px 0`
+  - Container Padding → `0 18px`, Hero-Grid `36px 18px 56px`
+  - `.landing-compare-row` Padding `16px 18px`
+  - Hero/CTA Action-Wrappern Buttons full-width (`flex: 1 1 100%`)
 
-- `src/routes/co-pilot.tsx` — komplett neu (ersetzt Mock).
-- `src/hooks/useCopilot.ts` — Hooks (session/context/messages/send).
-- `src/components/copilot/ChatMessage.tsx` — User & Assistant Bubble + SourcePills.
-- `src/components/copilot/ContextPanel.tsx` — rechte Spalte.
-- `src/components/copilot/Composer.tsx` — Input + Quick Actions.
-- Wiederverwendet: `AuthGate`, `CopilotMark`, `AITag`, `ThinkingTrace`.
+### 2. Fehlende Hooks in JSX ergänzen
 
-## Offene Punkte (frage nach Bestätigung)
+Damit die Selektoren oben greifen, ergänze ich an den entsprechenden Stellen in `src/routes/index.tsx` ein paar Klassennamen, die noch fehlen, ohne sonst etwas am Layout zu ändern:
 
-1. **Quick Actions als Fallback**: Wenn die Edge Function keine `quick_actions` liefert, soll ich statische Defaults zeigen (wie die aktuellen `SUGGESTIONS`) oder leer?
-2. **„Etwas korrigieren"**: Inline-Edit der einzelnen Felder (role/idea/…) oder freier Textbereich, der via `context_parse` neu geparst wird? Vorschlag: freier Text → reparse.
-3. **Mehrere Sessions**: Soll es einen Session-Switcher (Dropdown/Sidebar) geben oder bleibt es bei „immer letzte/neueste Session"? Aktuell nicht im Brief, ich würde es für später lassen.
+- Nav-CTA-Label aufsplitten: `<span className="landing-nav-cta-label">Plattform starten</span><span className="landing-nav-cta-short">Start</span>` (Short-Span standardmäßig `display:none`, im 900-Block umgekehrt).
+- Comparison-Tabelle: Header-Row bekommt `landing-compare-head`, die einzelnen Zellen `l-compare-task`, `l-compare-solo`, `l-compare-mf` (für die `::before`-Labels).
+- Plattform-Pill in der Nav bekommt `landing-nav-pill`, damit sie gezielt versteckt werden kann (heute fällt sie unter `landing-nav-links`).
+- Chaos-Cloud-Wrapper bekommt `landing-chaos-cloud`, statt per `min-height:480` selektiert zu werden.
+
+### 3. Verifikation
+
+Nach dem Edit:
+- Build-Output prüfen.
+- Im Preview Viewport 390 × 720 (jetziger State) durchscrollen und mit `screens/mobile/01..12` vergleichen.
+- Zusätzlich Tablet (820/834 px) screenshotten und prüfen, dass 2-Spalter-Stacks und Marketplace `2×4` passen.
+
+## Out of scope
+
+- Keine Änderungen an Desktop-Layout, Inhalten, Co-Pilot-Edge-Function, anderen Routen, `__root.tsx`, `ServiceTile`, `styles.css`.
+- Keine neuen Komponenten, keine neuen Assets.
