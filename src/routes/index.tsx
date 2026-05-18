@@ -1030,14 +1030,14 @@ function LProblem() {
   ];
   const positions = [
     { top: 0, left: 30, rot: -3 },
-    { top: 60, left: 220, rot: 4 },
+    { top: 60, left: 205, rot: 4 },
     { top: 130, left: 0, rot: -6 },
-    { top: 200, left: 200, rot: 2 },
-    { top: 280, left: 50, rot: -2 },
-    { top: 350, left: 240, rot: 5 },
-    { top: 80, left: 380, rot: -4 },
-    { top: 250, left: 380, rot: 3 },
-    { top: 400, left: 360, rot: -2 },
+    { top: 200, left: 185, rot: 2 },
+    { top: 280, left: 42, rot: -2 },
+    { top: 350, left: 220, rot: 5 },
+    { top: 84, left: 312, rot: -4 },
+    { top: 250, left: 305, rot: 3 },
+    { top: 400, left: 285, rot: -2 },
   ];
   return (
     <Section tone="paper" pad="140px 0">
@@ -1090,12 +1090,13 @@ function LProblem() {
           </div>
         </div>
 
-        <div style={{ position: "relative", minHeight: 480 }}>
+        <div className="landing-problem-cloud" style={{ position: "relative", minHeight: 480 }}>
           {fragments.map((t, i) => {
             const p = positions[i];
             return (
               <div
                 key={t}
+                className="landing-problem-chip"
                 style={{
                   position: "absolute",
                   top: p.top,
@@ -1118,6 +1119,7 @@ function LProblem() {
             );
           })}
           <svg
+            className="landing-problem-lines"
             viewBox="0 0 500 480"
             style={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.18 }}
           >
