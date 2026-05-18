@@ -325,7 +325,7 @@ function CoPilotPage() {
                   </div>
                 ) : (
                   <div key={m.id} className="max-w-[90%]">
-                    <div className="rounded-2xl rounded-bl-sm border border-white/10 bg-white/5 px-4 py-3.5 font-serif text-[16px] italic leading-snug text-[var(--cream)] whitespace-pre-wrap">
+                    <div className="rounded-2xl rounded-bl-sm border border-white/10 bg-white/5 px-4 py-3.5 text-[15px] leading-snug text-[var(--cream)] whitespace-pre-wrap">
                       {m.content}
                     </div>
                     {m.sources && m.sources.length > 0 && (
