@@ -2694,6 +2694,7 @@ function LCta() {
         }}
       />
       <div
+        className="landing-cta-grid landing-section-inner"
         style={{
           position: "relative",
           maxWidth: 1240,
