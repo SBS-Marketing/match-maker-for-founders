@@ -1907,6 +1907,7 @@ function LFunding() {
         </div>
 
         <div
+          className="landing-funding-card"
           style={{
             padding: 28,
             borderRadius: 24,
@@ -1928,8 +1929,9 @@ function LFunding() {
           >
             <SvcIcon name="seal" size={280} color={M.cream} stroke={1.4} />
           </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
+          <div className="landing-funding-card-head" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
             <span
+              className="landing-funding-card-title"
               style={{
                 fontFamily: M.fontMono,
                 fontSize: 11,
@@ -1941,6 +1943,7 @@ function LFunding() {
               EXIST · Gründerstipendium · DLR
             </span>
             <span
+              className="landing-funding-slot"
               style={{
                 padding: "4px 10px",
                 borderRadius: 999,
@@ -1956,6 +1959,7 @@ function LFunding() {
             </span>
           </div>
           <div
+            className="landing-grant-amount"
             style={{
               position: "relative",
               marginTop: 18,
@@ -1967,11 +1971,12 @@ function LFunding() {
           >
             €125.000
           </div>
-          <div style={{ position: "relative", fontSize: 15, color: "rgba(255,255,255,0.85)", marginTop: 6 }}>
+          <div className="landing-grant-meta" style={{ position: "relative", fontSize: 15, color: "rgba(255,255,255,0.85)", marginTop: 6 }}>
             pro Team · 12 Monate · zzgl. Sachkosten & Coaching
           </div>
           <div style={{ position: "relative", marginTop: 24 }}>
             <div
+              className="landing-grant-progress-labels"
               style={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -1990,6 +1995,7 @@ function LFunding() {
             </div>
           </div>
           <div
+            className="landing-grant-note"
             style={{
               position: "relative",
               marginTop: 22,
@@ -2009,6 +2015,7 @@ function LFunding() {
             </div>
           </div>
           <div
+            className="landing-grant-actions"
             style={{
               position: "relative",
               marginTop: 18,
