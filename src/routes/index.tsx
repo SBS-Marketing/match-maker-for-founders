@@ -1038,7 +1038,7 @@ function LProblem() {
   ];
   return (
     <Section tone="paper" pad="140px 0">
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+      <div className="landing-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
         <div>
           <Eyebrow>01 · Das Problem</Eyebrow>
           <h2
@@ -1356,7 +1356,7 @@ function LHowItWorks() {
           </span>
         </h2>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
+      <div className="landing-card-grid landing-card-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
         {steps.map((s) => (
           <div
             key={s.n}
@@ -1440,7 +1440,7 @@ function LMarketplace() {
           aus Anzeigenpreis. Co-Pilot zeigt nur, was jetzt sinnvoll ist.
         </p>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridAutoRows: "220px", gap: 16 }}>
+      <div className="landing-card-grid landing-market-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridAutoRows: "220px", gap: 16 }}>
         {SERVICES.map((s, i) => (
           <ServiceTile key={s.id} s={s} accented={i === 0} />
         ))}
@@ -1857,7 +1857,7 @@ function LCoPilotMoment() {
 function LFunding() {
   return (
     <Section tone="paper" pad="140px 0" id="foerderung">
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
+      <div className="landing-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
         <div>
           <Eyebrow>05 · Förderung · live gematcht</Eyebrow>
           <div
