@@ -1030,14 +1030,14 @@ function LProblem() {
   ];
   const positions = [
     { top: 0, left: 30, rot: -3 },
-    { top: 60, left: 220, rot: 4 },
+    { top: 60, left: 205, rot: 4 },
     { top: 130, left: 0, rot: -6 },
-    { top: 200, left: 200, rot: 2 },
-    { top: 280, left: 50, rot: -2 },
-    { top: 350, left: 240, rot: 5 },
-    { top: 80, left: 380, rot: -4 },
-    { top: 250, left: 380, rot: 3 },
-    { top: 400, left: 360, rot: -2 },
+    { top: 200, left: 185, rot: 2 },
+    { top: 280, left: 42, rot: -2 },
+    { top: 350, left: 220, rot: 5 },
+    { top: 84, left: 312, rot: -4 },
+    { top: 250, left: 305, rot: 3 },
+    { top: 400, left: 285, rot: -2 },
   ];
   return (
     <Section tone="paper" pad="140px 0">
@@ -1090,12 +1090,13 @@ function LProblem() {
           </div>
         </div>
 
-        <div style={{ position: "relative", minHeight: 480 }}>
+        <div className="landing-problem-cloud" style={{ position: "relative", minHeight: 480 }}>
           {fragments.map((t, i) => {
             const p = positions[i];
             return (
               <div
                 key={t}
+                className="landing-problem-chip"
                 style={{
                   position: "absolute",
                   top: p.top,
@@ -1118,6 +1119,7 @@ function LProblem() {
             );
           })}
           <svg
+            className="landing-problem-lines"
             viewBox="0 0 500 480"
             style={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.18 }}
           >
@@ -3053,6 +3055,30 @@ const RESPONSIVE_CSS = `
 /* Nav CTA short label hidden by default */
 .landing-nav-cta-short { display: none; }
 
+/* Problem chip cloud: keep all chips visible on compact desktop/tablet widths */
+@media (max-width: 1100px) {
+  .landing-problem-cloud {
+    min-height: 0 !important;
+    height: auto !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-content: flex-start !important;
+    gap: 10px !important;
+    transform: none !important;
+    margin-bottom: 0 !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+  .landing-problem-chip {
+    position: static !important;
+    transform: none !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+  .landing-problem-lines { display: none !important; }
+}
+
 /* ════════ TABLET / LARGE PHONE LANDSCAPE  ≤ 900px ════════ */
 @media (max-width: 900px) {
   /* Section rhythm */
@@ -3179,17 +3205,6 @@ const RESPONSIVE_CSS = `
   .landing-root [style*="font-size: 72px"] { font-size: 48px !important; line-height: 1.05 !important; }
   .landing-root [style*="font-size: 56px"] { font-size: 38px !important; line-height: 1.05 !important; }
 
-  /* Chaos cloud → clipped flourish */
-  .landing-root [style*="min-height: 480"] {
-    min-height: 0 !important;
-    height: 200px !important;
-    transform: scale(0.55);
-    transform-origin: top left;
-    margin-bottom: -120px;
-    opacity: 0.55;
-    pointer-events: none;
-  }
-
   /* FAQ sticky heading → static */
   .landing-root [style*="position: sticky"] { position: static !important; }
   .landing-faq-grid > div:first-child { position: static !important; }
@@ -3267,6 +3282,18 @@ const RESPONSIVE_CSS = `
     padding-right: 18px !important;
   }
   .landing-hero-grid { padding: 36px 18px 56px !important; gap: 32px !important; }
+
+  /* Problem chips → one column on phone */
+  .landing-problem-cloud {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 9px !important;
+  }
+  .landing-problem-chip {
+    width: 100% !important;
+    padding: 11px 14px !important;
+    font-size: 13px !important;
+  }
 
   /* Compare row padding */
   .landing-compare-row { padding: 16px 18px !important; }
