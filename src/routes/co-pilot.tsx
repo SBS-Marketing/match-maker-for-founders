@@ -300,7 +300,7 @@ function CoPilotPage() {
             <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-6">
               {messages.length === 0 && !sending && (
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-[14px] text-white/70">
-                  <div className="mb-1 font-serif italic text-[var(--cream)]">
+                  <div className="mb-1 text-[var(--cream)]">
                     „Erzähl mir kurz, was du gerade baust und wo du stehst — ich höre zu und mache dir
                     einen konkreten nächsten Schritt."
                   </div>
