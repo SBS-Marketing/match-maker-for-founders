@@ -2547,6 +2547,7 @@ function LFaq() {
       a: "Jederzeit zum nächsten Monat — im Founder-Plan; jährliche Pläne sind 12 Monate gebunden, mit 30 Tagen Rückerstattung. Deine Profile und Matches bleiben im Read-Only-Modus erhalten.",
     },
   ];
+  const [openIdx, setOpenIdx] = useState<number>(0);
   return (
     <Section tone="cream" pad="140px 0">
       <div className="landing-two-col landing-faq-grid" style={{ display: "grid", gridTemplateColumns: "0.85fr 1.15fr", gap: 80, alignItems: "flex-start" }}>
@@ -2586,7 +2587,7 @@ function LFaq() {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
           {items.map((it, i) => {
-            const open = !!it.open;
+            const open = openIdx === i;
             const last = i === items.length - 1;
             return (
               <div
@@ -2597,12 +2598,24 @@ function LFaq() {
                   borderBottom: last ? "1px solid rgba(21,20,15,0.10)" : "none",
                 }}
               >
-                <div
+                <button
+                  type="button"
+                  onClick={() => setOpenIdx(open ? -1 : i)}
+                  aria-expanded={open}
                   style={{
                     display: "grid",
                     gridTemplateColumns: "40px 1fr 24px",
                     gap: 18,
                     alignItems: "flex-start",
+                    width: "100%",
+                    background: "transparent",
+                    border: "none",
+                    padding: 0,
+                    margin: 0,
+                    textAlign: "left",
+                    cursor: "pointer",
+                    font: "inherit",
+                    color: "inherit",
                   }}
                 >
                   <span
@@ -2646,11 +2659,12 @@ function LFaq() {
                       alignItems: "center",
                       justifyContent: "center",
                       flexShrink: 0,
+                      marginTop: 2,
                     }}
                   >
                     <SvcIcon name={open ? "check2" : "plus2"} size={12} color={open ? M.cream : M.ink} stroke={2.4} />
                   </span>
-                </div>
+                </button>
               </div>
             );
           })}
