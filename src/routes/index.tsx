@@ -477,19 +477,19 @@ function LNav() {
           </span>
           <span
             style={{
-              marginLeft: 6,
-              padding: "2px 7px",
-              borderRadius: 6,
-              background: "rgba(21,20,15,0.06)",
-              border: "1px solid rgba(21,20,15,0.08)",
+              marginLeft: 8,
+              padding: "3px 9px",
+              borderRadius: 999,
+              background: M.ember,
               fontFamily: M.fontMono,
               fontSize: 9.5,
               letterSpacing: "0.14em",
               textTransform: "uppercase",
-              color: M.smoke,
+              color: M.cream,
+              fontWeight: 600,
             }}
           >
-            platform · beta
+            beta
           </span>
         </div>
         <nav className="landing-nav-links" style={{ display: "flex", gap: 24 }}>
