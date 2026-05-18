@@ -679,7 +679,7 @@ function HeroCopilot() {
           „Drei Dinge parallel: einen technischen Co-Founder, einen Anwalt für den Gründervertrag, und du solltest EXIST in
           den nächsten 6 Wochen anschauen — Q3 ist machbar, wenn ihr jetzt startet."
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+        <div className="hero-copilot-recs" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
           {[
             { sId: "cofounder", n: "Anna W.", l: "Backend · Berlin", fit: 94 },
             { sId: "legal", n: "Dr. Lena H.", l: "GmbH · ESOP", fit: 91 },
@@ -688,6 +688,7 @@ function HeroCopilot() {
             const s = SVC_BY_ID[r.sId];
             return (
               <div
+                className="hero-copilot-rec"
                 key={r.n}
                 style={{
                   padding: 12,
@@ -780,7 +781,7 @@ function HeroCopilot() {
         </div>
       </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, paddingTop: 4 }}>
+      <div className="hero-copilot-chips" style={{ display: "flex", flexWrap: "wrap", gap: 6, paddingTop: 4 }}>
         {SERVICES.map((s) => (
           <ServiceChip key={s.id} s={s} />
         ))}
