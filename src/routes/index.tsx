@@ -590,7 +590,7 @@ function HeroBackdrop() {
 
 function HeroCopilot() {
   return (
-    <div style={{ ...GLASS.pane, padding: 24, display: "flex", flexDirection: "column", gap: 14, position: "relative" }}>
+    <div className="hero-copilot" style={{ ...GLASS.pane, padding: 24, display: "flex", flexDirection: "column", gap: 14, position: "relative" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span
@@ -791,10 +791,11 @@ function HeroCopilot() {
 
 function LHero() {
   return (
-    <div style={{ position: "relative", background: M.paper, overflow: "hidden" }}>
+    <div className="landing-hero" style={{ position: "relative", background: M.paper, overflow: "hidden" }}>
       <HeroBackdrop />
       <LNav />
       <div
+        className="landing-hero-grid"
         style={{
           position: "relative",
           maxWidth: 1240,
@@ -806,8 +807,9 @@ function LHero() {
           alignItems: "center",
         }}
       >
-        <div>
+        <div className="landing-hero-copy">
           <div
+            className="landing-hero-pill"
             style={{
               ...GLASS.pill,
               padding: "6px 14px 6px 8px",
@@ -846,6 +848,7 @@ function LHero() {
           </div>
 
           <h1
+            className="landing-hero-title"
             style={{
               margin: 0,
               fontWeight: 600,
@@ -868,8 +871,9 @@ function LHero() {
             gerade stehst und genau die richtigen Menschen und Programme an einen Tisch holt.
           </p>
 
-          <div style={{ display: "flex", gap: 12, marginTop: 36, flexWrap: "wrap" }}>
+          <div className="landing-hero-actions" style={{ display: "flex", gap: 12, marginTop: 36, flexWrap: "wrap" }}>
             <Link
+              className="landing-hero-primary"
               to="/co-pilot"
               style={{
                 background: M.ember,
@@ -890,6 +894,7 @@ function LHero() {
               <SvcIcon name="arrowR" size={15} color={M.cream} stroke={2.2} />
             </Link>
             <Link
+              className="landing-hero-secondary"
               to="/marketplace"
               style={{
                 ...GLASS.pill,
@@ -910,6 +915,7 @@ function LHero() {
           </div>
 
           <div
+            className="landing-hero-stats"
             style={{
               marginTop: 56,
               paddingTop: 24,
