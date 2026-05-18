@@ -1907,6 +1907,7 @@ function LFunding() {
         </div>
 
         <div
+          className="landing-funding-card"
           style={{
             padding: 28,
             borderRadius: 24,
@@ -1928,8 +1929,9 @@ function LFunding() {
           >
             <SvcIcon name="seal" size={280} color={M.cream} stroke={1.4} />
           </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
+          <div className="landing-funding-card-head" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
             <span
+              className="landing-funding-card-title"
               style={{
                 fontFamily: M.fontMono,
                 fontSize: 11,
@@ -1941,6 +1943,7 @@ function LFunding() {
               EXIST · Gründerstipendium · DLR
             </span>
             <span
+              className="landing-funding-slot"
               style={{
                 padding: "4px 10px",
                 borderRadius: 999,
@@ -1956,6 +1959,7 @@ function LFunding() {
             </span>
           </div>
           <div
+            className="landing-grant-amount"
             style={{
               position: "relative",
               marginTop: 18,
@@ -1967,11 +1971,12 @@ function LFunding() {
           >
             €125.000
           </div>
-          <div style={{ position: "relative", fontSize: 15, color: "rgba(255,255,255,0.85)", marginTop: 6 }}>
+          <div className="landing-grant-meta" style={{ position: "relative", fontSize: 15, color: "rgba(255,255,255,0.85)", marginTop: 6 }}>
             pro Team · 12 Monate · zzgl. Sachkosten & Coaching
           </div>
           <div style={{ position: "relative", marginTop: 24 }}>
             <div
+              className="landing-grant-progress-labels"
               style={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -1990,6 +1995,7 @@ function LFunding() {
             </div>
           </div>
           <div
+            className="landing-grant-note"
             style={{
               position: "relative",
               marginTop: 22,
@@ -2009,6 +2015,7 @@ function LFunding() {
             </div>
           </div>
           <div
+            className="landing-grant-actions"
             style={{
               position: "relative",
               marginTop: 18,
@@ -3241,6 +3248,29 @@ const RESPONSIVE_CSS = `
     font-size: clamp(72px, 14vw, 140px) !important;
     line-height: 0.95 !important;
   }
+  .landing-funding-card {
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    justify-self: stretch !important;
+    padding: 24px !important;
+  }
+  .landing-funding-card-head,
+  .landing-grant-actions {
+    align-items: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+  .landing-funding-card-title,
+  .landing-grant-meta,
+  .landing-grant-note > div {
+    overflow-wrap: anywhere !important;
+  }
+  .landing-grant-amount {
+    font-size: clamp(50px, 13vw, 72px) !important;
+    letter-spacing: 0 !important;
+    line-height: 0.95 !important;
+  }
 }
 
 /* ════════ PHONE PORTRAIT  ≤ 640px ════════ */
@@ -3322,6 +3352,30 @@ const RESPONSIVE_CSS = `
   }
   .landing-funding-bignum {
     font-size: clamp(64px, 18vw, 96px) !important;
+  }
+  .landing-funding-card {
+    padding: 20px !important;
+    border-radius: 18px !important;
+  }
+  .landing-two-col > .landing-funding-card {
+    width: 100% !important;
+    max-width: none !important;
+  }
+  .landing-funding-card-head,
+  .landing-grant-progress-labels,
+  .landing-grant-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    justify-items: start !important;
+  }
+  .landing-grant-amount {
+    font-size: clamp(38px, 11vw, 52px) !important;
+    white-space: nowrap !important;
+  }
+  .landing-grant-meta { font-size: 13.5px !important; }
+  .landing-grant-note {
+    padding: 12px !important;
+    gap: 10px !important;
   }
 }
 `;
