@@ -2519,32 +2519,32 @@ function LFaq() {
   const items = [
     {
       q: "Ist das ein Dating-App-Klon für Founder?",
-      a: "Nein. Es ist näher an einem Chief-of-Staff, der dich durch Gründung, Förderung und die ersten Hires begleitet — mit einem KI-Co-Pilot vorne und 1.847 vorgeprüften Menschen dahinter. Swipe gibt es nicht.",
+      a: "Nein. Der Swipe-Mechanismus ist nur die Oberfläche — dahinter steckt ein Algorithmus, der Skills, Branche, Standort und Verfügbarkeit abgleicht. Du wirst nicht nach Profilbild gematcht, sondern danach ob ihr zusammen ein Unternehmen aufbauen könnt.",
       open: true,
     },
     {
       q: "Wer prüft die Anwälte, Steuerberater und Mentoren?",
-      a: "Jeder Partner durchläuft eine 4-Stufen-Prüfung: Branchenfit, Founder-Referenzen aus den letzten 24 Monaten, Reaktionszeit-SLA, jährliche Re-Validierung. Wer länger als 14 Tage nicht antwortet, fällt automatisch aus dem Feed.",
+      a: "Jeder Experte auf matchfoundr durchläuft eine manuelle Verifikation: Berufsnachweis, Referenzen und ein Erstgespräch mit unserem Team. Gefakte Profile fliegen raus — unkompliziert und dauerhaft.",
     },
     {
       q: "Bekommt jemand für eine Empfehlung Geld?",
-      a: "Niemand zahlt für Sichtbarkeit. Partner zahlen Mitgliedsgebühren, aber Reihenfolge und Konfidenz ergeben sich ausschließlich aus deinem Profil und Phase. Wir machen kein Provisions-Splitting.",
+      a: "Ja — wir arbeiten mit Affiliate-Programmen unserer Partner-Unternehmen. Das bedeutet: Wenn du über matchfoundr zu IONOS, Lexoffice oder einem anderen Partner weiterklickst, erhalten wir eine kleine Provision. Für dich entstehen dadurch keine Mehrkosten — im Gegenteil, du profitierst von exklusiven Rabatten. Auf das Matching hat das null Einfluss: Welcher Co-Founder dir vorgeschlagen wird, entscheidet ausschließlich der Algorithmus.",
     },
     {
       q: "Was passiert mit meinen Daten und meinem Pitch?",
-      a: "Dein Pitch wird nicht für KI-Training verwendet. Co-Pilot-Sessions sind verschlüsselt, nur du und gezielt von dir freigegebene Partner sehen sie. AV-Verträge nach DSGVO sind in jedem Plan inkludiert.",
+      a: "Deine Idee bleibt deine Idee. Dein Profil und dein Projekt sind nur für Nutzer sichtbar, denen du aktiv zustimmst. Wir verkaufen keine Daten, geben nichts an Partner weiter und verarbeiten alles DSGVO-konform mit Serverstandort Deutschland.",
     },
     {
       q: "Funktioniert das auch außerhalb von Deutschland?",
-      a: 'Heute: Berlin, München, Wien, Zürich. Recht & Steuer sind nach Jurisdiktion sortiert (DE / AT / CH). Co-Founder-Matching ist DACH-weit, mit "remote ok"-Filter. Q3 2025: Amsterdam und Stockholm.',
+      a: "Ja. Die Plattform ist auf Deutsch und Englisch verfügbar. Aktueller Fokus liegt auf DACH — Deutschland, Österreich und Schweiz. Internationale Profile sind aber bereits möglich und werden mit steigender Nutzerzahl aktiv ausgebaut.",
     },
     {
       q: "Kann der Co-Pilot wirklich einen EXIST-Antrag vorausfüllen?",
-      a: "Aus One-Pager + 20-min-Voice-Memo: 70–75% Vorbefüllung. Den Rest (FuE-Quote, Hochschulanbindung, Meilensteinplan) klärst du in einer Session mit der Co-Pilot-Antragsbegleitung. Bewilligungsquote 2024: 68%.",
+      a: "Er führt dich Schritt für Schritt durch die Anforderungen, erklärt was du brauchst und hilft dir, die relevanten Abschnitte vorzubereiten. Den finalen Antrag prüft ein Mensch — entweder du selbst oder einer unserer verifizierten EXIST-Berater auf der Plattform.",
     },
     {
       q: "Kann ich kündigen?",
-      a: "Jederzeit zum nächsten Monat — im Founder-Plan; jährliche Pläne sind 12 Monate gebunden, mit 30 Tagen Rückerstattung. Deine Profile und Matches bleiben im Read-Only-Modus erhalten.",
+      a: "Jederzeit, ohne Begründung, ohne Frist. Monatlich kündbar direkt in den Einstellungen — keine E-Mail, kein Anruf, kein Kleingedrucktes.",
     },
   ];
   const [openIdx, setOpenIdx] = useState<number>(0);
