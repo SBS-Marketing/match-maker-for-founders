@@ -51,7 +51,7 @@ function GrantDetail() {
               <AITag tone="dark">Co-Pilot · Eligibility-Check</AITag>
             </div>
             <ul className="space-y-2.5">
-              {grant.eligibility.map((e) => {
+              {grant.eligibility.map((e: any) => {
                 const isOk = e.ok === true;
                 const isWarn = e.ok === "warn";
                 return (
