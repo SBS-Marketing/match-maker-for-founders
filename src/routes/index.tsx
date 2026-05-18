@@ -969,6 +969,7 @@ function LHero() {
 function LogoWall() {
   return (
     <div
+      className="landing-logo-wall"
       style={{
         position: "relative",
         borderTop: "1px solid rgba(21,20,15,0.08)",
@@ -979,6 +980,7 @@ function LogoWall() {
       }}
     >
       <div
+        className="landing-logo-wall-inner"
         style={{
           maxWidth: 1240,
           margin: "0 auto",
@@ -989,6 +991,7 @@ function LogoWall() {
         }}
       >
         <span
+          className="landing-logo-wall-label"
           style={{
             fontFamily: M.fontMono,
             fontSize: 11,
@@ -999,17 +1002,17 @@ function LogoWall() {
         >
           Partner-Netzwerk
         </span>
-        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 38, opacity: 0.85, flexWrap: "wrap" }}>
-          <span style={{ fontFamily: M.fontSans, fontSize: 18, fontWeight: 700, letterSpacing: "-0.03em" }}>EXIST</span>
-          <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontSize: 19 }}>Bird &amp; Bird</span>
-          <span style={{ fontFamily: M.fontSans, fontSize: 14, fontWeight: 700, letterSpacing: "0.32em" }}>PROFIT</span>
-          <span style={{ fontFamily: M.fontMono, fontSize: 14 }}>bafa /</span>
-          <span style={{ fontFamily: M.fontSans, fontSize: 17, fontWeight: 600, letterSpacing: "-0.02em" }}>KfW</span>
-          <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontSize: 18 }}>Osborne Clarke</span>
-          <span style={{ fontFamily: M.fontSans, fontSize: 15, fontWeight: 600, letterSpacing: "-0.015em" }}>
+        <div className="landing-logo-wall-logos" style={{ flex: 1, display: "flex", alignItems: "center", gap: 38, opacity: 0.85, flexWrap: "wrap" }}>
+          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontSans, fontSize: 18, fontWeight: 700, letterSpacing: "-0.03em" }}>EXIST</span>
+          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontSize: 19 }}>Bird &amp; Bird</span>
+          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontSans, fontSize: 14, fontWeight: 700, letterSpacing: "0.32em" }}>PROFIT</span>
+          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontMono, fontSize: 14 }}>bafa /</span>
+          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontSans, fontSize: 17, fontWeight: 600, letterSpacing: "-0.02em" }}>KfW</span>
+          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontSize: 18 }}>Osborne Clarke</span>
+          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontSans, fontSize: 15, fontWeight: 600, letterSpacing: "-0.015em" }}>
             SignalIduna
           </span>
-          <span style={{ fontFamily: M.fontMono, fontSize: 13, textTransform: "lowercase" }}>n26·labs</span>
+          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontMono, fontSize: 13, textTransform: "lowercase" }}>n26·labs</span>
         </div>
       </div>
     </div>
