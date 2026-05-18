@@ -86,7 +86,7 @@ function AdvisorDetail() {
           <div className="glass-pane mt-5 p-5">
             <div className="eyebrow">Network-Vouches</div>
             <div className="mt-4 space-y-4">
-              {advisor.vouches.map((v) => (
+              {advisor.vouches.map((v: any) => (
                 <div key={v.from}>
                   <p className="font-serif text-[16px] italic leading-snug">„{v.quote}"</p>
                   <div className="mt-2 text-[12px] text-[var(--smoke)]">
