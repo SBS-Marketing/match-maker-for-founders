@@ -50,14 +50,14 @@ export function ServiceTile({
         padding: compact ? 16 : 22,
         borderRadius: compact ? 16 : 20,
         background: accented
-          ? `linear-gradient(155deg, ${service.hue}f2, ${service.hue}cc)`
+          ? "linear-gradient(155deg, var(--ember), #c8410f)"
           : "rgba(251,250,247,0.62)",
         backdropFilter: "blur(22px) saturate(140%)",
         border: accented
-          ? "1px solid rgba(255,230,210,0.4)"
+          ? "1px solid rgba(255,230,210,0.45)"
           : "1px solid rgba(255,255,255,0.7)",
         boxShadow: accented
-          ? `0 18px 36px -14px ${service.hue}66, inset 0 1px 0 rgba(255,255,255,0.3)`
+          ? "0 20px 40px -14px rgba(226,81,28,0.55), inset 0 1px 0 rgba(255,255,255,0.3)"
           : "inset 0 1px 0 rgba(255,255,255,0.85), 0 14px 32px -16px rgba(21,20,15,0.18)",
         color: accented ? "var(--cream)" : "var(--ink)",
         minHeight: compact ? 100 : 170,
