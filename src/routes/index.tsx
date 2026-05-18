@@ -3089,7 +3089,14 @@ const RESPONSIVE_CSS = `
   .landing-hero-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 18px !important; margin-top: 44px !important; padding-top: 20px !important; }
   .landing-hero-stats > div { padding-left: 0 !important; border-left: none !important; }
   .hero-copilot { padding: 18px !important; border-radius: 18px !important; }
-  .hero-copilot [style*="grid-template-columns: repeat(3, 1fr)"] { grid-template-columns: 1fr !important; }
+  .hero-copilot-recs { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 8px !important; }
+  .hero-copilot-rec { padding: 10px !important; min-width: 0 !important; }
+  .hero-copilot-rec [style*="font-size: 13px"] { font-size: 12px !important; overflow-wrap: anywhere !important; }
+  .hero-copilot-rec [style*="font-size: 11px"] { font-size: 10px !important; }
+  .hero-copilot-chips { gap: 6px !important; }
+  .hero-copilot-chips > span { font-size: 10.5px !important; padding: 4px 8px 4px 5px !important; }
+  .landing-root h2 { letter-spacing: -0.015em !important; line-height: 1.08 !important; }
+  .landing-root h2 span { display: inline !important; }
   .landing-root [style*="max-width: 1240"],
   .landing-root [style*="padding: 0px 64px"] {
     padding-left: 18px !important;
