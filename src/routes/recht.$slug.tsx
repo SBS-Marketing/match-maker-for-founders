@@ -68,7 +68,7 @@ function AdvisorDetail() {
           <div className="glass-pane mt-5 p-5">
             <div className="eyebrow">Fachgebiete</div>
             <div className="mt-4 space-y-3">
-              {advisor.specialties.map((sp) => (
+              {advisor.specialties.map((sp: any) => (
                 <div key={sp.label}>
                   <div className="flex justify-between text-[13px]">
                     <span>{sp.label}</span>
