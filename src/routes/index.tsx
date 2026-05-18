@@ -456,8 +456,9 @@ function LNav() {
     { t: "Stories", href: "#stories" },
   ];
   return (
-    <div style={{ position: "sticky", top: 16, zIndex: 50, padding: "0 64px", marginTop: 16 }}>
+    <div className="landing-nav-shell" style={{ position: "sticky", top: 16, zIndex: 50, padding: "0 64px", marginTop: 16 }}>
       <div
+        className="landing-nav-inner"
         style={{
           maxWidth: 1240,
           margin: "0 auto",
@@ -468,7 +469,7 @@ function LNav() {
           gap: 28,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="landing-brand" style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <IconMF size={22} />
           <span style={{ fontWeight: 700, fontSize: 17, letterSpacing: "-0.02em", color: M.ink }}>
             matchfoundr<span style={{ color: M.ember }}>.</span>
@@ -490,7 +491,7 @@ function LNav() {
             platform · beta
           </span>
         </div>
-        <nav style={{ display: "flex", gap: 24 }}>
+        <nav className="landing-nav-links" style={{ display: "flex", gap: 24 }}>
           {items.map((i) => (
             <a
               key={i.t}
@@ -513,14 +514,16 @@ function LNav() {
             </a>
           ))}
         </nav>
-        <div style={{ flex: 1 }} />
+        <div className="landing-nav-spacer" style={{ flex: 1 }} />
         <Link
+          className="landing-nav-signin"
           to="/auth"
           style={{ fontSize: 13.5, fontWeight: 500, color: M.smoke, textDecoration: "none" }}
         >
           Sign in
         </Link>
         <Link
+          className="landing-nav-cta"
           to="/co-pilot"
           style={{
             background: M.ink,
@@ -587,7 +590,7 @@ function HeroBackdrop() {
 
 function HeroCopilot() {
   return (
-    <div style={{ ...GLASS.pane, padding: 24, display: "flex", flexDirection: "column", gap: 14, position: "relative" }}>
+    <div className="hero-copilot" style={{ ...GLASS.pane, padding: 24, display: "flex", flexDirection: "column", gap: 14, position: "relative" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span
@@ -633,6 +636,7 @@ function HeroCopilot() {
         }}
       >
         <div
+          className="landing-compare-head"
           style={{
             fontFamily: M.fontMono,
             fontSize: 10,
@@ -676,7 +680,7 @@ function HeroCopilot() {
           „Drei Dinge parallel: einen technischen Co-Founder, einen Anwalt für den Gründervertrag, und du solltest EXIST in
           den nächsten 6 Wochen anschauen — Q3 ist machbar, wenn ihr jetzt startet."
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+        <div className="hero-copilot-recs" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
           {[
             { sId: "cofounder", n: "Anna W.", l: "Backend · Berlin", fit: 94 },
             { sId: "legal", n: "Dr. Lena H.", l: "GmbH · ESOP", fit: 91 },
@@ -685,6 +689,7 @@ function HeroCopilot() {
             const s = SVC_BY_ID[r.sId];
             return (
               <div
+                className="hero-copilot-rec"
                 key={r.n}
                 style={{
                   padding: 12,
@@ -777,7 +782,7 @@ function HeroCopilot() {
         </div>
       </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, paddingTop: 4 }}>
+      <div className="hero-copilot-chips" style={{ display: "flex", flexWrap: "wrap", gap: 6, paddingTop: 4 }}>
         {SERVICES.map((s) => (
           <ServiceChip key={s.id} s={s} />
         ))}
@@ -788,10 +793,11 @@ function HeroCopilot() {
 
 function LHero() {
   return (
-    <div style={{ position: "relative", background: M.paper, overflow: "hidden" }}>
+    <div className="landing-hero" style={{ position: "relative", background: M.paper, overflow: "hidden" }}>
       <HeroBackdrop />
       <LNav />
       <div
+        className="landing-hero-grid"
         style={{
           position: "relative",
           maxWidth: 1240,
@@ -803,8 +809,9 @@ function LHero() {
           alignItems: "center",
         }}
       >
-        <div>
+        <div className="landing-hero-copy">
           <div
+            className="landing-hero-pill"
             style={{
               ...GLASS.pill,
               padding: "6px 14px 6px 8px",
@@ -843,6 +850,7 @@ function LHero() {
           </div>
 
           <h1
+            className="landing-hero-title"
             style={{
               margin: 0,
               fontWeight: 600,
@@ -865,8 +873,9 @@ function LHero() {
             gerade stehst und genau die richtigen Menschen und Programme an einen Tisch holt.
           </p>
 
-          <div style={{ display: "flex", gap: 12, marginTop: 36, flexWrap: "wrap" }}>
+          <div className="landing-hero-actions" style={{ display: "flex", gap: 12, marginTop: 36, flexWrap: "wrap" }}>
             <Link
+              className="landing-hero-primary"
               to="/co-pilot"
               style={{
                 background: M.ember,
@@ -887,6 +896,7 @@ function LHero() {
               <SvcIcon name="arrowR" size={15} color={M.cream} stroke={2.2} />
             </Link>
             <Link
+              className="landing-hero-secondary"
               to="/marketplace"
               style={{
                 ...GLASS.pill,
@@ -907,6 +917,7 @@ function LHero() {
           </div>
 
           <div
+            className="landing-hero-stats"
             style={{
               marginTop: 56,
               paddingTop: 24,
@@ -1028,7 +1039,7 @@ function LProblem() {
   ];
   return (
     <Section tone="paper" pad="140px 0">
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+      <div className="landing-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
         <div>
           <Eyebrow>01 · Das Problem</Eyebrow>
           <h2
@@ -1341,13 +1352,12 @@ function LHowItWorks() {
             color: M.ink,
           }}
         >
-          Drei Schritte.{" "}
-          <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400, color: M.smoke }}>
+          Drei Schritte. <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400, color: M.smoke }}>
             Kein Dashboard zu pflegen.
           </span>
         </h2>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
+      <div className="landing-card-grid landing-card-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
         {steps.map((s) => (
           <div
             key={s.n}
@@ -1431,7 +1441,7 @@ function LMarketplace() {
           aus Anzeigenpreis. Co-Pilot zeigt nur, was jetzt sinnvoll ist.
         </p>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridAutoRows: "220px", gap: 16 }}>
+      <div className="landing-card-grid landing-market-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridAutoRows: "220px", gap: 16 }}>
         {SERVICES.map((s, i) => (
           <ServiceTile key={s.id} s={s} accented={i === 0} />
         ))}
@@ -1544,8 +1554,7 @@ function LCoPilotMoment() {
               color: M.cream,
             }}
           >
-            Er versteht, wo du{" "}
-            <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>wirklich</span> stehst
+            Er versteht, wo du <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>wirklich</span> stehst
             <span style={{ color: M.ember }}>.</span>
           </h2>
           <p style={{ marginTop: 24, fontSize: 17, lineHeight: 1.6, color: "rgba(251,250,247,0.7)", maxWidth: 460 }}>
@@ -1849,7 +1858,7 @@ function LCoPilotMoment() {
 function LFunding() {
   return (
     <Section tone="paper" pad="140px 0" id="foerderung">
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
+      <div className="landing-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
         <div>
           <Eyebrow>05 · Förderung · live gematcht</Eyebrow>
           <div
@@ -2050,8 +2059,7 @@ function LCompare() {
             color: M.ink,
           }}
         >
-          Wie viel Zeit du{" "}
-          <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>zurück</span> bekommst
+          Wie viel Zeit du <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>zurück</span> bekommst
           <span style={{ color: M.ember }}>.</span>
         </h2>
       </div>
@@ -2079,6 +2087,7 @@ function LCompare() {
         </div>
         {rows.map((r, i) => (
           <div
+            className="landing-compare-row"
             key={r.d}
             style={{
               display: "grid",
@@ -2266,7 +2275,7 @@ function LTestimonials() {
           </h2>
         </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: 18 }}>
+      <div className="landing-card-grid landing-quote-grid" style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: 18 }}>
         {quotes.map((q) => (
           <QuoteCard key={q.name} q={q} />
         ))}
@@ -2468,8 +2477,7 @@ function LPricing() {
             color: M.ink,
           }}
         >
-          Ein Co-Pilot kostet weniger als{" "}
-          <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>eine Erstberatung</span>
+          Ein Co-Pilot kostet weniger als <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>eine Erstberatung</span>
           <span style={{ color: M.ember }}>.</span>
         </h2>
         <p style={{ fontSize: 16.5, lineHeight: 1.55, color: M.smoke, maxWidth: 540, margin: "16px auto 0" }}>
@@ -2477,7 +2485,7 @@ function LPricing() {
           Provision.
         </p>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18, alignItems: "stretch" }}>
+      <div className="landing-card-grid landing-pricing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18, alignItems: "stretch" }}>
         {tiers.map((t) => (
           <PriceCard key={t.name} t={t} />
         ))}
@@ -2523,7 +2531,7 @@ function LFaq() {
   ];
   return (
     <Section tone="cream" pad="140px 0">
-      <div style={{ display: "grid", gridTemplateColumns: "0.85fr 1.15fr", gap: 80, alignItems: "flex-start" }}>
+      <div className="landing-two-col landing-faq-grid" style={{ display: "grid", gridTemplateColumns: "0.85fr 1.15fr", gap: 80, alignItems: "flex-start" }}>
         <div style={{ position: "sticky", top: 100 }}>
           <Eyebrow>09 · Was Founder uns fragen</Eyebrow>
           <h2
@@ -2780,6 +2788,7 @@ function LCta() {
         </div>
 
         <div
+          className="landing-cta-grid"
           style={{
             ...GLASS.paneInk,
             padding: 28,
@@ -2915,7 +2924,7 @@ function LFooter() {
   return (
     <footer style={{ background: M.ink, color: M.cream, padding: "80px 0 36px" }}>
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 64px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1.4fr repeat(4, 1fr)", gap: 36, marginBottom: 56 }}>
+        <div className="landing-footer-grid" style={{ display: "grid", gridTemplateColumns: "1.4fr repeat(4, 1fr)", gap: 36, marginBottom: 56 }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <IconMF size={28} color={M.cream} spark={M.ember} />
@@ -3032,9 +3041,13 @@ function LFooter() {
  * Page
  * ──────────────────────────────────────────────────────────────────────── */
 const RESPONSIVE_CSS = `
+.landing-root, .landing-root * { box-sizing: border-box; }
+
 /* ============ TABLET ≤1024 ============ */
 @media (max-width: 1024px) {
   .landing-root section { padding: 88px 0 !important; }
+  .landing-nav-shell { padding-left: 32px !important; padding-right: 32px !important; }
+  .landing-hero-grid { grid-template-columns: 1fr !important; padding: 72px 32px 88px !important; gap: 40px !important; }
   .landing-root [style*="max-width: 1240"],
   .landing-root [style*="padding: 0px 64px"] {
     padding-left: 32px !important;
@@ -3062,7 +3075,37 @@ const RESPONSIVE_CSS = `
 
 /* ============ MOBILE ≤768 ============ */
 @media (max-width: 768px) {
+  .landing-root { width: 100%; max-width: 100vw; overflow-x: clip !important; }
   .landing-root section { padding: 64px 0 !important; }
+  .landing-nav-shell { top: 12px !important; padding-left: 16px !important; padding-right: 16px !important; margin-top: 12px !important; }
+  .landing-nav-inner { width: 100% !important; max-width: none !important; padding: 8px 10px !important; gap: 0 !important; }
+  .landing-brand { min-width: 0 !important; gap: 8px !important; }
+  .landing-brand > span:last-child { display: none !important; }
+  .landing-nav-links, .landing-nav-signin, .landing-nav-cta, .landing-nav-spacer { display: none !important; }
+  .landing-hero-grid { grid-template-columns: 1fr !important; padding: 58px 24px 48px !important; gap: 34px !important; align-items: start !important; }
+  .landing-hero-pill { max-width: 100% !important; margin-bottom: 28px !important; gap: 8px !important; white-space: normal !important; }
+  .landing-hero-pill > span:last-child { font-size: 10px !important; line-height: 1.35 !important; letter-spacing: 0.04em !important; }
+  .landing-hero-title { font-size: clamp(42px, 12.4vw, 50px) !important; line-height: 0.98 !important; letter-spacing: -0.02em !important; max-width: 100% !important; overflow-wrap: normal !important; }
+  .landing-hero-copy > p { font-size: 17px !important; line-height: 1.55 !important; margin-top: 24px !important; max-width: 100% !important; }
+  .landing-hero-actions { flex-direction: column !important; align-items: stretch !important; gap: 12px !important; margin-top: 32px !important; }
+  .landing-hero-primary, .landing-hero-secondary { width: 100% !important; justify-content: center !important; padding: 15px 18px !important; font-size: 15px !important; }
+  .landing-hero-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 18px !important; margin-top: 44px !important; padding-top: 20px !important; }
+  .landing-hero-stats > div { padding-left: 0 !important; border-left: none !important; }
+  .hero-copilot { padding: 18px !important; border-radius: 18px !important; }
+  .hero-copilot-recs { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 8px !important; }
+  .hero-copilot-rec { padding: 10px !important; min-width: 0 !important; }
+  .hero-copilot-rec [style*="font-size: 13px"] { font-size: 12px !important; overflow-wrap: anywhere !important; }
+  .hero-copilot-rec [style*="font-size: 11px"] { font-size: 10px !important; }
+  .hero-copilot-chips { gap: 6px !important; }
+  .hero-copilot-chips > span { font-size: 10.5px !important; padding: 4px 8px 4px 5px !important; }
+  .landing-two-col, .landing-cta-grid, .landing-faq-grid { grid-template-columns: 1fr !important; gap: 34px !important; }
+  .landing-card-grid, .landing-market-grid, .landing-quote-grid, .landing-pricing-grid { grid-template-columns: 1fr !important; grid-auto-rows: auto !important; gap: 16px !important; }
+  .landing-compare-head { display: none !important; }
+  .landing-compare-row { grid-template-columns: 1fr !important; gap: 10px !important; padding: 18px !important; align-items: start !important; }
+  .landing-footer-grid { grid-template-columns: 1fr !important; gap: 28px !important; }
+  .landing-faq-grid > div:first-child { position: static !important; }
+  .landing-root h2 { letter-spacing: -0.015em !important; line-height: 1.08 !important; }
+  .landing-root h2 span { display: inline !important; }
   .landing-root [style*="max-width: 1240"],
   .landing-root [style*="padding: 0px 64px"] {
     padding-left: 18px !important;
@@ -3084,7 +3127,7 @@ const RESPONSIVE_CSS = `
   .landing-root [style*="grid-auto-rows: 220px"] {
     grid-auto-rows: auto !important;
   }
-  /* Sticky nav: hide center links, keep logo + CTA */
+  /* Sticky nav: collapse to the brand on phones */
   .landing-root nav { display: none !important; }
   /* Big display text */
   .landing-root [style*="font-size: 180px"] { font-size: 64px !important; }
@@ -3108,6 +3151,11 @@ const RESPONSIVE_CSS = `
 
 /* ============ SMALL PHONES ≤380 ============ */
 @media (max-width: 380px) {
+  .landing-nav-shell { padding-left: 12px !important; padding-right: 12px !important; }
+  .landing-hero-grid { padding: 48px 18px 42px !important; }
+  .landing-hero-title { font-size: 40px !important; }
+  .landing-hero-copy > p { font-size: 16px !important; }
+  .landing-hero-primary, .landing-hero-secondary { font-size: 14px !important; padding-left: 14px !important; padding-right: 14px !important; }
   .landing-root [style*="max-width: 1240"],
   .landing-root [style*="padding: 0px 64px"] {
     padding-left: 14px !important;
