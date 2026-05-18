@@ -1,6 +1,8 @@
 // GitHub API Proxy — Token bleibt server-seitig, nie im Browser
+import { env } from "netlify:edge";
+
 export default async (request: Request) => {
-  const token = Deno.env.get("GITHUB_TOKEN");
+  const token = env.get("GITHUB_TOKEN");
   if (!token) {
     return new Response(JSON.stringify({ error: "GITHUB_TOKEN not configured" }), {
       status: 500,
