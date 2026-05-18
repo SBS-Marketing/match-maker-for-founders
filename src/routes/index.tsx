@@ -3098,6 +3098,12 @@ const RESPONSIVE_CSS = `
   .hero-copilot-rec [style*="font-size: 11px"] { font-size: 10px !important; }
   .hero-copilot-chips { gap: 6px !important; }
   .hero-copilot-chips > span { font-size: 10.5px !important; padding: 4px 8px 4px 5px !important; }
+  .landing-two-col, .landing-cta-grid, .landing-faq-grid { grid-template-columns: 1fr !important; gap: 34px !important; }
+  .landing-card-grid, .landing-market-grid, .landing-quote-grid, .landing-pricing-grid { grid-template-columns: 1fr !important; grid-auto-rows: auto !important; gap: 16px !important; }
+  .landing-compare-head { display: none !important; }
+  .landing-compare-row { grid-template-columns: 1fr !important; gap: 10px !important; padding: 18px !important; align-items: start !important; }
+  .landing-footer-grid { grid-template-columns: 1fr !important; gap: 28px !important; }
+  .landing-faq-grid > div:first-child { position: static !important; }
   .landing-root h2 { letter-spacing: -0.015em !important; line-height: 1.08 !important; }
   .landing-root h2 span { display: inline !important; }
   .landing-root [style*="max-width: 1240"],
