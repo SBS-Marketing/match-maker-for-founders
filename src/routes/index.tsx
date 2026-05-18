@@ -3251,6 +3251,8 @@ const RESPONSIVE_CSS = `
   .landing-funding-card {
     min-width: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
+    justify-self: stretch !important;
     padding: 24px !important;
   }
   .landing-funding-card-head,
@@ -3355,6 +3357,10 @@ const RESPONSIVE_CSS = `
     padding: 20px !important;
     border-radius: 18px !important;
   }
+  .landing-two-col > .landing-funding-card {
+    width: 100% !important;
+    max-width: none !important;
+  }
   .landing-funding-card-head,
   .landing-grant-progress-labels,
   .landing-grant-actions {
@@ -3363,7 +3369,8 @@ const RESPONSIVE_CSS = `
     justify-items: start !important;
   }
   .landing-grant-amount {
-    font-size: clamp(44px, 16vw, 64px) !important;
+    font-size: clamp(38px, 11vw, 52px) !important;
+    white-space: nowrap !important;
   }
   .landing-grant-meta { font-size: 13.5px !important; }
   .landing-grant-note {
