@@ -2794,7 +2794,7 @@ function LCta() {
         </div>
 
         <div
-          className="landing-cta-grid"
+          className="landing-cta-pane"
           style={{
             ...GLASS.paneInk,
             padding: 28,
