@@ -456,6 +456,7 @@ function LNav() {
     { t: "Pricing", href: "#pricing" },
     { t: "Stories", href: "#stories" },
   ];
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <div className="landing-nav-shell" style={{ position: "sticky", top: 16, zIndex: 50, padding: "0 64px", marginTop: 16 }}>
       <div
@@ -468,6 +469,7 @@ function LNav() {
           display: "flex",
           alignItems: "center",
           gap: 28,
+          position: "relative",
         }}
       >
         <div className="landing-brand" style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -544,10 +546,96 @@ function LNav() {
           <span className="landing-nav-cta-short">Start</span>
           <SvcIcon name="arrowR" size={13} color={M.cream} stroke={2.2} />
         </Link>
+        <button
+          type="button"
+          className="landing-nav-burger"
+          aria-label="Menü öffnen"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((v) => !v)}
+          style={{
+            display: "none",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 38,
+            height: 38,
+            borderRadius: 999,
+            border: "1px solid rgba(21,20,15,0.12)",
+            background: "rgba(251,250,247,0.7)",
+            color: M.ink,
+            cursor: "pointer",
+            padding: 0,
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+            {menuOpen ? (
+              <><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></>
+            ) : (
+              <><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></>
+            )}
+          </svg>
+        </button>
+        {menuOpen && (
+          <div
+            className="landing-nav-menu"
+            style={{
+              position: "absolute",
+              top: "calc(100% + 10px)",
+              left: 0,
+              right: 0,
+              ...GLASS.pill,
+              borderRadius: 20,
+              padding: 14,
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+            }}
+          >
+            {items.map((i) => (
+              <a
+                key={i.t}
+                href={i.href}
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 12,
+                  fontSize: 15,
+                  fontWeight: 500,
+                  color: M.ink,
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                {i.live && (
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#3D9970" }} />
+                )}
+                {i.t}
+              </a>
+            ))}
+            <Link
+              to="/auth"
+              onClick={() => setMenuOpen(false)}
+              style={{
+                padding: "12px 14px",
+                borderRadius: 12,
+                fontSize: 15,
+                fontWeight: 500,
+                color: M.smoke,
+                textDecoration: "none",
+                borderTop: "1px solid rgba(21,20,15,0.08)",
+                marginTop: 4,
+              }}
+            >
+              Sign in
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
 
 function HeroBackdrop() {
   const blobs = [
