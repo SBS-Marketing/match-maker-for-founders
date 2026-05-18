@@ -3181,16 +3181,27 @@ const RESPONSIVE_CSS = `
   .landing-root [style*="font-size: 72px"] { font-size: 48px !important; line-height: 1.05 !important; }
   .landing-root [style*="font-size: 56px"] { font-size: 38px !important; line-height: 1.05 !important; }
 
-  /* Chaos cloud → clipped flourish */
-  .landing-root [style*="min-height: 480"] {
+  /* Problem chips → visible responsive cluster */
+  .landing-problem-cloud {
     min-height: 0 !important;
-    height: 200px !important;
-    transform: scale(0.55);
-    transform-origin: top left;
-    margin-bottom: -120px;
-    opacity: 0.55;
-    pointer-events: none;
+    height: auto !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-content: flex-start !important;
+    gap: 10px !important;
+    transform: none !important;
+    margin-bottom: 0 !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
   }
+  .landing-problem-chip {
+    position: static !important;
+    transform: none !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+  .landing-problem-lines { display: none !important; }
 
   /* FAQ sticky heading → static */
   .landing-root [style*="position: sticky"] { position: static !important; }
