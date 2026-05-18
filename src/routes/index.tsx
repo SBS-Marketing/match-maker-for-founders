@@ -3337,12 +3337,22 @@ const RESPONSIVE_CSS = `
   .landing-logo-wall-inner { gap: 30px !important; }
   .landing-logo-wall-logos {
     display: grid !important;
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(6, 1fr) !important;
     justify-items: center !important;
-    gap: 26px !important;
+    align-items: center !important;
+    gap: 22px 14px !important;
     width: 100% !important;
   }
-  .landing-logo-wall-logo { display: block !important; }
+  .landing-logo-wall-logo { display: block !important; text-align: center !important; }
+  /* Pyramid: 1 - 2 - 3 - 2 */
+  .landing-logo-wall-logo:nth-child(1) { grid-column: 3 / span 2 !important; }
+  .landing-logo-wall-logo:nth-child(2) { grid-column: 2 / span 2 !important; }
+  .landing-logo-wall-logo:nth-child(3) { grid-column: 4 / span 2 !important; }
+  .landing-logo-wall-logo:nth-child(4) { grid-column: 1 / span 2 !important; }
+  .landing-logo-wall-logo:nth-child(5) { grid-column: 3 / span 2 !important; }
+  .landing-logo-wall-logo:nth-child(6) { grid-column: 5 / span 2 !important; }
+  .landing-logo-wall-logo:nth-child(7) { grid-column: 2 / span 2 !important; }
+  .landing-logo-wall-logo:nth-child(8) { grid-column: 4 / span 2 !important; }
   .landing-logo-wall-label { font-size: 10.5px !important; }
 
   /* Problem chips → one column on phone */
