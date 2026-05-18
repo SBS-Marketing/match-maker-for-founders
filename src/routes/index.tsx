@@ -2067,6 +2067,7 @@ function LCompare() {
       </div>
       <div style={{ borderRadius: 24, overflow: "hidden", border: "1px solid rgba(21,20,15,0.10)", background: M.paper }}>
         <div
+          className="landing-compare-head"
           style={{
             display: "grid",
             gridTemplateColumns: "1.1fr 1fr 1fr",
@@ -2100,12 +2101,12 @@ function LCompare() {
               background: i % 2 === 1 ? "rgba(255,255,255,0.4)" : "transparent",
             }}
           >
-            <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.015em", color: M.ink }}>{r.d}</div>
-            <div style={{ fontSize: 13.5, color: M.smoke, display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="l-compare-task" style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.015em", color: M.ink }}>{r.d}</div>
+            <div className="l-compare-solo" style={{ fontSize: 13.5, color: M.smoke, display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: M.smoke }} />
               {r.solo}
             </div>
-            <div style={{ fontSize: 13.5, color: M.ink, fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="l-compare-mf" style={{ fontSize: 13.5, color: M.ink, fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
               <SvcIcon name="check2" size={14} color={M.ember} stroke={2.5} />
               {r.mf}
             </div>
