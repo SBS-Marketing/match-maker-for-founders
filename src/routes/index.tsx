@@ -636,6 +636,7 @@ function HeroCopilot() {
         }}
       >
         <div
+          className="landing-compare-head"
           style={{
             fontFamily: M.fontMono,
             fontSize: 10,
@@ -2086,6 +2087,7 @@ function LCompare() {
         </div>
         {rows.map((r, i) => (
           <div
+            className="landing-compare-row"
             key={r.d}
             style={{
               display: "grid",
@@ -2273,7 +2275,7 @@ function LTestimonials() {
           </h2>
         </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: 18 }}>
+      <div className="landing-card-grid landing-quote-grid" style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: 18 }}>
         {quotes.map((q) => (
           <QuoteCard key={q.name} q={q} />
         ))}
@@ -2483,7 +2485,7 @@ function LPricing() {
           Provision.
         </p>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18, alignItems: "stretch" }}>
+      <div className="landing-card-grid landing-pricing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18, alignItems: "stretch" }}>
         {tiers.map((t) => (
           <PriceCard key={t.name} t={t} />
         ))}
