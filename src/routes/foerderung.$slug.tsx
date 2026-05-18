@@ -110,7 +110,7 @@ function GrantDetail() {
           <div className="glass-pane p-5">
             <div className="eyebrow">Materialien</div>
             <ul className="mt-4 space-y-2.5">
-              {grant.materials.map((m) => (
+              {grant.materials.map((m: any) => (
                 <li key={m.item} className="flex items-start gap-2 text-[13px]">
                   <span
                     className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border"
