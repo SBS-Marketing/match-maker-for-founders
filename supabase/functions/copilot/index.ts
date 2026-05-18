@@ -1,10 +1,10 @@
 // ─────────────────────────────────────────────────────────────
 // matchfoundr · Co-Pilot Edge Function
 // Pipeline: Kimi K2.6 (heavy work) → Claude Sonnet (polish)
+// Routing via OpenRouter — one API key for both models
 // ─────────────────────────────────────────────────────────────
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import Anthropic from 'https://esm.sh/@anthropic-ai/sdk@0.27.0'
 import { KIMI_PROMPTS, SONNET_PROMPTS, type FounderContext, type TaskType } from './prompts.ts'
 
 const corsHeaders = {
@@ -12,38 +12,35 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// ─── Kimi API call ───────────────────────────────────────────
-async function callKimi(prompt: string): Promise<string> {
-  const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
+const KIMI_MODEL    = 'moonshotai/kimi-k2.6'
+const SONNET_MODEL  = 'anthropic/claude-sonnet-4-6'
+
+// ─── Generic OpenRouter call ─────────────────────────────────
+async function callOpenRouter(model: string, prompt: string, maxTokens = 2048): Promise<string> {
+  const res = await fetch(OPENROUTER_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${Deno.env.get('KIMI_API_KEY')}`,
+      'Authorization': `Bearer ${Deno.env.get('OPENROUTER_API_KEY')}`,
+      'HTTP-Referer': 'https://matchfoundr.com',
+      'X-Title': 'matchfoundr Co-Pilot',
     },
     body: JSON.stringify({
-      model: 'moonshot-v1-32k',   // Kimi K2.6 equivalent
+      model,
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.3,
-      max_tokens: 2048,
+      temperature: model === KIMI_MODEL ? 0.3 : 0.7,
+      max_tokens: maxTokens,
     }),
   })
   const data = await res.json()
-  if (!res.ok) throw new Error(`Kimi error: ${JSON.stringify(data)}`)
+  if (!res.ok) throw new Error(`OpenRouter error (${model}): ${JSON.stringify(data)}`)
   return data.choices[0].message.content
 }
 
-// ─── Sonnet API call ─────────────────────────────────────────
-async function callSonnet(prompt: string): Promise<string> {
-  const anthropic = new Anthropic({
-    apiKey: Deno.env.get('ANTHROPIC_API_KEY'),
-  })
-  const msg = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6-20250219',
-    max_tokens: 1024,
-    messages: [{ role: 'user', content: prompt }],
-  })
-  return (msg.content[0] as { text: string }).text
-}
+// ─── Convenience wrappers ────────────────────────────────────
+const callKimi   = (prompt: string) => callOpenRouter(KIMI_MODEL,   prompt, 2048)
+const callSonnet = (prompt: string) => callOpenRouter(SONNET_MODEL, prompt, 1024)
 
 // ─── Parse JSON safely ───────────────────────────────────────
 function parseJSON(text: string): Record<string, unknown> {
