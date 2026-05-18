@@ -3210,6 +3210,22 @@ const RESPONSIVE_CSS = `
   .landing-root h1 { font-size: clamp(40px, 11vw, 64px) !important; line-height: 1.0 !important; }
   .landing-root h2 { font-size: clamp(28px, 7vw, 44px) !important; line-height: 1.05 !important; }
   .landing-root h2 span { display: inline !important; }
+
+  /* Logo wall centered on tablet/mobile */
+  .landing-logo-wall { padding: 36px 22px !important; }
+  .landing-logo-wall-inner {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    justify-items: center !important;
+    gap: 28px !important;
+    text-align: center !important;
+  }
+  .landing-logo-wall-logos {
+    justify-content: center !important;
+    gap: 24px 34px !important;
+  }
+  .landing-logo-wall-label { width: 100% !important; }
+
   /* €2.4M giant number */
   .landing-root [style*="font-size: 180px"] { font-size: 92px !important; line-height: 0.9 !important; }
   .landing-root [style*="font-size: 72px"] { font-size: 48px !important; line-height: 1.05 !important; }
@@ -3315,6 +3331,19 @@ const RESPONSIVE_CSS = `
     padding-right: 18px !important;
   }
   .landing-hero-grid { padding: 36px 18px 56px !important; gap: 32px !important; }
+
+  /* Logo wall → centered brand stack */
+  .landing-logo-wall { padding: 42px 18px !important; }
+  .landing-logo-wall-inner { gap: 30px !important; }
+  .landing-logo-wall-logos {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    justify-items: center !important;
+    gap: 26px !important;
+    width: 100% !important;
+  }
+  .landing-logo-wall-logo { display: block !important; }
+  .landing-logo-wall-label { font-size: 10.5px !important; }
 
   /* Problem chips → one column on phone */
   .landing-problem-cloud {
