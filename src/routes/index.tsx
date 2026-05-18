@@ -3031,17 +3031,107 @@ function LFooter() {
 /* ─────────────────────────────────────────────────────────────────────────
  * Page
  * ──────────────────────────────────────────────────────────────────────── */
+const RESPONSIVE_CSS = `
+/* ============ TABLET ≤1024 ============ */
+@media (max-width: 1024px) {
+  .landing-root section { padding: 88px 0 !important; }
+  .landing-root [style*="max-width: 1240"],
+  .landing-root [style*="padding: 0px 64px"] {
+    padding-left: 32px !important;
+    padding-right: 32px !important;
+  }
+  .landing-root [style*="grid-template-columns: 1.1fr 0.9fr"],
+  .landing-root [style*="grid-template-columns: 0.9fr 1.1fr"],
+  .landing-root [style*="grid-template-columns: 0.85fr 1.15fr"],
+  .landing-root [style*="grid-template-columns: 1.4fr 1fr 1fr"],
+  .landing-root [style*="grid-template-columns: 1.1fr 1fr 1fr"],
+  .landing-root [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
+  }
+  .landing-root [style*="grid-template-columns: repeat(4, 1fr)"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .landing-root [style*="grid-template-columns: 1.4fr repeat(4, 1fr)"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 24px !important;
+  }
+  .landing-root [style*="font-size: 180px"] { font-size: 96px !important; }
+  .landing-root [style*="font-size: 72px"] { font-size: 52px !important; }
+}
+
+/* ============ MOBILE ≤768 ============ */
+@media (max-width: 768px) {
+  .landing-root section { padding: 64px 0 !important; }
+  .landing-root [style*="max-width: 1240"],
+  .landing-root [style*="padding: 0px 64px"] {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+  }
+  /* Collapse every multi-column grid */
+  .landing-root [style*="grid-template-columns: repeat(3"],
+  .landing-root [style*="grid-template-columns: repeat(4"],
+  .landing-root [style*="grid-template-columns: 1.1fr 0.9fr"],
+  .landing-root [style*="grid-template-columns: 0.9fr 1.1fr"],
+  .landing-root [style*="grid-template-columns: 0.85fr 1.15fr"],
+  .landing-root [style*="grid-template-columns: 1.4fr 1fr 1fr"],
+  .landing-root [style*="grid-template-columns: 1.1fr 1fr 1fr"],
+  .landing-root [style*="grid-template-columns: 1.4fr repeat(4, 1fr)"],
+  .landing-root [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+  .landing-root [style*="grid-auto-rows: 220px"] {
+    grid-auto-rows: auto !important;
+  }
+  /* Sticky nav: hide center links, keep logo + CTA */
+  .landing-root nav { display: none !important; }
+  /* Big display text */
+  .landing-root [style*="font-size: 180px"] { font-size: 64px !important; }
+  .landing-root [style*="font-size: 72px"] { font-size: 38px !important; line-height: 1.05 !important; }
+  .landing-root [style*="font-size: 56px"] { font-size: 34px !important; line-height: 1.05 !important; }
+  .landing-root [style*="font-size: 26px"] { font-size: 19px !important; }
+  .landing-root [style*="font-size: 24px"] { font-size: 18px !important; }
+  .landing-root [style*="font-size: 22px"] { font-size: 17px !important; }
+  .landing-root [style*="font-size: 19px"] { font-size: 16px !important; }
+  /* Gaps that are too generous on phones */
+  .landing-root [style*="gap: 80px"] { gap: 32px !important; }
+  .landing-root [style*="gap: 64px"] { gap: 28px !important; }
+  .landing-root [style*="gap: 56px"] { gap: 28px !important; }
+  .landing-root [style*="gap: 48px"] { gap: 24px !important; }
+  .landing-root [style*="gap: 36px"] { gap: 20px !important; }
+  /* Marketplace tiles min-height + icon shrink */
+  .landing-root [style*="min-height: 150px"] { min-height: 130px !important; }
+  /* Sticky-nav container padding */
+  .landing-root [style*="padding: 8px 8px 8px 18px"] { padding: 6px 6px 6px 14px !important; gap: 8px !important; }
+}
+
+/* ============ SMALL PHONES ≤380 ============ */
+@media (max-width: 380px) {
+  .landing-root [style*="max-width: 1240"],
+  .landing-root [style*="padding: 0px 64px"] {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+  .landing-root [style*="font-size: 72px"] { font-size: 32px !important; }
+  .landing-root [style*="font-size: 56px"] { font-size: 28px !important; }
+}
+`;
+
 function Landing() {
   return (
     <div
+      className="landing-root"
       style={{
         minHeight: "100vh",
         background: M.cream,
         color: M.ink,
         fontFamily: M.fontSans,
         WebkitFontSmoothing: "antialiased",
+        overflowX: "hidden",
       }}
     >
+      <style dangerouslySetInnerHTML={{ __html: RESPONSIVE_CSS }} />
       <LHero />
       <LProblem />
       <LHowItWorks />
