@@ -456,8 +456,9 @@ function LNav() {
     { t: "Stories", href: "#stories" },
   ];
   return (
-    <div style={{ position: "sticky", top: 16, zIndex: 50, padding: "0 64px", marginTop: 16 }}>
+    <div className="landing-nav-shell" style={{ position: "sticky", top: 16, zIndex: 50, padding: "0 64px", marginTop: 16 }}>
       <div
+        className="landing-nav-inner"
         style={{
           maxWidth: 1240,
           margin: "0 auto",
@@ -468,7 +469,7 @@ function LNav() {
           gap: 28,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="landing-brand" style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <IconMF size={22} />
           <span style={{ fontWeight: 700, fontSize: 17, letterSpacing: "-0.02em", color: M.ink }}>
             matchfoundr<span style={{ color: M.ember }}>.</span>
@@ -490,7 +491,7 @@ function LNav() {
             platform · beta
           </span>
         </div>
-        <nav style={{ display: "flex", gap: 24 }}>
+        <nav className="landing-nav-links" style={{ display: "flex", gap: 24 }}>
           {items.map((i) => (
             <a
               key={i.t}
@@ -513,14 +514,16 @@ function LNav() {
             </a>
           ))}
         </nav>
-        <div style={{ flex: 1 }} />
+        <div className="landing-nav-spacer" style={{ flex: 1 }} />
         <Link
+          className="landing-nav-signin"
           to="/auth"
           style={{ fontSize: 13.5, fontWeight: 500, color: M.smoke, textDecoration: "none" }}
         >
           Sign in
         </Link>
         <Link
+          className="landing-nav-cta"
           to="/co-pilot"
           style={{
             background: M.ink,
