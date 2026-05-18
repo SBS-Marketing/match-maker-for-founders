@@ -1861,10 +1861,11 @@ function LCoPilotMoment() {
 function LFunding() {
   return (
     <Section tone="paper" pad="140px 0" id="foerderung">
-      <div className="landing-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
+      <div className="landing-two-col landing-section-inner" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
         <div>
           <Eyebrow>05 · Förderung · live gematcht</Eyebrow>
           <div
+            className="landing-funding-bignum"
             style={{
               marginTop: 24,
               fontWeight: 600,
