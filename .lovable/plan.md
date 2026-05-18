@@ -1,63 +1,68 @@
-# matchfoundr v2 — Founder-Plattform Rollout
+# Co-Pilot Chat (/co-pilot) — Implementierungsplan
 
-Die ZIP enthält ein vollständiges Handoff (Prompt, README, 6 Screens, 8 Referenz-JSX-Files, HTML-Prototyp). Das Design ist gesperrt – ich setze es pixel-nah um und baue alle Features inkl. Routing, Co-Pilot, Marketplace und Detailseiten. Bestehende Co-Founder-Funktionalität (`/discover`, Matches, Auth, Supabase) bleibt intakt und wandert hinter den neuen Marketplace-Eintrag „Co-Founder".
+## Ziel
+`src/routes/co-pilot.tsx` von Mock-Daten auf einen funktionsfähigen, auth-geschützten Chat umstellen, der mit der bereits deployten Edge Function `copilot` spricht und Session/Kontext/Messages in Supabase persistiert.
 
-## Architektur-Entscheidungen
+## UI (matchfoundr Brand)
 
-- **Co-Founder bleibt eigene Seite**: `/co-founder` (rename von `/discover`-Erfahrung) mit voller Such-/Match-/Chat-Logik. Im Marketplace ist die Kachel der Einstieg dorthin.
-- **Backdrop-Varianten**: `<PageBackdrop variant="sunrise" | "dusk">` existiert teilweise – wird auf die Spec aus README erweitert (4 Blobs, Grid, Noise). Co-Pilot nutzt `dusk`.
-- **Design-Tokens & Service-Hues** kommen als CSS-Variablen in `src/styles.css`. Service-Farben (`--svc-legal`, `--svc-tax`, …) werden als Tokens definiert, nicht hartcodiert.
-- **Seed-Daten** liegen in `src/data/{founders,advisors,grants,services,mentors}.ts` (kein Backend für die neuen Kategorien – MVP-Scope laut README).
-- **AI Co-Pilot** ist im MVP scripted (canned responses + Quick-Chips + lokaler State). Optional kann später Lovable AI Gateway (`google/gemini-2.5-flash`) angeschlossen werden – nicht Teil dieses Plans.
+Layout zwei Spalten (65% / 35%, auf mobil gestapelt). Tokens aus `styles.css`: `--ink #15140f`, `--ember #E2511C`, `--cream #FBFAF7`, Font Geist.
 
-## Neue Routen (TanStack file-based)
+**Linke Spalte — Chat**
+- Header-Bar: `CopilotMark` Badge + Titel "Co-Pilot" + `AITag` "ONLINE" + Session-Titel (editable inline) + "Session speichern" Button (rechts).
+- Scroll-Bereich mit Messages:
+  - User → rechts, cream Bubble auf ink Background.
+  - Assistant → links, dunkle Bubble mit ember Akzent, serif italic für die Antwort.
+  - Unter Assistant-Bubble: Quellen-Pills (PDF / Web / Intern) gerendert aus `sources[]`.
+  - Thinking-Trace während Streaming (Reuse `ThinkingTrace`).
+- Composer unten: Textarea mit Placeholder „Frag etwas — oder lass mich den Plan ausarbeiten…", Senden-Button (ember).
+- Quick-Action Chips unter dem Composer, dynamisch aus letzter Assistant-Response `quick_actions[]`.
 
-```
-src/routes/
-  index.tsx              -> Landing v2 (Hero links + Co-Pilot Preview rechts + Service-Strip)
-  heute.tsx              -> Command Center (auth-protected via _authenticated)
-  marketplace.tsx        -> 8-Service Grid mit Co-Pilot Routing Banner
-  co-pilot.tsx           -> Chat-UI, Dusk-Backdrop
-  co-founder.tsx         -> bestehende Discover-Logik (Filter, Multi-Card, Like/Anschreiben)
-  recht.index.tsx        -> Lawyer Listing
-  recht.$slug.tsx        -> Advisor Detail (Fit-Reasoning, Pricing, Vouches)
-  foerderung.index.tsx   -> Grant Listing
-  foerderung.$slug.tsx   -> Grant Detail (EXIST-Beispiel, Eligibility, Timeline, 78%-CTA)
-  steuer.tsx · kapital.tsx · mentoren.tsx · talent.tsx · growth.tsx
-                         -> Skeleton-Listings (laut README OK für 6/8)
-```
+**Rechte Spalte — Kontext-Panel**
+- `glass-pane-ink` Card:
+  - Eyebrow „SO HABE ICH DICH VERSTANDEN"
+  - Felder DU / IDEE / STAND / STADT / ZIEL / RISIKO (aus `copilot_context`)
+  - Button „Etwas korrigieren" → öffnet Inline-Edit Dialog (Phase 2 als simples Dialog mit Textarea, schickt `context_parse`).
+- Zweite Card: „QUELLEN, AUF DIE ICH MICH STÜTZE" — aggregiert distinct `sources` aus allen Messages der Session.
 
-Bestehende Routen (`auth`, `onboarding`, `profile`, `matches`, `discover`, `entdecken`) bleiben. `/discover` wird intern Alias / Redirect auf `/co-founder`.
+## Datenfluss
 
-## Shared Components (neu)
+1. **Auth Gate**: Komponente in `<AuthGate>` einwickeln.
+2. **Mount**:
+   - `copilot_sessions` für `user_id` laden → letzte Session nehmen oder neue anlegen (`INSERT title:"Neue Session"`), `session_id` im State.
+   - `copilot_context` für `user_id` laden (ORDER BY updated_at DESC LIMIT 1). Wenn leer → Panel zeigt Empty-State + CTA „Erzähl mir kurz von dir".
+   - `copilot_messages` für `session_id` laden (ASC). Falls leer, Welcome-Message anzeigen.
+3. **Senden**:
+   - Optimistisch User-Message in State + INSERT in `copilot_messages` (`role:'user'`).
+   - `supabase.functions.invoke('copilot', { body: { task: 'chat', session_id, message } })`.
+   - Response `{ answer, sources, quick_actions }` → INSERT Assistant Message (`role:'assistant'`, `sources`, `model_used`).
+   - State aktualisieren, scroll-to-bottom.
+4. **Context Parse**: Wenn kein `copilot_context` existiert und User die erste lange Nachricht schickt, parallel `task:'context_parse'` aufrufen, Resultat upserten in `copilot_context`.
+5. **Session speichern**: Button setzt `title` über Prompt/Input und UPDATE auf `copilot_sessions`.
 
-- `PageBackdrop` (erweitert) · `GlassPane` · `GlassPill` · `GlassPaneInk` · `GlassPaneEmber`
-- `ServiceChip`, `ServiceTile`, `ServiceIcon` (8 SVGs aus `platform-shared.jsx`)
-- `CopilotMark` (Konvergenz-Chevrons + Ember-Dot)
-- `ThinkingTrace` (dashed bubble), `FitScore`, `PlanTrack`, `SourceCitation`
-- `AdvisorCard`, `GrantCard`, `FeedRow` (cross-service mit hue-Border)
-- `AppNav` erweitern: für eingeloggte User „Heute / Marketplace / Co-Pilot / Co-Founder" als Tabs.
+## Technische Details
 
-## Seiten-Implementierung
+- TanStack Query Hooks:
+  - `useSession()` → ensures session, returns `{ sessionId }`.
+  - `useContext()` → SELECT copilot_context.
+  - `useMessages(sessionId)` → SELECT + Realtime subscription auf `copilot_messages` filter `session_id`.
+  - `useSendMessage()` → mutation: insert user msg → invoke edge fn → insert assistant msg → invalidate.
+- Realtime: optional `supabase.channel('copilot:'+sessionId)` für `copilot_messages` INSERT.
+- Edge Function Aufruf via Browser-Client (`supabase.functions.invoke`) — die Function ist bereits deployed; sie sollte mit JWT laufen (RLS-konformer Insert macht sie selbst oder Client). Erwartetes Body-Schema: `{ task, session_id, message, context? }`, Response: `{ answer, sources: [{type,title,url?}], quick_actions: string[] }`.
+- Fehlerbehandlung: Toast bei Edge-Function-Fehler (429 → "Limit erreicht", 402 → "Credits aufgebraucht", sonst generisch).
+- Auto-Scroll: ref + `useEffect` auf messages.length.
+- Composer: Enter sendet, Shift+Enter neue Zeile.
 
-1. **Landing v2** – Eyebrow „01 · Die Plattform", Headline „Alles, was ein **founder** braucht. KI-vermittelt." (Instrument Serif italic auf „founder"), zwei CTAs, rechts Glass-Pane mit Beispiel-Query + 3 Cross-Service Recommendations + 8-Chip-Strip. Sektionen `how-it-works`, `stories`, `pricing` bleiben (für bestehende Nav-Hash-Links), bekommen aber neuen v2-Content „Eine KI für alle Gewerke".
-2. **Command Center `/heute`** – Co-Pilot Fokus-Banner („Heute: 2 Calls, 1 Antrag fällig"), Feed „Active conversations across services" (hue-akzentuierte Rows), Agenda, Funding-Pipeline mit EXIST 78%-Karte. Auth-gated.
-3. **Marketplace** – Routing-Banner oben („Sag dem Co-Pilot, was du brauchst"), 4×2 Grid; erste Kachel (Co-Founder) `glass-pane-ember`; Klick → jeweilige Listing-Route.
-4. **Co-Pilot** – Dusk-Variant, Chat-Thread links, Sidebar rechts mit „Was der Co-Pilot verstanden hat" + Quellen. Thinking-Trace-Bubble + 3-Spur-Plan-Card mit konkreten Next-CTAs.
-5. **Advisor Detail** – Lawyer-Profil mit AI-Fit-Reasoning, Fachgebiete-Bars, Pricing-Pakete, Network-Vouches, „Erstgespräch buchen" → Mock-Slot-Picker.
-6. **Förderprogramm Detail** – EXIST-Breakdown, Eligibility ✓/!, Timeline, Materials-Checklist, „Antrag weiterführen (78% pre-filled)" → Link.
+## Dateien
 
-## Styles.css Ergänzungen
+- `src/routes/co-pilot.tsx` — komplett neu (ersetzt Mock).
+- `src/hooks/useCopilot.ts` — Hooks (session/context/messages/send).
+- `src/components/copilot/ChatMessage.tsx` — User & Assistant Bubble + SourcePills.
+- `src/components/copilot/ContextPanel.tsx` — rechte Spalte.
+- `src/components/copilot/Composer.tsx` — Input + Quick Actions.
+- Wiederverwendet: `AuthGate`, `CopilotMark`, `AITag`, `ThinkingTrace`.
 
-- Glass-Recipes exakt aus README (`.glass-pane`, `.glass-pill`, `.glass-pane-soft`, `.glass-pane-ink`, `.glass-pane-ember`, Dusk-Variante).
-- Service-Hues als Tokens.
-- Geist + Geist Mono + Instrument Serif Google-Font Import sicherstellen.
+## Offene Punkte (frage nach Bestätigung)
 
-## Was NICHT geändert wird
-
-- Supabase-Schema, Auth-Flow, Onboarding, bestehende Co-Founder-Match-Logik (Swipes, Matches, Messages).
-- Keine neuen npm-Pakete – alles mit Tailwind + Inline-SVG.
-
-## Lieferung
-
-Ein Durchgang: Tokens & Glass-Utilities → Shared Components & Seed-Daten → Landing v2 → Marketplace → Co-Pilot → Command Center → Recht- + Förderprogramm-Detail → Listings-Skeletons → Nav-Update → Co-Founder-Route. Danach Build-Check.
+1. **Quick Actions als Fallback**: Wenn die Edge Function keine `quick_actions` liefert, soll ich statische Defaults zeigen (wie die aktuellen `SUGGESTIONS`) oder leer?
+2. **„Etwas korrigieren"**: Inline-Edit der einzelnen Felder (role/idea/…) oder freier Textbereich, der via `context_parse` neu geparst wird? Vorschlag: freier Text → reparse.
+3. **Mehrere Sessions**: Soll es einen Session-Switcher (Dropdown/Sidebar) geben oder bleibt es bei „immer letzte/neueste Session"? Aktuell nicht im Brief, ich würde es für später lassen.
