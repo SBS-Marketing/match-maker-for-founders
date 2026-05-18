@@ -1533,6 +1533,7 @@ function LCoPilotMoment() {
         }}
       />
       <div
+        className="landing-two-col landing-section-inner"
         style={{
           position: "relative",
           maxWidth: 1240,
@@ -1860,10 +1861,11 @@ function LCoPilotMoment() {
 function LFunding() {
   return (
     <Section tone="paper" pad="140px 0" id="foerderung">
-      <div className="landing-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
+      <div className="landing-two-col landing-section-inner" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
         <div>
           <Eyebrow>05 · Förderung · live gematcht</Eyebrow>
           <div
+            className="landing-funding-bignum"
             style={{
               marginTop: 24,
               fontWeight: 600,
@@ -2692,6 +2694,7 @@ function LCta() {
         }}
       />
       <div
+        className="landing-cta-grid landing-section-inner"
         style={{
           position: "relative",
           maxWidth: 1240,
@@ -2725,7 +2728,7 @@ function LCta() {
             Fünf Minuten reichen. Du sprichst, er sortiert. Am Ende hast du drei konkrete Schritte und Menschen, die sie
             mit dir gehen.
           </p>
-          <div style={{ display: "flex", gap: 12, marginTop: 36, flexWrap: "wrap" }}>
+          <div className="landing-cta-actions" style={{ display: "flex", gap: 12, marginTop: 36, flexWrap: "wrap" }}>
             <Link
               to="/co-pilot"
               style={{
@@ -2791,7 +2794,7 @@ function LCta() {
         </div>
 
         <div
-          className="landing-cta-grid"
+          className="landing-cta-pane"
           style={{
             ...GLASS.paneInk,
             padding: 28,
@@ -3212,6 +3215,17 @@ const RESPONSIVE_CSS = `
   /* Hero actions full-width on tablet */
   .landing-hero-actions { flex-wrap: wrap !important; }
   .landing-hero-primary, .landing-hero-secondary { justify-content: center !important; }
+
+  /* Section inner padding/gap on tablet */
+  .landing-section-inner {
+    padding-left: 22px !important;
+    padding-right: 22px !important;
+    gap: 32px !important;
+  }
+  .landing-funding-bignum {
+    font-size: clamp(72px, 14vw, 140px) !important;
+    line-height: 0.95 !important;
+  }
 }
 
 /* ════════ PHONE PORTRAIT  ≤ 640px ════════ */
@@ -3265,6 +3279,22 @@ const RESPONSIVE_CSS = `
     flex: 1 1 100% !important;
     width: 100% !important;
     justify-content: center !important;
+  }
+
+  /* Section inner / CTA pane on phone */
+  .landing-section-inner {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+    gap: 24px !important;
+  }
+  .landing-cta-pane { padding: 22px !important; }
+  .landing-cta-actions {
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+  }
+  .landing-funding-bignum {
+    font-size: clamp(64px, 18vw, 96px) !important;
   }
 }
 `;
