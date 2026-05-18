@@ -103,7 +103,7 @@ function AdvisorDetail() {
           <div className="glass-pane p-5">
             <div className="eyebrow">Pakete</div>
             <div className="mt-4 space-y-3">
-              {advisor.packages.map((p) => (
+              {advisor.packages.map((p: any) => (
                 <div key={p.name} className="rounded-xl border border-[var(--ruled)] bg-white/40 p-4">
                   <div className="flex items-baseline justify-between">
                     <span className="text-[14px] font-semibold">{p.name}</span>
