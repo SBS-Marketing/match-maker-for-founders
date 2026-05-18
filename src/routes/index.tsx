@@ -3041,9 +3041,13 @@ function LFooter() {
  * Page
  * ──────────────────────────────────────────────────────────────────────── */
 const RESPONSIVE_CSS = `
+.landing-root, .landing-root * { box-sizing: border-box; }
+
 /* ============ TABLET ≤1024 ============ */
 @media (max-width: 1024px) {
   .landing-root section { padding: 88px 0 !important; }
+  .landing-nav-shell { padding-left: 32px !important; padding-right: 32px !important; }
+  .landing-hero-grid { grid-template-columns: 1fr !important; padding: 72px 32px 88px !important; gap: 40px !important; }
   .landing-root [style*="max-width: 1240"],
   .landing-root [style*="padding: 0px 64px"] {
     padding-left: 32px !important;
@@ -3071,7 +3075,24 @@ const RESPONSIVE_CSS = `
 
 /* ============ MOBILE ≤768 ============ */
 @media (max-width: 768px) {
+  .landing-root { width: 100%; max-width: 100vw; overflow-x: clip !important; }
   .landing-root section { padding: 64px 0 !important; }
+  .landing-nav-shell { top: 12px !important; padding-left: 16px !important; padding-right: 16px !important; margin-top: 12px !important; }
+  .landing-nav-inner { width: 100% !important; max-width: none !important; padding: 8px 10px !important; gap: 0 !important; }
+  .landing-brand { min-width: 0 !important; gap: 8px !important; }
+  .landing-brand > span:last-child { display: none !important; }
+  .landing-nav-links, .landing-nav-signin, .landing-nav-cta, .landing-nav-spacer { display: none !important; }
+  .landing-hero-grid { grid-template-columns: 1fr !important; padding: 58px 24px 48px !important; gap: 34px !important; align-items: start !important; }
+  .landing-hero-pill { max-width: 100% !important; margin-bottom: 28px !important; gap: 8px !important; white-space: normal !important; }
+  .landing-hero-pill > span:last-child { font-size: 10px !important; line-height: 1.35 !important; letter-spacing: 0.04em !important; }
+  .landing-hero-title { font-size: clamp(42px, 12.4vw, 50px) !important; line-height: 0.98 !important; letter-spacing: -0.02em !important; max-width: 100% !important; overflow-wrap: normal !important; }
+  .landing-hero-copy > p { font-size: 17px !important; line-height: 1.55 !important; margin-top: 24px !important; max-width: 100% !important; }
+  .landing-hero-actions { flex-direction: column !important; align-items: stretch !important; gap: 12px !important; margin-top: 32px !important; }
+  .landing-hero-primary, .landing-hero-secondary { width: 100% !important; justify-content: center !important; padding: 15px 18px !important; font-size: 15px !important; }
+  .landing-hero-stats { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 18px !important; margin-top: 44px !important; padding-top: 20px !important; }
+  .landing-hero-stats > div { padding-left: 0 !important; border-left: none !important; }
+  .hero-copilot { padding: 18px !important; border-radius: 18px !important; }
+  .hero-copilot [style*="grid-template-columns: repeat(3, 1fr)"] { grid-template-columns: 1fr !important; }
   .landing-root [style*="max-width: 1240"],
   .landing-root [style*="padding: 0px 64px"] {
     padding-left: 18px !important;
@@ -3093,7 +3114,7 @@ const RESPONSIVE_CSS = `
   .landing-root [style*="grid-auto-rows: 220px"] {
     grid-auto-rows: auto !important;
   }
-  /* Sticky nav: hide center links, keep logo + CTA */
+  /* Sticky nav: collapse to the brand on phones */
   .landing-root nav { display: none !important; }
   /* Big display text */
   .landing-root [style*="font-size: 180px"] { font-size: 64px !important; }
@@ -3117,6 +3138,11 @@ const RESPONSIVE_CSS = `
 
 /* ============ SMALL PHONES ≤380 ============ */
 @media (max-width: 380px) {
+  .landing-nav-shell { padding-left: 12px !important; padding-right: 12px !important; }
+  .landing-hero-grid { padding: 48px 18px 42px !important; }
+  .landing-hero-title { font-size: 40px !important; }
+  .landing-hero-copy > p { font-size: 16px !important; }
+  .landing-hero-primary, .landing-hero-secondary { font-size: 14px !important; padding-left: 14px !important; padding-right: 14px !important; }
   .landing-root [style*="max-width: 1240"],
   .landing-root [style*="padding: 0px 64px"] {
     padding-left: 14px !important;
