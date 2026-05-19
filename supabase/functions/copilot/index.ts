@@ -211,26 +211,12 @@ Deno.serve(async (req) => {
     }
 
     else if (task === 'plan_generate') {
-      // Load assessment scores if available
-      const { data: assessment } = await supabase
-        .from('founder_assessment')
-        .select('scores')
-        .eq('user_id', user.id)
-        .single()
-
-      // Load skills if available
-      const { data: skills } = await supabase
-        .from('founder_skills')
-        .select('skills, looking_for, availability')
-        .eq('user_id', user.id)
-        .single()
-
-      // Enrich context with industry + assessment
-      const { data: profileFull } = await supabase
-        .from('profiles')
-        .select('industry, venture_term, partner_term')
-        .eq('id', user.id)
-        .single()
+      // Load assessment + skills + industry for full context
+      const [{ data: assessment }, { data: skills }, { data: profileFull }] = await Promise.all([
+        supabase.from('founder_assessment').select('scores').eq('user_id', user.id).single(),
+        supabase.from('founder_skills').select('skills, looking_for, availability').eq('user_id', user.id).single(),
+        supabase.from('profiles').select('industry, venture_term, partner_term').eq('id', user.id).single(),
+      ])
 
       if (profileFull?.industry) {
         ctx.industry     = profileFull.industry
@@ -238,29 +224,19 @@ Deno.serve(async (req) => {
         ctx.partner_term = profileFull.partner_term
       }
 
-      const enrichedInput = JSON.stringify({
-        message,
+      // Sonnet gets full context directly — no Kimi middleman for plan
+      const fullContext = JSON.stringify({
+        founder: ctx,
         assessment_scores: assessment?.scores || null,
         skills: skills?.skills || null,
+        looking_for: skills?.looking_for || null,
+        availability_hrs: skills?.availability || null,
       })
 
-      // Stage 1: Kimi builds structured plan
-      const kimiPrompt = KIMI_PROMPTS.plan_generate(ctx, enrichedInput)
-      const kimiRaw = await callKimi(kimiPrompt)
-      console.log('[KIMI plan_generate]', kimiRaw.slice(0, 300))
-      const planData = parseJSON(kimiRaw)
-
-      // If Kimi returned nothing useful, give Sonnet a minimal context fallback
-      const planInput = kimiRaw.trim()
-        ? JSON.stringify(planData)
-        : `Keine strukturierten Plan-Daten verfügbar — generiere einen Startplan basierend auf: ${JSON.stringify(ctx)}`
-
-      // Stage 2: Sonnet turns it into a presentation
-      const sonnetPrompt = SONNET_PROMPTS.plan_presentation(ctx, planInput)
+      const sonnetPrompt = SONNET_PROMPTS.plan_presentation(ctx, fullContext)
       const sonnetRaw = await callSonnet(sonnetPrompt)
       console.log('[SONNET plan slides raw]', sonnetRaw.slice(0, 300))
 
-      // Extract slides — handle array, wrapped object, or empty
       const parsedSlides = parseJSONLoose(sonnetRaw)
       const slides: unknown[] = Array.isArray(parsedSlides)
         ? parsedSlides
@@ -270,20 +246,19 @@ Deno.serve(async (req) => {
 
       console.log('[SLIDES count]', slides.length)
 
-      // Save plan as document
       await supabase.from('copilot_documents').insert({
         user_id:       user.id,
         session_id:    session_id || null,
         type:          'pitch_outline',
         title:         `Persönlicher Plan — ${ctx.userName}`,
         content:       sonnetRaw,
-        draft_content: kimiRaw,
+        draft_content: fullContext,
         fill_pct:      100,
         status:        'ready',
         metadata:      { slides_count: slides.length },
       })
 
-      result = { plan: planData, slides }
+      result = { slides }
     }
 
     else if (task === 'deadline_extract') {
