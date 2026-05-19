@@ -183,7 +183,7 @@ function Onboarding() {
       sessionStorage.removeItem(STORAGE_KEY);
 
       // Redirect to dashboard with tutorial flag
-      navigate({ to: "/heute", search: { tutorial: "1" } as never });
+      navigate({ to: "/heute" });
     } catch (e) {
       console.error(e);
       toast.error("Speichern fehlgeschlagen. Bitte erneut versuchen.");
