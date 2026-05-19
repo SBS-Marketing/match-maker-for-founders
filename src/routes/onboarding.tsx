@@ -752,7 +752,7 @@ function StepContextQuestion({
     <div className="flex min-h-[70vh] flex-col justify-between">
       <header>
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">
-          Frage {idx + 1} von {CONTEXT_QUESTIONS.length}
+          Frage {idx + 1} von {questions.length}
         </p>
         <h1 className="mt-3 font-serif text-3xl leading-tight text-[var(--ink)] md:text-4xl">
           {q.question}
