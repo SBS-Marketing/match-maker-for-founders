@@ -64,49 +64,55 @@ const EMPTY_STATE: State = {
 const STORAGE_KEY = "matchfoundr_onboarding_v1";
 const STEP_KEY = "matchfoundr_onboarding_step_v1";
 
-const CONTEXT_QUESTIONS: {
+type ContextQuestion = {
   key: keyof ContextFields;
   question: string;
   placeholder: string;
   options: string[];
   multi: boolean;
-}[] = [
-  {
-    key: "idea",
-    question: "Woran arbeitest du?",
-    placeholder: "Erzähl in einem Satz, was du baust…",
-    options: ["SaaS-Tool", "Marketplace", "Mobile App", "AI/ML-Produkt", "Hardware", "Consumer-Brand", "B2B-Service", "Noch unklar"],
-    multi: false,
-  },
-  {
-    key: "role",
-    question: "Was ist deine Rolle? Solo oder mit Team?",
-    placeholder: "z. B. Solo-Founder, technisch",
-    options: ["Solo-Founder", "Technischer Co-Founder", "Business/Sales", "Produkt/Design", "Mit Team (2–3)", "Mit Team (4+)"],
-    multi: true,
-  },
-  {
-    key: "stage",
-    question: "Wo stehst du gerade?",
-    placeholder: "Idee, Prototyp, erste Kunden…",
-    options: ["Reine Idee", "Konzept/Validierung", "Prototyp", "MVP live", "Erste Kunden", "Skaliert (>10k MRR)"],
-    multi: false,
-  },
-  {
-    key: "goal",
-    question: "Was willst du in den nächsten 3 Monaten erreichen?",
-    placeholder: "z. B. MVP live, 10 zahlende Pilotkunden",
-    options: ["MVP fertigstellen", "Erste 10 Kunden", "Co-Founder finden", "Förderung sichern", "Team aufbauen", "Pre-Seed Runde"],
-    multi: true,
-  },
-  {
-    key: "risk",
-    question: "Was ist dein größtes Risiko oder die nächste Deadline?",
-    placeholder: "z. B. Runway endet in 6 Monaten",
-    options: ["Runway < 6 Monate", "Antrags-Deadline", "Markt-Validierung offen", "Tech-Risiko", "Kein Co-Founder", "Kein Risiko gerade"],
-    multi: false,
-  },
-];
+};
+
+function buildContextQuestions(industry: Industry): ContextQuestion[] {
+  const venture = industry.terms.venture;
+  const partner = industry.terms.partner;
+  return [
+    {
+      key: "idea",
+      question: `Woran arbeitest du? Was für ein ${venture} entsteht?`,
+      placeholder: `Erzähl in einem Satz, was du baust…`,
+      options: ["SaaS-Tool", "Marketplace", "Mobile App", "AI/ML-Produkt", "Hardware", "Consumer-Brand", "B2B-Service", "Noch unklar"],
+      multi: false,
+    },
+    {
+      key: "role",
+      question: `Was ist deine Rolle? Solo oder mit ${partner}?`,
+      placeholder: `z. B. Solo, technisch`,
+      options: [`Solo`, `Technischer ${partner}`, "Business/Sales", "Produkt/Design", "Mit Team (2–3)", "Mit Team (4+)"],
+      multi: true,
+    },
+    {
+      key: "stage",
+      question: "Wo stehst du gerade?",
+      placeholder: "Aktuelle Phase…",
+      options: industry.terms.stage_options,
+      multi: false,
+    },
+    {
+      key: "goal",
+      question: "Was willst du in den nächsten 3 Monaten erreichen?",
+      placeholder: "z. B. erste 10 Kunden",
+      options: ["Erstes Projekt fertig", "Erste 10 Kunden", `${partner} finden`, "Förderung sichern", "Team aufbauen", "Finanzierung"],
+      multi: true,
+    },
+    {
+      key: "risk",
+      question: "Was ist dein größtes Risiko oder die nächste Deadline?",
+      placeholder: "z. B. Runway endet in 6 Monaten",
+      options: ["Runway < 6 Monate", "Antrags-Deadline", "Markt-Validierung offen", "Genehmigung/Zulassung offen", `Kein ${partner}`, "Kein Risiko gerade"],
+      multi: false,
+    },
+  ];
+}
 
 // ─────────────────────────────────────────────────────────────
 // Step keys per path
