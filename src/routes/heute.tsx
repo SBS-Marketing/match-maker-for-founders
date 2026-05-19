@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AuthGate } from "@/components/AuthGate";
 import { SERVICE_BY_ID, type ServiceId } from "@/data/services";
@@ -5,6 +6,7 @@ import { ServiceIcon } from "@/components/ServiceIcon";
 import { CopilotMark, AITag } from "@/components/Copilot";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Check, Calendar } from "lucide-react";
+import { TutorialOverlay, shouldShowTutorial } from "@/components/onboarding/TutorialOverlay";
 
 export const Route = createFileRoute("/heute")({
   head: () => ({ meta: [{ title: "Heute · Command Center — matchfoundr" }] }),
@@ -26,6 +28,15 @@ const FEED: Row[] = [
 
 function CommandCenter() {
   const today = new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
+  const [showTutorial, setShowTutorial] = useState(false);
+  useEffect(() => {
+    if (shouldShowTutorial()) {
+      // brief delay so layout has settled and targets are measurable
+      const t = window.setTimeout(() => setShowTutorial(true), 250);
+      return () => window.clearTimeout(t);
+    }
+  }, []);
+
   return (
     <div className="mx-auto max-w-6xl px-4 pt-8 pb-20 sm:px-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -49,7 +60,7 @@ function CommandCenter() {
       </div>
 
       {/* Focus banner */}
-      <div className="glass-pane-ink mt-6 grid gap-4 p-6 sm:grid-cols-[1fr_auto] sm:items-center">
+      <div data-tour="focus" className="glass-pane-ink mt-6 grid gap-4 p-6 sm:grid-cols-[1fr_auto] sm:items-center">
         <div>
           <div className="mb-2 flex items-center gap-2">
             <AITag tone="dark">Co-Pilot</AITag>
@@ -74,7 +85,7 @@ function CommandCenter() {
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[1.3fr_0.85fr_0.85fr]">
         {/* Active conversations */}
-        <div className="glass-pane flex flex-col gap-3 p-5">
+        <div data-tour="conversations" className="glass-pane flex flex-col gap-3 p-5">
           <div className="flex items-center justify-between">
             <span className="eyebrow">Aktive Gespräche · {FEED.length} offen</span>
             <span className="font-mono text-[11px] text-[var(--smoke)]">Letzte Aktivität</span>
@@ -117,7 +128,7 @@ function CommandCenter() {
         </div>
 
         {/* Agenda */}
-        <div className="glass-pane p-5">
+        <div data-tour="agenda" className="glass-pane p-5">
           <div className="eyebrow">Agenda heute</div>
           <ul className="mt-4 space-y-3">
             {[
@@ -137,7 +148,7 @@ function CommandCenter() {
         </div>
 
         {/* Funding pipeline */}
-        <Link to="/foerderung/$slug" params={{ slug: "exist" }} className="glass-pane block p-5 transition hover:-translate-y-0.5">
+        <Link data-tour="funding" to="/foerderung/$slug" params={{ slug: "exist" }} className="glass-pane block p-5 transition hover:-translate-y-0.5">
           <div className="eyebrow">Funding-Pipeline</div>
           <div className="mt-4 text-[18px] font-semibold tracking-tight">EXIST · DLR</div>
           <div className="text-[12px] text-[var(--smoke)]">€125k · 12 Monate · Deadline 28. Mai</div>
@@ -157,6 +168,8 @@ function CommandCenter() {
           </div>
         </Link>
       </div>
+
+      {showTutorial && <TutorialOverlay onClose={() => setShowTutorial(false)} />}
     </div>
   );
 }
