@@ -131,21 +131,60 @@ function Onboarding() {
   const [state, setState] = useState<State>(() => {
     if (typeof window === "undefined") return EMPTY_STATE;
     try {
-      const raw = sessionStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(STORAGE_KEY);
       return raw ? { ...EMPTY_STATE, ...JSON.parse(raw) } : EMPTY_STATE;
     } catch {
       return EMPTY_STATE;
     }
   });
-  const [stepIdx, setStepIdx] = useState(0);
+  const [stepIdx, setStepIdx] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    try {
+      const raw = localStorage.getItem(STEP_KEY);
+      const n = raw ? parseInt(raw, 10) : 0;
+      return Number.isFinite(n) && n >= 0 ? n : 0;
+    } catch {
+      return 0;
+    }
+  });
   const [direction, setDirection] = useState<1 | -1>(1);
   const [submitting, setSubmitting] = useState(false);
+  const resumedRef = useRef(false);
 
   useEffect(() => {
     try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch { /* ignore */ }
   }, [state]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STEP_KEY, String(stepIdx));
+    } catch { /* ignore */ }
+  }, [stepIdx]);
+
+  // Show resume hint once if user returns mid-flow
+  useEffect(() => {
+    if (resumedRef.current) return;
+    resumedRef.current = true;
+    if (stepIdx > 0 && state.path) {
+      toast.success("Fortschritt wiederhergestellt", {
+        description: "Du machst da weiter, wo du aufgehört hast.",
+        action: {
+          label: "Neu starten",
+          onClick: () => {
+            try {
+              localStorage.removeItem(STORAGE_KEY);
+              localStorage.removeItem(STEP_KEY);
+            } catch { /* ignore */ }
+            setState(EMPTY_STATE);
+            setStepIdx(0);
+          },
+        },
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const steps = stepsFor(state.path);
   const currentStep = steps[stepIdx] ?? "type";
