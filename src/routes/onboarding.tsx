@@ -411,6 +411,8 @@ function Onboarding() {
             {currentStep === "overview" && (
               <StepOverview
                 state={state}
+                industry={industry}
+                contextQuestions={contextQuestions}
                 onEditContext={(key, value) => updateCtx(key, value)}
                 onEditSkills={(patch) => updateSkills(patch)}
                 onSubmit={submitAll}
