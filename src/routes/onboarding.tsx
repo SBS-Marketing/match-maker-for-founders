@@ -59,13 +59,50 @@ const EMPTY_STATE: State = {
 };
 
 const STORAGE_KEY = "matchfoundr_onboarding_v1";
+const STEP_KEY = "matchfoundr_onboarding_step_v1";
 
-const CONTEXT_QUESTIONS: { key: keyof ContextFields; question: string; placeholder: string }[] = [
-  { key: "idea", question: "Woran arbeitest du?", placeholder: "Erzähl in einem Satz, was du baust…" },
-  { key: "role", question: "Was ist deine Rolle? Solo oder mit Team?", placeholder: "z. B. Solo-Founder, technisch" },
-  { key: "stage", question: "Wo stehst du gerade?", placeholder: "Idee, Prototyp, erste Kunden…" },
-  { key: "goal", question: "Was willst du in den nächsten 3 Monaten erreichen?", placeholder: "z. B. MVP live, 10 zahlende Pilotkunden" },
-  { key: "risk", question: "Was ist dein größtes Risiko oder die nächste Deadline?", placeholder: "z. B. Runway endet in 6 Monaten" },
+const CONTEXT_QUESTIONS: {
+  key: keyof ContextFields;
+  question: string;
+  placeholder: string;
+  options: string[];
+  multi: boolean;
+}[] = [
+  {
+    key: "idea",
+    question: "Woran arbeitest du?",
+    placeholder: "Erzähl in einem Satz, was du baust…",
+    options: ["SaaS-Tool", "Marketplace", "Mobile App", "AI/ML-Produkt", "Hardware", "Consumer-Brand", "B2B-Service", "Noch unklar"],
+    multi: false,
+  },
+  {
+    key: "role",
+    question: "Was ist deine Rolle? Solo oder mit Team?",
+    placeholder: "z. B. Solo-Founder, technisch",
+    options: ["Solo-Founder", "Technischer Co-Founder", "Business/Sales", "Produkt/Design", "Mit Team (2–3)", "Mit Team (4+)"],
+    multi: true,
+  },
+  {
+    key: "stage",
+    question: "Wo stehst du gerade?",
+    placeholder: "Idee, Prototyp, erste Kunden…",
+    options: ["Reine Idee", "Konzept/Validierung", "Prototyp", "MVP live", "Erste Kunden", "Skaliert (>10k MRR)"],
+    multi: false,
+  },
+  {
+    key: "goal",
+    question: "Was willst du in den nächsten 3 Monaten erreichen?",
+    placeholder: "z. B. MVP live, 10 zahlende Pilotkunden",
+    options: ["MVP fertigstellen", "Erste 10 Kunden", "Co-Founder finden", "Förderung sichern", "Team aufbauen", "Pre-Seed Runde"],
+    multi: true,
+  },
+  {
+    key: "risk",
+    question: "Was ist dein größtes Risiko oder die nächste Deadline?",
+    placeholder: "z. B. Runway endet in 6 Monaten",
+    options: ["Runway < 6 Monate", "Antrags-Deadline", "Markt-Validierung offen", "Tech-Risiko", "Kein Co-Founder", "Kein Risiko gerade"],
+    multi: false,
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────
