@@ -1135,11 +1135,15 @@ function StepAssessment({
 
 function StepOverview({
   state,
+  industry,
+  contextQuestions,
   onEditContext,
   onEditSkills,
   onSubmit,
 }: {
   state: State;
+  industry: Industry;
+  contextQuestions: ContextQuestion[];
   onEditContext: (key: keyof ContextFields, value: string) => void;
   onEditSkills: (patch: Partial<SkillState>) => void;
   onSubmit: () => void;
@@ -1159,7 +1163,9 @@ function StepOverview({
 
       {/* Type card */}
       <section className="rounded-2xl bg-[var(--ink)] p-6 text-[var(--cream)]">
-        <div className="font-mono text-xs uppercase tracking-[0.2em] opacity-60">Typ</div>
+        <div className="font-mono text-xs uppercase tracking-[0.2em] opacity-60">
+          {industry.emoji} {industry.label} · Typ
+        </div>
         <div className="mt-1 font-serif text-2xl capitalize">
           {state.path === "founder" && "🚀 Founder"}
           {state.path === "talent" && "🛠 Talent"}
@@ -1169,9 +1175,11 @@ function StepOverview({
 
       {showContext && (
         <section>
-          <h2 className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-[var(--ink)]/60">Dein Kontext</h2>
+          <h2 className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-[var(--ink)]/60">
+            Dein {industry.terms.venture}
+          </h2>
           <div className="flex flex-col divide-y divide-[var(--ink)]/10 rounded-2xl bg-[var(--paper)]">
-            {CONTEXT_QUESTIONS.map((q) => (
+            {contextQuestions.map((q) => (
               <EditableRow
                 key={q.key}
                 label={labelForCtx(q.key)}
