@@ -182,7 +182,10 @@ function Onboarding() {
 
       sessionStorage.removeItem(STORAGE_KEY);
 
-      // Redirect to dashboard with tutorial flag
+      // Trigger tutorial overlay on /heute
+      try { sessionStorage.setItem("mf_tutorial", "1"); } catch {}
+
+      // Redirect to dashboard
       navigate({ to: "/heute" });
     } catch (e) {
       console.error(e);
