@@ -707,16 +707,18 @@ function VoiceCapture({
 
 function StepContextQuestion({
   idx,
+  questions,
   value,
   onChange,
   onNext,
 }: {
   idx: number;
+  questions: ContextQuestion[];
   value: string;
   onChange: (v: string) => void;
   onNext: () => void;
 }) {
-  const q = CONTEXT_QUESTIONS[idx];
+  const q = questions[idx];
   const canNext = value.trim().length >= 2;
 
   // Parse current value into selected chip set (case-insensitive)
