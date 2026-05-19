@@ -275,7 +275,18 @@ function Onboarding() {
       });
 
       // Trigger plan generation (fire and forget – it can take a while)
-      supabase.functions.invoke("copilot", { body: { task: "plan_generate", message: "" } }).catch(() => undefined);
+      supabase.functions
+        .invoke("copilot", {
+          body: {
+            task: "plan_generate",
+            message: "",
+            industry: state.industry,
+            venture_term: industry.terms.venture,
+            partner_term: industry.terms.partner,
+            copilot_context: industry.copilot_context,
+          },
+        })
+        .catch(() => undefined);
 
       try {
         localStorage.removeItem(STORAGE_KEY);
