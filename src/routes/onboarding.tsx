@@ -643,6 +643,34 @@ function StepContextQuestion({
 }) {
   const q = CONTEXT_QUESTIONS[idx];
   const canNext = value.trim().length >= 2;
+
+  // Parse current value into selected chip set (case-insensitive)
+  const selectedChips = new Set(
+    value
+      .split(/,\s*/)
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean),
+  );
+  const isChipSelected = (opt: string) => selectedChips.has(opt.toLowerCase());
+
+  const toggleChip = (opt: string) => {
+    if (q.multi) {
+      const parts = value
+        .split(/,\s*/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const lower = opt.toLowerCase();
+      const exists = parts.some((p) => p.toLowerCase() === lower);
+      const next = exists
+        ? parts.filter((p) => p.toLowerCase() !== lower)
+        : [...parts, opt];
+      onChange(next.join(", "));
+    } else {
+      // Single-select: replace value with chip (toggle off if same)
+      onChange(isChipSelected(opt) ? "" : opt);
+    }
+  };
+
   return (
     <div className="flex min-h-[70vh] flex-col justify-between">
       <header>
@@ -652,13 +680,43 @@ function StepContextQuestion({
         <h1 className="mt-3 font-serif text-3xl leading-tight text-[var(--ink)] md:text-4xl">
           {q.question}
         </h1>
+
+        <div className="mt-5">
+          <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--ink)]/50">
+            {q.multi ? "Schnellauswahl · mehrere möglich" : "Schnellauswahl"}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {q.options.map((opt) => {
+              const active = isChipSelected(opt);
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => toggleChip(opt)}
+                  className={
+                    "rounded-full border px-3.5 py-1.5 text-[13px] transition-colors " +
+                    (active
+                      ? "border-[var(--ember)] bg-[var(--ember)] text-[var(--cream)]"
+                      : "border-[var(--ink)]/15 bg-[var(--paper)] text-[var(--ink)] hover:border-[var(--ember)]")
+                  }
+                >
+                  {active ? "✓ " : ""}
+                  {opt}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <p className="mt-5 mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--ink)]/50">
+          Oder frei schreiben
+        </p>
         <textarea
-          autoFocus
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={q.placeholder}
-          rows={5}
-          className="mt-6 w-full resize-none rounded-2xl border border-[var(--ink)]/10 bg-[var(--paper)] p-5 text-lg text-[var(--ink)] outline-none placeholder:text-[var(--ink)]/30 focus:border-[var(--ember)]"
+          rows={4}
+          className="w-full resize-none rounded-2xl border border-[var(--ink)]/10 bg-[var(--paper)] p-5 text-lg text-[var(--ink)] outline-none placeholder:text-[var(--ink)]/30 focus:border-[var(--ember)]"
         />
       </header>
       <div className="mt-8">
