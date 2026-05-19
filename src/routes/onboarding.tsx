@@ -196,8 +196,10 @@ function Onboarding() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const steps = stepsFor(state.path);
-  const currentStep = steps[stepIdx] ?? "type";
+  const industry = useMemo(() => getIndustry(state.industry ?? "tech"), [state.industry]);
+  const contextQuestions = useMemo(() => buildContextQuestions(industry), [industry]);
+  const steps = stepsFor(state.industry, state.path);
+  const currentStep = steps[stepIdx] ?? "industry";
 
   const goNext = useCallback(() => {
     setDirection(1);
