@@ -817,15 +817,27 @@ const MAX_SKILLS = 8;
 
 function StepSkillPicker({
   skills,
+  primaryCategories,
   onChange,
   onNext,
 }: {
   skills: SkillState;
+  primaryCategories: string[];
   onChange: (patch: Partial<SkillState>) => void;
   onNext: () => void;
 }) {
-  const [activeCat, setActiveCat] = useState<string>(SKILL_CATEGORIES[0].id);
-  const cat = SKILL_CATEGORIES.find((c) => c.id === activeCat)!;
+  // Order categories: primary (from industry) first, then the rest
+  const orderedCategories = useMemo(() => {
+    const primary = primaryCategories
+      .map((id) => SKILL_CATEGORIES.find((c) => c.id === id))
+      .filter((c): c is (typeof SKILL_CATEGORIES)[number] => Boolean(c));
+    const primaryIds = new Set(primary.map((c) => c.id));
+    const rest = SKILL_CATEGORIES.filter((c) => !primaryIds.has(c.id));
+    return [...primary, ...rest];
+  }, [primaryCategories]);
+
+  const [activeCat, setActiveCat] = useState<string>(orderedCategories[0].id);
+  const cat = orderedCategories.find((c) => c.id === activeCat) ?? orderedCategories[0];
 
   const toggleSkill = (skill: string) => {
     const isSelected = skills.selected.includes(skill);
@@ -857,7 +869,7 @@ function StepSkillPicker({
 
       {/* Category chips */}
       <div className="-mx-6 flex gap-2 overflow-x-auto px-6 pb-1">
-        {SKILL_CATEGORIES.map((c) => (
+        {orderedCategories.map((c) => (
           <button
             key={c.id}
             onClick={() => setActiveCat(c.id)}
