@@ -1,18 +1,19 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { z } from "zod";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, ArrowLeft, Mic, MicOff, PencilLine, Sparkles, Check, Lightbulb, Wrench, Layers, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthGate } from "@/components/AuthGate";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { ArrowRight, Check, Lightbulb, Wrench } from "lucide-react";
-import { SkillsInput } from "@/components/SkillsInput";
-
-const skillsToArray = (s: string) =>
-  s ? s.split(",").map((x) => x.trim()).filter(Boolean) : [];
+import { SKILL_CATEGORIES, LOOKING_FOR_OPTIONS, type LookingFor } from "../../onboarding/skills";
+import {
+  ASSESSMENT_QUESTIONS,
+  calculateAllScores,
+  type AssessmentScores,
+} from "../../onboarding/assessment";
+import { RadarChart } from "@/components/onboarding/RadarChart";
+import { LoadingConverge } from "@/components/onboarding/LoadingConverge";
 
 export const Route = createFileRoute("/onboarding")({
   component: () => (
@@ -22,772 +23,1025 @@ export const Route = createFileRoute("/onboarding")({
   ),
 });
 
-type Path = "" | "founder" | "joiner";
+// ─────────────────────────────────────────────────────────────
+// State Machine
+// ─────────────────────────────────────────────────────────────
 
-type Form = {
-  path: Path;
-  display_name: string;
-  location: string;
-  photo_url: string;
-  vision: string;
-  stage: "" | "idea" | "mvp" | "revenue" | "scaling";
-  commitment: "" | "full_time" | "part_time" | "exploring";
-  looking_for: string;
-  role: "" | "tech" | "business" | "product" | "design" | "other";
-  industry: string;
-  skills: string;
+type FounderType = "founder" | "talent" | "hybrid";
+
+type ContextFields = {
+  idea: string;
+  role: string;
+  stage: string;
+  goal: string;
+  risk: string;
 };
 
-const FOUNDER_STEPS = ["Pfad", "Identity", "Deine Idee", "Stage", "Co-Founder gesucht", "Logistik", "Review"] as const;
-const JOINER_STEPS = ["Pfad", "Identity", "Deine Skills", "Was du suchst", "Logistik", "Review"] as const;
+type SkillState = {
+  selected: string[];
+  categories: string[];
+  availability: number;
+  looking_for: LookingFor[];
+};
 
-const stageOptions: { value: Form["stage"]; l: string; d: string }[] = [
-  { value: "idea", l: "Nur am Überlegen", d: "Ein paar Stunden pro Woche. Noch kein Prototyp, keine Nutzer." },
-  { value: "mvp", l: "Baue nachts", d: "Ein echter Prototyp nimmt nach Feierabend Form an." },
-  { value: "revenue", l: "Steige bald aus", d: "Kündigung ist raus oder in den nächsten 60 Tagen." },
-  { value: "scaling", l: "Schon Vollzeit", d: "Job ist gekündigt. Die Runway-Uhr tickt." },
+type State = {
+  path: FounderType | null;
+  context: ContextFields;
+  skills: SkillState;
+  answers: Record<string, number>;
+};
+
+const EMPTY_STATE: State = {
+  path: null,
+  context: { idea: "", role: "", stage: "", goal: "", risk: "" },
+  skills: { selected: [], categories: [], availability: 20, looking_for: [] },
+  answers: {},
+};
+
+const STORAGE_KEY = "matchfoundr_onboarding_v1";
+
+const CONTEXT_QUESTIONS: { key: keyof ContextFields; question: string; placeholder: string }[] = [
+  { key: "idea", question: "Woran arbeitest du?", placeholder: "Erzähl in einem Satz, was du baust…" },
+  { key: "role", question: "Was ist deine Rolle? Solo oder mit Team?", placeholder: "z. B. Solo-Founder, technisch" },
+  { key: "stage", question: "Wo stehst du gerade?", placeholder: "Idee, Prototyp, erste Kunden…" },
+  { key: "goal", question: "Was willst du in den nächsten 3 Monaten erreichen?", placeholder: "z. B. MVP live, 10 zahlende Pilotkunden" },
+  { key: "risk", question: "Was ist dein größtes Risiko oder die nächste Deadline?", placeholder: "z. B. Runway endet in 6 Monaten" },
 ];
-const joinerStageOptions: { value: Form["stage"]; l: string; d: string }[] = [
-  { value: "idea", l: "Ganz früh dabei", d: "Idee-Phase, gemeinsam von Null formen." },
-  { value: "mvp", l: "Beim MVP einsteigen", d: "Prototyp steht, jetzt richtig bauen." },
-  { value: "revenue", l: "Wenn Umsatz da ist", d: "Erste zahlende Kund:innen, jetzt skalieren." },
-  { value: "scaling", l: "Egal, Hauptsache passt", d: "Stage zweitrangig, Chemie zählt." },
-];
-const commitmentChips: { value: Form["commitment"]; l: string }[] = [
-  { value: "full_time", l: "In 30 Tagen" },
-  { value: "full_time", l: "In 60 Tagen" },
-  { value: "part_time", l: "In 90 Tagen" },
-  { value: "part_time", l: "6 Monate" },
-  { value: "exploring", l: "Wenn der Match passt" },
-];
-const roleOptions: { value: Form["role"]; l: string; d: string }[] = [
-  { value: "tech", l: "Tech", d: "Code, Infrastruktur, Systeme." },
-  { value: "business", l: "Business", d: "Sales, Ops, Finanzen, GTM." },
-  { value: "product", l: "Product", d: "Discovery, Specs, Roadmap." },
-  { value: "design", l: "Design", d: "UX, Brand, Craft." },
-];
+
+// ─────────────────────────────────────────────────────────────
+// Step keys per path
+// ─────────────────────────────────────────────────────────────
+
+function stepsFor(path: FounderType | null): string[] {
+  if (!path) return ["type"];
+  if (path === "founder") {
+    return ["type", "input_method", "ctx_0", "ctx_1", "ctx_2", "ctx_3", "ctx_4", "assessment", "overview"];
+  }
+  if (path === "talent") {
+    return ["type", "skills_picker", "looking_for", "availability", "assessment", "overview"];
+  }
+  // hybrid
+  return ["type", "input_method", "ctx_0", "ctx_1", "ctx_2", "ctx_3", "ctx_4", "skills_picker", "looking_for", "availability", "assessment", "overview"];
+}
+
+// ─────────────────────────────────────────────────────────────
+// Main component
+// ─────────────────────────────────────────────────────────────
 
 function Onboarding() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [step, setStep] = useState(0);
-  const [saving, setSaving] = useState(false);
-  const [autosave, setAutosave] = useState<string>("");
-  const [form, setForm] = useState<Form>({
-    path: "",
-    display_name: "",
-    location: "",
-    photo_url: "",
-    vision: "",
-    stage: "",
-    commitment: "",
-    looking_for: "",
-    role: "",
-    industry: "",
-    skills: "",
+  const [state, setState] = useState<State>(() => {
+    if (typeof window === "undefined") return EMPTY_STATE;
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      return raw ? { ...EMPTY_STATE, ...JSON.parse(raw) } : EMPTY_STATE;
+    } catch {
+      return EMPTY_STATE;
+    }
   });
-  const [commitChip, setCommitChip] = useState<number | null>(null);
-
-  const STEPS = form.path === "joiner" ? JOINER_STEPS : FOUNDER_STEPS;
-  const isJoiner = form.path === "joiner";
+  const [stepIdx, setStepIdx] = useState(0);
+  const [direction, setDirection] = useState<1 | -1>(1);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch { /* ignore */ }
+  }, [state]);
+
+  const steps = stepsFor(state.path);
+  const currentStep = steps[stepIdx] ?? "type";
+
+  const goNext = useCallback(() => {
+    setDirection(1);
+    setStepIdx((i) => Math.min(i + 1, steps.length - 1));
+  }, [steps.length]);
+
+  const goBack = useCallback(() => {
+    setDirection(-1);
+    setStepIdx((i) => Math.max(i - 1, 0));
+  }, []);
+
+  const updateState = useCallback((patch: Partial<State>) => {
+    setState((s) => ({ ...s, ...patch }));
+  }, []);
+
+  const updateCtx = useCallback((key: keyof ContextFields, value: string) => {
+    setState((s) => ({ ...s, context: { ...s.context, [key]: value } }));
+  }, []);
+
+  const updateSkills = useCallback((patch: Partial<SkillState>) => {
+    setState((s) => ({ ...s, skills: { ...s.skills, ...patch } }));
+  }, []);
+
+  // ── Submission ──────────────────────────────────────────────
+  const submitAll = useCallback(async () => {
     if (!user) return;
-    supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!data) return;
-        setForm({
-          path: ((data as any).path as Path) ?? "",
-          display_name: data.display_name ?? "",
-          location: data.location ?? "",
-          photo_url: data.photo_url ?? "",
-          vision: data.vision ?? "",
-          stage: (data.stage as any) ?? "",
-          commitment: (data.commitment as any) ?? "",
-          looking_for: data.looking_for ?? "",
-          role: (data.role as any) ?? "",
-          industry: data.industry ?? "",
-          skills: (data.skills ?? []).join(", "),
+    setSubmitting(true);
+    try {
+      const scores = calculateAllScores(state.answers);
+
+      // Persist profile founder_type
+      await supabase.from("profiles").update({ founder_type: state.path }).eq("id", user.id);
+
+      // Persist context for founder/hybrid
+      if (state.path === "founder" || state.path === "hybrid") {
+        await supabase.from("copilot_context").upsert({
+          user_id: user.id,
+          idea: state.context.idea || null,
+          role: state.context.role || null,
+          stage: state.context.stage || null,
+          goal: state.context.goal || null,
+          risk: state.context.risk || null,
+          raw_context: state.context,
+          updated_at: new Date().toISOString(),
         });
-      });
-  }, [user]);
-
-  useEffect(() => {
-    const t = setTimeout(() => setAutosave("vor 4s"), 1200);
-    return () => clearTimeout(t);
-  }, [form, step]);
-
-  const validateStep = (): string | null => {
-    // Step 0: Pfad — always
-    if (step === 0) {
-      if (!form.path) return "Wähle einen Pfad";
-      return null;
-    }
-    if (isJoiner) {
-      // 1 Identity, 2 Skills, 3 Was du suchst, 4 Logistik, 5 Review
-      if (step === 1 && form.display_name.trim().length < 2) return "Name zu kurz";
-      if (step === 2) {
-        if (!form.role) return "Wähle deine Rolle";
-        if (form.skills.trim().length < 2) return "Mindestens ein Skill";
       }
-      if (step === 3 && form.looking_for.trim().length < 20)
-        return "Mindestens 20 Zeichen — beschreib das Projekt";
-      if (step === 4 && !form.commitment) return "Wann kannst du loslegen?";
-      return null;
+
+      // Persist skills for talent/hybrid
+      if (state.path === "talent" || state.path === "hybrid") {
+        await supabase.from("founder_skills").insert({
+          user_id: user.id,
+          skills: state.skills.selected,
+          categories: state.skills.categories,
+          availability: state.skills.availability,
+          looking_for: state.skills.looking_for,
+        });
+      }
+
+      // Persist assessment
+      await supabase.from("founder_assessment").insert({
+        user_id: user.id,
+        raw_answers: state.answers,
+        scores,
+      });
+
+      // Trigger plan generation (fire and forget – it can take a while)
+      supabase.functions.invoke("copilot", { body: { task: "plan_generate", message: "" } }).catch(() => undefined);
+
+      sessionStorage.removeItem(STORAGE_KEY);
+
+      // Redirect to dashboard with tutorial flag
+      navigate({ to: "/heute", search: { tutorial: "1" } as never });
+    } catch (e) {
+      console.error(e);
+      toast.error("Speichern fehlgeschlagen. Bitte erneut versuchen.");
+      setSubmitting(false);
     }
-    // Founder
-    if (step === 1 && form.display_name.trim().length < 2) return "Name zu kurz";
-    if (step === 2 && form.vision.trim().length < 20) return "Mindestens 20 Zeichen für deine Idee";
-    if (step === 3 && !form.stage) return "Wähle eine Stage";
-    if (step === 4 && form.looking_for.trim().length < 20) return "Mindestens 20 Zeichen";
-    if (step === 5 && !form.role) return "Wähle deine Rolle";
-    return null;
+  }, [user, state, navigate]);
+
+  if (submitting) {
+    return (
+      <main className="min-h-screen" style={{ background: "var(--cream)" }}>
+        <LoadingConverge />
+      </main>
+    );
+  }
+
+  const progress = state.path ? (stepIdx / (steps.length - 1)) * 100 : 0;
+
+  return (
+    <main className="min-h-screen overflow-hidden" style={{ background: "var(--cream)" }}>
+      {/* Progress bar */}
+      <div className="fixed inset-x-0 top-0 z-50 h-1 bg-[var(--paper)]">
+        <motion.div
+          className="h-full"
+          style={{ background: "var(--ember)" }}
+          initial={false}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        />
+      </div>
+
+      {/* Back button */}
+      {stepIdx > 0 && currentStep !== "overview" && (
+        <button
+          onClick={goBack}
+          className="fixed left-4 top-6 z-40 flex h-9 w-9 items-center justify-center rounded-full bg-[var(--paper)] text-[var(--ink)] transition-colors hover:bg-[var(--ember-tint)]"
+          aria-label="Zurück"
+        >
+          <ArrowLeft size={16} />
+        </button>
+      )}
+
+      <div className="relative mx-auto min-h-screen max-w-2xl">
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={currentStep}
+            custom={direction}
+            initial={{ x: direction > 0 ? "100%" : "-100%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: direction > 0 ? "-100%" : "100%", opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="min-h-screen px-6 pb-12 pt-20"
+          >
+            {currentStep === "type" && (
+              <StepType
+                onChoose={(p) => {
+                  updateState({ path: p });
+                  setDirection(1);
+                  setStepIdx(1);
+                }}
+              />
+            )}
+
+            {currentStep === "input_method" && (
+              <StepInputMethod
+                onForm={() => goNext()}
+                onVoiceComplete={(parsed) => {
+                  setState((s) => ({ ...s, context: { ...s.context, ...parsed } }));
+                  // Skip context questions, jump to next non-context step
+                  setDirection(1);
+                  const next = steps.findIndex((s, i) => i > stepIdx && !s.startsWith("ctx_"));
+                  setStepIdx(next === -1 ? steps.length - 1 : next);
+                }}
+              />
+            )}
+
+            {currentStep.startsWith("ctx_") && (
+              <StepContextQuestion
+                idx={Number(currentStep.split("_")[1])}
+                value={state.context[CONTEXT_QUESTIONS[Number(currentStep.split("_")[1])].key]}
+                onChange={(v) => updateCtx(CONTEXT_QUESTIONS[Number(currentStep.split("_")[1])].key, v)}
+                onNext={goNext}
+              />
+            )}
+
+            {currentStep === "skills_picker" && (
+              <StepSkillPicker
+                skills={state.skills}
+                onChange={updateSkills}
+                onNext={goNext}
+              />
+            )}
+
+            {currentStep === "looking_for" && (
+              <StepLookingFor
+                selected={state.skills.looking_for}
+                onChange={(v) => updateSkills({ looking_for: v })}
+                onNext={goNext}
+              />
+            )}
+
+            {currentStep === "availability" && (
+              <StepAvailability
+                value={state.skills.availability}
+                onChange={(v) => updateSkills({ availability: v })}
+                onNext={goNext}
+              />
+            )}
+
+            {currentStep === "assessment" && (
+              <StepAssessment
+                answers={state.answers}
+                onChange={(answers) => updateState({ answers })}
+                onComplete={goNext}
+              />
+            )}
+
+            {currentStep === "overview" && (
+              <StepOverview
+                state={state}
+                onEditContext={(key, value) => updateCtx(key, value)}
+                onEditSkills={(patch) => updateSkills(patch)}
+                onSubmit={submitAll}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </main>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Screen: Type select
+// ─────────────────────────────────────────────────────────────
+
+function StepType({ onChoose }: { onChoose: (p: FounderType) => void }) {
+  const options: { id: FounderType; title: string; sub: string; Icon: typeof Lightbulb }[] = [
+    { id: "founder", title: "Ich hab eine Idee", sub: "und suche einen Co-Founder", Icon: Lightbulb },
+    { id: "talent", title: "Ich hab Skills", sub: "und suche ein Projekt", Icon: Wrench },
+    { id: "hybrid", title: "Ich hab beides", sub: "Idee + Skills", Icon: Layers },
+  ];
+  return (
+    <div className="flex flex-col gap-8">
+      <header>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">Willkommen</p>
+        <h1 className="mt-2 font-serif text-4xl leading-tight text-[var(--ink)] md:text-5xl">
+          Was beschreibt dich <em className="text-[var(--ember)]">am besten</em>?
+        </h1>
+      </header>
+      <div className="flex flex-col gap-3">
+        {options.map(({ id, title, sub, Icon }) => (
+          <motion.button
+            key={id}
+            onClick={() => onChoose(id)}
+            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.01 }}
+            className="group flex items-center gap-4 rounded-2xl border border-[var(--ink)]/10 bg-[var(--paper)] p-6 text-left transition-colors hover:border-[var(--ember)]"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--ink)] text-[var(--cream)] transition-colors group-hover:bg-[var(--ember)]">
+              <Icon size={22} />
+            </div>
+            <div className="flex-1">
+              <div className="font-serif text-2xl text-[var(--ink)]">{title}</div>
+              <div className="text-sm text-[var(--ink)]/60">{sub}</div>
+            </div>
+            <ArrowRight size={20} className="text-[var(--ink)]/30 transition-all group-hover:translate-x-1 group-hover:text-[var(--ember)]" />
+          </motion.button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Screen: Input method (voice vs form)
+// ─────────────────────────────────────────────────────────────
+
+function StepInputMethod({
+  onForm,
+  onVoiceComplete,
+}: {
+  onForm: () => void;
+  onVoiceComplete: (parsed: Partial<ContextFields>) => void;
+}) {
+  const [mode, setMode] = useState<null | "voice">(null);
+  if (mode === "voice") return <VoiceCapture onDone={onVoiceComplete} onCancel={() => setMode(null)} />;
+  return (
+    <div className="flex flex-col gap-8">
+      <header>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">Schritt 1</p>
+        <h1 className="mt-2 font-serif text-4xl leading-tight text-[var(--ink)] md:text-5xl">
+          Erzähl uns von <em className="text-[var(--ember)]">deinem Projekt</em>
+        </h1>
+        <p className="mt-3 text-[var(--ink)]/70">Wie willst du anfangen?</p>
+      </header>
+      <div className="flex flex-col gap-3">
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          whileHover={{ scale: 1.01 }}
+          onClick={() => setMode("voice")}
+          className="flex items-center gap-4 rounded-2xl border border-[var(--ink)]/10 bg-[var(--paper)] p-6 text-left hover:border-[var(--ember)]"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--ember)] text-[var(--cream)]">
+            <Mic size={22} />
+          </div>
+          <div className="flex-1">
+            <div className="font-serif text-2xl text-[var(--ink)]">Per Voice</div>
+            <div className="text-sm text-[var(--ink)]/60">Sprich 30 – 90 Sekunden, wir extrahieren den Rest</div>
+          </div>
+        </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          whileHover={{ scale: 1.01 }}
+          onClick={onForm}
+          className="flex items-center gap-4 rounded-2xl border border-[var(--ink)]/10 bg-[var(--paper)] p-6 text-left hover:border-[var(--ember)]"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--ink)] text-[var(--cream)]">
+            <PencilLine size={22} />
+          </div>
+          <div className="flex-1">
+            <div className="font-serif text-2xl text-[var(--ink)]">Per Formular</div>
+            <div className="text-sm text-[var(--ink)]/60">Schritt für Schritt, 5 Fragen</div>
+          </div>
+        </motion.button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Voice capture
+// ─────────────────────────────────────────────────────────────
+
+function VoiceCapture({
+  onDone,
+  onCancel,
+}: {
+  onDone: (parsed: Partial<ContextFields>) => void;
+  onCancel: () => void;
+}) {
+  const [recording, setRecording] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<number | null>(null);
+
+  const start = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      chunksRef.current = [];
+      mr.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      mr.start();
+      mediaRecorderRef.current = mr;
+      setRecording(true);
+      setElapsed(0);
+      timerRef.current = window.setInterval(() => setElapsed((s) => s + 1), 1000);
+    } catch (e) {
+      console.error(e);
+      toast.error("Mikrofon-Zugriff verweigert");
+    }
+  }, []);
+
+  const stop = useCallback(async () => {
+    const mr = mediaRecorderRef.current;
+    if (!mr) return;
+    if (timerRef.current) clearInterval(timerRef.current);
+    setRecording(false);
+    setProcessing(true);
+
+    await new Promise<void>((resolve) => {
+      mr.onstop = () => resolve();
+      mr.stop();
+    });
+    mr.stream.getTracks().forEach((t) => t.stop());
+
+    const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+
+    try {
+      // Get auth token
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) throw new Error("Nicht angemeldet");
+
+      const fd = new FormData();
+      fd.append("file", blob, "voice.webm");
+
+      const res = await fetch("/api/stt", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      if (!res.ok) throw new Error(`STT fehlgeschlagen (${res.status})`);
+      const { text } = await res.json();
+      if (!text || text.trim().length < 10) {
+        toast.error("Aufnahme zu kurz oder leer");
+        setProcessing(false);
+        return;
+      }
+
+      // Send to copilot context_parse
+      const { data, error } = await supabase.functions.invoke("copilot", {
+        body: { task: "context_parse", message: text },
+      });
+      if (error) throw error;
+      const ctx = (data?.context ?? {}) as Partial<ContextFields>;
+      toast.success("Kontext erkannt");
+      onDone({
+        idea: ctx.idea ?? "",
+        role: ctx.role ?? "",
+        stage: ctx.stage ?? "",
+        goal: ctx.goal ?? "",
+        risk: ctx.risk ?? "",
+      });
+    } catch (e) {
+      console.error(e);
+      toast.error((e as Error).message || "Transkription fehlgeschlagen");
+      setProcessing(false);
+    }
+  }, [onDone]);
+
+  if (processing) {
+    return <LoadingConverge label="Verstehe, was du gesagt hast…" />;
+  }
+
+  return (
+    <div className="flex min-h-[70vh] flex-col items-center justify-center gap-8 text-center">
+      <header>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">Voice</p>
+        <h1 className="mt-2 font-serif text-4xl text-[var(--ink)]">Erzähl uns von deiner Idee</h1>
+        <p className="mt-3 max-w-md text-[var(--ink)]/60">
+          Was baust du, in welcher Rolle, wo stehst du, was willst du erreichen, was ist dein Risiko?
+        </p>
+      </header>
+
+      <motion.button
+        onClick={recording ? stop : start}
+        whileTap={{ scale: 0.95 }}
+        animate={recording ? { scale: [1, 1.06, 1] } : { scale: 1 }}
+        transition={recording ? { duration: 1.2, repeat: Infinity } : { duration: 0.2 }}
+        className="flex h-32 w-32 items-center justify-center rounded-full text-[var(--cream)] shadow-2xl"
+        style={{ background: recording ? "var(--ember-deep)" : "var(--ember)" }}
+      >
+        {recording ? <MicOff size={40} /> : <Mic size={40} />}
+      </motion.button>
+
+      <div className="font-mono text-sm text-[var(--ink)]/60">
+        {recording ? `Aufnahme läuft… ${elapsed}s` : "Tippen, um zu starten"}
+      </div>
+
+      <button onClick={onCancel} className="text-sm text-[var(--ink)]/50 underline">
+        Lieber tippen
+      </button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Context form question (one at a time)
+// ─────────────────────────────────────────────────────────────
+
+function StepContextQuestion({
+  idx,
+  value,
+  onChange,
+  onNext,
+}: {
+  idx: number;
+  value: string;
+  onChange: (v: string) => void;
+  onNext: () => void;
+}) {
+  const q = CONTEXT_QUESTIONS[idx];
+  const canNext = value.trim().length >= 2;
+  return (
+    <div className="flex min-h-[70vh] flex-col justify-between">
+      <header>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">
+          Frage {idx + 1} von {CONTEXT_QUESTIONS.length}
+        </p>
+        <h1 className="mt-3 font-serif text-3xl leading-tight text-[var(--ink)] md:text-4xl">
+          {q.question}
+        </h1>
+        <textarea
+          autoFocus
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={q.placeholder}
+          rows={5}
+          className="mt-6 w-full resize-none rounded-2xl border border-[var(--ink)]/10 bg-[var(--paper)] p-5 text-lg text-[var(--ink)] outline-none placeholder:text-[var(--ink)]/30 focus:border-[var(--ember)]"
+        />
+      </header>
+      <div className="mt-8">
+        <button
+          onClick={onNext}
+          disabled={!canNext}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--ember)] py-4 font-medium text-[var(--cream)] transition-all disabled:opacity-40"
+        >
+          Weiter <ArrowRight size={18} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Skill picker
+// ─────────────────────────────────────────────────────────────
+
+const MAX_SKILLS = 8;
+
+function StepSkillPicker({
+  skills,
+  onChange,
+  onNext,
+}: {
+  skills: SkillState;
+  onChange: (patch: Partial<SkillState>) => void;
+  onNext: () => void;
+}) {
+  const [activeCat, setActiveCat] = useState<string>(SKILL_CATEGORIES[0].id);
+  const cat = SKILL_CATEGORIES.find((c) => c.id === activeCat)!;
+
+  const toggleSkill = (skill: string) => {
+    const isSelected = skills.selected.includes(skill);
+    if (isSelected) {
+      const next = skills.selected.filter((s) => s !== skill);
+      const cats = SKILL_CATEGORIES.filter((c) => c.skills.some((s) => next.includes(s))).map((c) => c.id);
+      onChange({ selected: next, categories: cats });
+    } else {
+      if (skills.selected.length >= MAX_SKILLS) {
+        toast.error(`Max. ${MAX_SKILLS} Skills`);
+        return;
+      }
+      const next = [...skills.selected, skill];
+      const cats = SKILL_CATEGORIES.filter((c) => c.skills.some((s) => next.includes(s))).map((c) => c.id);
+      onChange({ selected: next, categories: cats });
+    }
+  };
+
+  return (
+    <div className="flex min-h-[70vh] flex-col gap-6">
+      <header>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">
+          Deine Skills · {skills.selected.length}/{MAX_SKILLS}
+        </p>
+        <h1 className="mt-2 font-serif text-3xl leading-tight text-[var(--ink)] md:text-4xl">
+          Was bringst du <em className="text-[var(--ember)]">mit</em>?
+        </h1>
+      </header>
+
+      {/* Category chips */}
+      <div className="-mx-6 flex gap-2 overflow-x-auto px-6 pb-1">
+        {SKILL_CATEGORIES.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => setActiveCat(c.id)}
+            className={`flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm transition-all ${
+              activeCat === c.id
+                ? "border-transparent bg-[var(--ember)] text-[var(--cream)]"
+                : "border-[var(--ink)]/10 bg-[var(--paper)] text-[var(--ink)]"
+            }`}
+          >
+            <span>{c.emoji}</span>
+            <span>{c.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Skill tags */}
+      <div className="flex flex-wrap gap-2">
+        {cat.skills.map((s) => {
+          const selected = skills.selected.includes(s);
+          return (
+            <motion.button
+              key={s}
+              onClick={() => toggleSkill(s)}
+              whileTap={{ scale: 0.95 }}
+              animate={{ scale: selected ? 1.04 : 1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 22 }}
+              className={`rounded-full border px-4 py-2 text-sm transition-colors ${
+                selected
+                  ? "border-transparent bg-[var(--ember)] text-[var(--cream)]"
+                  : "border-[var(--ink)]/15 bg-transparent text-[var(--ink)]"
+              }`}
+            >
+              {s}
+            </motion.button>
+          );
+        })}
+      </div>
+
+      <div className="mt-auto pt-6">
+        <button
+          onClick={onNext}
+          disabled={skills.selected.length === 0}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--ember)] py-4 font-medium text-[var(--cream)] transition-all disabled:opacity-40"
+        >
+          Weiter <ArrowRight size={18} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Looking for
+// ─────────────────────────────────────────────────────────────
+
+function StepLookingFor({
+  selected,
+  onChange,
+  onNext,
+}: {
+  selected: LookingFor[];
+  onChange: (v: LookingFor[]) => void;
+  onNext: () => void;
+}) {
+  const toggle = (id: LookingFor) => {
+    onChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
+  };
+  return (
+    <div className="flex min-h-[70vh] flex-col gap-6">
+      <header>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">Was suchst du?</p>
+        <h1 className="mt-2 font-serif text-3xl leading-tight text-[var(--ink)] md:text-4xl">
+          Wie willst du <em className="text-[var(--ember)]">einsteigen</em>?
+        </h1>
+        <p className="mt-2 text-sm text-[var(--ink)]/60">Mehrfachauswahl möglich</p>
+      </header>
+      <div className="flex flex-col gap-3">
+        {LOOKING_FOR_OPTIONS.map((o) => {
+          const isSel = selected.includes(o.id);
+          return (
+            <motion.button
+              key={o.id}
+              onClick={() => toggle(o.id)}
+              whileTap={{ scale: 0.98 }}
+              className={`flex items-center gap-4 rounded-2xl border p-5 text-left transition-colors ${
+                isSel ? "border-[var(--ember)] bg-[var(--ember-tint)]" : "border-[var(--ink)]/10 bg-[var(--paper)]"
+              }`}
+            >
+              <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${isSel ? "border-[var(--ember)] bg-[var(--ember)]" : "border-[var(--ink)]/30"}`}>
+                {isSel && <Check size={14} className="text-[var(--cream)]" />}
+              </div>
+              <div className="flex-1">
+                <div className="font-medium text-[var(--ink)]">{o.label}</div>
+                <div className="text-sm text-[var(--ink)]/60">{o.desc}</div>
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+      <div className="mt-auto pt-6">
+        <button
+          onClick={onNext}
+          disabled={selected.length === 0}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--ember)] py-4 font-medium text-[var(--cream)] transition-all disabled:opacity-40"
+        >
+          Weiter <ArrowRight size={18} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Availability slider
+// ─────────────────────────────────────────────────────────────
+
+const AVAIL_SNAPS = [5, 10, 20, 30, 40];
+function StepAvailability({
+  value,
+  onChange,
+  onNext,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  onNext: () => void;
+}) {
+  const label = value >= 40 ? "Full-time (40h+)" : `${value} Stunden / Woche`;
+  return (
+    <div className="flex min-h-[70vh] flex-col gap-8">
+      <header>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">Verfügbarkeit</p>
+        <h1 className="mt-2 font-serif text-3xl leading-tight text-[var(--ink)] md:text-4xl">
+          Wie viel Zeit kannst du <em className="text-[var(--ember)]">investieren</em>?
+        </h1>
+      </header>
+
+      <div className="mt-12">
+        <div className="text-center font-serif text-5xl text-[var(--ember)]">{label}</div>
+        <input
+          type="range"
+          min={5}
+          max={40}
+          step={5}
+          value={value}
+          onChange={(e) => {
+            const v = Number(e.target.value);
+            const snap = AVAIL_SNAPS.reduce((p, c) => (Math.abs(c - v) < Math.abs(p - v) ? c : p), AVAIL_SNAPS[0]);
+            onChange(snap);
+          }}
+          className="mt-8 w-full accent-[var(--ember)]"
+        />
+        <div className="mt-2 flex justify-between font-mono text-xs text-[var(--ink)]/40">
+          {AVAIL_SNAPS.map((s) => (
+            <span key={s}>{s === 40 ? "40+" : s}</span>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-auto pt-6">
+        <button
+          onClick={onNext}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--ember)] py-4 font-medium text-[var(--cream)]"
+        >
+          Weiter <ArrowRight size={18} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Assessment (15 questions, 1–5 slider)
+// ─────────────────────────────────────────────────────────────
+
+function StepAssessment({
+  answers,
+  onChange,
+  onComplete,
+}: {
+  answers: Record<string, number>;
+  onChange: (a: Record<string, number>) => void;
+  onComplete: () => void;
+}) {
+  const [idx, setIdx] = useState(() => {
+    // Resume at first unanswered
+    const i = ASSESSMENT_QUESTIONS.findIndex((q) => answers[q.id] === undefined);
+    return i === -1 ? 0 : i;
+  });
+  const q = ASSESSMENT_QUESTIONS[idx];
+  const value = answers[q.id] ?? 3;
+
+  const setValue = (v: number) => {
+    onChange({ ...answers, [q.id]: v });
   };
 
   const next = () => {
-    const err = validateStep();
-    if (err) return toast.error(err);
-    setStep((s) => Math.min(s + 1, STEPS.length - 1));
-  };
-  const back = () => setStep((s) => Math.max(s - 1, 0));
-
-  const submit = async () => {
-    const baseSchema = z.object({
-      path: z.enum(["founder", "joiner"]),
-      display_name: z.string().trim().min(2).max(80),
-      role: z.enum(["tech", "business", "product", "design", "other"]),
-      commitment: z.enum(["full_time", "part_time", "exploring"]),
-      looking_for: z.string().trim().min(20).max(1000),
-    });
-    const founderSchema = baseSchema.extend({
-      vision: z.string().trim().min(20).max(1000),
-      stage: z.enum(["idea", "mvp", "revenue", "scaling"]),
-    });
-    const joinerSchema = baseSchema.extend({
-      vision: z.string().max(1000).optional().or(z.literal("")),
-      stage: z.enum(["idea", "mvp", "revenue", "scaling"]).optional().or(z.literal("")),
-    });
-    const parsed = (isJoiner ? joinerSchema : founderSchema).safeParse(form);
-    if (!parsed.success) return toast.error(parsed.error.issues[0].message);
-    setSaving(true);
-    const skills = form.skills
-      ? form.skills.split(",").map((s) => s.trim()).filter(Boolean)
-      : [];
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        path: form.path || null,
-        display_name: form.display_name,
-        location: form.location || null,
-        photo_url: form.photo_url || null,
-        vision: form.vision || null,
-        looking_for: form.looking_for,
-        role: form.role || null,
-        stage: form.stage || null,
-        commitment: form.commitment || null,
-        industry: form.industry || null,
-        skills,
-        onboarded_at: new Date().toISOString(),
-      } as any)
-      .eq("id", user!.id);
-    setSaving(false);
-    if (error) return toast.error(error.message);
-    toast.success("Profil gespeichert.");
-    navigate({ to: "/discover" });
+    if (answers[q.id] === undefined) {
+      onChange({ ...answers, [q.id]: value });
+    }
+    if (idx + 1 >= ASSESSMENT_QUESTIONS.length) {
+      onComplete();
+    } else {
+      setIdx(idx + 1);
+    }
   };
 
   return (
-    <div className="min-h-[calc(100vh-56px)] px-6 py-8 md:px-10">
-      {/* Progress dots */}
-      <div
-        className="glass-pane-ink mx-auto mt-6 flex max-w-5xl flex-wrap items-center justify-center gap-x-2 gap-y-2 px-3 py-3 shadow-2xl"
-        style={{
-          background: "rgba(12,11,9,0.78)",
-          border: "1px solid rgba(255,255,255,0.22)",
-          boxShadow:
-            "0 18px 60px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.10)",
-        }}
-      >
-        {STEPS.map((s, i) => {
-          const done = i < step;
-          const active = i === step;
-          return (
-            <div key={s} className="flex items-center gap-2">
-              <span
-                className="flex min-h-8 items-center gap-2 rounded-full px-2.5 font-mono text-[11px] uppercase tracking-[0.12em]"
-                style={{
-                  background: active
-                    ? "rgba(226,81,28,0.22)"
-                    : done
-                      ? "rgba(255,255,255,0.14)"
-                      : "rgba(255,255,255,0.10)",
-                  border: active
-                    ? "1px solid rgba(255,200,170,0.55)"
-                    : "1px solid rgba(255,255,255,0.18)",
-                  color: active
-                    ? "var(--cream)"
-                    : done
-                      ? "rgba(255,255,255,0.92)"
-                      : "rgba(255,255,255,0.84)",
-                }}
-              >
-                <span
-                  className="flex h-[22px] w-[22px] items-center justify-center rounded-full text-[11px] font-semibold"
-                  style={{
-                    background: active
-                      ? "var(--ember)"
-                      : done
-                        ? "rgba(255,255,255,0.30)"
-                        : "rgba(255,255,255,0.22)",
-                    border: `1px solid ${
-                      active ? "rgba(255,200,170,0.65)" : "rgba(255,255,255,0.45)"
-                    }`,
-                    color: "var(--cream)",
-                  }}
-                >
-                  {done ? <Check className="h-3 w-3" /> : i + 1}
-                </span>
-                {s}
-              </span>
-              {i < STEPS.length - 1 && (
-                <span
-                  className="hidden h-px w-3 sm:block"
-                  style={{ background: "rgba(255,255,255,0.35)" }}
-                />
-              )}
-            </div>
-          );
-        })}
-      </div>
+    <div className="flex min-h-[80vh] flex-col justify-between">
+      <header>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">
+          Frage {idx + 1} von {ASSESSMENT_QUESTIONS.length} · ~2 Min.
+        </p>
+        <h1 className="mt-4 font-serif text-2xl leading-snug text-[var(--ink)] md:text-3xl">
+          {q.text}
+        </h1>
+      </header>
 
-      {/* Form card */}
-      <div className="mx-auto mt-8 flex max-w-[880px] items-center justify-center">
-        <div
-          className="glass-pane w-full px-7 py-9 md:px-14 md:py-10"
-          style={{ background: "rgba(251,250,247,0.82)", color: "var(--ink)" }}
-        >
-          <div className="eyebrow">
-            {String(step + 1).padStart(2, "0")} · {STEPS[step]}
-          </div>
-
-          {/* STEP 0 — Pfad */}
-          {step === 0 && (
-            <>
-              <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
-                Was bringst du <span className="font-serif italic font-normal">mit?</span>
-              </h2>
-              <p className="mt-3 max-w-[560px] text-[15px] leading-relaxed text-[var(--smoke)]">
-                Diese Wahl entscheidet den Rest. Du kannst sie später ändern.
-              </p>
-              <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <PathCard
-                  active={form.path === "founder"}
-                  onClick={() => setForm({ ...form, path: "founder" })}
-                  icon={<Lightbulb className="h-5 w-5" />}
-                  title="Ich hab eine Idee"
-                  desc="Du baust an etwas und suchst eine Mitgründer:in, die mit dir loslegt."
-                />
-                <PathCard
-                  active={form.path === "joiner"}
-                  onClick={() => setForm({ ...form, path: "joiner" })}
-                  icon={<Wrench className="h-5 w-5" />}
-                  title="Ich biete Skills an"
-                  desc="Du hast noch keine eigene Idee, willst aber bei einem Projekt einsteigen."
-                />
-              </div>
-            </>
-          )}
-
-          {/* STEP 1 — Identity (both paths) */}
-          {step === 1 && (
-            <>
-              <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
-                Wer bist <span className="font-serif italic font-normal">du?</span>
-              </h2>
-              <p className="mt-3 max-w-[560px] text-[15px] leading-relaxed text-[var(--smoke)]">
-                Echter Name, echtes Foto. Andere Founder entscheiden hier in Sekunden.
-              </p>
-              <div className="mt-7 grid gap-5">
-                <Field label="Name">
-                  <Input
-                    value={form.display_name}
-                    onChange={(e) => setForm({ ...form, display_name: e.target.value })}
-                    placeholder="Vor- und Nachname"
-                  />
-                </Field>
-                <Field label="Foto-URL (optional)">
-                  <Input
-                    value={form.photo_url}
-                    onChange={(e) => setForm({ ...form, photo_url: e.target.value })}
-                    placeholder="https://…"
-                  />
-                </Field>
-                <Field label="Standort (optional)">
-                  <Input
-                    value={form.location}
-                    onChange={(e) => setForm({ ...form, location: e.target.value })}
-                    placeholder="Berlin, Remote, …"
-                  />
-                </Field>
-              </div>
-            </>
-          )}
-
-          {/* FOUNDER: STEP 2 — Vision */}
-          {!isJoiner && step === 2 && (
-            <>
-              <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
-                Was baust du, <span className="font-serif italic font-normal">ehrlich?</span>
-              </h2>
-              <p className="mt-3 max-w-[560px] text-[15px] leading-relaxed text-[var(--smoke)]">
-                Keine Pitch-Folie. Schreib so wie du einer Freundin am Abend erzählen würdest, was dich packt.
-              </p>
-              <div className="mt-7">
-                <Field label="Deine Idee (mind. 20 Zeichen)">
-                  <Textarea
-                    rows={7}
-                    value={form.vision}
-                    onChange={(e) => setForm({ ...form, vision: e.target.value })}
-                    placeholder="Ich habe fünf Jahre bei … gebaut. Jetzt will ich …"
-                  />
-                </Field>
-              </div>
-            </>
-          )}
-
-          {/* FOUNDER: STEP 3 — Stage */}
-          {!isJoiner && step === 3 && (
-            <>
-              <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
-                Wo stehst du, <span className="font-serif italic font-normal">ehrlich?</span>
-              </h2>
-              <p className="mt-3 max-w-[560px] text-[15px] leading-relaxed text-[var(--smoke)]">
-                Wir matchen Founder die ungefähr gleich weit sind. Lügen hilft niemandem.
-              </p>
-              <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {stageOptions.map((opt) => (
-                  <SelectCard
-                    key={opt.value}
-                    selected={form.stage === opt.value}
-                    onClick={() => setForm({ ...form, stage: opt.value })}
-                    title={opt.l}
-                    desc={opt.d}
-                  />
-                ))}
-              </div>
-              <CommitmentRow
-                commitChip={commitChip}
-                setChip={(i, v) => {
-                  setCommitChip(i);
-                  setForm({ ...form, commitment: v });
-                }}
-              />
-            </>
-          )}
-
-          {/* FOUNDER: STEP 4 — Was du suchst */}
-          {!isJoiner && step === 4 && (
-            <>
-              <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
-                Wen suchst du, <span className="font-serif italic font-normal">wirklich?</span>
-              </h2>
-              <p className="mt-3 max-w-[560px] text-[15px] leading-relaxed text-[var(--smoke)]">
-                Sei spezifisch. „Ein Technical Co-Founder der … kann" schlägt „jemand smartes" jedes Mal.
-              </p>
-              <div className="mt-7">
-                <Field label="Was suchst du in einem Co-Founder?">
-                  <Textarea
-                    rows={7}
-                    value={form.looking_for}
-                    onChange={(e) => setForm({ ...form, looking_for: e.target.value })}
-                    placeholder="Jemand der Systeme baut. Hat schon Payments-Infrastruktur gesehen …"
-                  />
-                </Field>
-              </div>
-            </>
-          )}
-
-          {/* FOUNDER: STEP 5 — Logistik (Rolle) */}
-          {!isJoiner && step === 5 && (
-            <LogistikRolle form={form} setForm={setForm} />
-          )}
-
-          {/* JOINER: STEP 2 — Skills */}
-          {isJoiner && step === 2 && (
-            <>
-              <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
-                Was bringst du <span className="font-serif italic font-normal">mit?</span>
-              </h2>
-              <p className="mt-3 max-w-[560px] text-[15px] leading-relaxed text-[var(--smoke)]">
-                Deine Rolle und Skills sind dein Pitch. Konkret schlägt allgemein.
-              </p>
-              <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {roleOptions.map((opt) => (
-                  <SelectCard
-                    key={opt.value}
-                    selected={form.role === opt.value}
-                    onClick={() => setForm({ ...form, role: opt.value })}
-                    title={opt.l}
-                    desc={opt.d}
-                  />
-                ))}
-              </div>
-              <div className="mt-6 grid gap-5">
-                <Field label="Skills">
-                  <SkillsInput
-                    value={skillsToArray(form.skills)}
-                    onChange={(arr) => setForm({ ...form, skills: arr.join(", ") })}
-                    placeholder="z. B. React, Sales, Pitching"
-                  />
-                </Field>
-                <Field label="Branche / Erfahrung (optional)">
-                  <Input
-                    value={form.industry}
-                    onChange={(e) => setForm({ ...form, industry: e.target.value })}
-                    placeholder="Fintech, B2B SaaS, …"
-                  />
-                </Field>
-                <Field label="Kurz zu dir (optional)">
-                  <Textarea
-                    rows={4}
-                    value={form.vision}
-                    onChange={(e) => setForm({ ...form, vision: e.target.value })}
-                    placeholder="5 Jahre Engineering bei … habe schon zwei Produkte von 0→1 gebracht …"
-                  />
-                </Field>
-              </div>
-            </>
-          )}
-
-          {/* JOINER: STEP 3 — Was für ein Projekt */}
-          {isJoiner && step === 3 && (
-            <>
-              <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
-                In was willst du <span className="font-serif italic font-normal">einsteigen?</span>
-              </h2>
-              <p className="mt-3 max-w-[560px] text-[15px] leading-relaxed text-[var(--smoke)]">
-                Welche Phase passt zu dir? Und was muss das Projekt mitbringen, damit du All-in gehst?
-              </p>
-              <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {joinerStageOptions.map((opt) => (
-                  <SelectCard
-                    key={opt.value}
-                    selected={form.stage === opt.value}
-                    onClick={() => setForm({ ...form, stage: opt.value })}
-                    title={opt.l}
-                    desc={opt.d}
-                  />
-                ))}
-              </div>
-              <div className="mt-6">
-                <Field label="Was muss das Projekt mitbringen? (mind. 20 Zeichen)">
-                  <Textarea
-                    rows={6}
-                    value={form.looking_for}
-                    onChange={(e) => setForm({ ...form, looking_for: e.target.value })}
-                    placeholder="B2B, technisch ambitioniert, Gründer:in mit Domain-Expertise …"
-                  />
-                </Field>
-              </div>
-            </>
-          )}
-
-          {/* JOINER: STEP 4 — Logistik */}
-          {isJoiner && step === 4 && (
-            <>
-              <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
-                Wann kannst du <span className="font-serif italic font-normal">loslegen?</span>
-              </h2>
-              <p className="mt-3 max-w-[560px] text-[15px] leading-relaxed text-[var(--smoke)]">
-                Sag ehrlich, wie viel du investieren kannst. Founder filtern hart auf Commitment.
-              </p>
-              <CommitmentRow
-                commitChip={commitChip}
-                setChip={(i, v) => {
-                  setCommitChip(i);
-                  setForm({ ...form, commitment: v });
-                }}
-                bare
-              />
-            </>
-          )}
-
-          {/* REVIEW — last step for both paths */}
-          {step === STEPS.length - 1 && (
-            <>
-              <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
-                Bereit zum <span className="font-serif italic font-normal">veröffentlichen?</span>
-              </h2>
-              <p className="mt-3 max-w-[560px] text-[15px] leading-relaxed text-[var(--smoke)]">
-                Letzter Blick auf dein Profil. Du kannst alles jederzeit ändern.
-              </p>
-              <div
-                className="mt-7 grid gap-3 rounded-2xl p-5 text-sm"
-                style={{
-                  background: "rgba(21,20,15,0.04)",
-                  border: "1px solid rgba(21,20,15,0.06)",
-                }}
-              >
-                <ReviewRow label="Pfad" value={form.path === "founder" ? "Founder mit Idee" : "Joiner mit Skills"} />
-                <ReviewRow label="Name" value={form.display_name} />
-                <ReviewRow label="Standort" value={form.location || "—"} />
-                {!isJoiner && <ReviewRow label="Stage" value={form.stage || "—"} />}
-                {isJoiner && <ReviewRow label="Wunsch-Stage" value={form.stage || "—"} />}
-                <ReviewRow label="Commitment" value={form.commitment || "—"} />
-                <ReviewRow label="Rolle" value={form.role || "—"} />
-                <ReviewRow label="Branche" value={form.industry || "—"} />
-                <ReviewRow label="Skills" value={form.skills || "—"} />
-                {!isJoiner && (
-                  <ReviewRow
-                    label="Idee"
-                    value={form.vision.slice(0, 120) + (form.vision.length > 120 ? "…" : "")}
-                  />
-                )}
-                {isJoiner && form.vision && (
-                  <ReviewRow
-                    label="Kurz zu dir"
-                    value={form.vision.slice(0, 120) + (form.vision.length > 120 ? "…" : "")}
-                  />
-                )}
-                <ReviewRow
-                  label={isJoiner ? "Projekt-Wunsch" : "Sucht"}
-                  value={form.looking_for.slice(0, 120) + (form.looking_for.length > 120 ? "…" : "")}
-                />
-              </div>
-            </>
-          )}
-
-          {/* Footer */}
-          <div
-            className="mt-8 flex items-center justify-between border-t pt-6"
-            style={{ borderColor: "rgba(21,20,15,0.08)" }}
-          >
-            <span className="eyebrow" style={{ letterSpacing: "0.06em" }}>
-              ~{Math.max(1, STEPS.length - step - 1) * 30}s übrig · Autospeichern {autosave || "live"}
-            </span>
-            <div className="flex gap-2.5">
-              {step > 0 && (
-                <Button
-                  variant="outline"
-                  onClick={back}
-                  className="h-11 rounded-xl border-[rgba(21,20,15,0.15)] bg-transparent text-[var(--ink)]"
-                >
-                  Zurück
-                </Button>
-              )}
-              {step < STEPS.length - 1 ? (
-                <Button
-                  onClick={next}
-                  className="shadow-ember h-11 gap-2 rounded-xl bg-[var(--ember)] px-6 text-[var(--cream)] hover:bg-[var(--ember-deep)]"
-                >
-                  Weiter · {STEPS[step + 1]}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={submit}
-                  disabled={saving}
-                  className="shadow-ember h-11 gap-2 rounded-xl bg-[var(--ember)] px-6 text-[var(--cream)] hover:bg-[var(--ember-deep)]"
-                >
-                  {saving ? "Speichere…" : "Profil veröffentlichen"}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function PathCard({
-  active,
-  onClick,
-  icon,
-  title,
-  desc,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  title: string;
-  desc: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex flex-col gap-3 rounded-2xl p-6 text-left transition"
-      style={{
-        background: active ? "rgba(226,81,28,0.10)" : "rgba(255,255,255,0.55)",
-        border: active ? "1.5px solid var(--ember)" : "1px solid rgba(21,20,15,0.10)",
-        boxShadow: active ? "0 12px 28px -12px rgba(178,59,14,0.32)" : "none",
-      }}
-    >
-      <span
-        className="flex h-10 w-10 items-center justify-center rounded-xl"
-        style={{
-          background: active ? "var(--ember)" : "rgba(21,20,15,0.06)",
-          color: active ? "var(--cream)" : "var(--ink)",
-        }}
-      >
-        {icon}
-      </span>
-      <div>
-        <div className="text-lg font-semibold tracking-tight">{title}</div>
-        <div className="mt-1 text-[13px] leading-snug text-[var(--smoke)]">{desc}</div>
-      </div>
-    </button>
-  );
-}
-
-function SelectCard({
-  selected,
-  onClick,
-  title,
-  desc,
-}: {
-  selected: boolean;
-  onClick: () => void;
-  title: string;
-  desc: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex items-start gap-3.5 rounded-2xl p-5 text-left transition"
-      style={{
-        background: selected ? "rgba(226,81,28,0.10)" : "rgba(255,255,255,0.55)",
-        border: selected ? "1.5px solid var(--ember)" : "1px solid rgba(21,20,15,0.10)",
-        boxShadow: selected ? "0 10px 24px -10px rgba(178,59,14,0.30)" : "none",
-      }}
-    >
-      <span
-        className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md"
-        style={{
-          background: selected ? "var(--ember)" : "transparent",
-          border: selected ? "none" : "1.5px solid rgba(21,20,15,0.25)",
-        }}
-      >
-        {selected && <Check className="h-3.5 w-3.5" style={{ color: "var(--cream)" }} />}
-      </span>
-      <span>
-        <div className="text-base font-semibold tracking-tight">{title}</div>
-        <div className="mt-1 text-[13px] leading-snug text-[var(--smoke)]">{desc}</div>
-      </span>
-    </button>
-  );
-}
-
-function CommitmentRow({
-  commitChip,
-  setChip,
-  bare = false,
-}: {
-  commitChip: number | null;
-  setChip: (i: number, v: Form["commitment"]) => void;
-  bare?: boolean;
-}) {
-  return (
-    <div
-      className={bare ? "mt-7" : "mt-6 rounded-2xl px-5 py-4"}
-      style={
-        bare
-          ? undefined
-          : { background: "rgba(21,20,15,0.04)", border: "1px solid rgba(21,20,15,0.06)" }
-      }
-    >
-      {!bare && <div className="eyebrow mb-3">Wann gehst du Vollzeit?</div>}
-      <div className="flex flex-wrap gap-2">
-        {commitmentChips.map((c, i) => {
-          const sel = commitChip === i;
-          return (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setChip(i, c.value)}
-              className="rounded-full px-3.5 py-2 text-sm font-medium transition"
+      <div className="mt-12">
+        {/* 5-dot slider */}
+        <div className="flex items-center justify-between gap-2">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <motion.button
+              key={n}
+              onClick={() => setValue(n)}
+              whileTap={{ scale: 0.85 }}
+              animate={{ scale: value === n ? 1.2 : 1 }}
+              className="flex h-14 w-14 items-center justify-center rounded-full transition-colors"
               style={{
-                background: sel ? "var(--ink)" : "rgba(255,255,255,0.7)",
-                color: sel ? "var(--cream)" : "var(--ink)",
-                border: sel ? "1px solid transparent" : "1px solid rgba(21,20,15,0.10)",
+                background: value >= n ? "var(--ember)" : "var(--paper)",
+                border: value === n ? "2px solid var(--ink)" : "2px solid transparent",
               }}
             >
-              {c.l}
-            </button>
-          );
-        })}
+              <span className={`font-mono text-sm ${value >= n ? "text-[var(--cream)]" : "text-[var(--ink)]/40"}`}>
+                {n}
+              </span>
+            </motion.button>
+          ))}
+        </div>
+        <div className="mt-4 flex justify-between text-xs text-[var(--ink)]/60">
+          <span className="max-w-[40%]">{q.low_label}</span>
+          <span className="max-w-[40%] text-right">{q.high_label}</span>
+        </div>
+      </div>
+
+      <div className="mt-12">
+        <button
+          onClick={next}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--ember)] py-4 font-medium text-[var(--cream)]"
+        >
+          {idx + 1 >= ASSESSMENT_QUESTIONS.length ? "Assessment abschließen" : "Weiter"}{" "}
+          <ArrowRight size={18} />
+        </button>
       </div>
     </div>
   );
 }
 
-function LogistikRolle({
-  form,
-  setForm,
+// ─────────────────────────────────────────────────────────────
+// Overview
+// ─────────────────────────────────────────────────────────────
+
+function StepOverview({
+  state,
+  onEditContext,
+  onEditSkills,
+  onSubmit,
 }: {
-  form: Form;
-  setForm: (f: Form) => void;
+  state: State;
+  onEditContext: (key: keyof ContextFields, value: string) => void;
+  onEditSkills: (patch: Partial<SkillState>) => void;
+  onSubmit: () => void;
 }) {
-  return (
-    <>
-      <h2 className="mt-3 text-4xl font-semibold leading-[1.05] tracking-tight">
-        Was bringst du <span className="font-serif italic font-normal">mit?</span>
-      </h2>
-      <p className="mt-3 max-w-[560px] text-[15px] leading-relaxed text-[var(--smoke)]">
-        Deine Rolle, deine Branche, deine Skills. Knapp.
-      </p>
-      <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {roleOptions.map((opt) => (
-          <SelectCard
-            key={opt.value}
-            selected={form.role === opt.value}
-            onClick={() => setForm({ ...form, role: opt.value })}
-            title={opt.l}
-            desc={opt.d}
-          />
-        ))}
-      </div>
-      <div className="mt-6 grid gap-5">
-        <Field label="Branche (optional)">
-          <Input
-            value={form.industry}
-            onChange={(e) => setForm({ ...form, industry: e.target.value })}
-            placeholder="Fintech, B2B SaaS, …"
-          />
-        </Field>
-        <Field label="Skills">
-          <SkillsInput
-            value={skillsToArray(form.skills)}
-            onChange={(arr) => setForm({ ...form, skills: arr.join(", ") })}
-            placeholder="z. B. React, Sales, Pitching"
-          />
-        </Field>
-      </div>
-    </>
-  );
-}
+  const scores = useMemo(() => calculateAllScores(state.answers), [state.answers]);
+  const showContext = state.path === "founder" || state.path === "hybrid";
+  const showSkills = state.path === "talent" || state.path === "hybrid";
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium">{label}</label>
-      {children}
+    <div className="flex flex-col gap-10 pb-24">
+      <header>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">Dein Profil</p>
+        <h1 className="mt-2 font-serif text-4xl leading-tight text-[var(--ink)]">
+          Sieht <em className="text-[var(--ember)]">gut aus</em>. Bereit?
+        </h1>
+      </header>
+
+      {/* Type card */}
+      <section className="rounded-2xl bg-[var(--ink)] p-6 text-[var(--cream)]">
+        <div className="font-mono text-xs uppercase tracking-[0.2em] opacity-60">Typ</div>
+        <div className="mt-1 font-serif text-2xl capitalize">
+          {state.path === "founder" && "🚀 Founder"}
+          {state.path === "talent" && "🛠 Talent"}
+          {state.path === "hybrid" && "✨ Hybrid"}
+        </div>
+      </section>
+
+      {showContext && (
+        <section>
+          <h2 className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-[var(--ink)]/60">Dein Kontext</h2>
+          <div className="flex flex-col divide-y divide-[var(--ink)]/10 rounded-2xl bg-[var(--paper)]">
+            {CONTEXT_QUESTIONS.map((q) => (
+              <EditableRow
+                key={q.key}
+                label={labelForCtx(q.key)}
+                value={state.context[q.key]}
+                onChange={(v) => onEditContext(q.key, v)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {showSkills && (
+        <section>
+          <h2 className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-[var(--ink)]/60">Deine Skills</h2>
+          <div className="flex flex-wrap gap-2">
+            {state.skills.selected.map((s) => (
+              <span key={s} className="rounded-full bg-[var(--ember)] px-3 py-1.5 text-sm text-[var(--cream)]">
+                {s}
+              </span>
+            ))}
+          </div>
+          <div className="mt-3 text-sm text-[var(--ink)]/60">
+            {state.skills.availability >= 40 ? "Full-time" : `${state.skills.availability}h / Woche`} ·{" "}
+            {state.skills.looking_for.length} Engagement-Optionen
+          </div>
+        </section>
+      )}
+
+      <section>
+        <h2 className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-[var(--ink)]/60">Persönlichkeit</h2>
+        <div className="flex justify-center rounded-2xl bg-[var(--paper)] p-4">
+          <RadarChart scores={scores} size={280} />
+        </div>
+      </section>
+
+      <button
+        onClick={onSubmit}
+        className="sticky bottom-4 mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--ember)] py-5 text-lg font-medium text-[var(--cream)] shadow-2xl"
+      >
+        <Sparkles size={20} /> Deinen Plan generieren
+      </button>
     </div>
   );
 }
 
-function ReviewRow({ label, value }: { label: string; value: string }) {
+function labelForCtx(key: keyof ContextFields): string {
+  switch (key) {
+    case "idea": return "Idee";
+    case "role": return "Rolle";
+    case "stage": return "Stand";
+    case "goal": return "Ziel";
+    case "risk": return "Risiko";
+  }
+}
+
+function EditableRow({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
+
+  if (editing) {
+    return (
+      <div className="flex flex-col gap-2 p-4">
+        <div className="font-mono text-xs uppercase tracking-[0.15em] text-[var(--ember)]">{label}</div>
+        <textarea
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          rows={3}
+          className="w-full resize-none rounded-xl border border-[var(--ink)]/10 bg-[var(--cream)] p-3 text-[var(--ink)] outline-none focus:border-[var(--ember)]"
+        />
+        <div className="flex justify-end gap-2">
+          <button onClick={() => setEditing(false)} className="rounded-lg px-3 py-1 text-sm text-[var(--ink)]/60">
+            Abbrechen
+          </button>
+          <button
+            onClick={() => { onChange(draft); setEditing(false); }}
+            className="rounded-lg bg-[var(--ember)] px-3 py-1 text-sm text-[var(--cream)]"
+          >
+            Speichern
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
-    <div className="flex gap-4">
-      <span className="w-32 shrink-0 text-[var(--smoke)]">{label}</span>
-      <span className="font-medium text-[var(--ink)]">{value}</span>
-    </div>
+    <button onClick={() => setEditing(true)} className="flex items-start gap-3 p-4 text-left transition-colors hover:bg-[var(--ember-tint)]/40">
+      <Info size={14} className="mt-1 text-[var(--ink)]/30" />
+      <div className="flex-1">
+        <div className="font-mono text-xs uppercase tracking-[0.15em] text-[var(--ink)]/50">{label}</div>
+        <div className="mt-1 text-[var(--ink)]">{value || <span className="italic text-[var(--ink)]/40">— nicht ausgefüllt —</span>}</div>
+      </div>
+      <PencilLine size={16} className="text-[var(--ink)]/40" />
+    </button>
   );
 }
