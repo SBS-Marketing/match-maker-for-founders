@@ -12,6 +12,7 @@ import {
   calculateAllScores,
   type AssessmentScores,
 } from "../../onboarding/assessment";
+import { INDUSTRIES, getIndustry, type Industry, type IndustryId } from "../../onboarding/industries";
 import { RadarChart } from "@/components/onboarding/RadarChart";
 import { LoadingConverge } from "@/components/onboarding/LoadingConverge";
 
