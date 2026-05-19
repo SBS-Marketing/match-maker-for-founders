@@ -330,12 +330,24 @@ function Onboarding() {
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="min-h-screen px-6 pb-12 pt-20"
           >
+            {currentStep === "industry" && (
+              <StepIndustry
+                selected={state.industry}
+                onChoose={(id) => {
+                  updateState({ industry: id });
+                  setDirection(1);
+                  setTimeout(() => setStepIdx(1), 400);
+                }}
+              />
+            )}
+
             {currentStep === "type" && (
               <StepType
+                industry={industry}
                 onChoose={(p) => {
                   updateState({ path: p });
                   setDirection(1);
-                  setStepIdx(1);
+                  setStepIdx(2);
                 }}
               />
             )}
@@ -356,8 +368,9 @@ function Onboarding() {
             {currentStep.startsWith("ctx_") && (
               <StepContextQuestion
                 idx={Number(currentStep.split("_")[1])}
-                value={state.context[CONTEXT_QUESTIONS[Number(currentStep.split("_")[1])].key]}
-                onChange={(v) => updateCtx(CONTEXT_QUESTIONS[Number(currentStep.split("_")[1])].key, v)}
+                questions={contextQuestions}
+                value={state.context[contextQuestions[Number(currentStep.split("_")[1])].key]}
+                onChange={(v) => updateCtx(contextQuestions[Number(currentStep.split("_")[1])].key, v)}
                 onNext={goNext}
               />
             )}
@@ -365,6 +378,7 @@ function Onboarding() {
             {currentStep === "skills_picker" && (
               <StepSkillPicker
                 skills={state.skills}
+                primaryCategories={industry.primary_skills}
                 onChange={updateSkills}
                 onNext={goNext}
               />
