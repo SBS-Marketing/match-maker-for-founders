@@ -7,15 +7,40 @@ Everything feels native: full-screen steps, spring animations, swipe gestures, n
 
 ---
 
-## Screen 0 — Type Selection
+## Screen 0a — Industry Selection (NEW — first screen ever)
+
+Full-screen. Headline: "Was baust du auf?"
+8 large tappable cards in a 2-column grid with emoji + label.
+On tap: card fills with Ember (#E2511C), white text, spring scale animation.
+Then auto-advances after 400ms to Screen 0b.
+
+Industries (from `onboarding/industries.ts`):
+- ⚡ Tech & Startup
+- 🔨 Handwerk & Produktion
+- ◎ Gastronomie & Food
+- ✦ Kreativwirtschaft
+- ◈ Handel & E-Commerce
+- ◑ Bildung & Soziales
+- ⊕ Gesundheit & Wellness
+- ↗ Beratung & Dienstleistung
+
+Selected industry is stored in profile (`industry` field) and controls:
+- All terminology in subsequent screens (Startup → Betrieb, Co-Founder → Geschäftspartner, etc.)
+- Which skill categories are shown first in the Skill Picker
+- Co-Pilot prompt context and tone
+
+---
+
+## Screen 0b — Type Selection
 
 Full-screen. Three large tappable cards, stacked vertically with spacing.
+Labels adapt to selected industry (e.g. "Betrieb" instead of "Startup" for Handwerk).
 On tap: card scales up slightly (spring animation), then slides out left while next screen slides in from right.
 
 ```
 ┌─────────────────────────────┐
 │  Ich hab eine Idee          │  → Founder Path
-│  und suche einen Co-Founder │
+│  und suche einen [partner]  │
 └─────────────────────────────┘
 
 ┌─────────────────────────────┐
