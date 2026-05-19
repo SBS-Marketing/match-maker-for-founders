@@ -30,6 +30,10 @@ export type Industry = {
   // Which skill categories to show first (from skills.ts)
   primary_skills: string[]  // category IDs
 
+  // Branchen-spezifische Skills (eigene Chip-Kategorie "Branche")
+  industry_skills: string[]
+
+
   // Co-Pilot system tone hint
   copilot_context: string   // injected into Kimi + Sonnet prompts
 }
