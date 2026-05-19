@@ -118,16 +118,17 @@ function buildContextQuestions(industry: Industry): ContextQuestion[] {
 // Step keys per path
 // ─────────────────────────────────────────────────────────────
 
-function stepsFor(path: FounderType | null): string[] {
-  if (!path) return ["type"];
+function stepsFor(industry: IndustryId | null, path: FounderType | null): string[] {
+  if (!industry) return ["industry"];
+  if (!path) return ["industry", "type"];
   if (path === "founder") {
-    return ["type", "input_method", "ctx_0", "ctx_1", "ctx_2", "ctx_3", "ctx_4", "assessment", "overview"];
+    return ["industry", "type", "input_method", "ctx_0", "ctx_1", "ctx_2", "ctx_3", "ctx_4", "assessment", "overview"];
   }
   if (path === "talent") {
-    return ["type", "skills_picker", "looking_for", "availability", "assessment", "overview"];
+    return ["industry", "type", "skills_picker", "looking_for", "availability", "assessment", "overview"];
   }
   // hybrid
-  return ["type", "input_method", "ctx_0", "ctx_1", "ctx_2", "ctx_3", "ctx_4", "skills_picker", "looking_for", "availability", "assessment", "overview"];
+  return ["industry", "type", "input_method", "ctx_0", "ctx_1", "ctx_2", "ctx_3", "ctx_4", "skills_picker", "looking_for", "availability", "assessment", "overview"];
 }
 
 // ─────────────────────────────────────────────────────────────
