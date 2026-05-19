@@ -303,7 +303,7 @@ function Onboarding() {
       toast.error("Speichern fehlgeschlagen. Bitte erneut versuchen.");
       setSubmitting(false);
     }
-  }, [user, state, navigate]);
+  }, [user, state, navigate, industry]);
 
   if (submitting) {
     return (
