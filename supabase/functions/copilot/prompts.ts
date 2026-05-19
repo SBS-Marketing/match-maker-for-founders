@@ -63,31 +63,40 @@ export const KIMI_PROMPTS: Record<string, (ctx: FounderContext, input: string) =
   `,
 
   plan_generate: (ctx, input) => `
-    Du bist ein erfahrener Startup-Stratege.
-    Erstelle einen konkreten 3-Spur-Aktionsplan für diesen Founder.
+    Du bist ein erfahrener Berater für Unternehmensgründungen — branchenunabhängig.
+    Analysiere dieses Profil und erstelle einen konkreten 3-Spur-Aktionsplan.
 
-    Founder-Profil:
+    Profil:
+    - Name: ${ctx.userName}
+    - Branche: ${ctx.industry || 'allgemein'} ${ctx.copilot_context ? `(${ctx.copilot_context})` : ''}
+    - ${ctx.venture_term || 'Vorhaben'}: ${ctx.idea || 'unbekannt'}
     - Rolle: ${ctx.role || 'unbekannt'}
-    - Idee: ${ctx.idea || 'unbekannt'}
     - Stand: ${ctx.stage || 'unbekannt'}
     - Stadt: ${ctx.city || 'unbekannt'}
     - Ziel: ${ctx.goal || 'unbekannt'}
-    - Risiko: ${ctx.risk || 'unbekannt'}
+    - Größtes Risiko: ${ctx.risk || 'unbekannt'}
 
-    Erstelle 3 parallele Spuren (z.B. Co-Founder, Recht, Förderung).
+    Wähle die 3 wichtigsten Spuren für DIESEN spezifischen Stand und diese Branche.
+    Beispiele je nach Branche: ${ctx.partner_term || 'Partner'} finden, Finanzierung, Zulassung/Recht,
+    erste Kunden, Standort, Team aufbauen, Produkt entwickeln — was JETZT am meisten zählt.
+
     Antworte NUR mit validem JSON:
     {
+      "situation": "1 ehrlicher Satz wie die Lage wirklich ist",
+      "headline": "1 motivierender Satz was möglich ist",
       "spuren": [
         {
           "nummer": 1,
           "titel": "...",
           "priorität": "hoch|mittel|niedrig",
-          "naechste_schritte": ["Schritt 1", "Schritt 2", "Schritt 3"],
+          "warum": "1 Satz warum diese Spur jetzt wichtig ist",
+          "naechste_schritte": ["Konkreter Schritt 1", "Konkreter Schritt 2", "Konkreter Schritt 3"],
           "zeitrahmen": "X Wochen",
-          "ressourcen": ["Link/Name 1", "Link/Name 2"]
+          "ressourcen": ["Konkrete Ressource 1", "Konkrete Ressource 2"]
         }
       ],
-      "zusammenfassung": "Ein Satz was jetzt am wichtigsten ist"
+      "erster_schritt": "Die eine Sache die ${ctx.userName} diese Woche tun soll",
+      "dealbreaker": "Das eine Risiko das alles stoppen kann — oder null wenn keins"
     }
   `,
 
@@ -256,12 +265,73 @@ export const SONNET_PROMPTS: Record<string, (ctx: FounderContext, draft: string)
     Antworte NUR mit dem fertigen Text — keine Erklärungen, keine Metakommentare.
   `,
 
-  plan_text: (ctx, draft) => `
-    Formuliere diesen Aktionsplan für ${ctx.userName} als motivierende, klare Ansage.
-    Ton: Direkt wie ein guter Co-Founder, nicht wie eine Beratungsagentur.
-    Verwende "du", nicht "Sie". Keine Bullet-Listen-Wüste — fließender Text mit Struktur.
+  plan_presentation: (ctx, draft) => `
+    Du bist der Co-Pilot von matchfoundr.
+    Erstelle aus diesen Plan-Daten eine Präsentation als JSON-Array von Slides.
+    Jeder Slide ist eine Bildschirmseite — kurz, direkt, visuell stark.
+
+    Ton: Wie ein erfahrener Mentor der ${ctx.userName} direkt anspricht.
+    Verwende "du". Kein Consulting-Sprech. Keine leeren Phrasen.
+    Branche: ${ctx.industry || 'allgemein'} — benutze passende Sprache (${ctx.venture_term || 'Vorhaben'}, ${ctx.partner_term || 'Partner'}).
 
     Plan-Daten: ${draft}
+
+    Antworte NUR mit validem JSON — ein Array von Slides:
+    [
+      {
+        "type": "headline",
+        "title": "Dein Plan, ${ctx.userName}.",
+        "subtitle": "Die headline aus den Plan-Daten — motivierend, 1 Satz",
+        "tag": "Persönlicher Plan"
+      },
+      {
+        "type": "situation",
+        "label": "Wo du stehst",
+        "text": "Ehrlicher, direkter Satz zur aktuellen Lage — nicht wertend, nicht übertrieben positiv"
+      },
+      {
+        "type": "track",
+        "nummer": 1,
+        "label": "Spur 01",
+        "title": "Titel der Spur",
+        "why": "Warum diese Spur jetzt — 1 Satz",
+        "steps": ["Schritt 1", "Schritt 2", "Schritt 3"],
+        "timeframe": "X Wochen",
+        "priority": "hoch"
+      },
+      {
+        "type": "track",
+        "nummer": 2,
+        "label": "Spur 02",
+        "title": "...",
+        "why": "...",
+        "steps": ["...", "...", "..."],
+        "timeframe": "...",
+        "priority": "mittel"
+      },
+      {
+        "type": "track",
+        "nummer": 3,
+        "label": "Spur 03",
+        "title": "...",
+        "why": "...",
+        "steps": ["...", "...", "..."],
+        "timeframe": "...",
+        "priority": "mittel"
+      },
+      {
+        "type": "first_step",
+        "label": "Diese Woche",
+        "action": "Die eine konkrete Aktion für diese Woche",
+        "why": "Warum genau diese als erstes — 1 Satz"
+      },
+      {
+        "type": "dealbreaker",
+        "label": "Im Blick behalten",
+        "risk": "Das Risiko das alles stoppen kann — oder null wenn keins",
+        "mitigation": "1 konkreter Satz wie man es entschärft"
+      }
+    ]
   `,
 
   email_advisor_first: (ctx, draft) => `

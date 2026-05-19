@@ -130,6 +130,7 @@ Deno.serve(async (req) => {
       // Kimi only — pure extraction
       const kimiPrompt = KIMI_PROMPTS.context_parse(ctx, message)
       const kimiRaw = await callKimi(kimiPrompt)
+      console.log('[KIMI context_parse]', kimiRaw.slice(0, 300))
       const parsed = parseJSON(kimiRaw)
 
       // Save/update context
@@ -155,10 +156,13 @@ Deno.serve(async (req) => {
       // Stage 1: Kimi analyzes + answers
       const kimiPrompt = KIMI_PROMPTS.chat(ctx, message)
       const kimiRaw = await callKimi(kimiPrompt)
+      console.log('[KIMI chat raw]', kimiRaw.slice(0, 300))
       const kimiData = parseJSON(kimiRaw)
+      console.log('[KIMI chat parsed] antwort:', String(kimiData.antwort ?? '').slice(0, 200))
 
       // Extract draft — never pass empty string to Sonnet
       const draft = extractDraft(kimiData, kimiRaw)
+      console.log('[DRAFT to Sonnet]', draft.slice(0, 200))
 
       // Stage 2: Sonnet polishes the answer text
       const sonnetPrompt = SONNET_PROMPTS.chat(ctx, draft)
@@ -190,28 +194,78 @@ Deno.serve(async (req) => {
 
       result = {
         answer:        polishedAnswer,
+        too_early:     kimiData.zu_frueh === true,
         sources:       Array.isArray(kimiData.quellen) ? kimiData.quellen : [],
         quick_actions: Array.isArray(kimiData.follow_up_aktionen) ? kimiData.follow_up_aktionen : [],
       }
     }
 
     else if (task === 'plan_generate') {
-      // Stage 1: Kimi builds structure
-      const kimiPrompt = KIMI_PROMPTS.plan_generate(ctx, message)
+      // Load assessment scores if available
+      const { data: assessment } = await supabase
+        .from('founder_assessment')
+        .select('scores')
+        .eq('user_id', user.id)
+        .single()
+
+      // Load skills if available
+      const { data: skills } = await supabase
+        .from('founder_skills')
+        .select('skills, looking_for, availability')
+        .eq('user_id', user.id)
+        .single()
+
+      // Enrich context with industry + assessment
+      const { data: profileFull } = await supabase
+        .from('profiles')
+        .select('industry, venture_term, partner_term')
+        .eq('id', user.id)
+        .single()
+
+      if (profileFull?.industry) {
+        ctx.industry     = profileFull.industry
+        ctx.venture_term = profileFull.venture_term
+        ctx.partner_term = profileFull.partner_term
+      }
+
+      const enrichedInput = JSON.stringify({
+        message,
+        assessment_scores: assessment?.scores || null,
+        skills: skills?.skills || null,
+      })
+
+      // Stage 1: Kimi builds structured plan
+      const kimiPrompt = KIMI_PROMPTS.plan_generate(ctx, enrichedInput)
       const kimiRaw = await callKimi(kimiPrompt)
+      console.log('[KIMI plan_generate]', kimiRaw.slice(0, 300))
       const planData = parseJSON(kimiRaw)
 
-      // Stage 2: Sonnet writes readable plan text
-      const sonnetPrompt = SONNET_PROMPTS.plan_text(ctx, JSON.stringify(planData))
-      const planText = await callSonnet(sonnetPrompt)
+      // Stage 2: Sonnet turns it into a presentation
+      const sonnetPrompt = SONNET_PROMPTS.plan_presentation(ctx, JSON.stringify(planData))
+      const sonnetRaw = await callSonnet(sonnetPrompt)
+      const slides = parseJSON(sonnetRaw)
 
-      result = { plan: planData, plan_text: planText }
+      // Save plan as document
+      await supabase.from('copilot_documents').insert({
+        user_id:       user.id,
+        session_id:    session_id || null,
+        type:          'pitch_outline',
+        title:         `Persönlicher Plan — ${ctx.userName}`,
+        content:       sonnetRaw,
+        draft_content: kimiRaw,
+        fill_pct:      100,
+        status:        'ready',
+        metadata:      { slides_count: Array.isArray(slides) ? slides.length : 0 },
+      })
+
+      result = { plan: planData, slides }
     }
 
     else if (task === 'deadline_extract') {
       // Kimi only — pure extraction
       const kimiPrompt = KIMI_PROMPTS.deadline_extract(ctx, message)
       const kimiRaw = await callKimi(kimiPrompt)
+      console.log('[KIMI deadline_extract]', kimiRaw.slice(0, 300))
       const data = parseJSON(kimiRaw)
 
       const deadlines = (data.deadlines as Array<Record<string, unknown>>) || []
@@ -235,6 +289,7 @@ Deno.serve(async (req) => {
       // Stage 1: Kimi fills content from profile
       const kimiPrompt = KIMI_PROMPTS.document_exist_draft(ctx, message)
       const kimiRaw = await callKimi(kimiPrompt)
+      console.log('[KIMI document_exist]', kimiRaw.slice(0, 300))
 
       // Stage 2: Sonnet polishes every section
       const sonnetPrompt = SONNET_PROMPTS.document_exist(ctx, kimiRaw)
@@ -266,6 +321,7 @@ Deno.serve(async (req) => {
       // Stage 1: Kimi analyzes fit
       const kimiPrompt = KIMI_PROMPTS.advisor_reasons(ctx, advisorInfo)
       const kimiRaw = await callKimi(kimiPrompt)
+      console.log('[KIMI advisor_reasons]', kimiRaw.slice(0, 300))
       const kimiData = parseJSON(kimiRaw)
 
       // Stage 2: Sonnet polishes the reason texts
@@ -294,6 +350,7 @@ Deno.serve(async (req) => {
       // Stage 1: Kimi structures the brief
       const kimiPrompt = KIMI_PROMPTS.daily_brief_draft(ctx, dailyData)
       const kimiRaw = await callKimi(kimiPrompt)
+      console.log('[KIMI daily_brief]', kimiRaw.slice(0, 300))
 
       // Stage 2: Sonnet writes it naturally
       const sonnetPrompt = SONNET_PROMPTS.daily_brief(ctx, kimiRaw)
@@ -307,6 +364,7 @@ Deno.serve(async (req) => {
       // Stage 1: Kimi drafts structure
       const kimiPrompt = KIMI_PROMPTS.chat(ctx, `Erstelle einen Email-Entwurf für: ${message}`)
       const kimiRaw = await callKimi(kimiPrompt)
+      console.log('[KIMI email draft]', kimiRaw.slice(0, 300))
       const kimiData = parseJSON(kimiRaw)
 
       // Stage 2: Sonnet writes the actual email
@@ -334,6 +392,7 @@ Deno.serve(async (req) => {
       const matchInfo = JSON.stringify(extra.match || {})
       const kimiPrompt = KIMI_PROMPTS.match_explain(ctx, matchInfo)
       const kimiRaw = await callKimi(kimiPrompt)
+      console.log('[KIMI match_explain]', kimiRaw.slice(0, 300))
       result = { explanation: parseJSON(kimiRaw) }
     }
 
