@@ -53,6 +53,11 @@ export const INDUSTRIES: Industry[] = [
       idea_options: ['SaaS-Tool', 'Marketplace', 'Mobile App', 'AI/ML-Produkt', 'Hardware', 'Consumer-Brand', 'B2B-Service', 'Noch unklar'],
     },
     primary_skills: ['tech', 'design', 'sales'],
+    industry_skills: [
+      'Product-Market Fit', 'MVP-Building', 'Pitch Decks', 'Cap Table', 'EXIST-Antrag',
+      'VC-Pitching', 'YC / Accelerator', 'Hiring (Tech)', 'OKRs', 'Tech-Strategie',
+      'No-Code', 'API-Design', 'Open Source',
+    ],
     copilot_context: 'Tech Startup, typische Themen: MVP, Product-Market Fit, VC-Funding, EXIST, Cap Table, Hiring.',
   },
   {
@@ -69,6 +74,12 @@ export const INDUSTRIES: Industry[] = [
       idea_options: ['Schreinerei', 'Elektrik / SHK', 'Bau / Sanierung', 'Manufaktur', 'KFZ-Werkstatt', 'Mobiler Service', 'Spezial-Handwerk', 'Noch unklar'],
     },
     primary_skills: ['ops', 'finance', 'sales'],
+    industry_skills: [
+      'Meisterbrief', 'Gesellenprüfung', 'CAD / Technisches Zeichnen', 'Kalkulation',
+      'Aufmaß / Angebotserstellung', 'Bauleitung', 'CNC / Maschinen', 'Schweißen',
+      'Materialkunde', 'Handwerkskammer', 'Gewährleistung', 'Subunternehmer-Management',
+      'Werkstatt-Organisation',
+    ],
     copilot_context: 'Handwerksbetrieb, typische Themen: Meisterpflicht, Gewerbeanmeldung, Handwerkskammer, KfW-Kredit, Gesellenvertrag, Auftragsgewinnung.',
   },
   {
@@ -85,6 +96,12 @@ export const INDUSTRIES: Industry[] = [
       idea_options: ['Restaurant', 'Café / Bar', 'Foodtruck', 'Catering', 'Lieferdienst', 'Food-Brand / Produkt', 'Pop-up / Supperclub', 'Noch unklar'],
     },
     primary_skills: ['ops', 'marketing', 'finance'],
+    industry_skills: [
+      'Küchenleitung', 'Rezept-Entwicklung', 'Menu Engineering', 'HACCP',
+      'Sommelier / Getränke', 'Barista', 'Service / Gastfreundschaft', 'Lieferanten-Mgmt',
+      'Pachtverhandlung', 'Schichtplanung', 'Food-Cost-Kalkulation', 'POS-Systeme',
+      'Gastro-Marketing (Insta/TikTok)',
+    ],
     copilot_context: 'Gastronomiebetrieb, typische Themen: HACCP, Konzession, Pachtvertrag, Lieferanten, SCHUFA, Hygienevorschriften, Social Media für Gastro.',
   },
   {
@@ -101,6 +118,12 @@ export const INDUSTRIES: Industry[] = [
       idea_options: ['Design-Studio', 'Werbeagentur', 'Film / Video', 'Musik / Audio', 'Mode / Fashion', 'Content / Social', 'Foto', 'Noch unklar'],
     },
     primary_skills: ['design', 'marketing', 'sales'],
+    industry_skills: [
+      'Art Direction', 'Creative Direction', 'Copywriting', 'Storytelling',
+      'Pitchen bei Kunden', 'Briefing / Konzeption', 'Produktion (Film/Foto)',
+      'Casting', 'Mode-Design', 'Schnitt / Editing', 'Sound Design',
+      'Urheberrecht', 'GEMA / Verwertung',
+    ],
     copilot_context: 'Kreativagentur oder Studio, typische Themen: Auftragsrecht, Urheberrecht, Freelancer vs. Festanstellung, Projektpreise, Portfolio aufbauen.',
   },
   {
@@ -117,6 +140,12 @@ export const INDUSTRIES: Industry[] = [
       idea_options: ['Online-Shop', 'Eigene Marke (D2C)', 'Amazon FBA', 'Einzelhandel / Laden', 'Import / Export', 'Marktplatz', 'Großhandel / B2B', 'Noch unklar'],
     },
     primary_skills: ['sales', 'marketing', 'ops'],
+    industry_skills: [
+      'Shopify', 'WooCommerce', 'Amazon FBA', 'Produktfotografie', 'Listings / SEO',
+      'Performance Ads (Meta/Google)', 'Influencer-Kooperationen', 'Sourcing (Asien/EU)',
+      'Zoll / Import', 'Fulfillment / 3PL', 'Retouren-Management', 'CRM / Klaviyo',
+      'Marken-Aufbau',
+    ],
     copilot_context: 'E-Commerce oder Handel, typische Themen: Lieferanten, Shopify/Amazon, Logistik, Retouren, Performance Marketing, Markenaufbau.',
   },
   {
@@ -133,6 +162,12 @@ export const INDUSTRIES: Industry[] = [
       idea_options: ['Schule / Kita', 'NGO / Verein', 'EdTech-Plattform', 'Nachhilfe / Kurse', 'Soziales Unternehmen', 'Beratungsstelle', 'Jugendarbeit', 'Noch unklar'],
     },
     primary_skills: ['ops', 'finance', 'marketing'],
+    industry_skills: [
+      'Pädagogik', 'Lehrplan-Entwicklung', 'Förderantrag schreiben', 'Stiftungs-Kontakte',
+      'Gemeinnützigkeits-Recht', 'Spendenakquise', 'Ehrenamt-Koordination',
+      'Impact-Messung', 'Betriebserlaubnis (Kita/Schule)', 'EdTech-Didaktik',
+      'Inklusion', 'Mehrsprachigkeit',
+    ],
     copilot_context: 'Bildungs- oder Sozialunternehmen, typische Themen: Gemeinnützigkeit, Förderanträge, Betriebserlaubnis, Ehrenamt vs. Festanstellung, Impact-Messung.',
   },
   {
@@ -149,6 +184,12 @@ export const INDUSTRIES: Industry[] = [
       idea_options: ['Arzt- / Zahnarztpraxis', 'Physio / Heilpraktik', 'Yoga / Fitness-Studio', 'Coaching / Therapie', 'MedTech-Produkt', 'Apotheke', 'Wellness / Spa', 'Noch unklar'],
     },
     primary_skills: ['ops', 'marketing', 'finance'],
+    industry_skills: [
+      'Approbation / Heilkundeerlaubnis', 'Kassenzulassung', 'Abrechnung (GOÄ/EBM)',
+      'Patientendaten-Schutz', 'Praxis-Management', 'Therapie-Methoden',
+      'Anatomie / Physio', 'Yoga-Lehrer-Ausbildung', 'Ernährungsberatung',
+      'Medizingeräte (MPG)', 'Apotheken-Recht', 'Online-Coaching',
+    ],
     copilot_context: 'Gesundheits- oder Wellnessunternehmen, typische Themen: Approbation, Kassenzulassung, Datenschutz (Patientendaten), Praxisräume, Krankenkassen-Abrechnung.',
   },
   {
@@ -165,6 +206,12 @@ export const INDUSTRIES: Industry[] = [
       idea_options: ['Unternehmensberatung', 'Rechtsanwalt / Kanzlei', 'Steuerberatung', 'IT-Dienstleistung', 'HR / Recruiting', 'Marketing-Beratung', 'Coaching / Training', 'Noch unklar'],
     },
     primary_skills: ['sales', 'ops', 'finance'],
+    industry_skills: [
+      'Mandanten-Akquise', 'Positionierung / Nische', 'Stundensatz-Kalkulation',
+      'Proposal / Angebotsschreiben', 'Workshop-Moderation', 'Methodenkompetenz (Scrum/Lean)',
+      'Steuerrecht', 'Arbeitsrecht', 'Vertragsrecht', 'Audit / Due Diligence',
+      'Recruiting / Active Sourcing', 'Change Management',
+    ],
     copilot_context: 'Beratungs- oder Dienstleistungsunternehmen, typische Themen: Positionierung, Akquise, Stundenpreise vs. Projektpreise, Partnerschaft-Modelle, Skalierung ohne Qualitätsverlust.',
   },
 ]
