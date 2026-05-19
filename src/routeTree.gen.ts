@@ -30,6 +30,7 @@ import { Route as FoerderungIndexRouteImport } from './routes/foerderung.index'
 import { Route as RechtSlugRouteImport } from './routes/recht.$slug'
 import { Route as MatchesIdRouteImport } from './routes/matches.$id'
 import { Route as FoerderungSlugRouteImport } from './routes/foerderung.$slug'
+import { Route as ApiSttRouteImport } from './routes/api/stt'
 
 const TalentRoute = TalentRouteImport.update({
   id: '/talent',
@@ -136,6 +137,11 @@ const FoerderungSlugRoute = FoerderungSlugRouteImport.update({
   path: '/foerderung/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSttRoute = ApiSttRouteImport.update({
+  id: '/api/stt',
+  path: '/api/stt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/steuer': typeof SteuerRoute
   '/talent': typeof TalentRoute
+  '/api/stt': typeof ApiSttRoute
   '/foerderung/$slug': typeof FoerderungSlugRoute
   '/matches/$id': typeof MatchesIdRoute
   '/recht/$slug': typeof RechtSlugRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/steuer': typeof SteuerRoute
   '/talent': typeof TalentRoute
+  '/api/stt': typeof ApiSttRoute
   '/foerderung/$slug': typeof FoerderungSlugRoute
   '/matches/$id': typeof MatchesIdRoute
   '/recht/$slug': typeof RechtSlugRoute
@@ -200,6 +208,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/steuer': typeof SteuerRoute
   '/talent': typeof TalentRoute
+  '/api/stt': typeof ApiSttRoute
   '/foerderung/$slug': typeof FoerderungSlugRoute
   '/matches/$id': typeof MatchesIdRoute
   '/recht/$slug': typeof RechtSlugRoute
@@ -225,6 +234,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/steuer'
     | '/talent'
+    | '/api/stt'
     | '/foerderung/$slug'
     | '/matches/$id'
     | '/recht/$slug'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/steuer'
     | '/talent'
+    | '/api/stt'
     | '/foerderung/$slug'
     | '/matches/$id'
     | '/recht/$slug'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/steuer'
     | '/talent'
+    | '/api/stt'
     | '/foerderung/$slug'
     | '/matches/$id'
     | '/recht/$slug'
@@ -295,6 +307,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   SteuerRoute: typeof SteuerRoute
   TalentRoute: typeof TalentRoute
+  ApiSttRoute: typeof ApiSttRoute
   FoerderungSlugRoute: typeof FoerderungSlugRoute
   MatchesIdRoute: typeof MatchesIdRoute
   RechtSlugRoute: typeof RechtSlugRoute
@@ -452,6 +465,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FoerderungSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/stt': {
+      id: '/api/stt'
+      path: '/api/stt'
+      fullPath: '/api/stt'
+      preLoaderRoute: typeof ApiSttRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -471,6 +491,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   SteuerRoute: SteuerRoute,
   TalentRoute: TalentRoute,
+  ApiSttRoute: ApiSttRoute,
   FoerderungSlugRoute: FoerderungSlugRoute,
   MatchesIdRoute: MatchesIdRoute,
   RechtSlugRoute: RechtSlugRoute,
@@ -481,13 +502,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

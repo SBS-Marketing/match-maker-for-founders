@@ -31,8 +31,8 @@ export const Route = createFileRoute("/api/stt")({
         }
 
         const formData = await request.formData();
-        const file = formData.get("file");
-        if (!file || !(file instanceof File || file instanceof Blob)) {
+        const file = formData.get("file") as Blob | null;
+        if (!file) {
           return new Response(JSON.stringify({ error: "audio file missing" }), {
             status: 400,
             headers: { "Content-Type": "application/json" },
