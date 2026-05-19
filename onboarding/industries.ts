@@ -24,6 +24,7 @@ export type Industry = {
     prototype: string      // "MVP" → "erstes Projekt", "Testlauf", "Pilotküche"
     funding: string        // "Funding" → "Kredit / Förderung", "Investoren"
     stage_options: string[] // Stage-Auswahl passend zur Branche
+    idea_options: string[]  // Quick-Chips für "Was entsteht?"
   }
 
   // Which skill categories to show first (from skills.ts)
