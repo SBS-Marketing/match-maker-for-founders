@@ -177,6 +177,11 @@ function Onboarding() {
   useEffect(() => {
     if (resumedRef.current) return;
     resumedRef.current = true;
+    // Safety: if industry missing but step advanced (legacy state), reset to start
+    if (stepIdx > 0 && !state.industry) {
+      setStepIdx(0);
+      return;
+    }
     if (stepIdx > 0 && state.path) {
       toast.success("Fortschritt wiederhergestellt", {
         description: "Du machst da weiter, wo du aufgehört hast.",
