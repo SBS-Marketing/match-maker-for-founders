@@ -230,8 +230,11 @@ function Onboarding() {
     try {
       const scores = calculateAllScores(state.answers);
 
-      // Persist profile founder_type
-      await supabase.from("profiles").update({ founder_type: state.path }).eq("id", user.id);
+      // Persist profile founder_type + industry
+      await supabase
+        .from("profiles")
+        .update({ founder_type: state.path, industry: state.industry })
+        .eq("id", user.id);
 
       // Persist context for founder/hybrid
       if (state.path === "founder" || state.path === "hybrid") {
@@ -242,7 +245,13 @@ function Onboarding() {
           stage: state.context.stage || null,
           goal: state.context.goal || null,
           risk: state.context.risk || null,
-          raw_context: state.context,
+          raw_context: {
+            ...state.context,
+            industry: state.industry,
+            venture_term: industry.terms.venture,
+            partner_term: industry.terms.partner,
+            copilot_context: industry.copilot_context,
+          },
           updated_at: new Date().toISOString(),
         });
       }
