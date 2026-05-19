@@ -256,7 +256,10 @@ function Onboarding() {
       // Trigger plan generation (fire and forget – it can take a while)
       supabase.functions.invoke("copilot", { body: { task: "plan_generate", message: "" } }).catch(() => undefined);
 
-      sessionStorage.removeItem(STORAGE_KEY);
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(STEP_KEY);
+      } catch { /* ignore */ }
 
       // Trigger tutorial overlay on /heute
       try { sessionStorage.setItem("mf_tutorial", "1"); } catch {}
