@@ -80,7 +80,7 @@ function buildContextQuestions(industry: Industry): ContextQuestion[] {
       key: "idea",
       question: `Woran arbeitest du? Was für ein ${venture} entsteht?`,
       placeholder: `Erzähl in einem Satz, was du baust…`,
-      options: ["SaaS-Tool", "Marketplace", "Mobile App", "AI/ML-Produkt", "Hardware", "Consumer-Brand", "B2B-Service", "Noch unklar"],
+      options: industry.terms.idea_options,
       multi: false,
     },
     {

@@ -24,6 +24,7 @@ export type Industry = {
     prototype: string      // "MVP" → "erstes Projekt", "Testlauf", "Pilotküche"
     funding: string        // "Funding" → "Kredit / Förderung", "Investoren"
     stage_options: string[] // Stage-Auswahl passend zur Branche
+    idea_options: string[]  // Quick-Chips für "Was entsteht?"
   }
 
   // Which skill categories to show first (from skills.ts)
@@ -45,6 +46,7 @@ export const INDUSTRIES: Industry[] = [
       prototype: 'MVP',
       funding: 'Funding / Investment',
       stage_options: ['Idee', 'Prototyp / MVP', 'Erste Kunden', 'Product-Market Fit', 'Skalierung'],
+      idea_options: ['SaaS-Tool', 'Marketplace', 'Mobile App', 'AI/ML-Produkt', 'Hardware', 'Consumer-Brand', 'B2B-Service', 'Noch unklar'],
     },
     primary_skills: ['tech', 'design', 'sales'],
     copilot_context: 'Tech Startup, typische Themen: MVP, Product-Market Fit, VC-Funding, EXIST, Cap Table, Hiring.',
@@ -60,6 +62,7 @@ export const INDUSTRIES: Industry[] = [
       prototype: 'erstes Projekt',
       funding: 'Kredit / Förderung',
       stage_options: ['Idee / Plan', 'Meisterbrief / Zulassung', 'Erster Auftrag', 'Fester Kundenstamm', 'Zweiter Standort / Skalierung'],
+      idea_options: ['Schreinerei', 'Elektrik / SHK', 'Bau / Sanierung', 'Manufaktur', 'KFZ-Werkstatt', 'Mobiler Service', 'Spezial-Handwerk', 'Noch unklar'],
     },
     primary_skills: ['ops', 'finance', 'sales'],
     copilot_context: 'Handwerksbetrieb, typische Themen: Meisterpflicht, Gewerbeanmeldung, Handwerkskammer, KfW-Kredit, Gesellenvertrag, Auftragsgewinnung.',
@@ -75,6 +78,7 @@ export const INDUSTRIES: Industry[] = [
       prototype: 'Testlauf / Pop-up',
       funding: 'Finanzierung / Förderung',
       stage_options: ['Konzeptidee', 'Businessplan', 'Pop-up / Testlauf', 'Eröffnung', 'Zweites Lokal'],
+      idea_options: ['Restaurant', 'Café / Bar', 'Foodtruck', 'Catering', 'Lieferdienst', 'Food-Brand / Produkt', 'Pop-up / Supperclub', 'Noch unklar'],
     },
     primary_skills: ['ops', 'marketing', 'finance'],
     copilot_context: 'Gastronomiebetrieb, typische Themen: HACCP, Konzession, Pachtvertrag, Lieferanten, SCHUFA, Hygienevorschriften, Social Media für Gastro.',
@@ -90,6 +94,7 @@ export const INDUSTRIES: Industry[] = [
       prototype: 'erstes Projekt',
       funding: 'Förderung / Auftrag',
       stage_options: ['Idee / Konzept', 'Erstes Projekt', 'Feste Kunden', 'Team aufbauen', 'Agentur skalieren'],
+      idea_options: ['Design-Studio', 'Werbeagentur', 'Film / Video', 'Musik / Audio', 'Mode / Fashion', 'Content / Social', 'Foto', 'Noch unklar'],
     },
     primary_skills: ['design', 'marketing', 'sales'],
     copilot_context: 'Kreativagentur oder Studio, typische Themen: Auftragsrecht, Urheberrecht, Freelancer vs. Festanstellung, Projektpreise, Portfolio aufbauen.',
@@ -105,6 +110,7 @@ export const INDUSTRIES: Industry[] = [
       prototype: 'erster Launch',
       funding: 'Kapital / Kredit',
       stage_options: ['Produktidee', 'Supplier gefunden', 'Erster Launch', 'Profitabel', 'Skalierung'],
+      idea_options: ['Online-Shop', 'Eigene Marke (D2C)', 'Amazon FBA', 'Einzelhandel / Laden', 'Import / Export', 'Marktplatz', 'Großhandel / B2B', 'Noch unklar'],
     },
     primary_skills: ['sales', 'marketing', 'ops'],
     copilot_context: 'E-Commerce oder Handel, typische Themen: Lieferanten, Shopify/Amazon, Logistik, Retouren, Performance Marketing, Markenaufbau.',
@@ -120,6 +126,7 @@ export const INDUSTRIES: Industry[] = [
       prototype: 'Pilotprojekt',
       funding: 'Förderung / Spenden',
       stage_options: ['Idee', 'Pilotprojekt', 'Anerkennung / Zulassung', 'Betrieb', 'Skalierung / Franchise'],
+      idea_options: ['Schule / Kita', 'NGO / Verein', 'EdTech-Plattform', 'Nachhilfe / Kurse', 'Soziales Unternehmen', 'Beratungsstelle', 'Jugendarbeit', 'Noch unklar'],
     },
     primary_skills: ['ops', 'finance', 'marketing'],
     copilot_context: 'Bildungs- oder Sozialunternehmen, typische Themen: Gemeinnützigkeit, Förderanträge, Betriebserlaubnis, Ehrenamt vs. Festanstellung, Impact-Messung.',
@@ -135,6 +142,7 @@ export const INDUSTRIES: Industry[] = [
       prototype: 'erster Kurs / Pilot',
       funding: 'Finanzierung / Kassenzulassung',
       stage_options: ['Konzept', 'Zulassung / Approbation', 'Erste Patienten / Kunden', 'Etabliert', 'Zweiter Standort'],
+      idea_options: ['Arzt- / Zahnarztpraxis', 'Physio / Heilpraktik', 'Yoga / Fitness-Studio', 'Coaching / Therapie', 'MedTech-Produkt', 'Apotheke', 'Wellness / Spa', 'Noch unklar'],
     },
     primary_skills: ['ops', 'marketing', 'finance'],
     copilot_context: 'Gesundheits- oder Wellnessunternehmen, typische Themen: Approbation, Kassenzulassung, Datenschutz (Patientendaten), Praxisräume, Krankenkassen-Abrechnung.',
@@ -150,6 +158,7 @@ export const INDUSTRIES: Industry[] = [
       prototype: 'erster Mandant / Auftrag',
       funding: 'Eigenkapital / Kredit',
       stage_options: ['Idee / Positionierung', 'Erster Kunde', 'Feste Pipeline', 'Team aufbauen', 'Skalierung'],
+      idea_options: ['Unternehmensberatung', 'Rechtsanwalt / Kanzlei', 'Steuerberatung', 'IT-Dienstleistung', 'HR / Recruiting', 'Marketing-Beratung', 'Coaching / Training', 'Noch unklar'],
     },
     primary_skills: ['sales', 'ops', 'finance'],
     copilot_context: 'Beratungs- oder Dienstleistungsunternehmen, typische Themen: Positionierung, Akquise, Stundenpreise vs. Projektpreise, Partnerschaft-Modelle, Skalierung ohne Qualitätsverlust.',
