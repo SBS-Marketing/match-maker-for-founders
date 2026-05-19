@@ -44,20 +44,27 @@ const callKimi   = (prompt: string) => callOpenRouter(KIMI_MODEL,   prompt, 2048
 const callSonnet = (prompt: string) => callOpenRouter(SONNET_MODEL, prompt, 1024)
 
 // ─── Parse JSON safely ───────────────────────────────────────
+function stripFences(s: string): string {
+  return s.replace(/^\s*```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim()
+}
+
+function parseJSONLoose(text: string): unknown {
+  if (!text || !text.trim()) return null
+  const cleaned = stripFences(text)
+  try { return JSON.parse(cleaned) } catch { /* fall through */ }
+  const arr = cleaned.match(/\[[\s\S]*\]/)
+  if (arr) { try { return JSON.parse(arr[0]) } catch { /* */ } }
+  const obj = cleaned.match(/\{[\s\S]*\}/)
+  if (obj) { try { return JSON.parse(obj[0]) } catch { /* */ } }
+  return null
+}
+
 function parseJSON(text: string): Record<string, unknown> {
-  if (!text || text.trim() === '') return { raw: '' }
-  try {
-    // Try direct parse first
-    return JSON.parse(text)
-  } catch {
-    try {
-      // Try extracting JSON block
-      const match = text.match(/\{[\s\S]*\}/)
-      if (match) return JSON.parse(match[0])
-    } catch { /* fall through */ }
+  const parsed = parseJSONLoose(text)
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    return parsed as Record<string, unknown>
   }
-  // Fallback: return raw text so pipeline never breaks
-  return { raw: text, antwort: text }
+  return { raw: text ?? '', antwort: text ?? '' }
 }
 
 // ─── Extract best text from Kimi response ────────────────────
@@ -242,9 +249,18 @@ Deno.serve(async (req) => {
       const planData = parseJSON(kimiRaw)
 
       // Stage 2: Sonnet turns it into a presentation
-      const sonnetPrompt = SONNET_PROMPTS.plan_presentation(ctx, JSON.stringify(planData))
+      const hasPlanData = kimiRaw && kimiRaw.trim() !== '' && !('raw' in planData && !planData.antwort)
+      const sonnetInput = hasPlanData
+        ? JSON.stringify(planData)
+        : `Keine strukturierten Plan-Daten verfügbar — generiere generischen Startplan basierend auf Kontext: ${JSON.stringify(ctx)}`
+      const sonnetPrompt = SONNET_PROMPTS.plan_presentation(ctx, sonnetInput)
       const sonnetRaw = await callSonnet(sonnetPrompt)
-      const slides = parseJSON(sonnetRaw)
+      const parsedSlides = parseJSONLoose(sonnetRaw)
+      const slides: unknown[] = Array.isArray(parsedSlides)
+        ? parsedSlides
+        : (parsedSlides && typeof parsedSlides === 'object' && Array.isArray((parsedSlides as Record<string, unknown>).slides))
+          ? (parsedSlides as { slides: unknown[] }).slides
+          : []
 
       // Save plan as document
       await supabase.from('copilot_documents').insert({
@@ -256,7 +272,7 @@ Deno.serve(async (req) => {
         draft_content: kimiRaw,
         fill_pct:      100,
         status:        'ready',
-        metadata:      { slides_count: Array.isArray(slides) ? slides.length : 0 },
+        metadata:      { slides_count: slides.length },
       })
 
       result = { plan: planData, slides }
