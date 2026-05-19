@@ -59,13 +59,50 @@ const EMPTY_STATE: State = {
 };
 
 const STORAGE_KEY = "matchfoundr_onboarding_v1";
+const STEP_KEY = "matchfoundr_onboarding_step_v1";
 
-const CONTEXT_QUESTIONS: { key: keyof ContextFields; question: string; placeholder: string }[] = [
-  { key: "idea", question: "Woran arbeitest du?", placeholder: "Erzähl in einem Satz, was du baust…" },
-  { key: "role", question: "Was ist deine Rolle? Solo oder mit Team?", placeholder: "z. B. Solo-Founder, technisch" },
-  { key: "stage", question: "Wo stehst du gerade?", placeholder: "Idee, Prototyp, erste Kunden…" },
-  { key: "goal", question: "Was willst du in den nächsten 3 Monaten erreichen?", placeholder: "z. B. MVP live, 10 zahlende Pilotkunden" },
-  { key: "risk", question: "Was ist dein größtes Risiko oder die nächste Deadline?", placeholder: "z. B. Runway endet in 6 Monaten" },
+const CONTEXT_QUESTIONS: {
+  key: keyof ContextFields;
+  question: string;
+  placeholder: string;
+  options: string[];
+  multi: boolean;
+}[] = [
+  {
+    key: "idea",
+    question: "Woran arbeitest du?",
+    placeholder: "Erzähl in einem Satz, was du baust…",
+    options: ["SaaS-Tool", "Marketplace", "Mobile App", "AI/ML-Produkt", "Hardware", "Consumer-Brand", "B2B-Service", "Noch unklar"],
+    multi: false,
+  },
+  {
+    key: "role",
+    question: "Was ist deine Rolle? Solo oder mit Team?",
+    placeholder: "z. B. Solo-Founder, technisch",
+    options: ["Solo-Founder", "Technischer Co-Founder", "Business/Sales", "Produkt/Design", "Mit Team (2–3)", "Mit Team (4+)"],
+    multi: true,
+  },
+  {
+    key: "stage",
+    question: "Wo stehst du gerade?",
+    placeholder: "Idee, Prototyp, erste Kunden…",
+    options: ["Reine Idee", "Konzept/Validierung", "Prototyp", "MVP live", "Erste Kunden", "Skaliert (>10k MRR)"],
+    multi: false,
+  },
+  {
+    key: "goal",
+    question: "Was willst du in den nächsten 3 Monaten erreichen?",
+    placeholder: "z. B. MVP live, 10 zahlende Pilotkunden",
+    options: ["MVP fertigstellen", "Erste 10 Kunden", "Co-Founder finden", "Förderung sichern", "Team aufbauen", "Pre-Seed Runde"],
+    multi: true,
+  },
+  {
+    key: "risk",
+    question: "Was ist dein größtes Risiko oder die nächste Deadline?",
+    placeholder: "z. B. Runway endet in 6 Monaten",
+    options: ["Runway < 6 Monate", "Antrags-Deadline", "Markt-Validierung offen", "Tech-Risiko", "Kein Co-Founder", "Kein Risiko gerade"],
+    multi: false,
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -94,21 +131,60 @@ function Onboarding() {
   const [state, setState] = useState<State>(() => {
     if (typeof window === "undefined") return EMPTY_STATE;
     try {
-      const raw = sessionStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(STORAGE_KEY);
       return raw ? { ...EMPTY_STATE, ...JSON.parse(raw) } : EMPTY_STATE;
     } catch {
       return EMPTY_STATE;
     }
   });
-  const [stepIdx, setStepIdx] = useState(0);
+  const [stepIdx, setStepIdx] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    try {
+      const raw = localStorage.getItem(STEP_KEY);
+      const n = raw ? parseInt(raw, 10) : 0;
+      return Number.isFinite(n) && n >= 0 ? n : 0;
+    } catch {
+      return 0;
+    }
+  });
   const [direction, setDirection] = useState<1 | -1>(1);
   const [submitting, setSubmitting] = useState(false);
+  const resumedRef = useRef(false);
 
   useEffect(() => {
     try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch { /* ignore */ }
   }, [state]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STEP_KEY, String(stepIdx));
+    } catch { /* ignore */ }
+  }, [stepIdx]);
+
+  // Show resume hint once if user returns mid-flow
+  useEffect(() => {
+    if (resumedRef.current) return;
+    resumedRef.current = true;
+    if (stepIdx > 0 && state.path) {
+      toast.success("Fortschritt wiederhergestellt", {
+        description: "Du machst da weiter, wo du aufgehört hast.",
+        action: {
+          label: "Neu starten",
+          onClick: () => {
+            try {
+              localStorage.removeItem(STORAGE_KEY);
+              localStorage.removeItem(STEP_KEY);
+            } catch { /* ignore */ }
+            setState(EMPTY_STATE);
+            setStepIdx(0);
+          },
+        },
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const steps = stepsFor(state.path);
   const currentStep = steps[stepIdx] ?? "type";
@@ -180,7 +256,10 @@ function Onboarding() {
       // Trigger plan generation (fire and forget – it can take a while)
       supabase.functions.invoke("copilot", { body: { task: "plan_generate", message: "" } }).catch(() => undefined);
 
-      sessionStorage.removeItem(STORAGE_KEY);
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(STEP_KEY);
+      } catch { /* ignore */ }
 
       // Trigger tutorial overlay on /heute
       try { sessionStorage.setItem("mf_tutorial", "1"); } catch {}
@@ -564,6 +643,34 @@ function StepContextQuestion({
 }) {
   const q = CONTEXT_QUESTIONS[idx];
   const canNext = value.trim().length >= 2;
+
+  // Parse current value into selected chip set (case-insensitive)
+  const selectedChips = new Set(
+    value
+      .split(/,\s*/)
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean),
+  );
+  const isChipSelected = (opt: string) => selectedChips.has(opt.toLowerCase());
+
+  const toggleChip = (opt: string) => {
+    if (q.multi) {
+      const parts = value
+        .split(/,\s*/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const lower = opt.toLowerCase();
+      const exists = parts.some((p) => p.toLowerCase() === lower);
+      const next = exists
+        ? parts.filter((p) => p.toLowerCase() !== lower)
+        : [...parts, opt];
+      onChange(next.join(", "));
+    } else {
+      // Single-select: replace value with chip (toggle off if same)
+      onChange(isChipSelected(opt) ? "" : opt);
+    }
+  };
+
   return (
     <div className="flex min-h-[70vh] flex-col justify-between">
       <header>
@@ -573,13 +680,43 @@ function StepContextQuestion({
         <h1 className="mt-3 font-serif text-3xl leading-tight text-[var(--ink)] md:text-4xl">
           {q.question}
         </h1>
+
+        <div className="mt-5">
+          <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--ink)]/50">
+            {q.multi ? "Schnellauswahl · mehrere möglich" : "Schnellauswahl"}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {q.options.map((opt) => {
+              const active = isChipSelected(opt);
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => toggleChip(opt)}
+                  className={
+                    "rounded-full border px-3.5 py-1.5 text-[13px] transition-colors " +
+                    (active
+                      ? "border-[var(--ember)] bg-[var(--ember)] text-[var(--cream)]"
+                      : "border-[var(--ink)]/15 bg-[var(--paper)] text-[var(--ink)] hover:border-[var(--ember)]")
+                  }
+                >
+                  {active ? "✓ " : ""}
+                  {opt}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <p className="mt-5 mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--ink)]/50">
+          Oder frei schreiben
+        </p>
         <textarea
-          autoFocus
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={q.placeholder}
-          rows={5}
-          className="mt-6 w-full resize-none rounded-2xl border border-[var(--ink)]/10 bg-[var(--paper)] p-5 text-lg text-[var(--ink)] outline-none placeholder:text-[var(--ink)]/30 focus:border-[var(--ember)]"
+          rows={4}
+          className="w-full resize-none rounded-2xl border border-[var(--ink)]/10 bg-[var(--paper)] p-5 text-lg text-[var(--ink)] outline-none placeholder:text-[var(--ink)]/30 focus:border-[var(--ember)]"
         />
       </header>
       <div className="mt-8">
