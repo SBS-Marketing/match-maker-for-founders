@@ -1,54 +1,63 @@
-## Plan: Industry Layer für Onboarding
+## Problem
 
-### 1. DB-Migration
-Spalte `industry text` zu `public.profiles` hinzufügen (nullable, kein Default). Bestehende RLS-Policies decken die Spalte ab.
+`/plan` zeigt "Plan konnte nicht erstellt werden." weil der Client ein Array unter `data.slides` erwartet, die Edge Function aber ein Objekt `{raw: "...", antwort: "..."}` zurückgibt.
 
-### 2. State erweitern (`src/routes/onboarding.tsx`)
-- `State` um `industry: IndustryId | null` erweitern (initial `null`), in `EMPTY_STATE` ergänzen.
-- Import `INDUSTRIES`, `getIndustry`, `type IndustryId` aus `../../onboarding/industries`.
-- Helper `industry = state.industry ? getIndustry(state.industry) : null` im Component-Scope.
+Ursache: `parseJSON()` in `supabase/functions/copilot/index.ts` versucht nur `\{[\s\S]*\}` zu matchen. Sonnet liefert die Slides aber als JSON-Array, eingehüllt in ```json … ``` Fences. Das Array-Format wird nie erkannt → Fallback `{raw, antwort}` → Client sieht kein Array → Fehler.
 
-### 3. Steps-Maschine
-`stepsFor(path, hasIndustry)` umbauen: erster Step ist immer `"industry"`. Erst nach Auswahl folgt `"type"` und der bisherige Pfad. Sequenz:
+Zusatzproblem im aktuellen Log: Kimi (`plan_generate`) gibt einen leeren String zurück (`[KIMI plan_generate]` ohne Inhalt). Sonnet bekommt dann leere `planData` und der Plan ist generisch. Nicht blockierend, aber sichtbar.
 
-```text
-industry → type → (founder | talent | hybrid pfade) → assessment → overview
+## Fix
+
+### 1. `supabase/functions/copilot/index.ts` — robustes JSON-Parsing
+
+`parseJSON` so erweitern, dass es zuerst Code-Fences entfernt und sowohl Objekte als auch Arrays erkennt:
+
+```ts
+function stripFences(s: string): string {
+  return s.replace(/^\s*```(?:json)?\s*/i, '').replace(/```\s*$/,'').trim()
+}
+
+function parseJSONLoose(text: string): unknown {
+  if (!text || !text.trim()) return null
+  const cleaned = stripFences(text)
+  try { return JSON.parse(cleaned) } catch { /* fall through */ }
+  // Try array first, then object
+  const arr = cleaned.match(/\[[\s\S]*\]/)
+  if (arr) { try { return JSON.parse(arr[0]) } catch { /* */ } }
+  const obj = cleaned.match(/\{[\s\S]*\}/)
+  if (obj) { try { return JSON.parse(obj[0]) } catch { /* */ } }
+  return null
+}
 ```
 
-Back-Button bleibt funktional; auf Step 0 (industry) versteckt.
+Bestehendes `parseJSON` (das immer ein Objekt liefert) bleibt für `context_parse`/`chat`-Pfade nutzbar; intern auf `parseJSONLoose` aufbauen und bei Array/Null ein Fallback-Objekt mit `raw`/`antwort` zurückgeben.
 
-### 4. Neuer Screen: `StepIndustry`
-- Headline „Was baust du auf?"
-- 2-Spalten-Grid (`grid-cols-2 gap-3`), 8 Karten aus `INDUSTRIES`.
-- Karte: Emoji groß, Label `font-serif`, kurze `description` darunter.
-- `whileTap={{ scale: 0.96 }}`, `whileHover={{ scale: 1.02 }}`.
-- On click: setState `industry`, 400 ms Delay → `setStepIdx(1)` (Spring-Fill via `animate` auf Ember-Hintergrund während des Delays).
+### 2. `plan_generate`-Branch — Slides garantiert als Array
 
-### 5. Adaptive Language
-- **StepType**: Subtitel aus `industry.terms.partner` ableiten (z. B. "und suche einen Geschäftspartner"). „Idee/Skills/beides" bleibt, aber Partner-Begriff dynamisch.
-- **CONTEXT_QUESTIONS** in eine Factory `buildContextQuestions(industry)` umwandeln:
-  - `stage` → `options = industry.terms.stage_options`
-  - `role` → Partner-Begriff in Frage/Optionen einsetzen
-  - `idea` → Frage nutzt `venture` (z. B. „Was für ein Betrieb/Studio entsteht?")
-- Im Component `const contextQuestions = useMemo(() => buildContextQuestions(industry), [industry])` und überall `CONTEXT_QUESTIONS` durch `contextQuestions` ersetzen (StepContextQuestion props + Overview-Labels).
-- **StepSkillPicker**: erhält `primaryCategories: string[]` aus `industry.primary_skills`. Diese Kategorien werden zuerst gerendert, restliche danach (stable sort).
-- **StepOverview**: „Dein Kontext"-Sektion-Label nutzt `industry.terms.venture`.
+```ts
+const sonnetRaw = await callSonnet(sonnetPrompt)
+const parsedSlides = parseJSONLoose(sonnetRaw)
+const slides: unknown[] = Array.isArray(parsedSlides)
+  ? parsedSlides
+  : (parsedSlides && Array.isArray((parsedSlides as any).slides))
+    ? (parsedSlides as any).slides
+    : []
+```
 
-### 6. Persistenz in `submitAll`
-- `profiles.update({ founder_type, industry: state.industry })`.
-- `copilot_context.upsert` zusätzlich `raw_context: { ...state.context, industry: state.industry, venture_term, partner_term, copilot_context }`.
-- Co-Pilot-Invoke-Body erweitern: `body: { task: "plan_generate", message: "", industry: state.industry, venture_term: industry.terms.venture, partner_term: industry.terms.partner, copilot_context: industry.copilot_context }`.
+`result = { plan: planData, slides }` → Client bekommt jetzt immer ein Array (ggf. leer, dann zeigt der Client weiter die existierende Fehlermeldung).
 
-### 7. Resume-Verhalten
-`STORAGE_KEY` bleibt; Industry-Feld wird automatisch mitserialisiert. Wenn `state.industry == null` aber `stepIdx > 0`, auf 0 zurücksetzen (sicherer Reset).
+### 3. Leere Kimi-Antwort abfangen
 
-### Technische Details
-- **Dateien geändert**: `src/routes/onboarding.tsx` (umfangreich), `src/integrations/supabase/types.ts` wird nach Migration automatisch regeneriert.
-- **Dateien neu**: keine (Industry-Screen lebt inline; falls Datei zu groß wird, später extrahieren).
-- **Migration**: einfaches `ALTER TABLE public.profiles ADD COLUMN industry text;`
-- **Edge Function `copilot`**: nur Body-Felder ergänzen — die Prompts unterstützen laut Aufgabenstellung bereits `industry`, `venture_term`, `partner_term`, `copilot_context`. Keine Änderung am Edge-Function-Code nötig.
-- **Type-Safety**: `IndustryId` Union sorgt für Compile-Check; `getIndustry` fällt auf `tech` zurück (defensiv).
+Wenn `kimiRaw` leer ist, Sonnet trotzdem mit minimalem Kontext aufrufen (statt mit `{}` Stringify einer leeren Struktur), damit die Slides nicht völlig generisch werden. Konkret: bei leerem `planData` einen Hinweisstring (`"Keine strukturierten Plan-Daten verfügbar — generiere generischen Startplan basierend auf Kontext: <ctx>"`) an Sonnet schicken.
 
-### Risiken / Out of Scope
-- Voice-Parsing (`context_parse`) bleibt unverändert — Industry beeinflusst dort nichts.
-- Keine Migration bestehender Profile (industry bleibt `null` für Alt-User; UI-Fallback nutzt generische Begriffe via `getIndustry()`-Default).
+## Keine Änderungen
+
+- `src/routes/plan.tsx` bleibt unverändert — der Client erwartet bereits ein Array.
+- Keine DB-/Migration-Änderungen.
+- Keine UI-Anpassungen.
+
+## Verifikation
+
+1. Edge Function neu deployen.
+2. `/plan` neu laden → Slides erscheinen.
+3. Edge-Logs prüfen: `slides_count > 0` im `copilot_documents.metadata`.

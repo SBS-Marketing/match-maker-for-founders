@@ -44,20 +44,27 @@ const callKimi   = (prompt: string) => callOpenRouter(KIMI_MODEL,   prompt, 2048
 const callSonnet = (prompt: string) => callOpenRouter(SONNET_MODEL, prompt, 1024)
 
 // ─── Parse JSON safely ───────────────────────────────────────
+function stripFences(s: string): string {
+  return s.replace(/^\s*```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim()
+}
+
+function parseJSONLoose(text: string): unknown {
+  if (!text || !text.trim()) return null
+  const cleaned = stripFences(text)
+  try { return JSON.parse(cleaned) } catch { /* fall through */ }
+  const arr = cleaned.match(/\[[\s\S]*\]/)
+  if (arr) { try { return JSON.parse(arr[0]) } catch { /* */ } }
+  const obj = cleaned.match(/\{[\s\S]*\}/)
+  if (obj) { try { return JSON.parse(obj[0]) } catch { /* */ } }
+  return null
+}
+
 function parseJSON(text: string): Record<string, unknown> {
-  if (!text || text.trim() === '') return { raw: '' }
-  try {
-    // Try direct parse first
-    return JSON.parse(text)
-  } catch {
-    try {
-      // Try extracting JSON block
-      const match = text.match(/\{[\s\S]*\}/)
-      if (match) return JSON.parse(match[0])
-    } catch { /* fall through */ }
+  const parsed = parseJSONLoose(text)
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    return parsed as Record<string, unknown>
   }
-  // Fallback: return raw text so pipeline never breaks
-  return { raw: text, antwort: text }
+  return { raw: text ?? '', antwort: text ?? '' }
 }
 
 // ─── Extract best text from Kimi response ────────────────────
