@@ -43,21 +43,19 @@ const callKimi   = (prompt: string) => callOpenRouter(KIMI_MODEL,   prompt, 2048
 const callSonnet = (prompt: string) => callOpenRouter(SONNET_MODEL, prompt, 1024)
 
 // ─── Parse JSON safely ───────────────────────────────────────
-function parseJSON(text: string): any {
+function parseJSON(text: string): Record<string, unknown> {
   if (!text || text.trim() === '') return { raw: '' }
   try {
+    // Try direct parse first
     return JSON.parse(text)
   } catch {
-    // Try extracting JSON array first, then object
     try {
-      const arrMatch = text.match(/\[[\s\S]*\]/)
-      if (arrMatch) return JSON.parse(arrMatch[0])
-    } catch { /* fall through */ }
-    try {
-      const objMatch = text.match(/\{[\s\S]*\}/)
-      if (objMatch) return JSON.parse(objMatch[0])
+      // Try extracting JSON block
+      const match = text.match(/\{[\s\S]*\}/)
+      if (match) return JSON.parse(match[0])
     } catch { /* fall through */ }
   }
+  // Fallback: return raw text so pipeline never breaks
   return { raw: text, antwort: text }
 }
 

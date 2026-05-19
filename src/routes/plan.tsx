@@ -11,7 +11,6 @@ export const Route = createFileRoute("/plan")({
   component: PlanPage,
 });
 
-// ─── Slide types ─────────────────────────────────────────────
 type Slide =
   | { type: "headline"; title: string; subtitle?: string; tag?: string }
   | { type: "situation"; label?: string; text: string }
@@ -38,7 +37,6 @@ function PlanPage() {
   const [idx, setIdx] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
 
-  // Load (from cache or API)
   useEffect(() => {
     let cancelled = false;
 
@@ -83,7 +81,7 @@ function PlanPage() {
 
   const total = slides?.length ?? 0;
   const isLast = idx === total - 1;
-  const canSkip = idx >= 2; // erste 2 Slides müssen gesehen werden
+  const canSkip = idx >= 2;
 
   const goNext = useCallback(() => {
     if (!slides) return;
@@ -104,7 +102,6 @@ function PlanPage() {
     navigate({ to: "/heute" });
   }, [navigate]);
 
-  // Keyboard
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); goNext(); }
@@ -119,7 +116,6 @@ function PlanPage() {
     else if (info.offset.x > 60) goPrev();
   };
 
-  // ── Loading ─────────────────────────────────────────────
   if (!slides && !error) {
     return (
       <main className="min-h-screen" style={{ background: "var(--cream)" }}>
@@ -146,18 +142,16 @@ function PlanPage() {
 
   return (
     <main className="relative h-screen w-screen overflow-hidden" style={{ background: "var(--cream)" }}>
-      {/* Skip → Dashboard (ab Slide 3) */}
       {canSkip && (
         <button
           onClick={goDashboard}
-          className="fixed right-6 top-6 z-40 font-mono text-xs uppercase tracking-[0.2em] text-[var(--ink)]/50 transition-colors hover:text-[var(--ink)]"
+          className="fixed right-6 top-6 z-40 font-mono text-xs uppercase tracking-[0.2em] opacity-60 transition-opacity hover:opacity-100"
           style={{ mixBlendMode: "difference", color: "#aaa" }}
         >
           Überspringen
         </button>
       )}
 
-      {/* Slide stage */}
       <div className="relative h-full w-full">
         <AnimatePresence mode="wait" initial={false} custom={direction}>
           <motion.div
@@ -185,7 +179,6 @@ function PlanPage() {
         </AnimatePresence>
       </div>
 
-      {/* Prev / Next chevrons (desktop) */}
       {idx > 0 && (
         <button
           onClick={goPrev}
@@ -205,7 +198,6 @@ function PlanPage() {
         </button>
       )}
 
-      {/* Dot indicator */}
       <div className="fixed inset-x-0 bottom-6 z-30 flex items-center justify-center gap-2">
         {slides!.map((_, i) => (
           <button
@@ -224,7 +216,6 @@ function PlanPage() {
   );
 }
 
-// ─── Filter null/empty slides (e.g. dealbreaker without risk) ─
 function filterSlides(arr: Slide[]): Slide[] {
   return arr.filter((s) => {
     if (s.type === "dealbreaker") {
@@ -237,7 +228,6 @@ function filterSlides(arr: Slide[]): Slide[] {
   });
 }
 
-// ─── Slide renderers ─────────────────────────────────────────
 function SlideRenderer({
   slide, idx, total, isLast, onCTA, onNext,
 }: {

@@ -279,16 +279,30 @@ function Onboarding() {
         scores,
       });
 
+      // Trigger plan generation (fire and forget – it can take a while)
+      supabase.functions
+        .invoke("copilot", {
+          body: {
+            task: "plan_generate",
+            message: "",
+            industry: state.industry,
+            venture_term: industry.terms.venture,
+            partner_term: industry.terms.partner,
+            copilot_context: industry.copilot_context,
+          },
+        })
+        .catch(() => undefined);
+
       try {
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem(STEP_KEY);
       } catch { /* ignore */ }
 
-      // Trigger tutorial overlay on /heute (shown after plan presentation)
-      try { sessionStorage.setItem("n", "1"); } catch {}
+      // Trigger tutorial overlay on /heute
+      try { sessionStorage.setItem("mf_tutorial", "1"); } catch {}
 
-      // Redirect to the plan presentation — it fetches plan_generate itself
-      navigate({ to: "/plan" });
+      // Redirect to dashboard
+      navigate({ to: "/heute" });
     } catch (e) {
       console.error(e);
       toast.error("Speichern fehlgeschlagen. Bitte erneut versuchen.");
