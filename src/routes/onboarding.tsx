@@ -46,6 +46,7 @@ type SkillState = {
 };
 
 type State = {
+  industry: IndustryId | null;
   path: FounderType | null;
   context: ContextFields;
   skills: SkillState;
@@ -53,6 +54,7 @@ type State = {
 };
 
 const EMPTY_STATE: State = {
+  industry: null,
   path: null,
   context: { idea: "", role: "", stage: "", goal: "", risk: "" },
   skills: { selected: [], categories: [], availability: 20, looking_for: [] },
