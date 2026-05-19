@@ -35,7 +35,8 @@ async function callOpenRouter(model: string, prompt: string, maxTokens = 2048): 
   })
   const data = await res.json()
   if (!res.ok) throw new Error(`OpenRouter error (${model}): ${JSON.stringify(data)}`)
-  return data.choices[0].message.content
+  const content = data?.choices?.[0]?.message?.content
+  return typeof content === 'string' ? content : (content == null ? '' : JSON.stringify(content))
 }
 
 // ─── Convenience wrappers ────────────────────────────────────
