@@ -43,11 +43,12 @@ async function callOpenRouter(model: string, prompt: string, maxTokens = 2048): 
 const callKimi   = (prompt: string) => callOpenRouter(KIMI_MODEL,   prompt, 2048)
 const callSonnet = (prompt: string) => callOpenRouter(SONNET_MODEL, prompt, 1024)
 
-// ─── Parse JSON safely ───────────────────────────────────────
+// ─── Strip markdown code fences ──────────────────────────────
 function stripFences(s: string): string {
   return s.replace(/^\s*```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim()
 }
 
+// ─── Parse JSON loosely — handles arrays, objects, fences ────
 function parseJSONLoose(text: string): unknown {
   if (!text || !text.trim()) return null
   const cleaned = stripFences(text)
@@ -59,6 +60,7 @@ function parseJSONLoose(text: string): unknown {
   return null
 }
 
+// ─── Parse JSON safely (always returns object) ───────────────
 function parseJSON(text: string): Record<string, unknown> {
   const parsed = parseJSONLoose(text)
   if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
@@ -248,19 +250,25 @@ Deno.serve(async (req) => {
       console.log('[KIMI plan_generate]', kimiRaw.slice(0, 300))
       const planData = parseJSON(kimiRaw)
 
-      // Stage 2: Sonnet turns it into a presentation
-      const hasPlanData = kimiRaw && kimiRaw.trim() !== '' && !('raw' in planData && !planData.antwort)
-      const sonnetInput = hasPlanData
+      // If Kimi returned nothing useful, give Sonnet a minimal context fallback
+      const planInput = kimiRaw.trim()
         ? JSON.stringify(planData)
-        : `Keine strukturierten Plan-Daten verfügbar — generiere generischen Startplan basierend auf Kontext: ${JSON.stringify(ctx)}`
-      const sonnetPrompt = SONNET_PROMPTS.plan_presentation(ctx, sonnetInput)
+        : `Keine strukturierten Plan-Daten verfügbar — generiere einen Startplan basierend auf: ${JSON.stringify(ctx)}`
+
+      // Stage 2: Sonnet turns it into a presentation
+      const sonnetPrompt = SONNET_PROMPTS.plan_presentation(ctx, planInput)
       const sonnetRaw = await callSonnet(sonnetPrompt)
+      console.log('[SONNET plan slides raw]', sonnetRaw.slice(0, 300))
+
+      // Extract slides — handle array, wrapped object, or empty
       const parsedSlides = parseJSONLoose(sonnetRaw)
       const slides: unknown[] = Array.isArray(parsedSlides)
         ? parsedSlides
-        : (parsedSlides && typeof parsedSlides === 'object' && Array.isArray((parsedSlides as Record<string, unknown>).slides))
-          ? (parsedSlides as { slides: unknown[] }).slides
+        : (parsedSlides && Array.isArray((parsedSlides as Record<string, unknown>).slides))
+          ? (parsedSlides as Record<string, unknown>).slides as unknown[]
           : []
+
+      console.log('[SLIDES count]', slides.length)
 
       // Save plan as document
       await supabase.from('copilot_documents').insert({
