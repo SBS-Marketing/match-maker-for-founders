@@ -249,9 +249,18 @@ Deno.serve(async (req) => {
       const planData = parseJSON(kimiRaw)
 
       // Stage 2: Sonnet turns it into a presentation
-      const sonnetPrompt = SONNET_PROMPTS.plan_presentation(ctx, JSON.stringify(planData))
+      const hasPlanData = kimiRaw && kimiRaw.trim() !== '' && !('raw' in planData && !planData.antwort)
+      const sonnetInput = hasPlanData
+        ? JSON.stringify(planData)
+        : `Keine strukturierten Plan-Daten verfügbar — generiere generischen Startplan basierend auf Kontext: ${JSON.stringify(ctx)}`
+      const sonnetPrompt = SONNET_PROMPTS.plan_presentation(ctx, sonnetInput)
       const sonnetRaw = await callSonnet(sonnetPrompt)
-      const slides = parseJSON(sonnetRaw)
+      const parsedSlides = parseJSONLoose(sonnetRaw)
+      const slides: unknown[] = Array.isArray(parsedSlides)
+        ? parsedSlides
+        : (parsedSlides && typeof parsedSlides === 'object' && Array.isArray((parsedSlides as Record<string, unknown>).slides))
+          ? (parsedSlides as { slides: unknown[] }).slides
+          : []
 
       // Save plan as document
       await supabase.from('copilot_documents').insert({
@@ -263,7 +272,7 @@ Deno.serve(async (req) => {
         draft_content: kimiRaw,
         fill_pct:      100,
         status:        'ready',
-        metadata:      { slides_count: Array.isArray(slides) ? slides.length : 0 },
+        metadata:      { slides_count: slides.length },
       })
 
       result = { plan: planData, slides }
