@@ -314,6 +314,66 @@ export type Database = {
           },
         ]
       }
+      founder_assessment: {
+        Row: {
+          created_at: string
+          id: string
+          raw_answers: Json
+          scores: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          raw_answers: Json
+          scores: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          raw_answers?: Json
+          scores?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      founder_skills: {
+        Row: {
+          availability: number | null
+          categories: Json | null
+          created_at: string
+          id: string
+          looking_for: Json | null
+          skills: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          availability?: number | null
+          categories?: Json | null
+          created_at?: string
+          id?: string
+          looking_for?: Json | null
+          skills?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          availability?: number | null
+          categories?: Json | null
+          created_at?: string
+          id?: string
+          looking_for?: Json | null
+          skills?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           created_at: string
@@ -372,6 +432,7 @@ export type Database = {
           commitment: Database["public"]["Enums"]["founder_commitment"] | null
           created_at: string
           display_name: string | null
+          founder_type: string | null
           id: string
           industry: string | null
           location: string | null
@@ -389,6 +450,7 @@ export type Database = {
           commitment?: Database["public"]["Enums"]["founder_commitment"] | null
           created_at?: string
           display_name?: string | null
+          founder_type?: string | null
           id: string
           industry?: string | null
           location?: string | null
@@ -406,6 +468,7 @@ export type Database = {
           commitment?: Database["public"]["Enums"]["founder_commitment"] | null
           created_at?: string
           display_name?: string | null
+          founder_type?: string | null
           id?: string
           industry?: string | null
           location?: string | null
