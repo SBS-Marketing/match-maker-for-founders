@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TalentRouteImport } from './routes/talent'
 import { Route as SteuerRouteImport } from './routes/steuer'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PlanRouteImport } from './routes/plan'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MentorenRouteImport } from './routes/mentoren'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
@@ -45,6 +46,11 @@ const SteuerRoute = SteuerRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanRoute = PlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/marketplace': typeof MarketplaceRoute
   '/mentoren': typeof MentorenRoute
   '/onboarding': typeof OnboardingRoute
+  '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
   '/steuer': typeof SteuerRoute
   '/talent': typeof TalentRoute
@@ -180,6 +187,7 @@ export interface FileRoutesByTo {
   '/marketplace': typeof MarketplaceRoute
   '/mentoren': typeof MentorenRoute
   '/onboarding': typeof OnboardingRoute
+  '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
   '/steuer': typeof SteuerRoute
   '/talent': typeof TalentRoute
@@ -205,6 +213,7 @@ export interface FileRoutesById {
   '/marketplace': typeof MarketplaceRoute
   '/mentoren': typeof MentorenRoute
   '/onboarding': typeof OnboardingRoute
+  '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
   '/steuer': typeof SteuerRoute
   '/talent': typeof TalentRoute
@@ -231,6 +240,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/mentoren'
     | '/onboarding'
+    | '/plan'
     | '/profile'
     | '/steuer'
     | '/talent'
@@ -255,6 +265,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/mentoren'
     | '/onboarding'
+    | '/plan'
     | '/profile'
     | '/steuer'
     | '/talent'
@@ -279,6 +290,7 @@ export interface FileRouteTypes {
     | '/marketplace'
     | '/mentoren'
     | '/onboarding'
+    | '/plan'
     | '/profile'
     | '/steuer'
     | '/talent'
@@ -304,6 +316,7 @@ export interface RootRouteChildren {
   MarketplaceRoute: typeof MarketplaceRoute
   MentorenRoute: typeof MentorenRoute
   OnboardingRoute: typeof OnboardingRoute
+  PlanRoute: typeof PlanRoute
   ProfileRoute: typeof ProfileRoute
   SteuerRoute: typeof SteuerRoute
   TalentRoute: typeof TalentRoute
@@ -337,6 +350,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plan': {
+      id: '/plan'
+      path: '/plan'
+      fullPath: '/plan'
+      preLoaderRoute: typeof PlanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -488,6 +508,7 @@ const rootRouteChildren: RootRouteChildren = {
   MarketplaceRoute: MarketplaceRoute,
   MentorenRoute: MentorenRoute,
   OnboardingRoute: OnboardingRoute,
+  PlanRoute: PlanRoute,
   ProfileRoute: ProfileRoute,
   SteuerRoute: SteuerRoute,
   TalentRoute: TalentRoute,
@@ -502,3 +523,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
