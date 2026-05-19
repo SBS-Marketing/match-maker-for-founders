@@ -12,6 +12,7 @@ import {
   calculateAllScores,
   type AssessmentScores,
 } from "../../onboarding/assessment";
+import { INDUSTRIES, getIndustry, type Industry, type IndustryId } from "../../onboarding/industries";
 import { RadarChart } from "@/components/onboarding/RadarChart";
 import { LoadingConverge } from "@/components/onboarding/LoadingConverge";
 
@@ -45,6 +46,7 @@ type SkillState = {
 };
 
 type State = {
+  industry: IndustryId | null;
   path: FounderType | null;
   context: ContextFields;
   skills: SkillState;
@@ -52,6 +54,7 @@ type State = {
 };
 
 const EMPTY_STATE: State = {
+  industry: null,
   path: null,
   context: { idea: "", role: "", stage: "", goal: "", risk: "" },
   skills: { selected: [], categories: [], availability: 20, looking_for: [] },
@@ -61,64 +64,71 @@ const EMPTY_STATE: State = {
 const STORAGE_KEY = "matchfoundr_onboarding_v1";
 const STEP_KEY = "matchfoundr_onboarding_step_v1";
 
-const CONTEXT_QUESTIONS: {
+type ContextQuestion = {
   key: keyof ContextFields;
   question: string;
   placeholder: string;
   options: string[];
   multi: boolean;
-}[] = [
-  {
-    key: "idea",
-    question: "Woran arbeitest du?",
-    placeholder: "Erzähl in einem Satz, was du baust…",
-    options: ["SaaS-Tool", "Marketplace", "Mobile App", "AI/ML-Produkt", "Hardware", "Consumer-Brand", "B2B-Service", "Noch unklar"],
-    multi: false,
-  },
-  {
-    key: "role",
-    question: "Was ist deine Rolle? Solo oder mit Team?",
-    placeholder: "z. B. Solo-Founder, technisch",
-    options: ["Solo-Founder", "Technischer Co-Founder", "Business/Sales", "Produkt/Design", "Mit Team (2–3)", "Mit Team (4+)"],
-    multi: true,
-  },
-  {
-    key: "stage",
-    question: "Wo stehst du gerade?",
-    placeholder: "Idee, Prototyp, erste Kunden…",
-    options: ["Reine Idee", "Konzept/Validierung", "Prototyp", "MVP live", "Erste Kunden", "Skaliert (>10k MRR)"],
-    multi: false,
-  },
-  {
-    key: "goal",
-    question: "Was willst du in den nächsten 3 Monaten erreichen?",
-    placeholder: "z. B. MVP live, 10 zahlende Pilotkunden",
-    options: ["MVP fertigstellen", "Erste 10 Kunden", "Co-Founder finden", "Förderung sichern", "Team aufbauen", "Pre-Seed Runde"],
-    multi: true,
-  },
-  {
-    key: "risk",
-    question: "Was ist dein größtes Risiko oder die nächste Deadline?",
-    placeholder: "z. B. Runway endet in 6 Monaten",
-    options: ["Runway < 6 Monate", "Antrags-Deadline", "Markt-Validierung offen", "Tech-Risiko", "Kein Co-Founder", "Kein Risiko gerade"],
-    multi: false,
-  },
-];
+};
+
+function buildContextQuestions(industry: Industry): ContextQuestion[] {
+  const venture = industry.terms.venture;
+  const partner = industry.terms.partner;
+  return [
+    {
+      key: "idea",
+      question: `Woran arbeitest du? Was für ein ${venture} entsteht?`,
+      placeholder: `Erzähl in einem Satz, was du baust…`,
+      options: ["SaaS-Tool", "Marketplace", "Mobile App", "AI/ML-Produkt", "Hardware", "Consumer-Brand", "B2B-Service", "Noch unklar"],
+      multi: false,
+    },
+    {
+      key: "role",
+      question: `Was ist deine Rolle? Solo oder mit ${partner}?`,
+      placeholder: `z. B. Solo, technisch`,
+      options: [`Solo`, `Technischer ${partner}`, "Business/Sales", "Produkt/Design", "Mit Team (2–3)", "Mit Team (4+)"],
+      multi: true,
+    },
+    {
+      key: "stage",
+      question: "Wo stehst du gerade?",
+      placeholder: "Aktuelle Phase…",
+      options: industry.terms.stage_options,
+      multi: false,
+    },
+    {
+      key: "goal",
+      question: "Was willst du in den nächsten 3 Monaten erreichen?",
+      placeholder: "z. B. erste 10 Kunden",
+      options: ["Erstes Projekt fertig", "Erste 10 Kunden", `${partner} finden`, "Förderung sichern", "Team aufbauen", "Finanzierung"],
+      multi: true,
+    },
+    {
+      key: "risk",
+      question: "Was ist dein größtes Risiko oder die nächste Deadline?",
+      placeholder: "z. B. Runway endet in 6 Monaten",
+      options: ["Runway < 6 Monate", "Antrags-Deadline", "Markt-Validierung offen", "Genehmigung/Zulassung offen", `Kein ${partner}`, "Kein Risiko gerade"],
+      multi: false,
+    },
+  ];
+}
 
 // ─────────────────────────────────────────────────────────────
 // Step keys per path
 // ─────────────────────────────────────────────────────────────
 
-function stepsFor(path: FounderType | null): string[] {
-  if (!path) return ["type"];
+function stepsFor(industry: IndustryId | null, path: FounderType | null): string[] {
+  if (!industry) return ["industry"];
+  if (!path) return ["industry", "type"];
   if (path === "founder") {
-    return ["type", "input_method", "ctx_0", "ctx_1", "ctx_2", "ctx_3", "ctx_4", "assessment", "overview"];
+    return ["industry", "type", "input_method", "ctx_0", "ctx_1", "ctx_2", "ctx_3", "ctx_4", "assessment", "overview"];
   }
   if (path === "talent") {
-    return ["type", "skills_picker", "looking_for", "availability", "assessment", "overview"];
+    return ["industry", "type", "skills_picker", "looking_for", "availability", "assessment", "overview"];
   }
   // hybrid
-  return ["type", "input_method", "ctx_0", "ctx_1", "ctx_2", "ctx_3", "ctx_4", "skills_picker", "looking_for", "availability", "assessment", "overview"];
+  return ["industry", "type", "input_method", "ctx_0", "ctx_1", "ctx_2", "ctx_3", "ctx_4", "skills_picker", "looking_for", "availability", "assessment", "overview"];
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -167,6 +177,11 @@ function Onboarding() {
   useEffect(() => {
     if (resumedRef.current) return;
     resumedRef.current = true;
+    // Safety: if industry missing but step advanced (legacy state), reset to start
+    if (stepIdx > 0 && !state.industry) {
+      setStepIdx(0);
+      return;
+    }
     if (stepIdx > 0 && state.path) {
       toast.success("Fortschritt wiederhergestellt", {
         description: "Du machst da weiter, wo du aufgehört hast.",
@@ -186,8 +201,10 @@ function Onboarding() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const steps = stepsFor(state.path);
-  const currentStep = steps[stepIdx] ?? "type";
+  const industry = useMemo(() => getIndustry(state.industry ?? "tech"), [state.industry]);
+  const contextQuestions = useMemo(() => buildContextQuestions(industry), [industry]);
+  const steps = stepsFor(state.industry, state.path);
+  const currentStep = steps[stepIdx] ?? "industry";
 
   const goNext = useCallback(() => {
     setDirection(1);
@@ -218,8 +235,11 @@ function Onboarding() {
     try {
       const scores = calculateAllScores(state.answers);
 
-      // Persist profile founder_type
-      await supabase.from("profiles").update({ founder_type: state.path }).eq("id", user.id);
+      // Persist profile founder_type + industry
+      await supabase
+        .from("profiles")
+        .update({ founder_type: state.path, industry: state.industry })
+        .eq("id", user.id);
 
       // Persist context for founder/hybrid
       if (state.path === "founder" || state.path === "hybrid") {
@@ -230,7 +250,13 @@ function Onboarding() {
           stage: state.context.stage || null,
           goal: state.context.goal || null,
           risk: state.context.risk || null,
-          raw_context: state.context,
+          raw_context: {
+            ...state.context,
+            industry: state.industry,
+            venture_term: industry.terms.venture,
+            partner_term: industry.terms.partner,
+            copilot_context: industry.copilot_context,
+          },
           updated_at: new Date().toISOString(),
         });
       }
@@ -254,7 +280,18 @@ function Onboarding() {
       });
 
       // Trigger plan generation (fire and forget – it can take a while)
-      supabase.functions.invoke("copilot", { body: { task: "plan_generate", message: "" } }).catch(() => undefined);
+      supabase.functions
+        .invoke("copilot", {
+          body: {
+            task: "plan_generate",
+            message: "",
+            industry: state.industry,
+            venture_term: industry.terms.venture,
+            partner_term: industry.terms.partner,
+            copilot_context: industry.copilot_context,
+          },
+        })
+        .catch(() => undefined);
 
       try {
         localStorage.removeItem(STORAGE_KEY);
@@ -271,7 +308,7 @@ function Onboarding() {
       toast.error("Speichern fehlgeschlagen. Bitte erneut versuchen.");
       setSubmitting(false);
     }
-  }, [user, state, navigate]);
+  }, [user, state, navigate, industry]);
 
   if (submitting) {
     return (
@@ -318,12 +355,24 @@ function Onboarding() {
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="min-h-screen px-6 pb-12 pt-20"
           >
+            {currentStep === "industry" && (
+              <StepIndustry
+                selected={state.industry}
+                onChoose={(id) => {
+                  updateState({ industry: id });
+                  setDirection(1);
+                  setTimeout(() => setStepIdx(1), 400);
+                }}
+              />
+            )}
+
             {currentStep === "type" && (
               <StepType
+                industry={industry}
                 onChoose={(p) => {
                   updateState({ path: p });
                   setDirection(1);
-                  setStepIdx(1);
+                  setStepIdx(2);
                 }}
               />
             )}
@@ -344,8 +393,9 @@ function Onboarding() {
             {currentStep.startsWith("ctx_") && (
               <StepContextQuestion
                 idx={Number(currentStep.split("_")[1])}
-                value={state.context[CONTEXT_QUESTIONS[Number(currentStep.split("_")[1])].key]}
-                onChange={(v) => updateCtx(CONTEXT_QUESTIONS[Number(currentStep.split("_")[1])].key, v)}
+                questions={contextQuestions}
+                value={state.context[contextQuestions[Number(currentStep.split("_")[1])].key]}
+                onChange={(v) => updateCtx(contextQuestions[Number(currentStep.split("_")[1])].key, v)}
                 onNext={goNext}
               />
             )}
@@ -353,6 +403,7 @@ function Onboarding() {
             {currentStep === "skills_picker" && (
               <StepSkillPicker
                 skills={state.skills}
+                primaryCategories={industry.primary_skills}
                 onChange={updateSkills}
                 onNext={goNext}
               />
@@ -385,6 +436,8 @@ function Onboarding() {
             {currentStep === "overview" && (
               <StepOverview
                 state={state}
+                industry={industry}
+                contextQuestions={contextQuestions}
                 onEditContext={(key, value) => updateCtx(key, value)}
                 onEditSkills={(patch) => updateSkills(patch)}
                 onSubmit={submitAll}
@@ -398,13 +451,62 @@ function Onboarding() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Screen: Industry select (0a)
+// ─────────────────────────────────────────────────────────────
+
+function StepIndustry({
+  selected,
+  onChoose,
+}: {
+  selected: IndustryId | null;
+  onChoose: (id: IndustryId) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-8">
+      <header>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">Schritt 1</p>
+        <h1 className="mt-2 font-serif text-4xl leading-tight text-[var(--ink)] md:text-5xl">
+          Was <em className="text-[var(--ember)]">baust du auf</em>?
+        </h1>
+        <p className="mt-3 text-[var(--ink)]/60">Wähle deine Branche — alles weitere passt sich an.</p>
+      </header>
+      <div className="grid grid-cols-2 gap-3">
+        {INDUSTRIES.map((ind) => {
+          const active = selected === ind.id;
+          return (
+            <motion.button
+              key={ind.id}
+              onClick={() => onChoose(ind.id)}
+              whileTap={{ scale: 0.96 }}
+              whileHover={{ scale: 1.02 }}
+              animate={{
+                backgroundColor: active ? "var(--ember)" : "var(--paper)",
+                color: active ? "var(--cream)" : "var(--ink)",
+              }}
+              transition={{ type: "spring", stiffness: 300, damping: 22 }}
+              className="flex flex-col items-start gap-2 rounded-2xl border border-[var(--ink)]/10 p-5 text-left"
+            >
+              <span className="text-3xl">{ind.emoji}</span>
+              <span className="font-serif text-lg leading-tight">{ind.label}</span>
+              <span className="text-xs opacity-70">{ind.description}</span>
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // Screen: Type select
 // ─────────────────────────────────────────────────────────────
 
-function StepType({ onChoose }: { onChoose: (p: FounderType) => void }) {
+function StepType({ industry, onChoose }: { industry: Industry; onChoose: (p: FounderType) => void }) {
+  const partner = industry.terms.partner;
+  const venture = industry.terms.venture;
   const options: { id: FounderType; title: string; sub: string; Icon: typeof Lightbulb }[] = [
-    { id: "founder", title: "Ich hab eine Idee", sub: "und suche einen Co-Founder", Icon: Lightbulb },
-    { id: "talent", title: "Ich hab Skills", sub: "und suche ein Projekt", Icon: Wrench },
+    { id: "founder", title: "Ich hab eine Idee", sub: `und suche einen ${partner}`, Icon: Lightbulb },
+    { id: "talent", title: "Ich hab Skills", sub: `und suche ein ${venture}`, Icon: Wrench },
     { id: "hybrid", title: "Ich hab beides", sub: "Idee + Skills", Icon: Layers },
   ];
   return (
@@ -632,16 +734,18 @@ function VoiceCapture({
 
 function StepContextQuestion({
   idx,
+  questions,
   value,
   onChange,
   onNext,
 }: {
   idx: number;
+  questions: ContextQuestion[];
   value: string;
   onChange: (v: string) => void;
   onNext: () => void;
 }) {
-  const q = CONTEXT_QUESTIONS[idx];
+  const q = questions[idx];
   const canNext = value.trim().length >= 2;
 
   // Parse current value into selected chip set (case-insensitive)
@@ -675,7 +779,7 @@ function StepContextQuestion({
     <div className="flex min-h-[70vh] flex-col justify-between">
       <header>
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">
-          Frage {idx + 1} von {CONTEXT_QUESTIONS.length}
+          Frage {idx + 1} von {questions.length}
         </p>
         <h1 className="mt-3 font-serif text-3xl leading-tight text-[var(--ink)] md:text-4xl">
           {q.question}
@@ -740,15 +844,27 @@ const MAX_SKILLS = 8;
 
 function StepSkillPicker({
   skills,
+  primaryCategories,
   onChange,
   onNext,
 }: {
   skills: SkillState;
+  primaryCategories: string[];
   onChange: (patch: Partial<SkillState>) => void;
   onNext: () => void;
 }) {
-  const [activeCat, setActiveCat] = useState<string>(SKILL_CATEGORIES[0].id);
-  const cat = SKILL_CATEGORIES.find((c) => c.id === activeCat)!;
+  // Order categories: primary (from industry) first, then the rest
+  const orderedCategories = useMemo(() => {
+    const primary = primaryCategories
+      .map((id) => SKILL_CATEGORIES.find((c) => c.id === id))
+      .filter((c): c is (typeof SKILL_CATEGORIES)[number] => Boolean(c));
+    const primaryIds = new Set(primary.map((c) => c.id));
+    const rest = SKILL_CATEGORIES.filter((c) => !primaryIds.has(c.id));
+    return [...primary, ...rest];
+  }, [primaryCategories]);
+
+  const [activeCat, setActiveCat] = useState<string>(orderedCategories[0].id);
+  const cat = orderedCategories.find((c) => c.id === activeCat) ?? orderedCategories[0];
 
   const toggleSkill = (skill: string) => {
     const isSelected = skills.selected.includes(skill);
@@ -780,7 +896,7 @@ function StepSkillPicker({
 
       {/* Category chips */}
       <div className="-mx-6 flex gap-2 overflow-x-auto px-6 pb-1">
-        {SKILL_CATEGORIES.map((c) => (
+        {orderedCategories.map((c) => (
           <button
             key={c.id}
             onClick={() => setActiveCat(c.id)}
@@ -1044,11 +1160,15 @@ function StepAssessment({
 
 function StepOverview({
   state,
+  industry,
+  contextQuestions,
   onEditContext,
   onEditSkills,
   onSubmit,
 }: {
   state: State;
+  industry: Industry;
+  contextQuestions: ContextQuestion[];
   onEditContext: (key: keyof ContextFields, value: string) => void;
   onEditSkills: (patch: Partial<SkillState>) => void;
   onSubmit: () => void;
@@ -1068,7 +1188,9 @@ function StepOverview({
 
       {/* Type card */}
       <section className="rounded-2xl bg-[var(--ink)] p-6 text-[var(--cream)]">
-        <div className="font-mono text-xs uppercase tracking-[0.2em] opacity-60">Typ</div>
+        <div className="font-mono text-xs uppercase tracking-[0.2em] opacity-60">
+          {industry.emoji} {industry.label} · Typ
+        </div>
         <div className="mt-1 font-serif text-2xl capitalize">
           {state.path === "founder" && "🚀 Founder"}
           {state.path === "talent" && "🛠 Talent"}
@@ -1078,9 +1200,11 @@ function StepOverview({
 
       {showContext && (
         <section>
-          <h2 className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-[var(--ink)]/60">Dein Kontext</h2>
+          <h2 className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-[var(--ink)]/60">
+            Dein {industry.terms.venture}
+          </h2>
           <div className="flex flex-col divide-y divide-[var(--ink)]/10 rounded-2xl bg-[var(--paper)]">
-            {CONTEXT_QUESTIONS.map((q) => (
+            {contextQuestions.map((q) => (
               <EditableRow
                 key={q.key}
                 label={labelForCtx(q.key)}

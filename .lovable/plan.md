@@ -1,35 +1,54 @@
-## Ziel
-Nach erfolgreichem Onboarding-Redirect auf `/heute` startet automatisch ein einmaliges, geführtes Tutorial, das die wichtigsten Bereiche des Command Centers erklärt.
+## Plan: Industry Layer für Onboarding
 
-## Trigger-Mechanismus
-- In `src/routes/onboarding.tsx` (Zeile 183–186): vor dem `navigate({ to: "/heute" })` zusätzlich `sessionStorage.setItem("mf_tutorial", "1")` setzen.
-- In `src/routes/heute.tsx`: beim Mount prüfen, ob `mf_tutorial === "1"` → Tutorial starten und Flag entfernen (damit es nur einmal läuft). Persistente Variante zusätzlich in `localStorage` ("mf_tutorial_done"), damit ein Reload mittendrin es nicht erneut zeigt.
+### 1. DB-Migration
+Spalte `industry text` zu `public.profiles` hinzufügen (nullable, kein Default). Bestehende RLS-Policies decken die Spalte ab.
 
-## Tutorial-UX (Spotlight-Coachmarks)
-Neue Komponente `src/components/onboarding/TutorialOverlay.tsx`:
-- Vollflächiges Overlay mit halbtransparentem Backdrop (`bg-ink/70`)
-- Spotlight: liest `getBoundingClientRect()` des aktuellen Ziel-Elements, schneidet das Loch via SVG-Maske (4 dunkle Rechtecke außen) und zeichnet eine 2 px Ember-Outline um das Target
-- Tooltip-Card (`glass-pane`) neben dem Target, mit Eyebrow „Schritt X von 5", Titel, kurzem Serif-Italic-Text, Buttons „Weiter" / „Überspringen"
-- Fade/scale via framer-motion (bereits installiert)
-- Auto-scroll zum Target, ResizeObserver für responsives Repositionieren
-- Esc / Klick auf „Fertig" schließt + setzt `localStorage.mf_tutorial_done = "1"`
+### 2. State erweitern (`src/routes/onboarding.tsx`)
+- `State` um `industry: IndustryId | null` erweitern (initial `null`), in `EMPTY_STATE` ergänzen.
+- Import `INDUSTRIES`, `getIndustry`, `type IndustryId` aus `../../onboarding/industries`.
+- Helper `industry = state.industry ? getIndustry(state.industry) : null` im Component-Scope.
 
-## Tutorial-Schritte
-Targets via `data-tour="..."` Attribute in `heute.tsx` markieren:
+### 3. Steps-Maschine
+`stepsFor(path, hasIndustry)` umbauen: erster Step ist immer `"industry"`. Erst nach Auswahl folgt `"type"` und der bisherige Pfad. Sequenz:
 
-1. `welcome` (zentriert, kein Target) — „Willkommen bei matchfoundr. Dein Command Center ist live."
-2. `focus` (Focus-Banner Zeile 52) — „Dein Co-Pilot priorisiert täglich drei Dinge. Übernehmen oder verschieben."
-3. `conversations` (Aktive Gespräche Zeile 77) — „Alle laufenden Threads — Co-Founder, Recht, Förderung, Steuer."
-4. `agenda` (Agenda Zeile 120) — „Was heute auf dem Kalender steht."
-5. `funding` (Funding-Pipeline Zeile 140) — „Dein wichtigster offener Antrag. Co-Pilot füllt 78% vorab."
+```text
+industry → type → (founder | talent | hybrid pfade) → assessment → overview
+```
 
-Letzter Step CTA: „Loslegen" → schließt Overlay.
+Back-Button bleibt funktional; auf Step 0 (industry) versteckt.
 
-## Dateien
-- **edit** `src/routes/onboarding.tsx`: 1 Zeile `sessionStorage.setItem` vor dem Redirect.
-- **edit** `src/routes/heute.tsx`: `CommandCenter` von reiner Funktion zu Komponente mit `useEffect`-Trigger + 5 `data-tour`-Attribute + `<TutorialOverlay/>`-Render.
-- **new** `src/components/onboarding/TutorialOverlay.tsx`: Spotlight-Overlay + Step-Engine.
+### 4. Neuer Screen: `StepIndustry`
+- Headline „Was baust du auf?"
+- 2-Spalten-Grid (`grid-cols-2 gap-3`), 8 Karten aus `INDUSTRIES`.
+- Karte: Emoji groß, Label `font-serif`, kurze `description` darunter.
+- `whileTap={{ scale: 0.96 }}`, `whileHover={{ scale: 1.02 }}`.
+- On click: setState `industry`, 400 ms Delay → `setStepIdx(1)` (Spring-Fill via `animate` auf Ember-Hintergrund während des Delays).
 
-## Nicht Teil dieses Plans
-- Wiederholbares Tutorial aus Profil-Settings (kann später nachgereicht werden, Hook ist da: einfach Flag wieder setzen).
-- Keine DB-Persistenz (rein clientseitig via localStorage).
+### 5. Adaptive Language
+- **StepType**: Subtitel aus `industry.terms.partner` ableiten (z. B. "und suche einen Geschäftspartner"). „Idee/Skills/beides" bleibt, aber Partner-Begriff dynamisch.
+- **CONTEXT_QUESTIONS** in eine Factory `buildContextQuestions(industry)` umwandeln:
+  - `stage` → `options = industry.terms.stage_options`
+  - `role` → Partner-Begriff in Frage/Optionen einsetzen
+  - `idea` → Frage nutzt `venture` (z. B. „Was für ein Betrieb/Studio entsteht?")
+- Im Component `const contextQuestions = useMemo(() => buildContextQuestions(industry), [industry])` und überall `CONTEXT_QUESTIONS` durch `contextQuestions` ersetzen (StepContextQuestion props + Overview-Labels).
+- **StepSkillPicker**: erhält `primaryCategories: string[]` aus `industry.primary_skills`. Diese Kategorien werden zuerst gerendert, restliche danach (stable sort).
+- **StepOverview**: „Dein Kontext"-Sektion-Label nutzt `industry.terms.venture`.
+
+### 6. Persistenz in `submitAll`
+- `profiles.update({ founder_type, industry: state.industry })`.
+- `copilot_context.upsert` zusätzlich `raw_context: { ...state.context, industry: state.industry, venture_term, partner_term, copilot_context }`.
+- Co-Pilot-Invoke-Body erweitern: `body: { task: "plan_generate", message: "", industry: state.industry, venture_term: industry.terms.venture, partner_term: industry.terms.partner, copilot_context: industry.copilot_context }`.
+
+### 7. Resume-Verhalten
+`STORAGE_KEY` bleibt; Industry-Feld wird automatisch mitserialisiert. Wenn `state.industry == null` aber `stepIdx > 0`, auf 0 zurücksetzen (sicherer Reset).
+
+### Technische Details
+- **Dateien geändert**: `src/routes/onboarding.tsx` (umfangreich), `src/integrations/supabase/types.ts` wird nach Migration automatisch regeneriert.
+- **Dateien neu**: keine (Industry-Screen lebt inline; falls Datei zu groß wird, später extrahieren).
+- **Migration**: einfaches `ALTER TABLE public.profiles ADD COLUMN industry text;`
+- **Edge Function `copilot`**: nur Body-Felder ergänzen — die Prompts unterstützen laut Aufgabenstellung bereits `industry`, `venture_term`, `partner_term`, `copilot_context`. Keine Änderung am Edge-Function-Code nötig.
+- **Type-Safety**: `IndustryId` Union sorgt für Compile-Check; `getIndustry` fällt auf `tech` zurück (defensiv).
+
+### Risiken / Out of Scope
+- Voice-Parsing (`context_parse`) bleibt unverändert — Industry beeinflusst dort nichts.
+- Keine Migration bestehender Profile (industry bleibt `null` für Alt-User; UI-Fallback nutzt generische Begriffe via `getIndustry()`-Default).
