@@ -424,13 +424,62 @@ function Onboarding() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// Screen: Industry select (0a)
+// ─────────────────────────────────────────────────────────────
+
+function StepIndustry({
+  selected,
+  onChoose,
+}: {
+  selected: IndustryId | null;
+  onChoose: (id: IndustryId) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-8">
+      <header>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">Schritt 1</p>
+        <h1 className="mt-2 font-serif text-4xl leading-tight text-[var(--ink)] md:text-5xl">
+          Was <em className="text-[var(--ember)]">baust du auf</em>?
+        </h1>
+        <p className="mt-3 text-[var(--ink)]/60">Wähle deine Branche — alles weitere passt sich an.</p>
+      </header>
+      <div className="grid grid-cols-2 gap-3">
+        {INDUSTRIES.map((ind) => {
+          const active = selected === ind.id;
+          return (
+            <motion.button
+              key={ind.id}
+              onClick={() => onChoose(ind.id)}
+              whileTap={{ scale: 0.96 }}
+              whileHover={{ scale: 1.02 }}
+              animate={{
+                backgroundColor: active ? "var(--ember)" : "var(--paper)",
+                color: active ? "var(--cream)" : "var(--ink)",
+              }}
+              transition={{ type: "spring", stiffness: 300, damping: 22 }}
+              className="flex flex-col items-start gap-2 rounded-2xl border border-[var(--ink)]/10 p-5 text-left"
+            >
+              <span className="text-3xl">{ind.emoji}</span>
+              <span className="font-serif text-lg leading-tight">{ind.label}</span>
+              <span className="text-xs opacity-70">{ind.description}</span>
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // Screen: Type select
 // ─────────────────────────────────────────────────────────────
 
-function StepType({ onChoose }: { onChoose: (p: FounderType) => void }) {
+function StepType({ industry, onChoose }: { industry: Industry; onChoose: (p: FounderType) => void }) {
+  const partner = industry.terms.partner;
+  const venture = industry.terms.venture;
   const options: { id: FounderType; title: string; sub: string; Icon: typeof Lightbulb }[] = [
-    { id: "founder", title: "Ich hab eine Idee", sub: "und suche einen Co-Founder", Icon: Lightbulb },
-    { id: "talent", title: "Ich hab Skills", sub: "und suche ein Projekt", Icon: Wrench },
+    { id: "founder", title: "Ich hab eine Idee", sub: `und suche einen ${partner}`, Icon: Lightbulb },
+    { id: "talent", title: "Ich hab Skills", sub: `und suche ein ${venture}`, Icon: Wrench },
     { id: "hybrid", title: "Ich hab beides", sub: "Idee + Skills", Icon: Layers },
   ];
   return (
