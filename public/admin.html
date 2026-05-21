@@ -149,9 +149,8 @@ nav{position:sticky;top:0;z-index:100;height:56px;background:rgba(17,16,9,.8);ba
 
 <!-- CONFIG BANNER (zeigt sich wenn keine Keys gesetzt) -->
 <div class="config-banner" id="config-banner">
-  <span>⚡ <b>Live-Daten aktivieren:</b> GitHub Token + Supabase URL eingeben für Echtzeit-Monitoring.</span>
+  <span>⚡ <b>Live-Daten aktivieren:</b> Supabase URL eingeben für Echtzeit-Monitoring.</span>
   <div class="config-inputs">
-    <input class="config-inp" id="cfg-gh" placeholder="GitHub Token (ghp_…)" type="password"/>
     <input class="config-inp" id="cfg-sb" placeholder="Supabase URL (https://…)"/>
     <button class="config-btn" onclick="saveConfig()">Verbinden</button>
   </div>
@@ -410,7 +409,6 @@ let cfg = {};
 try { cfg = JSON.parse(localStorage.getItem(CFG_KEY)||'{}'); } catch {}
 
 function saveConfig() {
-  cfg.gh  = document.getElementById('cfg-gh').value.trim();
   cfg.sb  = document.getElementById('cfg-sb').value.trim();
   localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
   document.getElementById('config-banner').style.display='none';
@@ -504,17 +502,16 @@ function addSimLog() {
 }
 
 // ── GITHUB LIVE ─────────────────────────────────────────────────────────────
+const GH_PROXY = 'https://urjpyhyezrwhwgnkkxjv.supabase.co/functions/v1/github-proxy';
+
 async function fetchGitHub() {
-  if (!cfg.gh) return;
   try {
-    const r = await fetch('https://api.github.com/repos/SBS-Marketing/match-maker-for-founders/issues?state=all&per_page=1',
-      {headers:{'Authorization':`Bearer ${cfg.gh}`,'Accept':'application/vnd.github+json'}});
+    const r = await fetch(`${GH_PROXY}/repos/SBS-Marketing/match-maker-for-founders/issues?state=all&per_page=1`);
     const link = r.headers.get('link')||'';
     const match = link.match(/page=(\d+)>; rel="last"/);
     const total = match ? parseInt(match[1]) : 55;
 
-    const open = await fetch('https://api.github.com/repos/SBS-Marketing/match-maker-for-founders/issues?state=open&per_page=1',
-      {headers:{'Authorization':`Bearer ${cfg.gh}`,'Accept':'application/vnd.github+json'}});
+    const open = await fetch(`${GH_PROXY}/repos/SBS-Marketing/match-maker-for-founders/issues?state=open&per_page=1`);
     const oLink = open.headers.get('link')||'';
     const oMatch = oLink.match(/page=(\d+)>; rel="last"/);
     const openCount = oMatch ? parseInt(oMatch[1]) : total;
