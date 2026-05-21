@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>matchfoundr · Tools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Geist',sans-serif;background:#0e0d09;color:#fbfaf7;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px}
+  .bg{position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 20% 20%,rgba(226,81,28,.15) 0%,transparent 60%),#0e0d09;z-index:0}
+  .wrap{position:relative;z-index:1;max-width:640px;width:100%;text-align:center}
+  .logo{font-size:28px;font-weight:700;letter-spacing:-.8px;margin-bottom:8px}.logo span{color:#e2511c}
+  .sub{font-size:15px;color:rgba(251,250,247,.4);margin-bottom:48px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
+  .card{background:rgba(251,250,247,.04);border:1px solid rgba(251,250,247,.1);border-radius:16px;padding:28px 20px;text-decoration:none;color:#fbfaf7;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:12px}
+  .card:hover{border-color:rgba(226,81,28,.4);background:rgba(226,81,28,.06);transform:translateY(-2px);box-shadow:0 8px 32px rgba(226,81,28,.1)}
+  .card-icon{font-size:32px}
+  .card-title{font-size:15px;font-weight:700;letter-spacing:-.3px}
+  .card-desc{font-size:12px;color:rgba(251,250,247,.4);line-height:1.4;text-align:center}
+  .gh-link{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:rgba(251,250,247,.35);text-decoration:none;padding:8px 16px;border:1px solid rgba(251,250,247,.1);border-radius:20px;transition:all .2s}
+  .gh-link:hover{color:#fbfaf7;border-color:rgba(251,250,247,.25)}
+  @media(max-width:480px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="wrap">
+  <div class="logo">match<span>foundr</span></div>
+  <div class="sub">Interne Tools für das Team</div>
+  <div class="grid">
+    <a class="card" href="/board.html">
+      <div class="card-icon">📋</div>
+      <div class="card-title">Board</div>
+      <div class="card-desc">GitHub Issues als Kanban. Drag & Drop, Kommentare, Live-Sync.</div>
+    </a>
+    <a class="card" href="/admin.html">
+      <div class="card-icon">⚙️</div>
+      <div class="card-title">Admin</div>
+      <div class="card-desc">Automation-Monitoring, Error Logs, API-Status & Scraper-Health.</div>
+    </a>
+    <a class="card" href="/deals.html">
+      <div class="card-icon">🎁</div>
+      <div class="card-title">Deals</div>
+      <div class="card-desc">Gründer-Rabatte & Freebies von AWS, HubSpot, Intercom & Co.</div>
+    </a>
+  </div>
+  <a class="gh-link" href="https://github.com/SBS-Marketing/match-maker-for-founders" target="_blank" rel="noopener">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+    SBS-Marketing/match-maker-for-founders
+  </a>
+</div>
+</body>
+</html>

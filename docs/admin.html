@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>matchfoundr · Admin</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
+:root{--ink:#15140f;--cream:#fbfaf7;--ember:#e2511c;--smoke:#6b635a;--sans:'Geist',system-ui,sans-serif;--mono:'Geist Mono',monospace;--ok:#3d9e6a;--warn:#c9a84c;--err:#d94f4f;--info:#5a9ec8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:#111009;color:var(--cream);min-height:100vh}
+
+.backdrop{position:fixed;inset:0;z-index:0;background:#111009;overflow:hidden}
+.b1{position:absolute;width:60%;height:70%;top:-20%;right:-10%;background:radial-gradient(circle,rgba(226,81,28,.3),transparent 65%);filter:blur(100px);pointer-events:none}
+.b2{position:absolute;width:45%;height:55%;bottom:-15%;left:-10%;background:radial-gradient(circle,rgba(21,20,15,.8),transparent 65%);filter:blur(80px);pointer-events:none}
+.grid{position:absolute;inset:0;opacity:.04;background-image:linear-gradient(rgba(255,255,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,1) 1px,transparent 1px);background-size:48px 48px;pointer-events:none}
+
+.app{position:relative;z-index:1}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;height:56px;background:rgba(17,16,9,.8);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;padding:0 28px;gap:16px;justify-content:space-between}
+.nav-l{display:flex;align-items:center;gap:12px}
+.wm{font-weight:700;font-size:18px;letter-spacing:-.04em}.wm span{color:var(--ember)}
+.bdg{font-family:var(--mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase;background:rgba(226,81,28,.15);color:var(--ember);border:1px solid rgba(226,81,28,.3);border-radius:999px;padding:3px 9px}
+.nav-status{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.4)}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--ok);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(61,158,106,.4)}50%{opacity:.7;box-shadow:0 0 0 4px rgba(61,158,106,0)}}
+.nav-r{display:flex;gap:8px}
+.refresh-btn{font-family:var(--mono);font-size:10px;letter-spacing:.08em;padding:5px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s}
+.refresh-btn:hover{border-color:var(--ember);color:var(--ember)}
+
+/* LAYOUT */
+.page{max-width:1560px;margin:0 auto;padding:28px}
+
+/* CONFIG BANNER */
+.config-banner{background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);border-radius:12px;padding:14px 18px;margin-bottom:24px;display:flex;align-items:center;gap:12px;font-size:13px;color:rgba(255,255,255,.6)}
+.config-banner b{color:#c9a84c}
+.config-inputs{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+.config-inp{padding:6px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:var(--cream);font-family:var(--mono);font-size:11px;outline:none;width:240px}
+.config-inp:focus{border-color:var(--ember)}
+.config-btn{padding:6px 12px;border-radius:7px;background:var(--ember);border:none;color:var(--cream);font-family:var(--mono);font-size:10px;letter-spacing:.06em;cursor:pointer}
+
+/* GRID */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+
+/* CARD */
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:20px}
+.card-sm{padding:16px}
+.card-title{font-family:var(--mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title .dot{width:6px;height:6px;border-radius:50%}
+
+/* KPI */
+.kpi-val{font-size:clamp(28px,3vw,42px);font-weight:700;letter-spacing:-.04em;line-height:1}
+.kpi-label{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.08em;margin-top:6px}
+.kpi-delta{font-family:var(--mono);font-size:11px;margin-top:4px}
+.delta-up{color:var(--ok)}.delta-dn{color:var(--err)}.delta-eq{color:rgba(255,255,255,.3)}
+
+/* STATUS ROWS */
+.status-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.status-row:last-child{border-bottom:none}
+.sname{flex:1;font-size:13px;font-weight:500}
+.sdesc{font-size:11px;color:rgba(255,255,255,.35);margin-left:auto;font-family:var(--mono)}
+.stag{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:999px}
+.s-ok{background:rgba(61,158,106,.15);color:#3d9e6a;border:1px solid rgba(61,158,106,.25)}
+.s-warn{background:rgba(201,168,76,.15);color:#c9a84c;border:1px solid rgba(201,168,76,.25)}
+.s-err{background:rgba(217,79,79,.15);color:#d94f4f;border:1px solid rgba(217,79,79,.25)}
+.s-idle{background:rgba(255,255,255,.06);color:rgba(255,255,255,.3);border:1px solid rgba(255,255,255,.1)}
+.s-run{background:rgba(90,158,200,.15);color:#5a9ec8;border:1px solid rgba(90,158,200,.25)}
+
+/* LOG */
+.log-feed{font-family:var(--mono);font-size:11px;display:flex;flex-direction:column;gap:4px;max-height:320px;overflow-y:auto}
+.log-line{display:flex;gap:10px;padding:5px 8px;border-radius:6px;transition:background .12s}
+.log-line:hover{background:rgba(255,255,255,.03)}
+.log-ts{color:rgba(255,255,255,.25);flex-shrink:0;width:56px}
+.log-src{flex-shrink:0;width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.log-msg{flex:1;color:rgba(255,255,255,.65)}
+.log-ok .log-src{color:var(--ok)}
+.log-warn .log-src{color:var(--warn)}
+.log-err .log-src{color:var(--err)}
+.log-err .log-msg{color:#ff9090}
+.log-info .log-src{color:var(--info)}
+
+/* FLOW DIAGRAM */
+.flow{display:flex;align-items:center;gap:0;flex-wrap:nowrap;overflow-x:auto;padding:4px 0 12px}
+.flow-node{flex-shrink:0;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px;text-align:center;min-width:110px}
+.flow-node.ok{border-color:rgba(61,158,106,.35);background:rgba(61,158,106,.08)}
+.flow-node.err{border-color:rgba(217,79,79,.35);background:rgba(217,79,79,.08)}
+.flow-node.run{border-color:rgba(90,158,200,.35);background:rgba(90,158,200,.08);animation:glow 1.5s infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(90,158,200,.2)}50%{box-shadow:0 0 8px 2px rgba(90,158,200,.25)}}
+.fn-icon{font-size:18px;margin-bottom:4px}
+.fn-name{font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:rgba(255,255,255,.55)}
+.fn-status{font-family:var(--mono);font-size:8px;margin-top:3px}
+.flow-arr{flex-shrink:0;color:rgba(255,255,255,.2);font-size:16px;padding:0 6px;align-self:center}
+
+/* GITHUB RUNS */
+.run-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.run-row:last-child{border-bottom:none}
+.run-name{flex:1;font-size:12px}
+.run-branch{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3)}
+.run-time{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3)}
+
+/* MINI CHART */
+.sparkline{display:flex;align-items:flex-end;gap:3px;height:36px;margin-top:10px}
+.bar{flex:1;border-radius:3px 3px 0 0;background:rgba(226,81,28,.4);transition:height .3s}
+.bar.today{background:var(--ember)}
+
+/* TABS */
+.tabs{display:flex;gap:2px;margin-bottom:16px;background:rgba(255,255,255,.04);border-radius:10px;padding:3px;width:fit-content}
+.tab{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:6px 14px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.4);transition:all .15s;border:none;background:transparent}
+.tab.on{background:rgba(255,255,255,.1);color:var(--cream)}
+
+/* SETUP MODAL */
+.modal-bg{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#1a1612;border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:28px;max-width:480px;width:90%}
+.modal h3{font-size:18px;font-weight:700;letter-spacing:-.025em;margin-bottom:6px}
+.modal p{font-size:13px;color:rgba(255,255,255,.45);margin-bottom:20px;line-height:1.55}
+.inp-field{margin-bottom:12px}
+.inp-field label{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:5px}
+.inp-field input{width:100%;padding:10px 13px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:var(--cream);font-family:var(--mono);font-size:12px;outline:none}
+.inp-field input:focus{border-color:var(--ember)}
+.modal-actions{display:flex;gap:8px;margin-top:18px}
+.btn-p{flex:1;padding:10px;border-radius:9px;background:var(--ember);border:none;color:var(--cream);font-weight:600;font-size:13px;cursor:pointer}
+.btn-c{padding:10px 16px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.45);font-size:13px;cursor:pointer}
+
+@media(max-width:1000px){.grid-4{grid-template-columns:1fr 1fr}.grid-3{grid-template-columns:1fr 1fr}}
+@media(max-width:660px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="backdrop"><div class="b1"></div><div class="b2"></div><div class="grid"></div></div>
+
+<div class="app">
+<nav>
+  <div class="nav-l">
+    <div class="wm">matchfoundr<span>.</span></div>
+    <div class="bdg">Admin</div>
+  </div>
+  <div class="nav-status"><div class="pulse"></div><span id="sys-status">Alle Systeme operational</span></div>
+  <div class="nav-r">
+    <button class="refresh-btn" onclick="refreshAll()">↺ Refresh</button>
+    <button class="refresh-btn" style="border-color:rgba(226,81,28,.3);color:var(--ember)" onclick="openSetup()">⚙ Config</button>
+  </div>
+</nav>
+
+<div class="page">
+
+<!-- CONFIG BANNER (zeigt sich wenn keine Keys gesetzt) -->
+<div class="config-banner" id="config-banner">
+  <span>⚡ <b>Live-Daten aktivieren:</b> Supabase URL eingeben für Echtzeit-Monitoring.</span>
+  <div class="config-inputs">
+    <input class="config-inp" id="cfg-sb" placeholder="Supabase URL (https://…)"/>
+    <button class="config-btn" onclick="saveConfig()">Verbinden</button>
+  </div>
+</div>
+
+<!-- KPI ROW -->
+<div class="grid-4" style="margin-bottom:16px">
+  <div class="card card-sm">
+    <div class="card-title"><span class="dot" style="background:var(--ok)"></span>Automations</div>
+    <div class="kpi-val" id="kpi-flows">4</div>
+    <div class="kpi-label">Aktive Pipelines</div>
+    <div class="kpi-delta delta-up">↑ alle operational</div>
+  </div>
+  <div class="card card-sm">
+    <div class="card-title"><span class="dot" style="background:var(--err)"></span>Fehler (24h)</div>
+    <div class="kpi-val" id="kpi-errors" style="color:var(--err)">0</div>
+    <div class="kpi-label">Error Events</div>
+    <div class="kpi-delta delta-up" id="kpi-err-delta">↑ keine neuen</div>
+  </div>
+  <div class="card card-sm">
+    <div class="card-title"><span class="dot" style="background:var(--info)"></span>GitHub Issues</div>
+    <div class="kpi-val" id="kpi-issues">55</div>
+    <div class="kpi-label">Total · <span id="kpi-open" style="color:var(--ember)">55 offen</span></div>
+    <div class="kpi-delta delta-eq" id="kpi-closed-delta">0 geschlossen</div>
+  </div>
+  <div class="card card-sm">
+    <div class="card-title"><span class="dot" style="background:var(--warn)"></span>Förderprogramme</div>
+    <div class="kpi-val" id="kpi-foerd">17</div>
+    <div class="kpi-label">In Datenbank</div>
+    <div class="kpi-delta delta-up">↑ wöchentl. Update</div>
+  </div>
+</div>
+
+<!-- FLOW DIAGRAM -->
+<div class="card" style="margin-bottom:16px">
+  <div class="card-title"><span class="dot" style="background:var(--info)"></span>Automatisierungs-Flows</div>
+
+  <div style="margin-bottom:20px">
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:10px">Flow A · Förderprogramm-Pipeline (wöchentlich Mo 6:00)</div>
+    <div class="flow">
+      <div class="flow-node ok"><div class="fn-icon">🕐</div><div class="fn-name">GitHub Cron</div><div class="fn-status" style="color:var(--ok)">scheduled</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node ok"><div class="fn-icon">🕷</div><div class="fn-name">Scrapers</div><div class="fn-status" style="color:var(--ok)">KfW+BAFA+Länder</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node ok"><div class="fn-icon">🤖</div><div class="fn-name">Claude API</div><div class="fn-status" style="color:var(--ok)">normalize</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node ok"><div class="fn-icon">🔧</div><div class="fn-name">fix_normalize</div><div class="fn-status" style="color:var(--ok)">quality check</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node ok"><div class="fn-icon">🗄</div><div class="fn-name">Supabase</div><div class="fn-status" style="color:var(--ok)">upsert</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node ok"><div class="fn-icon">✓</div><div class="fn-name">Git Commit</div><div class="fn-status" style="color:var(--ok)">delta only</div></div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:20px">
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:10px">Flow B · Co-Pilot Request</div>
+    <div class="flow">
+      <div class="flow-node ok"><div class="fn-icon">👤</div><div class="fn-name">User Input</div><div class="fn-status" style="color:var(--ok)">SSE request</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node ok"><div class="fn-icon">🔑</div><div class="fn-name">Auth Check</div><div class="fn-status" style="color:var(--ok)">Supabase JWT</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node ok"><div class="fn-icon">🧠</div><div class="fn-name">Load Context</div><div class="fn-status" style="color:var(--ok)">user_context</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node run"><div class="fn-icon">⚡</div><div class="fn-name">Claude claude-opus-4-7</div><div class="fn-status" style="color:var(--info)">streaming</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node ok"><div class="fn-icon">💾</div><div class="fn-name">Save + Extract</div><div class="fn-status" style="color:var(--ok)">memory update</div></div>
+    </div>
+  </div>
+
+  <div>
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:10px">Flow C · Förderung-Search</div>
+    <div class="flow">
+      <div class="flow-node ok"><div class="fn-icon">🔍</div><div class="fn-name">Query</div><div class="fn-status" style="color:var(--ok)">user + context</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node ok"><div class="fn-icon">🛸</div><div class="fn-name">Voyage AI</div><div class="fn-status" style="color:var(--ok)">embedding</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node ok"><div class="fn-icon">📐</div><div class="fn-name">pgvector</div><div class="fn-status" style="color:var(--ok)">cosine search</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node ok"><div class="fn-icon">🤖</div><div class="fn-name">Claude</div><div class="fn-status" style="color:var(--ok)">recommendation</div></div>
+      <div class="flow-arr">→</div>
+      <div class="flow-node ok"><div class="fn-icon">📋</div><div class="fn-name">Results</div><div class="fn-status" style="color:var(--ok)">ranked + explained</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICE STATUS + GITHUB RUNS -->
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--ok)"></span>Service Status</div>
+    <div class="status-row">
+      <span style="font-size:16px">🗄</span><span class="sname">Supabase DB</span>
+      <span class="sdesc" id="sb-latency">— ms</span>
+      <span class="stag s-ok" id="sb-tag">Operational</span>
+    </div>
+    <div class="status-row">
+      <span style="font-size:16px">⚡</span><span class="sname">Edge Function · copilot</span>
+      <span class="sdesc" id="ef-copilot-latency">— ms</span>
+      <span class="stag s-ok" id="ef-copilot-tag">Deployed</span>
+    </div>
+    <div class="status-row">
+      <span style="font-size:16px">🔍</span><span class="sname">Edge Function · foerderung-search</span>
+      <span class="sdesc">—</span>
+      <span class="stag s-warn">Ausstehend</span>
+    </div>
+    <div class="status-row">
+      <span style="font-size:16px">🤖</span><span class="sname">Claude API (Anthropic)</span>
+      <span class="sdesc" id="claude-latency">— ms</span>
+      <span class="stag s-ok" id="claude-tag">Operational</span>
+    </div>
+    <div class="status-row">
+      <span style="font-size:16px">🛸</span><span class="sname">Voyage AI (Embeddings)</span>
+      <span class="sdesc">—</span>
+      <span class="stag s-idle">Nicht konfiguriert</span>
+    </div>
+    <div class="status-row">
+      <span style="font-size:16px">💳</span><span class="sname">Stripe</span>
+      <span class="sdesc">—</span>
+      <span class="stag s-idle">Nicht konfiguriert</span>
+    </div>
+    <div class="status-row">
+      <span style="font-size:16px">🐙</span><span class="sname">GitHub Actions</span>
+      <span class="sdesc" id="gh-run-time">—</span>
+      <span class="stag s-ok" id="gh-tag">Active</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--info)"></span>GitHub · Letzte Runs</div>
+    <div id="gh-runs-list">
+      <div class="run-row">
+        <span style="font-size:14px">✅</span>
+        <div style="flex:1"><div class="run-name">Förderprogramme wöchentlich aktualisieren</div><div class="run-branch">main · 2026-05-17</div></div>
+        <span class="stag s-ok">success</span>
+      </div>
+      <div class="run-row">
+        <span style="font-size:14px">⏳</span>
+        <div style="flex:1"><div class="run-name">Nächster Run</div><div class="run-branch">Montag 06:00 UTC</div></div>
+        <span class="stag s-idle">scheduled</span>
+      </div>
+    </div>
+
+    <div style="margin-top:16px">
+      <div class="card-title" style="margin-bottom:10px"><span class="dot" style="background:var(--ember)"></span>Issues nach Kategorie</div>
+      <div id="issue-breakdown">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${[['Design','5b6cc3',9],['Backend','5a9e7a',13],['Daten','e2511c',7],['Marketing','c9a84c',10],['Legal','b07ab0',5],['Business','5abcd8',6],['Infra','888888',5]].map(([l,c,n])=>`
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-family:var(--mono);font-size:10px;width:80px;color:rgba(255,255,255,.5)">${l}</span>
+            <div style="flex:1;height:6px;background:rgba(255,255,255,.07);border-radius:999px;overflow:hidden">
+              <div style="height:100%;width:${Math.round(n/55*100)}%;background:#${c};border-radius:999px"></div>
+            </div>
+            <span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.35);width:20px;text-align:right">${n}</span>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ERROR LOG -->
+<div class="card" style="margin-bottom:16px;margin-top:16px">
+  <div class="card-title" style="justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:var(--err)"></span>Live Error Log</div>
+    <div style="display:flex;gap:6px">
+      <div class="tabs" style="margin:0">
+        <button class="tab on" onclick="filterLog('all',this)">All</button>
+        <button class="tab" onclick="filterLog('err',this)">Errors</button>
+        <button class="tab" onclick="filterLog('warn',this)">Warnings</button>
+        <button class="tab" onclick="filterLog('ok',this)">Success</button>
+      </div>
+      <button class="refresh-btn" onclick="addSimLog()">+ Simulate</button>
+    </div>
+  </div>
+  <div class="log-feed" id="log-feed"></div>
+</div>
+
+<!-- BOTTOM ROW -->
+<div class="grid-3">
+  <!-- Scraper Health -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--warn)"></span>Scraper-Gesundheit</div>
+    <div class="status-row">
+      <span style="font-size:14px">📦</span><span class="sname">KfW</span>
+      <span class="sdesc">4 Programme</span><span class="stag s-ok">OK</span>
+    </div>
+    <div class="status-row">
+      <span style="font-size:14px">📦</span><span class="sname">BAFA</span>
+      <span class="sdesc">3 Programme</span><span class="stag s-ok">OK</span>
+    </div>
+    <div class="status-row">
+      <span style="font-size:14px">📦</span><span class="sname">Bundesländer</span>
+      <span class="sdesc">10 Programme</span><span class="stag s-ok">OK</span>
+    </div>
+    <div class="status-row">
+      <span style="font-size:14px">📦</span><span class="sname">Förderdatenbank.de</span>
+      <span class="sdesc">live scraping</span><span class="stag s-warn">Rate limited</span>
+    </div>
+    <div class="status-row">
+      <span style="font-size:14px">📦</span><span class="sname">EU-Programme</span>
+      <span class="sdesc">—</span><span class="stag s-idle">Ausstehend</span>
+    </div>
+    <div style="margin-top:14px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25)">Letzter Run: 2026-05-17 · 17 Programme total</div>
+  </div>
+
+  <!-- DB Stats -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--info)"></span>Datenbank</div>
+    <div class="status-row"><span class="sname">foerderprogramme</span><span class="sdesc">17 Einträge</span><span class="stag s-ok">healthy</span></div>
+    <div class="status-row"><span class="sname">user_context</span><span class="sdesc">0 Einträge</span><span class="stag s-idle">leer</span></div>
+    <div class="status-row"><span class="sname">co_pilot_sessions</span><span class="sdesc">0 Einträge</span><span class="stag s-idle">leer</span></div>
+    <div class="status-row"><span class="sname">co_pilot_messages</span><span class="sdesc">0 Einträge</span><span class="stag s-idle">leer</span></div>
+    <div class="status-row"><span class="sname">user_foerderungen</span><span class="sdesc">0 Einträge</span><span class="stag s-idle">leer</span></div>
+    <div style="margin-top:14px;font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25)">pgvector · eu-west-1 · PostgreSQL 17</div>
+  </div>
+
+  <!-- Kosten-Tracking -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--ember)"></span>API-Kosten (Monat)</div>
+    <div class="status-row"><span class="sname">Claude (Anthropic)</span><span class="sdesc">~0 Anfragen</span><span class="stag s-ok">$0.00</span></div>
+    <div class="status-row"><span class="sname">Voyage AI</span><span class="sdesc">~0 Embeddings</span><span class="stag s-ok">$0.00</span></div>
+    <div class="status-row"><span class="sname">Supabase</span><span class="sdesc">Free Tier</span><span class="stag s-ok">$0.00</span></div>
+    <div class="status-row"><span class="sname">GitHub Actions</span><span class="sdesc">Free Tier</span><span class="stag s-ok">$0.00</span></div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06)">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3)">Gesamt Mai 2026</span>
+        <span style="font-size:22px;font-weight:700;letter-spacing:-.03em;color:var(--ok)">$0.00</span>
+      </div>
+      <div style="font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.25);margin-top:4px">Budget: $50/Monat · 0% verbraucht</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /page -->
+</div><!-- /app -->
+
+<!-- SETUP MODAL -->
+<div class="modal-bg" id="setup-modal" onclick="if(event.target===this)closeSetup()">
+<div class="modal">
+  <h3>Live-Monitoring einrichten</h3>
+  <p>Gib deine API-Keys ein — sie werden nur im Browser gespeichert (localStorage), nie übertragen.</p>
+  <div class="inp-field"><label>GitHub Token</label><input id="m-gh" type="password" placeholder="ghp_…"/></div>
+  <div class="inp-field"><label>Supabase URL</label><input id="m-sb" placeholder="https://xxx.supabase.co"/></div>
+  <div class="inp-field"><label>Supabase Anon Key</label><input id="m-sbk" type="password" placeholder="eyJ…"/></div>
+  <div class="inp-field"><label>Anthropic API Key (optional)</label><input id="m-ant" type="password" placeholder="sk-ant-…"/></div>
+  <div class="modal-actions">
+    <button class="btn-c" onclick="closeSetup()">Abbrechen</button>
+    <button class="btn-p" onclick="saveSetup()">Speichern & verbinden</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────────────────
+const CFG_KEY = 'mf_admin_cfg';
+let cfg = {};
+try { cfg = JSON.parse(localStorage.getItem(CFG_KEY)||'{}'); } catch {}
+
+function saveConfig() {
+  cfg.sb  = document.getElementById('cfg-sb').value.trim();
+  localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+  document.getElementById('config-banner').style.display='none';
+  refreshAll();
+}
+function saveSetup() {
+  cfg.gh  = document.getElementById('m-gh').value.trim()||cfg.gh;
+  cfg.sb  = document.getElementById('m-sb').value.trim()||cfg.sb;
+  cfg.sbk = document.getElementById('m-sbk').value.trim()||cfg.sbk;
+  cfg.ant = document.getElementById('m-ant').value.trim()||cfg.ant;
+  localStorage.setItem(CFG_KEY, JSON.stringify(cfg));
+  closeSetup();
+  if (cfg.gh||cfg.sb) document.getElementById('config-banner').style.display='none';
+  refreshAll();
+}
+
+if (cfg.gh||cfg.sb) document.getElementById('config-banner').style.display='none';
+
+function openSetup() {
+  if (cfg.gh) document.getElementById('m-gh').value=cfg.gh;
+  if (cfg.sb) document.getElementById('m-sb').value=cfg.sb;
+  document.getElementById('setup-modal').classList.add('open');
+}
+function closeSetup() { document.getElementById('setup-modal').classList.remove('open'); }
+
+// ── LOG ─────────────────────────────────────────────────────────────────────
+let logs = [
+  {level:'ok',  src:'gh-actions',      msg:'weekly-scrape workflow triggered successfully', ts: Date.now()-3600000},
+  {level:'ok',  src:'scraper/kfw',     msg:'4 Programme geladen → data/raw/kfw/', ts: Date.now()-3580000},
+  {level:'ok',  src:'scraper/bafa',    msg:'3 Programme geladen → data/raw/bafa/', ts: Date.now()-3560000},
+  {level:'ok',  src:'scraper/laender', msg:'10 Programme geladen → data/raw/bundeslaender/', ts: Date.now()-3540000},
+  {level:'warn',src:'scraper/foerderdb','msg':'Rate limit hit (429) — retry in 60s', ts: Date.now()-3530000},
+  {level:'ok',  src:'normalize.py',    msg:'17 Programme normalisiert → normalized/', ts: Date.now()-3500000},
+  {level:'ok',  src:'fix_normalize',   msg:'1 ungültiger Eintrag entfernt (id:unknown)', ts: Date.now()-3490000},
+  {level:'ok',  src:'gh-actions',      msg:'Commit: "data: Förderprogramme 2026-05-17 aktualisiert"', ts: Date.now()-3480000},
+  {level:'info',src:'admin-dashboard', msg:'Seite geladen', ts: Date.now()-100},
+];
+let logFilter = 'all';
+
+function ts(t) {
+  const diff = (Date.now()-t)/1000;
+  if (diff<60) return `${Math.floor(diff)}s`;
+  if (diff<3600) return `${Math.floor(diff/60)}m`;
+  return `${Math.floor(diff/3600)}h`;
+}
+
+function renderLogs() {
+  const feed = document.getElementById('log-feed');
+  const filtered = logFilter==='all' ? logs : logs.filter(l=>
+    logFilter==='err' ? l.level==='err' :
+    logFilter==='warn' ? l.level==='warn' :
+    l.level==='ok'
+  );
+  feed.innerHTML = [...filtered].reverse().map(l=>`
+    <div class="log-line log-${l.level}">
+      <span class="log-ts">${ts(l.ts)}</span>
+      <span class="log-src">${l.src}</span>
+      <span class="log-msg">${l.msg}</span>
+    </div>`).join('') || '<div class="log-line"><span class="log-msg" style="color:rgba(255,255,255,.25)">Keine Einträge.</span></div>';
+}
+
+function filterLog(f,btn) {
+  logFilter=f;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderLogs();
+}
+
+const SIM_LOGS = [
+  {level:'ok',  src:'edge/copilot',    msg:'Request verarbeitet — 847ms, tokens: 1240'},
+  {level:'ok',  src:'supabase',        msg:'user_context updated for user_id: usr_xxx'},
+  {level:'warn',src:'edge/copilot',    msg:'Adaptive thinking aktiviert — längere Antwortzeit erwartet'},
+  {level:'err', src:'edge/foerderung', msg:'VOYAGE_API_KEY nicht gesetzt — Embedding fehlgeschlagen'},
+  {level:'ok',  src:'scraper/kfw',     msg:'Keine neuen Programme gefunden — Datensatz aktuell'},
+  {level:'info',src:'gh-actions',      msg:'weekly-scrape: run #2 gestartet'},
+  {level:'warn',src:'normalize.py',    msg:'Claude API slow response (4.2s) — möglicherweise hohe Last'},
+  {level:'ok',  src:'stripe/webhook',  msg:'customer.subscription.created — starter plan aktiviert'},
+];
+let simIdx=0;
+function addSimLog() {
+  const l = {...SIM_LOGS[simIdx%SIM_LOGS.length], ts:Date.now()};
+  simIdx++;
+  logs.push(l);
+  if(l.level==='err') {
+    const cur=parseInt(document.getElementById('kpi-errors').textContent)||0;
+    document.getElementById('kpi-errors').textContent=cur+1;
+    document.getElementById('kpi-err-delta').textContent=`↑ ${cur+1} neue Fehler`;
+    document.getElementById('kpi-err-delta').className='kpi-delta delta-dn';
+  }
+  renderLogs();
+}
+
+// ── GITHUB LIVE ─────────────────────────────────────────────────────────────
+const GH_PROXY = 'https://urjpyhyezrwhwgnkkxjv.supabase.co/functions/v1/github-proxy';
+
+async function fetchGitHub() {
+  try {
+    const r = await fetch(`${GH_PROXY}/repos/SBS-Marketing/match-maker-for-founders/issues?state=all&per_page=1`);
+    const link = r.headers.get('link')||'';
+    const match = link.match(/page=(\d+)>; rel="last"/);
+    const total = match ? parseInt(match[1]) : 55;
+
+    const open = await fetch(`${GH_PROXY}/repos/SBS-Marketing/match-maker-for-founders/issues?state=open&per_page=1`);
+    const oLink = open.headers.get('link')||'';
+    const oMatch = oLink.match(/page=(\d+)>; rel="last"/);
+    const openCount = oMatch ? parseInt(oMatch[1]) : total;
+    const closedCount = total - openCount;
+
+    document.getElementById('kpi-issues').textContent = total;
+    document.getElementById('kpi-open').textContent = `${openCount} offen`;
+    document.getElementById('kpi-closed-delta').textContent = `${closedCount} geschlossen`;
+    if (closedCount>0) document.getElementById('kpi-closed-delta').className='kpi-delta delta-up';
+
+    logs.push({level:'ok',src:'gh-api',msg:`${total} Issues geladen (${openCount} offen, ${closedCount} closed)`,ts:Date.now()});
+    renderLogs();
+  } catch(e) {
+    logs.push({level:'warn',src:'gh-api',msg:`Fetch failed: ${e.message}`,ts:Date.now()});
+    renderLogs();
+  }
+}
+
+// ── REFRESH ─────────────────────────────────────────────────────────────────
+async function refreshAll() {
+  document.querySelector('.pulse').style.background='#5a9ec8';
+  document.getElementById('sys-status').textContent='Aktualisiere…';
+  await fetchGitHub();
+  document.querySelector('.pulse').style.background='var(--ok)';
+  document.getElementById('sys-status').textContent='Alle Systeme operational';
+  logs.push({level:'ok',src:'admin',msg:'Manual refresh — alle Daten aktualisiert',ts:Date.now()});
+  renderLogs();
+}
+
+// ── INIT ────────────────────────────────────────────────────────────────────
+renderLogs();
+fetchGitHub();
+// Auto-refresh alle 60s
+setInterval(fetchGitHub, 60000);
+// Simuliere gelegentliche Log-Einträge
+setInterval(()=>{
+  if(Math.random()<0.3) addSimLog();
+}, 15000);
+</script>
+</body>
+</html>

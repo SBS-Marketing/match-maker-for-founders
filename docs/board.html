@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>matchfoundr · Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ember: #e2511c; --ember-l: #f4845f; --ember-d: #b83d12;
+    --cream: #fbfaf7; --ink: #15140f;
+    --glass: rgba(251,250,247,0.05); --gb: rgba(251,250,247,0.10);
+    --s-offen: #3b82f6; --s-arbeit: #f59e0b; --s-review: #a855f7; --s-fertig: #22c55e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Geist',sans-serif;background:#0e0d09;color:var(--cream);min-height:100vh;overflow-x:hidden}
+  /* BG */
+  .bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 70% 50% at 15% 10%,rgba(226,81,28,.15) 0%,transparent 60%),#0e0d09}
+  /* NAV */
+  nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:14px;padding:14px 28px;border-bottom:1px solid var(--gb);background:rgba(14,13,9,.7);backdrop-filter:blur(20px)}
+  .logo{font-size:17px;font-weight:700;letter-spacing:-.4px}.logo span{color:var(--ember)}
+  .nav-badge{font-size:10px;font-weight:700;background:var(--ember);color:#fff;padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
+  .sep{flex:1}
+  .gh-status{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(251,250,247,.45)}
+  .gh-dot{width:8px;height:8px;border-radius:50%;background:#444;transition:background .3s}
+  .gh-dot.ok{background:var(--s-fertig)} .gh-dot.err{background:#ef4444} .gh-dot.loading{background:var(--s-arbeit);animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .nav-btn{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;font-family:'Geist',sans-serif;padding:7px 14px;border-radius:8px;cursor:pointer;border:1px solid var(--gb);background:var(--glass);color:rgba(251,250,247,.6);transition:all .2s}
+  .nav-btn:hover{border-color:rgba(251,250,247,.2);color:var(--cream)}
+  .nav-btn.primary{background:var(--ember);border-color:transparent;color:#fff}
+  .nav-btn.primary:hover{background:var(--ember-l)}
+  /* Progress bar */
+  .prog-bar-wrap{height:3px;background:rgba(251,250,247,.06)}
+  .prog-bar{height:3px;background:linear-gradient(90deg,var(--ember),var(--ember-l));transition:width .5s}
+  /* Filters */
+  .toolbar{display:flex;align-items:center;gap:10px;padding:16px 28px;flex-wrap:wrap;position:relative;z-index:1}
+  .filter-group{display:flex;gap:6px;flex-wrap:wrap}
+  .fb{font-size:12px;font-weight:500;font-family:'Geist',sans-serif;padding:5px 12px;border-radius:16px;border:1px solid var(--gb);background:var(--glass);color:rgba(251,250,247,.5);cursor:pointer;transition:all .2s;white-space:nowrap}
+  .fb:hover{border-color:rgba(251,250,247,.2);color:var(--cream)}
+  .fb.on{background:rgba(226,81,28,.15);border-color:rgba(226,81,28,.4);color:var(--ember)}
+  .search-inp{background:var(--glass);border:1px solid var(--gb);color:var(--cream);padding:6px 12px 6px 32px;border-radius:16px;font-size:12px;font-family:'Geist',sans-serif;outline:none;width:180px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(251,250,247,.3)' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:10px center}
+  .search-inp::placeholder{color:rgba(251,250,247,.25)} .search-inp:focus{border-color:rgba(226,81,28,.35)}
+  /* Board */
+  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:0 28px 40px;position:relative;z-index:1;min-height:calc(100vh - 200px)}
+  /* Column */
+  .col{display:flex;flex-direction:column;gap:0;min-width:0}
+  .col-head{display:flex;align-items:center;gap:8px;padding:12px 4px;position:sticky;top:64px;z-index:10;background:#0e0d09}
+  .col-dot{width:8px;height:8px;border-radius:50%}
+  .col-title{font-size:13px;font-weight:700;letter-spacing:-.2px}
+  .col-count{font-size:11px;color:rgba(251,250,247,.35);background:var(--glass);border:1px solid var(--gb);padding:1px 7px;border-radius:10px}
+  .col-add{margin-left:auto;font-size:18px;line-height:1;color:rgba(251,250,247,.25);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:6px;transition:all .2s}
+  .col-add:hover{color:var(--ember);background:rgba(226,81,28,.1)}
+  .col-body{flex:1;display:flex;flex-direction:column;gap:10px;padding:4px 0;min-height:120px;border-radius:12px;transition:background .2s}
+  .col-body.drag-over{background:rgba(226,81,28,.06);outline:2px dashed rgba(226,81,28,.25)}
+  /* Cards */
+  .card{background:rgba(251,250,247,.04);border:1px solid var(--gb);border-radius:12px;padding:14px;cursor:grab;transition:all .2s;position:relative;overflow:hidden}
+  .card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:12px 0 0 12px}
+  .card.cat-design::before{background:#a78bfa}
+  .card.cat-backend::before{background:#38bdf8}
+  .card.cat-daten::before{background:#34d399}
+  .card.cat-marketing::before{background:#fb923c}
+  .card.cat-legal::before{background:#f87171}
+  .card.cat-business::before{background:#fbbf24}
+  .card.cat-infra::before{background:#94a3b8}
+  .card:hover{border-color:rgba(251,250,247,.18);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.3)}
+  .card.dragging{opacity:.4;transform:scale(.97)}
+  .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}
+  .card-title{font-size:13px;font-weight:600;line-height:1.4;letter-spacing:-.2px;flex:1}
+  .card-num{font-size:10px;color:rgba(251,250,247,.25);font-family:'Geist Mono',monospace;white-space:nowrap}
+  .card-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px;letter-spacing:.2px}
+  .badge.cat-design{background:rgba(167,139,250,.15);color:#a78bfa}
+  .badge.cat-backend{background:rgba(56,189,248,.15);color:#38bdf8}
+  .badge.cat-daten{background:rgba(52,211,153,.15);color:#34d399}
+  .badge.cat-marketing{background:rgba(251,146,60,.15);color:#fb923c}
+  .badge.cat-legal{background:rgba(248,113,113,.15);color:#f87171}
+  .badge.cat-business{background:rgba(251,191,36,.15);color:#fbbf24}
+  .badge.cat-infra{background:rgba(148,163,184,.15);color:#94a3b8}
+  .badge.prio-high{background:rgba(239,68,68,.15);color:#ef4444}
+  .badge.prio-mid{background:rgba(245,158,11,.15);color:#f59e0b}
+  .badge.prio-low{background:rgba(148,163,184,.1);color:#94a3b8}
+  .badge.phase{background:rgba(251,250,247,.07);color:rgba(251,250,247,.4)}
+  .card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+  .assignee{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:2px solid rgba(14,13,9,.8);cursor:pointer}
+  .assignee.empty{background:rgba(251,250,247,.1);color:rgba(251,250,247,.3);border-color:var(--gb)}
+  .assignee.empty:hover{border-color:rgba(251,250,247,.25)}
+  .card-actions{display:flex;gap:4px}
+  .card-action{font-size:11px;color:rgba(251,250,247,.25);background:none;border:none;cursor:pointer;padding:3px 5px;border-radius:5px;transition:all .2s;display:flex;align-items:center;gap:3px}
+  .card-action:hover{color:rgba(251,250,247,.7);background:rgba(251,250,247,.08)}
+  /* Loading skeleton */
+  .skeleton{background:rgba(251,250,247,.06);border-radius:12px;height:90px;animation:shimmer 1.5s infinite}
+  @keyframes shimmer{0%,100%{opacity:.5}50%{opacity:1}}
+  /* Empty column */
+  .col-empty{color:rgba(251,250,247,.18);font-size:12px;text-align:center;padding:24px 12px}
+  /* ── Modals ── */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+  .overlay.open{display:flex}
+  .modal{background:#1a1915;border:1px solid var(--gb);border-radius:20px;padding:28px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+  .modal h2{font-size:18px;font-weight:700;letter-spacing:-.4px;margin-bottom:6px}
+  .modal-sub{font-size:13px;color:rgba(251,250,247,.45);margin-bottom:22px;line-height:1.5}
+  .fg{margin-bottom:14px}
+  .fl{font-size:11px;font-weight:600;color:rgba(251,250,247,.45);margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:.5px}
+  .fi,.ft,.fs{width:100%;background:rgba(251,250,247,.06);border:1px solid var(--gb);color:var(--cream);padding:9px 12px;border-radius:10px;font-size:13px;font-family:'Geist',sans-serif;outline:none;transition:border-color .2s}
+  .fi:focus,.ft:focus,.fs:focus{border-color:rgba(226,81,28,.4)}
+  .ft{resize:vertical;min-height:80px}
+  .fs option{background:#1a1915}
+  .row-btns{display:flex;gap:8px;margin-top:20px}
+  .btn-cancel{flex:1;padding:9px;border-radius:10px;border:1px solid var(--gb);background:transparent;color:rgba(251,250,247,.5);font-size:13px;font-weight:600;font-family:'Geist',sans-serif;cursor:pointer;transition:all .2s}
+  .btn-cancel:hover{border-color:rgba(251,250,247,.2);color:var(--cream)}
+  .btn-ok{flex:2;padding:9px;border-radius:10px;border:none;background:var(--ember);color:#fff;font-size:13px;font-weight:600;font-family:'Geist',sans-serif;cursor:pointer;transition:all .2s}
+  .btn-ok:hover{background:var(--ember-l)}
+  .btn-ok:disabled{opacity:.5;cursor:not-allowed}
+  /* Detail modal (wider) */
+  .modal.wide{max-width:600px}
+  .detail-title{font-size:17px;font-weight:700;letter-spacing:-.4px;border:none;background:transparent;color:var(--cream);width:100%;outline:none;border-bottom:1px solid transparent;padding:2px 0;transition:border-color .2s;font-family:'Geist',sans-serif}
+  .detail-title:hover,.detail-title:focus{border-color:rgba(251,250,247,.15)}
+  .detail-badges{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+  .detail-desc{width:100%;background:rgba(251,250,247,.04);border:1px solid var(--gb);color:rgba(251,250,247,.7);padding:10px;border-radius:10px;font-size:13px;font-family:'Geist',sans-serif;resize:vertical;min-height:80px;outline:none;line-height:1.6}
+  .detail-desc:focus{border-color:rgba(226,81,28,.35)}
+  .gh-link{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:rgba(251,250,247,.35);text-decoration:none;margin-top:6px;padding:4px 8px;border-radius:6px;border:1px solid var(--gb);transition:all .2s}
+  .gh-link:hover{color:var(--cream);border-color:rgba(251,250,247,.2)}
+  /* Comments */
+  .comments-section{margin-top:20px;border-top:1px solid var(--gb);padding-top:16px}
+  .comments-title{font-size:12px;font-weight:600;color:rgba(251,250,247,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+  .comment{display:flex;gap:10px;margin-bottom:12px}
+  .c-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+  .c-body{flex:1}
+  .c-header{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+  .c-author{font-size:12px;font-weight:600}
+  .c-time{font-size:11px;color:rgba(251,250,247,.3)}
+  .c-text{font-size:13px;color:rgba(251,250,247,.65);line-height:1.5}
+  .c-add{display:flex;gap:8px;margin-top:12px}
+  .c-inp{flex:1;background:rgba(251,250,247,.05);border:1px solid var(--gb);color:var(--cream);padding:8px 12px;border-radius:10px;font-size:13px;font-family:'Geist',sans-serif;outline:none}
+  .c-inp:focus{border-color:rgba(226,81,28,.35)} .c-inp::placeholder{color:rgba(251,250,247,.25)}
+  .c-send{padding:8px 16px;border-radius:10px;border:none;background:var(--ember);color:#fff;font-size:12px;font-weight:600;font-family:'Geist',sans-serif;cursor:pointer}
+  /* Connect modal */
+  .modal.connect{max-width:440px}
+  .connect-steps{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+  .connect-step{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:rgba(251,250,247,.04);border-radius:10px;border:1px solid var(--gb);font-size:13px;color:rgba(251,250,247,.6);line-height:1.4}
+  .step-num{min-width:22px;height:22px;border-radius:50%;background:rgba(226,81,28,.2);color:var(--ember);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  /* Toast */
+  .toast{position:fixed;bottom:20px;right:20px;z-index:300;background:#1a1915;border:1px solid rgba(34,197,94,.3);color:#4ade80;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;transform:translateY(60px);opacity:0;transition:all .3s;pointer-events:none}
+  .toast.show{transform:translateY(0);opacity:1}
+  .toast.err{border-color:rgba(239,68,68,.3);color:#f87171}
+  /* Syncing indicator */
+  .syncing{display:none;align-items:center;gap:6px;font-size:11px;color:rgba(245,158,11,.7);font-family:'Geist Mono',monospace}
+  .syncing.on{display:flex}
+  .syncing-dot{width:5px;height:5px;border-radius:50%;background:var(--s-arbeit);animation:pulse 1s infinite}
+  @media(max-width:900px){.board{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.board{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+
+<!-- Nav -->
+<nav>
+  <div class="logo">match<span>foundr</span></div>
+  <div class="nav-badge">Board</div>
+  <div class="sep"></div>
+  <div class="gh-status">
+    <div class="gh-dot loading" id="gh-dot"></div>
+    <span id="gh-status-text">Verbinde mit GitHub…</span>
+  </div>
+  <div class="syncing" id="syncing-ind">
+    <div class="syncing-dot"></div>
+    Sync…
+  </div>
+  <button class="nav-btn" onclick="openNewIssueModal()">+ Issue</button>
+  <button class="nav-btn" onclick="refreshAll()" title="Refresh from GitHub">↻</button>
+  <button class="nav-btn" onclick="openConnectModal()" title="GitHub-Einstellungen (lokal)" style="display:none" id="settings-btn">⚙</button>
+  <a class="nav-btn" href="https://github.com/SBS-Marketing/match-maker-for-founders/issues" target="_blank" rel="noopener">GitHub ↗</a>
+</nav>
+
+<!-- Progress bar -->
+<div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
+
+<!-- Filters -->
+<div class="toolbar">
+  <div class="filter-group">
+    <button class="fb on" data-filter="cat" data-val="all" onclick="setFilter('cat','all',this)">Alle</button>
+    <button class="fb" data-filter="cat" data-val="design" onclick="setFilter('cat','design',this)">Design</button>
+    <button class="fb" data-filter="cat" data-val="backend" onclick="setFilter('cat','backend',this)">Backend</button>
+    <button class="fb" data-filter="cat" data-val="daten" onclick="setFilter('cat','daten',this)">Daten</button>
+    <button class="fb" data-filter="cat" data-val="marketing" onclick="setFilter('cat','marketing',this)">Marketing</button>
+    <button class="fb" data-filter="cat" data-val="legal" onclick="setFilter('cat','legal',this)">Legal</button>
+    <button class="fb" data-filter="cat" data-val="business" onclick="setFilter('cat','business',this)">Business</button>
+    <button class="fb" data-filter="cat" data-val="infra" onclick="setFilter('cat','infra',this)">Infra</button>
+  </div>
+  <div class="filter-group">
+    <button class="fb on" data-filter="phase" data-val="all" onclick="setFilter('phase','all',this)">Alle Phasen</button>
+    <button class="fb" data-filter="phase" data-val="1" onclick="setFilter('phase','1',this)">Phase 1</button>
+    <button class="fb" data-filter="phase" data-val="2" onclick="setFilter('phase','2',this)">Phase 2</button>
+    <button class="fb" data-filter="phase" data-val="3" onclick="setFilter('phase','3',this)">Phase 3</button>
+    <button class="fb" data-filter="phase" data-val="4" onclick="setFilter('phase','4',this)">Phase 4</button>
+    <button class="fb" data-filter="phase" data-val="5" onclick="setFilter('phase','5',this)">Phase 5</button>
+  </div>
+  <input class="search-inp" type="text" placeholder="Suche…" oninput="onSearch(this.value)">
+</div>
+
+<!-- Board -->
+<div class="board" id="board">
+  <div class="col" id="col-offen">
+    <div class="col-head">
+      <div class="col-dot" style="background:var(--s-offen)"></div>
+      <span class="col-title">Offen</span>
+      <span class="col-count" id="cnt-offen">–</span>
+      <button class="col-add" onclick="openNewIssueModal('offen')">＋</button>
+    </div>
+    <div class="col-body" id="body-offen" ondragover="onDragOver(event)" ondrop="onDrop(event,'offen')" ondragleave="onDragLeave(event)"></div>
+  </div>
+  <div class="col" id="col-in-arbeit">
+    <div class="col-head">
+      <div class="col-dot" style="background:var(--s-arbeit)"></div>
+      <span class="col-title">In Arbeit</span>
+      <span class="col-count" id="cnt-in-arbeit">–</span>
+      <button class="col-add" onclick="openNewIssueModal('in-arbeit')">＋</button>
+    </div>
+    <div class="col-body" id="body-in-arbeit" ondragover="onDragOver(event)" ondrop="onDrop(event,'in-arbeit')" ondragleave="onDragLeave(event)"></div>
+  </div>
+  <div class="col" id="col-review">
+    <div class="col-head">
+      <div class="col-dot" style="background:var(--s-review)"></div>
+      <span class="col-title">Review</span>
+      <span class="col-count" id="cnt-review">–</span>
+      <button class="col-add" onclick="openNewIssueModal('review')">＋</button>
+    </div>
+    <div class="col-body" id="body-review" ondragover="onDragOver(event)" ondrop="onDrop(event,'review')" ondragleave="onDragLeave(event)"></div>
+  </div>
+  <div class="col" id="col-fertig">
+    <div class="col-head">
+      <div class="col-dot" style="background:var(--s-fertig)"></div>
+      <span class="col-title">Fertig</span>
+      <span class="col-count" id="cnt-fertig">–</span>
+      <button class="col-add" onclick="openNewIssueModal('fertig')">＋</button>
+    </div>
+    <div class="col-body" id="body-fertig" ondragover="onDragOver(event)" ondrop="onDrop(event,'fertig')" ondragleave="onDragLeave(event)"></div>
+  </div>
+</div>
+
+<!-- Connect/Token Modal -->
+<div class="overlay" id="connect-modal">
+  <div class="modal connect">
+    <h2>🔗 GitHub verbinden</h2>
+    <p class="modal-sub">Damit das Board live mit GitHub-Issues synchronisiert, brauchst du ein Personal Access Token (Classic) mit <strong>repo</strong>-Scope.</p>
+    <div class="connect-steps">
+      <div class="connect-step"><div class="step-num">1</div>Gehe zu <strong>github.com → Settings → Developer settings → Personal access tokens → Classic</strong></div>
+      <div class="connect-step"><div class="step-num">2</div>Erstelle Token mit Scope: <strong>repo</strong> (Full control)</div>
+      <div class="connect-step"><div class="step-num">3</div>Füge Token hier ein — wird nur in deinem Browser gespeichert</div>
+    </div>
+    <div class="fg">
+      <label class="fl">GitHub Token (Classic PAT)</label>
+      <input class="fi" id="token-input" type="password" placeholder="ghp_…" autocomplete="off">
+    </div>
+    <div class="row-btns">
+      <button class="btn-cancel" onclick="closeConnectModal()">Abbrechen</button>
+      <button class="btn-ok" onclick="saveToken()">Verbinden ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Issue Modal -->
+<div class="overlay" id="new-modal">
+  <div class="modal">
+    <h2>+ Neue Issue</h2>
+    <p class="modal-sub">Issue wird direkt auf GitHub angelegt und erscheint im Board.</p>
+    <div class="fg"><label class="fl">Titel *</label><input class="fi" id="ni-title" type="text" placeholder="z.B. Landing Page Hero Section"></div>
+    <div class="fg"><label class="fl">Beschreibung</label><textarea class="ft" id="ni-desc" placeholder="Was genau soll gemacht werden?"></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg">
+        <label class="fl">Kategorie</label>
+        <select class="fs" id="ni-cat">
+          <option value="Design">Design</option>
+          <option value="Backend">Backend</option>
+          <option value="Daten">Daten</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Legal">Legal</option>
+          <option value="Business" selected>Business</option>
+          <option value="Infra">Infra</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Priorität</label>
+        <select class="fs" id="ni-prio">
+          <option value="Prio: High">High 🔴</option>
+          <option value="Prio: Mid" selected>Mid 🟡</option>
+          <option value="Prio: Low">Low ⚪</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Phase</label>
+        <select class="fs" id="ni-phase">
+          <option value="Phase 1" selected>Phase 1</option>
+          <option value="Phase 2">Phase 2</option>
+          <option value="Phase 3">Phase 3</option>
+          <option value="Phase 4">Phase 4</option>
+          <option value="Phase 5">Phase 5</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Status (Spalte)</label>
+        <select class="fs" id="ni-col">
+          <option value="Status: Offen" selected>Offen</option>
+          <option value="Status: In Arbeit">In Arbeit</option>
+          <option value="Status: Review">Review</option>
+          <option value="Status: Fertig">Fertig</option>
+        </select>
+      </div>
+    </div>
+    <div class="row-btns">
+      <button class="btn-cancel" onclick="closeNewModal()">Abbrechen</button>
+      <button class="btn-ok" id="ni-submit" onclick="createIssue()">Anlegen auf GitHub ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="overlay" id="detail-modal">
+  <div class="modal wide">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <span style="font-size:11px;color:rgba(251,250,247,.3);font-family:'Geist Mono',monospace" id="d-num"></span>
+      <button onclick="closeDetailModal()" style="background:none;border:none;color:rgba(251,250,247,.3);cursor:pointer;font-size:18px;line-height:1;padding:2px 6px">✕</button>
+    </div>
+    <input class="detail-title" id="d-title" type="text">
+    <div class="detail-badges" id="d-badges"></div>
+    <textarea class="detail-desc" id="d-desc" placeholder="Beschreibung…" rows="4"></textarea>
+    <a class="gh-link" id="d-ghlink" href="#" target="_blank" rel="noopener">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+      Auf GitHub öffnen ↗
+    </a>
+    <!-- Status selector in detail -->
+    <div style="margin-top:16px;display:flex;gap:8px;align-items:center">
+      <span style="font-size:12px;color:rgba(251,250,247,.4);font-weight:600">Status:</span>
+      <select class="fs" id="d-status" style="flex:1" onchange="updateDetailStatus()">
+        <option value="Status: Offen">Offen</option>
+        <option value="Status: In Arbeit">In Arbeit</option>
+        <option value="Status: Review">Review</option>
+        <option value="Status: Fertig">Fertig</option>
+      </select>
+      <button class="btn-ok" style="flex:0 0 auto;padding:8px 14px;font-size:12px" onclick="saveDetail()">Speichern</button>
+    </div>
+    <!-- Comments -->
+    <div class="comments-section">
+      <div class="comments-title">Kommentare</div>
+      <div id="d-comments"></div>
+      <div class="c-add">
+        <input class="c-inp" id="c-inp" type="text" placeholder="Kommentar schreiben… (Enter senden)">
+        <button class="c-send" onclick="postComment()">Senden</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+const REPO = 'SBS-Marketing/match-maker-for-founders';
+const REPO_URL = `https://github.com/${REPO}`;
+const SUPABASE_PROXY = 'https://urjpyhyezrwhwgnkkxjv.supabase.co/functions/v1/github-proxy';
+const USE_PROXY = window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0');
+const API = USE_PROXY ? `${SUPABASE_PROXY}/repos/${REPO}` : `https://api.github.com/repos/${REPO}`;
+let TOKEN = localStorage.getItem('mf_gh_token') || '';
+
+// Label maps
+const LABEL_COL = { 'Status: Offen':'offen','Status: In Arbeit':'in-arbeit','Status: Review':'review','Status: Fertig':'fertig' };
+const COL_LABEL = Object.fromEntries(Object.entries(LABEL_COL).map(([k,v])=>[v,k]));
+const CAT_LABELS = ['Design','Backend','Daten','Marketing','Legal','Business','Infra'];
+const PHASE_LABELS = ['Phase 1','Phase 2','Phase 3','Phase 4','Phase 5'];
+const PRIO_LABELS = ['Prio: High','Prio: Mid','Prio: Low'];
+
+// ── State ──────────────────────────────────────────────────────────────────
+let tasks = {}; // id → task
+let filterCat = 'all';
+let filterPhase = 'all';
+let filterSearch = '';
+let draggingId = null;
+let detailId = null;
+
+// ── API helpers ────────────────────────────────────────────────────────────
+function headers() {
+  return {
+    'Authorization': `token ${TOKEN}`,
+    'Accept': 'application/vnd.github.v3+json',
+    'Content-Type': 'application/json',
+  };
+}
+
+async function ghFetch(path, opts = {}) {
+  const base = USE_PROXY ? SUPABASE_PROXY : 'https://api.github.com';
+  const fetchOpts = USE_PROXY ? opts : { ...opts, headers: { ...headers(), ...(opts.headers||{}) } };
+  const res = await fetch(`${base}${path}`, fetchOpts);
+  if (!res.ok) throw new Error(`GitHub API ${res.status}: ${await res.text()}`);
+  return res.status === 204 ? null : res.json();
+}
+
+async function fetchAllIssues() {
+  let all = [], page = 1;
+  while (true) {
+    const batch = await ghFetch(`/repos/${REPO}/issues?state=all&per_page=100&page=${page}`);
+    if (!batch.length) break;
+    // Filter out PRs
+    all = all.concat(batch.filter(i => !i.pull_request));
+    if (batch.length < 100) break;
+    page++;
+  }
+  return all;
+}
+
+// ── Issue → Task mapping ───────────────────────────────────────────────────
+function issueToTask(issue) {
+  const lblNames = issue.labels.map(l => l.name);
+  const statusLbl = lblNames.find(l => l.startsWith('Status:'));
+  const col = statusLbl ? (LABEL_COL[statusLbl] || 'offen') : 'offen';
+  const cat = CAT_LABELS.find(c => lblNames.includes(c)) || 'Business';
+  const phaseStr = PHASE_LABELS.find(p => lblNames.includes(p));
+  const phase = phaseStr ? parseInt(phaseStr.replace('Phase ','')) : 1;
+  const prioLbl = PRIO_LABELS.find(p => lblNames.includes(p));
+  const prio = prioLbl ? prioLbl.replace('Prio: ','').toLowerCase() : 'mid';
+
+  return {
+    id: String(issue.number),
+    number: issue.number,
+    col,
+    cat: cat.toLowerCase(),
+    phase,
+    prio,
+    title: issue.title,
+    desc: issue.body || '',
+    assignee: issue.assignees?.map(a => a.login).join(', ') || '',
+    labels: lblNames,
+    ghState: issue.state,
+    url: issue.html_url,
+    updatedAt: issue.updated_at,
+  };
+}
+
+// ── Avatar color ───────────────────────────────────────────────────────────
+function avatarColor(name) {
+  const colors = ['#e2511c','#3b82f6','#22c55e','#a855f7','#f59e0b','#ec4899','#06b6d4'];
+  let h = 0; for (let c of name) h = (h * 31 + c.charCodeAt(0)) % 1000;
+  return colors[h % colors.length];
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function renderAll() {
+  const cols = ['offen','in-arbeit','review','fertig'];
+  const search = filterSearch.toLowerCase();
+
+  let totalDone = 0, total = 0;
+
+  cols.forEach(col => {
+    const body = document.getElementById(`body-${col}`);
+    let visible = Object.values(tasks).filter(t => {
+      if (t.col !== col) return false;
+      if (filterCat !== 'all' && t.cat !== filterCat) return false;
+      if (filterPhase !== 'all' && String(t.phase) !== filterPhase) return false;
+      if (search && !`${t.title} ${t.desc} ${t.cat}`.toLowerCase().includes(search)) return false;
+      return true;
+    });
+
+    total += visible.length;
+    if (col === 'fertig') totalDone += visible.length;
+
+    document.getElementById(`cnt-${col}`).textContent = visible.length;
+
+    if (!visible.length) {
+      body.innerHTML = '<div class="col-empty">Keine Issues hier</div>';
+      return;
+    }
+
+    body.innerHTML = visible.map(t => renderCard(t)).join('');
+    body.querySelectorAll('.card').forEach(el => {
+      el.addEventListener('dragstart', e => {
+        draggingId = el.dataset.id;
+        el.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      el.addEventListener('dragend', () => el.classList.remove('dragging'));
+    });
+  });
+
+  // Progress
+  const pct = total > 0 ? Math.round((totalDone / total) * 100) : 0;
+  document.getElementById('prog-bar').style.width = pct + '%';
+}
+
+function renderCard(t) {
+  const catLabel = t.cat.charAt(0).toUpperCase() + t.cat.slice(1);
+  const av = t.assignee
+    ? `<div class="assignee" style="background:${avatarColor(t.assignee)}" title="${t.assignee}">${t.assignee[0].toUpperCase()}</div>`
+    : `<div class="assignee empty" title="Niemandem zugewiesen">+</div>`;
+
+  return `
+  <div class="card cat-${t.cat}" id="card-${t.id}" draggable="true" data-id="${t.id}">
+    <div class="card-top">
+      <div class="card-title">${esc(t.title)}</div>
+      <span class="card-num">#${t.number}</span>
+    </div>
+    <div class="card-meta">
+      <span class="badge cat-${t.cat}">${catLabel}</span>
+      <span class="badge prio-${t.prio}">P: ${t.prio}</span>
+      <span class="badge phase">Ph.${t.phase}</span>
+    </div>
+    <div class="card-footer">
+      ${av}
+      <div class="card-actions">
+        <button class="card-action" onclick="openDetail('${t.id}')" title="Details">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Details
+        </button>
+        <a class="card-action" href="${t.url}" target="_blank" rel="noopener" title="Auf GitHub öffnen">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          GH
+        </a>
+      </div>
+    </div>
+  </div>`;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Drag & Drop ────────────────────────────────────────────────────────────
+function onDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function onDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+
+async function onDrop(e, col) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!draggingId || tasks[draggingId]?.col === col) return;
+
+  const t = tasks[draggingId];
+  const oldCol = t.col;
+  t.col = col;
+  renderAll();
+
+  // Update GitHub labels
+  setSyncing(true);
+  try {
+    // Remove all status labels, add new one
+    const newLabels = t.labels
+      .filter(l => !l.startsWith('Status:'))
+      .concat(COL_LABEL[col]);
+
+    await ghFetch(`/repos/${REPO}/issues/${t.number}/labels`, {
+      method: 'PUT',
+      body: JSON.stringify({ labels: newLabels }),
+    });
+
+    t.labels = newLabels;
+    showToast(`#${t.number} → ${colName(col)} ✓`);
+  } catch (err) {
+    t.col = oldCol;
+    renderAll();
+    showToast('Sync fehlgeschlagen: ' + err.message, true);
+  } finally {
+    setSyncing(false);
+  }
+  draggingId = null;
+}
+
+function colName(col) {
+  return { offen:'Offen','in-arbeit':'In Arbeit', review:'Review', fertig:'Fertig' }[col] || col;
+}
+
+// ── Detail Modal ───────────────────────────────────────────────────────────
+async function openDetail(id) {
+  detailId = id;
+  const t = tasks[id];
+  document.getElementById('d-num').textContent = `#${t.number}`;
+  document.getElementById('d-title').value = t.title;
+  document.getElementById('d-desc').value = t.desc;
+  document.getElementById('d-ghlink').href = t.url;
+  document.getElementById('d-status').value = COL_LABEL[t.col] || 'Status: Offen';
+
+  // Badges
+  const catLabel = t.cat.charAt(0).toUpperCase() + t.cat.slice(1);
+  document.getElementById('d-badges').innerHTML = `
+    <span class="badge cat-${t.cat}">${catLabel}</span>
+    <span class="badge prio-${t.prio}">Prio: ${t.prio}</span>
+    <span class="badge phase">Phase ${t.phase}</span>
+    ${t.assignee ? `<span class="badge" style="background:rgba(251,250,247,.08);color:rgba(251,250,247,.5)">@${t.assignee}</span>` : ''}
+  `;
+
+  document.getElementById('detail-modal').classList.add('open');
+
+  // Load comments from GitHub
+  document.getElementById('d-comments').innerHTML = '<div style="font-size:12px;color:rgba(251,250,247,.3)">Lade Kommentare…</div>';
+  try {
+    const comments = await ghFetch(`/repos/${REPO}/issues/${t.number}/comments`);
+    renderComments(comments);
+  } catch {
+    document.getElementById('d-comments').innerHTML = '<div style="font-size:12px;color:rgba(248,113,113,.6)">Kommentare nicht ladbar</div>';
+  }
+
+  document.getElementById('c-inp').onkeydown = e => { if (e.key === 'Enter') postComment(); };
+}
+
+function renderComments(comments) {
+  const el = document.getElementById('d-comments');
+  if (!comments.length) {
+    el.innerHTML = '<div style="font-size:12px;color:rgba(251,250,247,.25);margin-bottom:8px">Noch keine Kommentare</div>';
+    return;
+  }
+  el.innerHTML = comments.map(c => `
+    <div class="comment">
+      <div class="c-avatar" style="background:${avatarColor(c.user.login)}">${c.user.login[0].toUpperCase()}</div>
+      <div class="c-body">
+        <div class="c-header">
+          <span class="c-author">${c.user.login}</span>
+          <span class="c-time">${timeAgo(c.created_at)}</span>
+        </div>
+        <div class="c-text">${esc(c.body)}</div>
+      </div>
+    </div>`).join('');
+}
+
+async function postComment() {
+  const inp = document.getElementById('c-inp');
+  const text = inp.value.trim();
+  if (!text || !detailId) return;
+  inp.value = '';
+  const t = tasks[detailId];
+  setSyncing(true);
+  try {
+    const comment = await ghFetch(`/repos/${REPO}/issues/${t.number}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ body: text }),
+    });
+    const existing = document.getElementById('d-comments');
+    existing.innerHTML += `
+      <div class="comment">
+        <div class="c-avatar" style="background:${avatarColor(comment.user.login)}">${comment.user.login[0].toUpperCase()}</div>
+        <div class="c-body">
+          <div class="c-header"><span class="c-author">${comment.user.login}</span><span class="c-time">Gerade eben</span></div>
+          <div class="c-text">${esc(comment.body)}</div>
+        </div>
+      </div>`;
+    showToast('Kommentar gepostet ✓');
+  } catch (err) {
+    showToast('Fehler: ' + err.message, true);
+  } finally {
+    setSyncing(false);
+  }
+}
+
+async function saveDetail() {
+  if (!detailId) return;
+  const t = tasks[detailId];
+  const newTitle = document.getElementById('d-title').value.trim();
+  const newDesc = document.getElementById('d-desc').value.trim();
+
+  if (!newTitle) return;
+  setSyncing(true);
+  try {
+    await ghFetch(`/repos/${REPO}/issues/${t.number}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ title: newTitle, body: newDesc }),
+    });
+    t.title = newTitle;
+    t.desc = newDesc;
+    renderAll();
+    showToast('Issue aktualisiert ✓');
+  } catch (err) {
+    showToast('Fehler: ' + err.message, true);
+  } finally {
+    setSyncing(false);
+  }
+}
+
+async function updateDetailStatus() {
+  if (!detailId) return;
+  const t = tasks[detailId];
+  const newStatusLabel = document.getElementById('d-status').value;
+  const newCol = LABEL_COL[newStatusLabel];
+  if (newCol === t.col) return;
+
+  const newLabels = t.labels.filter(l => !l.startsWith('Status:')).concat(newStatusLabel);
+  setSyncing(true);
+  try {
+    await ghFetch(`/repos/${REPO}/issues/${t.number}/labels`, {
+      method: 'PUT',
+      body: JSON.stringify({ labels: newLabels }),
+    });
+    t.col = newCol;
+    t.labels = newLabels;
+    renderAll();
+    showToast(`Status → ${colName(newCol)} ✓`);
+  } catch (err) {
+    showToast('Fehler: ' + err.message, true);
+  } finally {
+    setSyncing(false);
+  }
+}
+
+function closeDetailModal() {
+  document.getElementById('detail-modal').classList.remove('open');
+  detailId = null;
+}
+
+// ── New Issue ──────────────────────────────────────────────────────────────
+function openNewIssueModal(col) {
+  if (col) document.getElementById('ni-col').value = COL_LABEL[col] || 'Status: Offen';
+  document.getElementById('ni-title').value = '';
+  document.getElementById('ni-desc').value = '';
+  document.getElementById('new-modal').classList.add('open');
+  setTimeout(() => document.getElementById('ni-title').focus(), 100);
+}
+function closeNewModal() { document.getElementById('new-modal').classList.remove('open'); }
+
+async function createIssue() {
+  const title = document.getElementById('ni-title').value.trim();
+  if (!title) return;
+  const btn = document.getElementById('ni-submit');
+  btn.disabled = true;
+  btn.textContent = 'Wird angelegt…';
+
+  const labels = [
+    document.getElementById('ni-cat').value,
+    document.getElementById('ni-prio').value,
+    document.getElementById('ni-phase').value,
+    document.getElementById('ni-col').value,
+  ];
+
+  setSyncing(true);
+  try {
+    const issue = await ghFetch(`/repos/${REPO}/issues`, {
+      method: 'POST',
+      body: JSON.stringify({
+        title,
+        body: document.getElementById('ni-desc').value.trim(),
+        labels,
+      }),
+    });
+    const task = issueToTask(issue);
+    tasks[task.id] = task;
+    renderAll();
+    closeNewModal();
+    showToast(`#${issue.number} angelegt auf GitHub ✓`);
+  } catch (err) {
+    showToast('Fehler: ' + err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Anlegen auf GitHub ✓';
+    setSyncing(false);
+  }
+}
+
+// ── Connect / Token ────────────────────────────────────────────────────────
+function openConnectModal() {
+  document.getElementById('token-input').value = TOKEN;
+  document.getElementById('connect-modal').classList.add('open');
+}
+function closeConnectModal() { document.getElementById('connect-modal').classList.remove('open'); }
+
+async function saveToken() {
+  const t = document.getElementById('token-input').value.trim();
+  if (!t) return;
+  TOKEN = t;
+  localStorage.setItem('mf_gh_token', TOKEN);
+  closeConnectModal();
+  await refreshAll();
+}
+
+// ── Filter / Search ────────────────────────────────────────────────────────
+function setFilter(type, val, el) {
+  if (type === 'cat') {
+    filterCat = val;
+    document.querySelectorAll('[data-filter="cat"]').forEach(b => b.classList.remove('on'));
+  } else {
+    filterPhase = val;
+    document.querySelectorAll('[data-filter="phase"]').forEach(b => b.classList.remove('on'));
+  }
+  el.classList.add('on');
+  renderAll();
+}
+function onSearch(v) { filterSearch = v; renderAll(); }
+
+// ── Load & Refresh ─────────────────────────────────────────────────────────
+async function refreshAll() {
+  setGhStatus('loading', 'Synchronisiere…');
+  showSkeletons();
+  try {
+    const issues = await fetchAllIssues();
+    tasks = {};
+    issues.forEach(i => {
+      const t = issueToTask(i);
+      tasks[t.id] = t;
+    });
+    renderAll();
+    setGhStatus('ok', `${issues.length} Issues geladen`);
+    showToast(`${issues.length} Issues von GitHub geladen ✓`);
+  } catch (err) {
+    setGhStatus('err', 'Fehler: ' + err.message);
+    showToast('GitHub-Fehler: ' + err.message, true);
+  }
+}
+
+function showSkeletons() {
+  ['offen','in-arbeit','review','fertig'].forEach(col => {
+    document.getElementById(`body-${col}`).innerHTML =
+      '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
+    document.getElementById(`cnt-${col}`).textContent = '…';
+  });
+}
+
+function setGhStatus(state, text) {
+  const dot = document.getElementById('gh-dot');
+  dot.className = 'gh-dot ' + state;
+  document.getElementById('gh-status-text').textContent = text;
+}
+
+function setSyncing(on) {
+  document.getElementById('syncing-ind').classList.toggle('on', on);
+}
+
+// ── Utils ──────────────────────────────────────────────────────────────────
+function timeAgo(iso) {
+  const s = Math.round((Date.now() - new Date(iso)) / 1000);
+  if (s < 60) return 'Gerade eben';
+  if (s < 3600) return `vor ${Math.round(s/60)} Min.`;
+  if (s < 86400) return `vor ${Math.round(s/3600)} Std.`;
+  return `vor ${Math.round(s/86400)} Tagen`;
+}
+
+let toastTimer;
+function showToast(msg, err) {
+  const t = document.getElementById('toast');
+  t.textContent = (err ? '✗ ' : '✓ ') + msg;
+  t.className = 'toast show' + (err ? ' err' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// Close overlays on background click
+['connect-modal','new-modal','detail-modal'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) {
+      if (id === 'detail-modal') closeDetailModal();
+      else this.classList.remove('open');
+    }
+  });
+});
+
+// ── Init ───────────────────────────────────────────────────────────────────
+(async function init() {
+  if (USE_PROXY) {
+    // Token liegt server-seitig → einfach laden
+    setGhStatus('loading', 'Verbinde…');
+    await refreshAll();
+  } else {
+    // Lokale Entwicklung → Token aus localStorage
+    if (!TOKEN) {
+      setGhStatus('err', 'Kein Token (lokal)');
+      openConnectModal();
+      return;
+    }
+    await refreshAll();
+  }
+})();
+</script>
+</body>
+</html>
