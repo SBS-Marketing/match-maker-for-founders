@@ -360,9 +360,9 @@
 // ── Config ──────────────────────────────────────────────────────────────────
 const REPO = 'SBS-Marketing/match-maker-for-founders';
 const REPO_URL = `https://github.com/${REPO}`;
-// Proxy-Modus: Token liegt server-seitig bei Netlify → kein Token im Browser nötig
+const SUPABASE_PROXY = 'https://urjpyhyezrwhwgnkkxjv.supabase.co/functions/v1/github-proxy';
 const USE_PROXY = window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0');
-const API = USE_PROXY ? `/api/github/repos/${REPO}` : `https://api.github.com/repos/${REPO}`;
+const API = USE_PROXY ? `${SUPABASE_PROXY}/repos/${REPO}` : `https://api.github.com/repos/${REPO}`;
 let TOKEN = localStorage.getItem('mf_gh_token') || '';
 
 // Label maps
@@ -390,7 +390,7 @@ function headers() {
 }
 
 async function ghFetch(path, opts = {}) {
-  const base = USE_PROXY ? '/api/github' : 'https://api.github.com';
+  const base = USE_PROXY ? SUPABASE_PROXY : 'https://api.github.com';
   const fetchOpts = USE_PROXY ? opts : { ...opts, headers: { ...headers(), ...(opts.headers||{}) } };
   const res = await fetch(`${base}${path}`, fetchOpts);
   if (!res.ok) throw new Error(`GitHub API ${res.status}: ${await res.text()}`);
