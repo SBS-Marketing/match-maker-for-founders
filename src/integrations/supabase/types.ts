@@ -746,7 +746,7 @@ export type Database = {
         Row: {
           id: string
           profile_id: string
-          embedding: string  // vector als string repräsentiert
+          embedding: string
           content_hash: string
           model: string | null
           created_at: string
@@ -773,6 +773,164 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_results: {
+        Row: {
+          id: string
+          user_id: string
+          target_id: string
+          target_type: string
+          total_score: number
+          dimension_scores: Json | null
+          badges: Json | null
+          dealbreaker: boolean | null
+          dealbreaker_reason: string | null
+          computed_at: string
+          skill_overlap_score: number | null
+          location_score: number | null
+          embedding_score: number | null
+          combined_score: number | null
+          explanation: Json | null
+          is_hidden: boolean | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          target_id: string
+          target_type: string
+          total_score: number
+          dimension_scores?: Json | null
+          badges?: Json | null
+          dealbreaker?: boolean | null
+          dealbreaker_reason?: string | null
+          computed_at?: string
+          skill_overlap_score?: number | null
+          location_score?: number | null
+          embedding_score?: number | null
+          combined_score?: number | null
+          explanation?: Json | null
+          is_hidden?: boolean | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          target_id?: string
+          target_type?: string
+          total_score?: number
+          dimension_scores?: Json | null
+          badges?: Json | null
+          dealbreaker?: boolean | null
+          dealbreaker_reason?: string | null
+          computed_at?: string
+          skill_overlap_score?: number | null
+          location_score?: number | null
+          embedding_score?: number | null
+          combined_score?: number | null
+          explanation?: Json | null
+          is_hidden?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_results_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_interactions: {
+        Row: {
+          id: string
+          user_id: string
+          target_id: string
+          target_type: string
+          action: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          target_id: string
+          target_type: string
+          action: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          target_id?: string
+          target_type?: string
+          action?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_interactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mutual_matches: {
+        Row: {
+          id: string
+          user_a: string
+          user_b: string
+          score_a: number | null
+          score_b: number | null
+          avg_score: number | null
+          status: string
+          created_at: string
+          conversation_id: string | null
+        }
+        Insert: {
+          id?: string
+          user_a: string
+          user_b: string
+          score_a?: number | null
+          score_b?: number | null
+          avg_score?: number | null
+          status?: string
+          created_at?: string
+          conversation_id?: string | null
+        }
+        Update: {
+          id?: string
+          user_a?: string
+          user_b?: string
+          score_a?: number | null
+          score_b?: number | null
+          avg_score?: number | null
+          status?: string
+          created_at?: string
+          conversation_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mutual_matches_user_a_fkey"
+            columns: ["user_a"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mutual_matches_user_b_fkey"
+            columns: ["user_b"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mutual_matches_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
         ]
