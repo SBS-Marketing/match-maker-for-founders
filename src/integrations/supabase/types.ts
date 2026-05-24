@@ -935,6 +935,117 @@ export type Database = {
           },
         ]
       }
+      waitlist: {
+        Row: {
+          id: string
+          email: string
+          name: string | null
+          status: string
+          token: string | null
+          resend_id: string | null
+          confirmed_at: string | null
+          invited_at: string | null
+          metadata: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          name?: string | null
+          status?: string
+          token?: string | null
+          resend_id?: string | null
+          confirmed_at?: string | null
+          invited_at?: string | null
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          name?: string | null
+          status?: string
+          token?: string | null
+          resend_id?: string | null
+          confirmed_at?: string | null
+          invited_at?: string | null
+          metadata?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      app_secrets: {
+        Row: {
+          id: string
+          key_name: string
+          vault_secret_id: string | null
+          encrypted_value: string | null
+          description: string | null
+          tags: string[] | null
+          created_at: string
+          updated_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          key_name: string
+          vault_secret_id?: string | null
+          encrypted_value?: string | null
+          description?: string | null
+          tags?: string[] | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          key_name?: string
+          vault_secret_id?: string | null
+          encrypted_value?: string | null
+          description?: string | null
+          tags?: string[] | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+        Relationships: []
+      }
+      secret_access_log: {
+        Row: {
+          id: string
+          key_name: string
+          action: string
+          actor_id: string | null
+          actor_role: string | null
+          success: boolean
+          error_msg: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          key_name: string
+          action: string
+          actor_id?: string | null
+          actor_role?: string | null
+          success?: boolean
+          error_msg?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          key_name?: string
+          action?: string
+          actor_id?: string | null
+          actor_role?: string | null
+          success?: boolean
+          error_msg?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -944,6 +1055,44 @@ export type Database = {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
+        }
+        Returns: boolean
+      }
+      join_waitlist: {
+        Args: {
+          p_email: string
+          p_name: string
+          p_metadata: Json
+        }
+        Returns: string
+      }
+      confirm_waitlist_entry: {
+        Args: {
+          p_token: string
+        }
+        Returns: boolean
+      }
+      waitlist_stats: {
+        Args: Record<string, never>
+        Returns: Json
+      }
+      get_secret: {
+        Args: {
+          p_key_name: string
+        }
+        Returns: string
+      }
+      upsert_secret: {
+        Args: {
+          p_key_name: string
+          p_secret_value: string
+          p_description: string
+        }
+        Returns: string
+      }
+      delete_secret: {
+        Args: {
+          p_key_name: string
         }
         Returns: boolean
       }
