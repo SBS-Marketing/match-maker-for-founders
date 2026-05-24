@@ -18,7 +18,7 @@ const passwordSchema = z.string().min(8, "Mindestens 8 Zeichen").max(72);
 function AuthPage() {
   const { user, enterDemo } = useAuth();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signup");
+  const [mode, setMode] = useState<"signin" | "signup" | "magic">("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,7 +32,7 @@ function AuthPage() {
     const eR = emailSchema.safeParse(email);
     const pR = passwordSchema.safeParse(password);
     if (!eR.success) return toast.error(eR.error.issues[0].message);
-    if (!pR.success) return toast.error(pR.error.issues[0].message);
+    if (mode !== "magic" && !pR.success) return toast.error(pR.error.issues[0].message);
 
     setLoading(true);
     try {
@@ -40,18 +40,24 @@ function AuthPage() {
         const { error } = await supabase.auth.signUp({
           email: eR.data,
           password: pR.data,
-          options: { emailRedirectTo: `${window.location.origin}/onboarding` },
+          options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
         });
         if (error) throw error;
-        toast.success("Konto erstellt. Los geht's.");
-        navigate({ to: "/onboarding" });
-      } else {
+        toast.success("Konto erstellt. Bestätige deine E-Mail.");
+      } else if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({
           email: eR.data,
           password: pR.data,
         });
         if (error) throw error;
         navigate({ to: "/heute" });
+      } else if (mode === "magic") {
+        const { error } = await supabase.auth.signInWithOtp({
+          email: eR.data,
+          options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+        });
+        if (error) throw error;
+        toast.success("Magic Link gesendet. Check dein Postfach.");
       }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Etwas ist schiefgelaufen");
@@ -61,16 +67,28 @@ function AuthPage() {
   };
 
   const oauth = async (provider: "google" | "apple") => {
+    if (provider === "google") {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: { access_type: "offline", prompt: "consent" },
+        },
+      });
+      if (error) toast.error(error.message);
+      return;
+    }
+    // Apple via Lovable fallback
     const { lovable } = await import("@/integrations/lovable/index");
     const result = await lovable.auth.signInWithOAuth(provider, {
-      redirect_uri: `${window.location.origin}/onboarding`,
+      redirect_uri: `${window.location.origin}/auth/callback`,
     });
     if (result.error) {
       toast.error(result.error.message ?? "Login fehlgeschlagen");
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/onboarding" });
+    navigate({ to: "/heute" });
   };
 
   const skipAuth = () => {
@@ -90,17 +108,24 @@ function AuthPage() {
                 Founder-Profil{" "}
                 <span className="font-serif italic font-normal text-[var(--ember)]">erstellen</span>
               </>
-            ) : (
+            ) : mode === "signin" ? (
               <>
                 Willkommen{" "}
                 <span className="font-serif italic font-normal text-[var(--ember)]">zurück</span>
+              </>
+            ) : (
+              <>
+                Magic{" "}
+                <span className="font-serif italic font-normal text-[var(--ember)]">Link</span>
               </>
             )}
           </h1>
           <p className="mt-3 text-sm text-[var(--smoke)]">
             {mode === "signup"
               ? "Beginne mit deinem matchfoundr-Konto."
-              : "Melde dich an, um weiterzumachen."}
+              : mode === "signin"
+              ? "Melde dich an, um weiterzumachen."
+              : "Login ohne Passwort per E-Mail-Link."}
           </p>
         </div>
       </div>
@@ -146,36 +171,62 @@ function AuthPage() {
               required
             />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="password">Passwort</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete={mode === "signup" ? "new-password" : "current-password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
+          {mode !== "magic" && (
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Passwort</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+          )}
           <Button
             type="submit"
             className="shadow-ember h-11 w-full rounded-xl bg-[var(--ember)] text-[var(--cream)] hover:bg-[var(--ember-deep)]"
             disabled={loading}
           >
-            {loading ? "Bitte warten…" : mode === "signup" ? "Konto erstellen" : "Anmelden"}
+            {loading
+              ? "Bitte warten…"
+              : mode === "signup"
+              ? "Konto erstellen"
+              : mode === "signin"
+              ? "Anmelden"
+              : "Magic Link senden"}
           </Button>
         </form>
-      </div>
-
-      <div className="text-center text-sm text-muted-foreground">
-        {mode === "signup" ? "Schon ein Konto?" : "Noch kein Konto?"}{" "}
-        <button
-          type="button"
-          className="text-foreground underline-offset-4 hover:underline"
-          onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
-        >
-          {mode === "signup" ? "Anmelden" : "Konto erstellen"}
-        </button>
+        <div className="mt-4 flex flex-col gap-2 text-center text-sm">
+          {mode !== "signin" && (
+            <button
+              type="button"
+              className="text-muted-foreground underline-offset-4 hover:underline"
+              onClick={() => setMode("signin")}
+            >
+              Schon ein Konto? Anmelden
+            </button>
+          )}
+          {mode !== "signup" && (
+            <button
+              type="button"
+              className="text-muted-foreground underline-offset-4 hover:underline"
+              onClick={() => setMode("signup")}
+            >
+              Noch kein Konto? Registrieren
+            </button>
+          )}
+          {mode !== "magic" && (
+            <button
+              type="button"
+              className="text-muted-foreground underline-offset-4 hover:underline"
+              onClick={() => setMode("magic")}
+            >
+              Magic Link Login
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

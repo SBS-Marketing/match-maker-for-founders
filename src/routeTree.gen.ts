@@ -41,6 +41,7 @@ import { Route as MatchesIdRouteImport } from './routes/matches.$id'
 import { Route as KapitalSlugRouteImport } from './routes/kapital.$slug'
 import { Route as GrowthSlugRouteImport } from './routes/growth.$slug'
 import { Route as FoerderungSlugRouteImport } from './routes/foerderung.$slug'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ApiSttRouteImport } from './routes/api/stt'
 
 const TalentRoute = TalentRouteImport.update({
@@ -203,6 +204,11 @@ const FoerderungSlugRoute = FoerderungSlugRouteImport.update({
   path: '/foerderung/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AuthRoute,
+} as any)
 const ApiSttRoute = ApiSttRouteImport.update({
   id: '/api/stt',
   path: '/api/stt',
@@ -211,7 +217,7 @@ const ApiSttRoute = ApiSttRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/co-founder': typeof CoFounderRoute
   '/co-pilot': typeof CoPilotRoute
   '/discover': typeof DiscoverRoute
@@ -227,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/steuer': typeof SteuerRouteWithChildren
   '/talent': typeof TalentRouteWithChildren
   '/api/stt': typeof ApiSttRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/foerderung/$slug': typeof FoerderungSlugRoute
   '/growth/$slug': typeof GrowthSlugRoute
   '/kapital/$slug': typeof KapitalSlugRoute
@@ -246,7 +253,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/co-founder': typeof CoFounderRoute
   '/co-pilot': typeof CoPilotRoute
   '/discover': typeof DiscoverRoute
@@ -257,6 +264,7 @@ export interface FileRoutesByTo {
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
   '/api/stt': typeof ApiSttRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/foerderung/$slug': typeof FoerderungSlugRoute
   '/growth/$slug': typeof GrowthSlugRoute
   '/kapital/$slug': typeof KapitalSlugRoute
@@ -277,7 +285,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/co-founder': typeof CoFounderRoute
   '/co-pilot': typeof CoPilotRoute
   '/discover': typeof DiscoverRoute
@@ -293,6 +301,7 @@ export interface FileRoutesById {
   '/steuer': typeof SteuerRouteWithChildren
   '/talent': typeof TalentRouteWithChildren
   '/api/stt': typeof ApiSttRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/foerderung/$slug': typeof FoerderungSlugRoute
   '/growth/$slug': typeof GrowthSlugRoute
   '/kapital/$slug': typeof KapitalSlugRoute
@@ -330,6 +339,7 @@ export interface FileRouteTypes {
     | '/steuer'
     | '/talent'
     | '/api/stt'
+    | '/auth/callback'
     | '/foerderung/$slug'
     | '/growth/$slug'
     | '/kapital/$slug'
@@ -360,6 +370,7 @@ export interface FileRouteTypes {
     | '/plan'
     | '/profile'
     | '/api/stt'
+    | '/auth/callback'
     | '/foerderung/$slug'
     | '/growth/$slug'
     | '/kapital/$slug'
@@ -395,6 +406,7 @@ export interface FileRouteTypes {
     | '/steuer'
     | '/talent'
     | '/api/stt'
+    | '/auth/callback'
     | '/foerderung/$slug'
     | '/growth/$slug'
     | '/kapital/$slug'
@@ -415,7 +427,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   CoFounderRoute: typeof CoFounderRoute
   CoPilotRoute: typeof CoPilotRoute
   DiscoverRoute: typeof DiscoverRoute
@@ -665,6 +677,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FoerderungSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/api/stt': {
       id: '/api/stt'
       path: '/api/stt'
@@ -674,6 +693,16 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthRouteChildren {
+  AuthCallbackRoute: typeof AuthCallbackRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthCallbackRoute: AuthCallbackRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 interface GrowthRouteChildren {
   GrowthSlugRoute: typeof GrowthSlugRoute
@@ -743,7 +772,7 @@ const TalentRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   CoFounderRoute: CoFounderRoute,
   CoPilotRoute: CoPilotRoute,
   DiscoverRoute: DiscoverRoute,
