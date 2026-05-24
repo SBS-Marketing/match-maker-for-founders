@@ -15,7 +15,7 @@ export const Route = createFileRoute("/foerderung/")({
           <span className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--cream)]" style={{ background: s.hue }}>
             <ServiceIcon name={s.icon} size={16} stroke={2} />
           </span>
-          <span className="eyebrow">Förderprogramme · {s.count} aktiv</span>
+          <span className="eyebrow">Förderprogramme · {GRANTS.length || s.count} aktiv</span>
         </div>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
           Öffentliche <span className="font-serif italic font-normal">Förderung</span>, live gematcht.
@@ -34,7 +34,13 @@ export const Route = createFileRoute("/foerderung/")({
                 <span><b>{g.amount}</b> Volumen</span>
                 <span>{g.duration}</span>
                 <span>Deadline: {g.deadline}</span>
+                {g.region && <span>{g.region}</span>}
               </div>
+              {g.category && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <span className="rounded-full bg-[var(--paper)] px-2.5 py-1 text-[11px] font-medium text-[var(--ink-soft)]">{g.category}</span>
+                </div>
+              )}
               <p className="mt-3 text-[13px] leading-relaxed text-[var(--smoke)]">{g.summary}</p>
               <div className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold">
                 Details <ArrowRight className="h-3.5 w-3.5" />

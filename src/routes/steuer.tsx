@@ -1,6 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ServiceSkeleton } from "@/components/ServiceSkeleton";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+
 export const Route = createFileRoute("/steuer")({
-  head: () => ({ meta: [{ title: "Steuer & Buchhaltung — matchfoundr" }] }),
-  component: () => <ServiceSkeleton id="tax" />,
+  component: Outlet,
 });

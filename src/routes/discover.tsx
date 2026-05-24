@@ -19,7 +19,12 @@ const AVATAR_COLORS = [
 ];
 
 function initials(name: string) {
-  return name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  return name
+    .split(" ")
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 }
 function colorFor(name: string) {
   let h = 0;
@@ -51,9 +56,24 @@ type Profile = {
   onboarded_at: string | null;
 };
 
-const roleLabel: Record<string, string> = { tech: "Tech", business: "Business", product: "Product", design: "Design", other: "Andere" };
-const stageLabel: Record<string, string> = { idea: "Idee", mvp: "MVP", revenue: "Umsatz", scaling: "Skalierung" };
-const commitLabel: Record<string, string> = { full_time: "Vollzeit", part_time: "Teilzeit", exploring: "Sondiert" };
+const roleLabel: Record<string, string> = {
+  tech: "Tech",
+  business: "Business",
+  product: "Product",
+  design: "Design",
+  other: "Andere",
+};
+const stageLabel: Record<string, string> = {
+  idea: "Idee",
+  mvp: "MVP",
+  revenue: "Umsatz",
+  scaling: "Skalierung",
+};
+const commitLabel: Record<string, string> = {
+  full_time: "Vollzeit",
+  part_time: "Teilzeit",
+  exploring: "Sondiert",
+};
 
 type FilterValue = string;
 const PATH_OPTIONS: { value: FilterValue; label: string }[] = [
@@ -82,8 +102,57 @@ const COMMIT_OPTIONS: { value: FilterValue; label: string }[] = [
   { value: "exploring", label: "Sondiert" },
 ];
 
+const DEMO_PROFILES: Profile[] = [
+  {
+    id: "demo-anna",
+    display_name: "Anna Wojcik",
+    photo_url: null,
+    location: "Berlin",
+    path: "joiner",
+    role: "tech",
+    industry: "tech",
+    stage: "mvp",
+    commitment: "part_time",
+    skills: ["Backend", "AI", "APIs", "Infra"],
+    vision: "Ich baue gern robuste MVPs und suche ein Founder-Team mit klarem B2B-Problem.",
+    looking_for: "Produktstarke Founder mit erstem Kundenkontakt.",
+    onboarded_at: new Date(0).toISOString(),
+  },
+  {
+    id: "demo-lena",
+    display_name: "Dr. Lena Heller",
+    photo_url: null,
+    location: "München",
+    path: "founder",
+    role: "business",
+    industry: "legal",
+    stage: "revenue",
+    commitment: "full_time",
+    skills: ["Legal", "GmbH", "ESOP", "Verträge"],
+    vision:
+      "Startup-Juristin mit Fokus auf Gründerverträge, Beteiligung und frühe Finanzierungsrunden.",
+    looking_for: "Founder, die ihre Struktur sauber aufsetzen wollen.",
+    onboarded_at: new Date(0).toISOString(),
+  },
+  {
+    id: "demo-felix",
+    display_name: "Felix Krämer",
+    photo_url: null,
+    location: "Hamburg",
+    path: "joiner",
+    role: "product",
+    industry: "tech",
+    stage: "idea",
+    commitment: "exploring",
+    skills: ["Product", "Discovery", "GTM", "B2B SaaS"],
+    vision: "Operator mit zwei Exits, stark in Positionierung und ersten 20 Kunden.",
+    looking_for: "Teams vor oder kurz nach MVP.",
+    onboarded_at: new Date(0).toISOString(),
+  },
+];
+
 function Discover() {
-  const { user } = useAuth();
+  const { user, isDemo } = useAuth();
   const navigate = useNavigate();
   const [queue, setQueue] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,21 +163,38 @@ function Discover() {
   const [fCommit, setFCommit] = useState<FilterValue>("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const filtered = queue.filter((p) =>
-    (fPath === "all" || p.path === fPath) &&
-    (fRole === "all" || p.role === fRole) &&
-    (fStage === "all" || p.stage === fStage) &&
-    (fCommit === "all" || p.commitment === fCommit)
+  const filtered = queue.filter(
+    (p) =>
+      (fPath === "all" || p.path === fPath) &&
+      (fRole === "all" || p.role === fRole) &&
+      (fStage === "all" || p.stage === fStage) &&
+      (fCommit === "all" || p.commitment === fCommit),
   );
   const activeCount = [fPath, fRole, fStage, fCommit].filter((v) => v !== "all").length;
-  const resetFilters = () => { setFPath("all"); setFRole("all"); setFStage("all"); setFCommit("all"); };
+  const resetFilters = () => {
+    setFPath("all");
+    setFRole("all");
+    setFStage("all");
+    setFCommit("all");
+  };
 
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
 
+    if (isDemo) {
+      setQueue(DEMO_PROFILES);
+      setMeOnboarded(true);
+      setLoading(false);
+      return;
+    }
+
     // Check own onboarding
-    const { data: me } = await supabase.from("profiles").select("onboarded_at").eq("id", user.id).maybeSingle();
+    const { data: me } = await supabase
+      .from("profiles")
+      .select("onboarded_at")
+      .eq("id", user.id)
+      .maybeSingle();
     if (!me?.onboarded_at) {
       setMeOnboarded(false);
       setLoading(false);
@@ -116,7 +202,10 @@ function Discover() {
     }
     setMeOnboarded(true);
 
-    const { data: swiped } = await supabase.from("swipes").select("target_id").eq("swiper_id", user.id);
+    const { data: swiped } = await supabase
+      .from("swipes")
+      .select("target_id")
+      .eq("swiper_id", user.id);
     const excluded = new Set<string>([user.id, ...(swiped ?? []).map((s) => s.target_id)]);
 
     const { data: profs, error } = await supabase
@@ -131,7 +220,7 @@ function Discover() {
     }
     setQueue((profs ?? []).filter((p) => !excluded.has(p.id)));
     setLoading(false);
-  }, [user]);
+  }, [user, isDemo]);
 
   useEffect(() => {
     load();
@@ -140,12 +229,23 @@ function Discover() {
   const swipe = async (targetId: string, direction: "like" | "pass") => {
     if (!user) return;
     setQueue((q) => q.filter((x) => x.id !== targetId));
-    const { error } = await supabase.from("swipes").insert({ swiper_id: user.id, target_id: targetId, direction });
+    if (isDemo) {
+      if (direction === "like") toast.success("Demo-Like gespeichert");
+      return;
+    }
+    const { error } = await supabase
+      .from("swipes")
+      .insert({ swiper_id: user.id, target_id: targetId, direction });
     if (error) return toast.error(error.message);
     if (direction === "like") {
       const ua = user.id < targetId ? user.id : targetId;
       const ub = user.id < targetId ? targetId : user.id;
-      const { data: m } = await supabase.from("matches").select("id").eq("user_a", ua).eq("user_b", ub).maybeSingle();
+      const { data: m } = await supabase
+        .from("matches")
+        .select("id")
+        .eq("user_a", ua)
+        .eq("user_b", ub)
+        .maybeSingle();
       if (m) toast.success("Es ist ein Match! 🎉");
       else toast.success("Like gesendet");
     }
@@ -153,13 +253,25 @@ function Discover() {
 
   const message = async (targetId: string) => {
     if (!user) return;
+    if (isDemo) {
+      setQueue((q) => q.filter((x) => x.id !== targetId));
+      toast.info("Demo: Chat wird nach echtem Match freigeschaltet.");
+      return;
+    }
     // Sending a like; if reciprocal -> match created, navigate to chat
-    const { error } = await supabase.from("swipes").insert({ swiper_id: user.id, target_id: targetId, direction: "like" });
+    const { error } = await supabase
+      .from("swipes")
+      .insert({ swiper_id: user.id, target_id: targetId, direction: "like" });
     if (error && !error.message.includes("duplicate")) return toast.error(error.message);
     setQueue((q) => q.filter((x) => x.id !== targetId));
     const ua = user.id < targetId ? user.id : targetId;
     const ub = user.id < targetId ? targetId : user.id;
-    const { data: m } = await supabase.from("matches").select("id").eq("user_a", ua).eq("user_b", ub).maybeSingle();
+    const { data: m } = await supabase
+      .from("matches")
+      .select("id")
+      .eq("user_a", ua)
+      .eq("user_b", ub)
+      .maybeSingle();
     if (m) {
       navigate({ to: "/matches/$id", params: { id: m.id } });
     } else {
@@ -168,7 +280,11 @@ function Discover() {
   };
 
   if (loading) {
-    return <div className="mx-auto max-w-xl px-4 py-20 text-center text-sm text-[var(--smoke)]">Lade Profile…</div>;
+    return (
+      <div className="mx-auto max-w-xl px-4 py-20 text-center text-sm text-[var(--smoke)]">
+        Lade Profile…
+      </div>
+    );
   }
 
   if (meOnboarded === false) {
@@ -177,7 +293,8 @@ function Discover() {
         <div className="glass-pane p-10 text-center">
           <div className="eyebrow">Profil unvollständig</div>
           <h2 className="mt-4 text-balance text-3xl font-semibold tracking-tight">
-            Erst dein <span className="font-serif italic font-normal text-[var(--ember)]">Profil</span>
+            Erst dein{" "}
+            <span className="font-serif italic font-normal text-[var(--ember)]">Profil</span>
           </h2>
           <p className="mt-4 text-[14px] text-[var(--smoke)]">
             Vervollständige dein Founder-Profil, bevor du andere Founder triffst.
@@ -205,7 +322,9 @@ function Discover() {
             Du hast alle aktuellen Founder gesehen. Schau später wieder vorbei.
           </p>
           <Link to="/matches">
-            <Button variant="ghost" className="mt-7 rounded-xl">Zu deinen Matches</Button>
+            <Button variant="ghost" className="mt-7 rounded-xl">
+              Zu deinen Matches
+            </Button>
           </Link>
         </div>
       </div>
@@ -221,14 +340,15 @@ function Discover() {
       >
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="h-4 w-4 text-[var(--ember-deep)]" />
-          <span className="eyebrow">
-            Filter{activeCount > 0 ? ` · ${activeCount} aktiv` : ""}
-          </span>
+          <span className="eyebrow">Filter{activeCount > 0 ? ` · ${activeCount} aktiv` : ""}</span>
         </div>
         <div className="flex items-center gap-3">
           {activeCount > 0 && (
             <span
-              onClick={(e) => { e.stopPropagation(); resetFilters(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                resetFilters();
+              }}
               className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--ember-deep)] hover:underline"
               role="button"
             >
@@ -245,7 +365,12 @@ function Discover() {
           <FilterRow label="Pfad" options={PATH_OPTIONS} value={fPath} onChange={setFPath} />
           <FilterRow label="Rolle" options={ROLE_OPTIONS} value={fRole} onChange={setFRole} />
           <FilterRow label="Stage" options={STAGE_OPTIONS} value={fStage} onChange={setFStage} />
-          <FilterRow label="Commit" options={COMMIT_OPTIONS} value={fCommit} onChange={setFCommit} />
+          <FilterRow
+            label="Commit"
+            options={COMMIT_OPTIONS}
+            value={fCommit}
+            onChange={setFCommit}
+          />
         </div>
       )}
     </div>
@@ -263,11 +388,7 @@ function Discover() {
           <p className="text-[14px] text-[var(--smoke)]">
             Keine Profile passen zu deinen aktuellen Filtern. Lockere sie oder setze sie zurück.
           </p>
-          <Button
-            variant="ghost"
-            className="mt-5 rounded-xl"
-            onClick={resetFilters}
-          >
+          <Button variant="ghost" className="mt-5 rounded-xl" onClick={resetFilters}>
             Filter zurücksetzen
           </Button>
         </div>
@@ -306,7 +427,9 @@ function Discover() {
                     )}
                   </div>
                   <div>
-                    <div className="text-[15px] font-semibold leading-tight text-[var(--ink)]">{name}</div>
+                    <div className="text-[15px] font-semibold leading-tight text-[var(--ink)]">
+                      {name}
+                    </div>
                     {p.location && (
                       <div className="mt-0.5 flex items-center gap-1 text-[12px] text-[var(--smoke)]">
                         <MapPin className="h-3 w-3" /> {p.location}
@@ -343,7 +466,9 @@ function Discover() {
               {p.skills && p.skills.length > 0 && (
                 <div className="mt-4 flex flex-wrap gap-1.5">
                   {p.skills.slice(0, 4).map((s) => (
-                    <Chip key={s} muted>{s}</Chip>
+                    <Chip key={s} muted>
+                      {s}
+                    </Chip>
                   ))}
                 </div>
               )}

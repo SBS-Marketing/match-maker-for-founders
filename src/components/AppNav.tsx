@@ -4,7 +4,23 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Lockup } from "@/components/Logo";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Bell, Menu, User } from "lucide-react";
+import { Bell, Compass, Home, Menu, MessageCircle, Sparkles, Store, User } from "lucide-react";
+
+const appLinks = [
+  { to: "/heute", label: "Heute" },
+  { to: "/discover", label: "Swipe" },
+  { to: "/marketplace", label: "Marktplatz" },
+  { to: "/co-pilot", label: "Co-Pilot" },
+  { to: "/matches", label: "Matches" },
+];
+
+const mobileTabs = [
+  { to: "/heute", label: "Heute", icon: Home },
+  { to: "/discover", label: "Swipe", icon: Compass },
+  { to: "/marketplace", label: "Markt", icon: Store },
+  { to: "/co-pilot", label: "Pilot", icon: Sparkles },
+  { to: "/matches", label: "Chats", icon: MessageCircle },
+];
 
 export function AppNav() {
   const { user, signOut } = useAuth();
@@ -24,10 +40,11 @@ export function AppNav() {
 
           <nav className="hidden items-center gap-1 text-sm sm:flex">
             {user ? (
-              <>
-                <NavLink to="/discover">Entdecken</NavLink>
-                <NavLink to="/matches">Matches</NavLink>
-              </>
+              appLinks.map((link) => (
+                <NavLink key={link.to} to={link.to}>
+                  {link.label}
+                </NavLink>
+              ))
             ) : (
               <>
                 <HashLink href="/#find-a-match">Find a match</HashLink>
@@ -99,12 +116,11 @@ export function AppNav() {
                 <div className="mt-8 flex flex-col gap-1 text-base">
                   {user ? (
                     <>
-                      <MobileLink to="/discover" onNavigate={close}>
-                        Entdecken
-                      </MobileLink>
-                      <MobileLink to="/matches" onNavigate={close}>
-                        Matches
-                      </MobileLink>
+                      {appLinks.map((link) => (
+                        <MobileLink key={link.to} to={link.to} onNavigate={close}>
+                          {link.label}
+                        </MobileLink>
+                      ))}
                       <MobileLink to="/profile" onNavigate={close}>
                         Profil
                       </MobileLink>
@@ -145,6 +161,31 @@ export function AppNav() {
         </div>
       </div>
     </header>
+  );
+}
+
+export function MobileBottomNav() {
+  const { user } = useAuth();
+  if (!user) return null;
+
+  return (
+    <nav aria-label="Mobile Hauptnavigation" className="fixed inset-x-3 bottom-3 z-50 sm:hidden">
+      <div className="glass-pill mx-auto grid h-16 max-w-md grid-cols-5 items-center px-2">
+        {mobileTabs.map(({ to, label, icon: Icon }) => (
+          <Link
+            key={to}
+            to={to}
+            className="flex min-w-0 flex-col items-center justify-center gap-1 rounded-full px-1 py-2 text-[10px] font-medium leading-none text-[var(--smoke)] transition hover:text-[var(--ink)]"
+            activeProps={{
+              className: "bg-[var(--ink)] text-[var(--cream)] shadow-sm hover:text-[var(--cream)]",
+            }}
+          >
+            <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+            <span className="max-w-full truncate">{label}</span>
+          </Link>
+        ))}
+      </div>
+    </nav>
   );
 }
 
@@ -211,4 +252,3 @@ function MobileHashLink({
     </a>
   );
 }
-

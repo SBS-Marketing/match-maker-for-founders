@@ -84,6 +84,44 @@ LOGOS = {
     "loom": "🎥",
     "mixpanel": "📊",
     "datadog": "🐶",
+    "mongodb": "🍃",
+    "neon": "🟩",
+    "heroku": "🟣",
+    "atlassian": "🔵",
+    "webflow": "🌊",
+    "elevenlabs": "🎙",
+    "deepgram": "🎧",
+    "fireworks": "🎆",
+    "baseten": "🧠",
+    "langchain": "🔗",
+    "llamaindex": "🦙",
+    "pinecone": "🌲",
+    "assemblyai": "🎙",
+    "qonto": "🏦",
+    "kontist": "🏦",
+    "ashby": "👥",
+    "workable": "👥",
+    "oyster": "🌍",
+    "greenhouse": "🌱",
+    "recruitee": "👥",
+    "factorial": "👔",
+    "kenjo": "👔",
+    "homerun": "🏁",
+    "y combinator": "🟧",
+    "techstars": "⭐",
+    "founder institute": "🏛",
+    "german accelerator": "🇩🇪",
+}
+
+CLAIM_URL_OVERRIDES = {
+    # Prefer the concrete claim/startup/pricing target over broad homepages.
+    "cloudflare": "https://www.cloudflare.com/startups/",
+    "sevdesk": "https://sevdesk.de/gruender/",
+    "german-accelerator": "https://www.germanaccelerator.com/our-programs",
+    "yc-startup-school": "https://www.startupschool.org/users/sign_up",
+    "founder-institute": "https://fi.co/join",
+    "startup-genome": "https://startupgenome.com/startup-resources",
+    "indie-hackers": "https://www.indiehackers.com/sign-up",
 }
 
 def get_logo(company: str) -> str:
@@ -92,6 +130,92 @@ def get_logo(company: str) -> str:
         if key in cl:
             return emoji
     return "🎁"
+
+
+def get_claim_url(source: dict, fallback_url: str = "") -> str:
+    return CLAIM_URL_OVERRIDES.get(source.get("id", ""), fallback_url or source.get("url", ""))
+
+
+def infer_value_and_tier(source: dict) -> tuple[str, str, str]:
+    """Best-effort value extraction from the official page text."""
+    text = re.sub(r"\s+", " ", source.get("text") or "")
+    lower = text.lower()
+    cat = source.get("cat", "saas")
+
+    if cat == "community":
+        if "free" in lower or "kostenlos" in lower:
+            return "Kostenloser Einstieg", "Free", "free"
+        return "Founder-Ressource", "Startup", "good"
+
+    money_patterns = [
+        r"(?:up to|bis zu|bis|worth|credits? up to)\s*([$€]\s?[\d.,]+(?:\s?[kKmM])?)",
+        r"([$€]\s?[\d.,]+(?:\s?[kKmM])?)\s+(?:in\s+)?(?:credits?|guthaben|value|wert)",
+        r"(?:credits?|guthaben|value|wert)\s+(?:of|von|bis zu|bis)?\s*([$€]\s?[\d.,]+(?:\s?[kKmM])?)",
+    ]
+    value_context_words = (
+        "credit",
+        "credits",
+        "guthaben",
+        "discount",
+        "rabatt",
+        "savings",
+        "save",
+        "free",
+        "kostenlos",
+        "perk",
+        "perks",
+    )
+    for pattern in money_patterns:
+        m = re.search(pattern, text, re.IGNORECASE)
+        if m:
+            start, end = m.span()
+            context = lower[max(0, start - 100): min(len(lower), end + 100)]
+            if not any(word in context for word in value_context_words):
+                continue
+            raw = m.group(1).replace(" ", "")
+            value = f"bis {raw} Credits" if "credit" in lower or "guthaben" in lower else f"bis {raw}"
+            numeric = raw.lower().replace("$", "").replace("€", "").replace(",", "").replace(".", "")
+            multiplier = 1000 if "k" in raw.lower() else 1000000 if "m" in raw.lower() else 1
+            amount = int(re.sub(r"\D", "", numeric) or "0") * multiplier
+            if amount >= 10000:
+                return value, "EPIC", "epic"
+            if amount >= 1000:
+                return value, raw, "big"
+            return value, "Deal", "good"
+
+    percent = re.search(r"(\d{2,3})\s?%\s+(?:off|discount|rabatt)", lower)
+    if percent:
+        pct = int(percent.group(1))
+        tier = "big" if pct >= 50 else "good"
+        return f"{pct}% Rabatt", f"{pct}% off", tier
+
+    months = re.search(r"(\d{1,2})\s+(?:months?|monate)\s+(?:free|kostenlos)", lower)
+    if months:
+        n = int(months.group(1))
+        tier = "big" if n >= 6 else "good"
+        return f"{n} Monate kostenlos", f"{n} Mo", tier
+
+    if "free plan" in lower or "free tier" in lower or "kostenloser tarif" in lower:
+        return "Free Tier verfügbar", "Free", "free"
+
+    if "startup" in lower or "founder" in lower or "gründer" in lower:
+        return "Startup-Programm", "Startup", "good"
+
+    return "Siehe Website", "Deal", "good"
+
+
+def default_tags(source: dict) -> list[str]:
+    cat = source.get("cat", "saas")
+    tags_by_cat = {
+        "cloud": ["Cloud", "Credits", "Infra"],
+        "saas": ["SaaS", "Produktivität", "Tools"],
+        "ai": ["AI", "API", "Credits"],
+        "legal": ["Finance", "Legal", "Banking"],
+        "marketing": ["Marketing", "Growth", "Tools"],
+        "hr": ["HR", "Recruiting", "Talent"],
+        "community": ["Community", "Netzwerk", "Founder"],
+    }
+    return tags_by_cat.get(cat, [cat.capitalize()])
 
 
 def normalize_with_claude(source: dict) -> dict | None:
@@ -146,6 +270,7 @@ Antworte NUR mit gültigem JSON, kein weiterer Text."""
         deal = json.loads(match.group())
         deal["id"] = source["id"]
         deal["url"] = source.get("url", deal.get("url", ""))
+        deal["claim_url"] = get_claim_url(source, deal["url"])
         deal["cat"] = source.get("cat", deal.get("cat", "saas"))
         deal["logo"] = get_logo(source.get("company", ""))
         deal["normalized_at"] = datetime.utcnow().isoformat()
@@ -158,21 +283,33 @@ Antworte NUR mit gültigem JSON, kein weiterer Text."""
 
 def fallback_normalize(source: dict) -> dict:
     """Einfaches Fallback ohne Claude – behält bekannte Werte."""
+    value, badge, tier = infer_value_and_tier(source)
+    cat = source.get("cat", "saas")
+    desc_by_cat = {
+        "cloud": "Cloud- oder Infrastruktur-Angebot für Startups. Nützlich für Hosting, Datenbanken, Deployments und technische Skalierung.",
+        "saas": "SaaS-Tool für frühe Teams. Nützlich für Produktivität, Kollaboration, Analytics oder interne Workflows.",
+        "ai": "AI-/ML-Angebot für Startups. Nützlich für Prototyping, Inferenz, Datenpipelines oder KI-Features im Produkt.",
+        "legal": "Legal-/Finance-Angebot für Gründer. Nützlich für Banking, Buchhaltung, Gesellschaftsstruktur oder Finanzprozesse.",
+        "marketing": "Marketing-/Growth-Angebot für frühe Teams. Nützlich für Launch, CRM, Analytics, Outreach oder SEO.",
+        "hr": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
+        "community": "Founder-Community oder Accelerator-Ressource. Nützlich für Netzwerk, Feedback, Mentoren und erste Reichweite.",
+    }
     return {
         "id": source["id"],
         "company": source.get("company", ""),
         "product": source.get("product", ""),
-        "cat": source.get("cat", "saas"),
+        "cat": cat,
         "logo": get_logo(source.get("company", "")),
-        "value": "Siehe Website",
-        "badge": "Deal",
-        "badge_class": "good",
-        "desc": f"Startup-Programm von {source.get('company', '')}. Details auf der offiziellen Website.",
-        "eligibility": "Startups",
+        "value": value,
+        "badge": badge,
+        "badge_class": tier,
+        "desc": desc_by_cat.get(cat, f"Startup-Angebot von {source.get('company', '')}. Details auf der offiziellen Website."),
+        "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
         "duration": "Siehe Website",
         "url": source.get("url", ""),
-        "tags": [source.get("cat", "").capitalize()],
-        "tier": "good",
+        "claim_url": get_claim_url(source),
+        "tags": default_tags(source),
+        "tier": tier,
         "active": True,
         "normalized_at": datetime.utcnow().isoformat(),
     }

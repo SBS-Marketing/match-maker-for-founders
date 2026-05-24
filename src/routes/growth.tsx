@@ -1,6 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ServiceSkeleton } from "@/components/ServiceSkeleton";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+
 export const Route = createFileRoute("/growth")({
-  head: () => ({ meta: [{ title: "Growth & GTM — matchfoundr" }] }),
-  component: () => <ServiceSkeleton id="growth" />,
+  component: Outlet,
 });

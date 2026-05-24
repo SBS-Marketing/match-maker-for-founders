@@ -16,6 +16,7 @@ export const Route = createFileRoute("/matches/$id")({
 });
 
 type Msg = { id: string; sender_id: string; body: string; created_at: string };
+type LastMessageRow = { match_id: string; body: string; created_at: string };
 type Thread = {
   match_id: string;
   other_id: string;
@@ -80,7 +81,7 @@ function Chat() {
         .in("match_id", matchIds)
         .order("created_at", { ascending: false });
       const lastByMatch = new Map<string, { body: string; created_at: string }>();
-      (lastMsgs ?? []).forEach((m: any) => {
+      (lastMsgs ?? []).forEach((m: LastMessageRow) => {
         if (!lastByMatch.has(m.match_id))
           lastByMatch.set(m.match_id, { body: m.body, created_at: m.created_at });
       });
@@ -153,7 +154,9 @@ function Chat() {
     if (!body || !user) return;
     if (body.length > 2000) return toast.error("Nachricht zu lang");
     setText("");
-    const { error } = await supabase.from("messages").insert({ match_id: id, sender_id: user.id, body });
+    const { error } = await supabase
+      .from("messages")
+      .insert({ match_id: id, sender_id: user.id, body });
     if (error) toast.error(error.message);
   };
 
@@ -165,8 +168,8 @@ function Chat() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
-      <div className="eyebrow mb-4 flex items-center gap-2.5 px-2">
+    <div className="mx-auto max-w-7xl px-3 py-4 md:px-8 md:py-6">
+      <div className="eyebrow mb-3 flex items-center gap-2.5 px-2 md:mb-4">
         <Link to="/matches" className="hover:text-[var(--ink)]">
           Matches
         </Link>
@@ -176,7 +179,7 @@ function Chat() {
 
       <div className="grid gap-4 lg:grid-cols-[300px_1fr_280px]">
         {/* Threads */}
-        <div className="glass-pane flex max-h-[calc(100vh-160px)] flex-col overflow-hidden p-0">
+        <div className="glass-pane hidden max-h-[calc(100vh-160px)] flex-col overflow-hidden p-0 lg:flex">
           <div className="p-5 pb-3.5">
             <div className="mb-3 flex items-center justify-between">
               <span className="text-[17px] font-semibold">Konversationen</span>
@@ -209,9 +212,7 @@ function Chat() {
                   className="grid w-full grid-cols-[36px_1fr_auto] items-center gap-3 px-5 py-3 text-left transition"
                   style={{
                     background: active ? "rgba(226,81,28,0.10)" : "transparent",
-                    borderLeft: active
-                      ? `3px solid var(--ember)`
-                      : "3px solid transparent",
+                    borderLeft: active ? `3px solid var(--ember)` : "3px solid transparent",
                     borderBottom: "1px solid rgba(21,20,15,0.05)",
                   }}
                 >
@@ -241,10 +242,10 @@ function Chat() {
         </div>
 
         {/* Conversation */}
-        <div className="glass-pane flex max-h-[calc(100vh-160px)] flex-col overflow-hidden p-0">
+        <div className="glass-pane flex h-[calc(100dvh-11rem)] min-h-[520px] flex-col overflow-hidden p-0 lg:max-h-[calc(100vh-160px)]">
           {/* Header */}
           <div
-            className="flex items-center gap-3.5 border-b px-5 py-4"
+            className="flex items-center gap-3 border-b px-4 py-3 md:gap-3.5 md:px-5 md:py-4"
             style={{ borderColor: "rgba(21,20,15,0.07)" }}
           >
             <Avatar className="h-10 w-10">
@@ -266,7 +267,7 @@ function Chat() {
               </div>
             </div>
             <span
-              className="rounded-full px-3 py-1 text-[11px] font-medium"
+              className="hidden rounded-full px-3 py-1 text-[11px] font-medium sm:inline-flex"
               style={{
                 background: "rgba(226,81,28,0.12)",
                 color: "var(--ember-deep)",
@@ -279,7 +280,7 @@ function Chat() {
           </div>
 
           {/* Messages */}
-          <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-6 py-5">
+          <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-4 md:px-6 md:py-5">
             <div className="eyebrow flex items-center gap-3" style={{ fontSize: 10 }}>
               <div className="h-px flex-1" style={{ background: "rgba(21,20,15,0.08)" }} />
               Heute
@@ -295,7 +296,7 @@ function Chat() {
               return (
                 <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                   <div
-                    className="max-w-[72%] px-4 py-3 text-[13.5px] leading-[1.5]"
+                    className="max-w-[86%] px-4 py-3 text-[13.5px] leading-[1.5] sm:max-w-[72%]"
                     style={{
                       borderRadius: mine ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
                       background: mine ? "var(--ink)" : "rgba(251,250,247,0.85)",
@@ -329,14 +330,11 @@ function Chat() {
 
           {/* Composer */}
           <div
-            className="border-t px-5 py-3.5"
+            className="border-t px-3 py-3 md:px-5 md:py-3.5"
             style={{ borderColor: "rgba(21,20,15,0.07)" }}
           >
-            <form
-              onSubmit={send}
-              className="glass-pane-soft flex items-center gap-2.5 px-3.5 py-3"
-            >
-              <Paperclip className="h-4 w-4 text-[var(--smoke)]" />
+            <form onSubmit={send} className="glass-pane-soft flex items-center gap-2.5 px-3.5 py-3">
+              <Paperclip className="hidden h-4 w-4 text-[var(--smoke)] sm:block" />
               <input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
@@ -344,7 +342,7 @@ function Chat() {
                 maxLength={2000}
                 className="flex-1 bg-transparent text-[14px] text-[var(--ink)] outline-none placeholder:text-[var(--smoke)]"
               />
-              <Smile className="h-4 w-4 text-[var(--smoke)]" />
+              <Smile className="hidden h-4 w-4 text-[var(--smoke)] sm:block" />
               <button
                 type="submit"
                 className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px]"
@@ -361,7 +359,7 @@ function Chat() {
         </div>
 
         {/* Side detail */}
-        <div className="glass-pane flex max-h-[calc(100vh-160px)] flex-col gap-5 overflow-hidden p-5">
+        <div className="glass-pane hidden max-h-[calc(100vh-160px)] flex-col gap-5 overflow-hidden p-5 lg:flex">
           <div className="flex flex-col items-center gap-2 text-center">
             <Avatar className="h-[72px] w-[72px] ring-2 ring-[var(--ember)]/30">
               {other?.photo_url && <AvatarImage src={other.photo_url} />}
@@ -390,10 +388,7 @@ function Chat() {
             >
               <Zap className="mt-0.5 h-3.5 w-3.5 shrink-0" style={{ color: "var(--ember-deep)" }} />
               <div>
-                <div
-                  className="text-[13px] font-semibold"
-                  style={{ color: "var(--ember-deep)" }}
-                >
+                <div className="text-[13px] font-semibold" style={{ color: "var(--ember-deep)" }}>
                   Ersten Call vereinbaren
                 </div>
                 <div

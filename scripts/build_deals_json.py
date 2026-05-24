@@ -9,6 +9,7 @@ from datetime import datetime
 
 DEALS_DIR  = Path(__file__).parent.parent / "data" / "deals"
 PUBLIC_DIR = Path(__file__).parent.parent / "public"
+DOCS_DIR   = Path(__file__).parent.parent / "docs"
 
 # Kategorien-Mapping: cat → Anzeigename + Icon
 CAT_META = {
@@ -86,8 +87,13 @@ def run():
     out_path = PUBLIC_DIR / "deals.json"
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
+    docs_path = DOCS_DIR / "deals.json"
+    if DOCS_DIR.exists():
+        shutil.copyfile(out_path, docs_path)
 
     print(f"✓ {len(deals)} Deals → public/deals.json")
+    if DOCS_DIR.exists():
+        print("✓ docs/deals.json synchronisiert")
     print(f"  Stats: {output['stats']}")
 
 

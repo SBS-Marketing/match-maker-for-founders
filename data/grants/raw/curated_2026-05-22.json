@@ -1,0 +1,225 @@
+{
+  "scraped_at": "2026-05-22T22:26:15.420671",
+  "sources": [
+    {
+      "id": "exist-gruenderstipendium",
+      "name": "EXIST-Gründerstipendium",
+      "body": "BMWK · DLR Projektträger",
+      "region": "Deutschland",
+      "category": "stipendium",
+      "stage": [
+        "idee",
+        "pre-seed",
+        "hochschule"
+      ],
+      "url": "https://www.exist.de/EXIST/Navigation/DE/Gruendungsfoerderung/EXIST-Gruendungsstipendium/exist-gruendungsstipendium.html",
+      "apply_url": "https://www.exist.de/EXIST/Navigation/DE/Gruendungsfoerderung/EXIST-Gruendungsstipendium/Antragstellung/antragstellung.html",
+      "amount_hint": "bis ca. €125.000",
+      "duration_hint": "12 Monate",
+      "deadline_hint": "Laufend über Hochschule",
+      "scraped_at": "2026-05-22T22:21:47.097175",
+      "text": null,
+      "status_code": null,
+      "final_url": null,
+      "error": "_ssl.c:993: The handshake operation timed out"
+    },
+    {
+      "id": "exist-forschungstransfer",
+      "name": "EXIST-Forschungstransfer",
+      "body": "BMWK · DLR Projektträger",
+      "region": "Deutschland",
+      "category": "forschung",
+      "stage": [
+        "forschung",
+        "deeptech",
+        "pre-seed"
+      ],
+      "url": "https://www.exist.de/EXIST/Navigation/DE/Gruendungsfoerderung/EXIST-Forschungstransfer/exist-forschungstransfer.html",
+      "apply_url": "https://www.exist.de/EXIST/Navigation/DE/Gruendungsfoerderung/EXIST-Forschungstransfer/Antragstellung/antragstellung.html",
+      "amount_hint": "bis ca. €250.000+",
+      "duration_hint": "18 Monate + Phase II",
+      "deadline_hint": "Stichtage / Projektträger prüfen",
+      "scraped_at": "2026-05-22T22:22:36.464619",
+      "text": null,
+      "status_code": null,
+      "final_url": null,
+      "error": "_ssl.c:993: The handshake operation timed out"
+    },
+    {
+      "id": "invest-zuschuss-wagniskapital",
+      "name": "INVEST Zuschuss für Wagniskapital",
+      "body": "BAFA · Business Angels",
+      "region": "Deutschland",
+      "category": "kapital",
+      "stage": [
+        "pre-seed",
+        "seed",
+        "angel"
+      ],
+      "url": "https://www.bafa.de/DE/Wirtschaft/Beratung_Finanzierung/Invest/invest_node.html",
+      "apply_url": "https://fms.bafa.de/BafaFrame/invest",
+      "amount_hint": "20% Erwerbszuschuss",
+      "duration_hint": "Investmentabhängig",
+      "deadline_hint": "Laufend",
+      "scraped_at": "2026-05-22T22:23:01.858815",
+      "text": null,
+      "status_code": null,
+      "final_url": null,
+      "error": "_ssl.c:993: The handshake operation timed out"
+    },
+    {
+      "id": "kfw-erp-gruenderkredit-startgeld",
+      "name": "ERP-Gründerkredit - StartGeld",
+      "body": "KfW · Finanzierung",
+      "region": "Deutschland",
+      "category": "kredit",
+      "stage": [
+        "gruendung",
+        "nachfolge",
+        "early"
+      ],
+      "url": "https://www.kfw.de/inlandsfoerderung/Unternehmen/Gr%C3%BCnden-Nachfolgen/F%C3%B6rderprodukte/ERP-Gr%C3%BCnderkredit-Startgeld-(067)/",
+      "apply_url": "https://www.kfw.de/inlandsfoerderung/Unternehmen/Gr%C3%BCnden-Nachfolgen/F%C3%B6rderprodukte/ERP-Gr%C3%BCnderkredit-Startgeld-(067)/",
+      "amount_hint": "bis €125.000",
+      "duration_hint": "bis 10 Jahre",
+      "deadline_hint": "Laufend über Hausbank",
+      "scraped_at": "2026-05-22T22:23:28.073932",
+      "text": null,
+      "status_code": null,
+      "final_url": null,
+      "error": "[Errno 54] Connection reset by peer"
+    },
+    {
+      "id": "profit-berlin",
+      "name": "ProFIT Berlin",
+      "body": "IBB Business Team",
+      "region": "Berlin",
+      "category": "fue",
+      "stage": [
+        "prototype",
+        "fue",
+        "seed"
+      ],
+      "url": "https://www.ibb-business-team.de/profit",
+      "apply_url": "https://www.ibb-business-team.de/profit",
+      "amount_hint": "bis €1,5 Mio.",
+      "duration_hint": "Projektabhängig",
+      "deadline_hint": "Rollierend",
+      "scraped_at": "2026-05-22T22:23:40.843873",
+      "text": null,
+      "status_code": null,
+      "final_url": null,
+      "error": "_ssl.c:993: The handshake operation timed out"
+    },
+    {
+      "id": "gruendungsbonus-berlin",
+      "name": "GründungsBONUS Berlin",
+      "body": "IBB Business Team",
+      "region": "Berlin",
+      "category": "zuschuss",
+      "stage": [
+        "gruendung",
+        "early",
+        "prototype"
+      ],
+      "url": "https://www.ibb-business-team.de/gruendungsbonus",
+      "apply_url": "https://www.ibb-business-team.de/gruendungsbonus",
+      "amount_hint": "bis €50.000",
+      "duration_hint": "12 Monate",
+      "deadline_hint": "Rollierend",
+      "scraped_at": "2026-05-22T22:24:07.227985",
+      "text": null,
+      "status_code": null,
+      "final_url": null,
+      "error": "Server disconnected without sending a response."
+    },
+    {
+      "id": "startup-bw-pre-seed",
+      "name": "Start-up BW Pre-Seed",
+      "body": "Land Baden-Württemberg · Startup BW",
+      "region": "Baden-Württemberg",
+      "category": "pre-seed",
+      "stage": [
+        "pre-seed",
+        "prototype",
+        "team"
+      ],
+      "url": "https://www.startupbw.de/foerderprogramme/start-up-bw-pre-seed",
+      "apply_url": "https://www.startupbw.de/foerderprogramme/start-up-bw-pre-seed",
+      "amount_hint": "bis €200.000",
+      "duration_hint": "Finanzierungsrunde",
+      "deadline_hint": "Über Betreuungspartner",
+      "scraped_at": "2026-05-22T22:24:25.849719",
+      "text": null,
+      "status_code": null,
+      "final_url": null,
+      "error": "_ssl.c:993: The handshake operation timed out"
+    },
+    {
+      "id": "ifb-innorampup",
+      "name": "InnoRampUp",
+      "body": "IFB Hamburg",
+      "region": "Hamburg",
+      "category": "zuschuss",
+      "stage": [
+        "pre-seed",
+        "prototype",
+        "innovation"
+      ],
+      "url": "https://www.ifbhh.de/foerderprogramm/innorampup",
+      "apply_url": "https://www.ifbhh.de/foerderprogramm/innorampup",
+      "amount_hint": "bis €150.000",
+      "duration_hint": "Projektabhängig",
+      "deadline_hint": "Rollierend",
+      "scraped_at": "2026-05-22T22:24:53.066316",
+      "text": null,
+      "status_code": null,
+      "final_url": null,
+      "error": "_ssl.c:993: The handshake operation timed out"
+    },
+    {
+      "id": "nrwbank-gruendungskredit",
+      "name": "NRW.BANK.Gründungskredit",
+      "body": "NRW.BANK",
+      "region": "Nordrhein-Westfalen",
+      "category": "kredit",
+      "stage": [
+        "gruendung",
+        "nachfolge",
+        "wachstum"
+      ],
+      "url": "https://www.nrwbank.de/de/foerderung/foerderprodukte/15204/nrwbankgruendungskredit.html",
+      "apply_url": "https://www.nrwbank.de/de/foerderung/foerderprodukte/15204/nrwbankgruendungskredit.html",
+      "amount_hint": "bis €10 Mio.",
+      "duration_hint": "bis 20 Jahre",
+      "deadline_hint": "Laufend über Hausbank",
+      "scraped_at": "2026-05-22T22:25:19.426242",
+      "text": null,
+      "status_code": null,
+      "final_url": null,
+      "error": "_ssl.c:993: The handshake operation timed out"
+    },
+    {
+      "id": "go-inno",
+      "name": "go-inno Innovationsgutschein",
+      "body": "BMWK · Innovationsberatung",
+      "region": "Deutschland",
+      "category": "beratung",
+      "stage": [
+        "innovation",
+        "mittelstand",
+        "prototype"
+      ],
+      "url": "https://www.bmwk.de/Redaktion/DE/Artikel/Technologie/go-inno.html",
+      "apply_url": "https://www.bmwk.de/Redaktion/DE/Artikel/Technologie/go-inno.html",
+      "amount_hint": "bis 50% Beratungskosten",
+      "duration_hint": "Beratungsprojekt",
+      "deadline_hint": "Laufend",
+      "scraped_at": "2026-05-22T22:25:45.973794",
+      "text": null,
+      "status_code": null,
+      "final_url": null,
+      "error": "_ssl.c:993: The handshake operation timed out"
+    }
+  ]
+}

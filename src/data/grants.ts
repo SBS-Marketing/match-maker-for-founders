@@ -1,3 +1,5 @@
+import { GENERATED_GRANTS } from "./grants.generated";
+
 export type Grant = {
   slug: string;
   name: string;
@@ -8,12 +10,18 @@ export type Grant = {
   fit: number;
   prefilled: number;
   summary: string;
+  region?: string;
+  category?: string;
+  stage?: string[];
+  sourceUrl?: string;
+  applyUrl?: string;
+  scrapeStatus?: "ok" | "error";
   eligibility: { item: string; ok: boolean | "warn"; note?: string }[];
   timeline: { phase: string; weeks: string; desc: string }[];
   materials: { item: string; done: boolean }[];
 };
 
-export const GRANTS: Grant[] = [
+const FALLBACK_GRANTS: Grant[] = [
   {
     slug: "exist",
     name: "EXIST-Gründerstipendium",
@@ -74,3 +82,5 @@ export const GRANTS: Grant[] = [
     ],
   },
 ];
+
+export const GRANTS: Grant[] = GENERATED_GRANTS.length > 0 ? GENERATED_GRANTS : FALLBACK_GRANTS;

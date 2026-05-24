@@ -28,28 +28,48 @@ HEADERS = {
 
 DISCOVERY_SOURCES = [
     {
-        "id": "startupstash",
-        "url": "https://startupstash.com/startup-deals-and-discounts/",
+        "id": "freefounderstack",
+        "url": "https://www.freefounderstack.com/",
         "cat": "aggregator",
     },
     {
-        "id": "saasworthy_programs",
-        "url": "https://www.saasworthy.com/list/startup-programs",
+        "id": "freestartupdeals",
+        "url": "https://www.freestartupdeals.com/",
         "cat": "aggregator",
     },
     {
-        "id": "saas_discount",
-        "url": "https://saasdiscount.com/",
+        "id": "innmind_deals",
+        "url": "https://innmind.com/startup-deals/",
         "cat": "aggregator",
     },
     {
-        "id": "wellfound_deals",
-        "url": "https://wellfound.com/startup-resources",
+        "id": "foundersprime",
+        "url": "https://www.foundersprime.com/",
         "cat": "aggregator",
     },
     {
-        "id": "getlatka_deals",
-        "url": "https://getlatka.com/startup-deals",
+        "id": "startcamp",
+        "url": "https://startcamp.com/",
+        "cat": "aggregator",
+    },
+    {
+        "id": "f6s_deals",
+        "url": "https://www.f6s.com/deals",
+        "cat": "aggregator",
+    },
+    {
+        "id": "startupperks_directory",
+        "url": "https://startupperks.directory/",
+        "cat": "aggregator",
+    },
+    {
+        "id": "founderlift",
+        "url": "https://www.founderlift.space/",
+        "cat": "aggregator",
+    },
+    {
+        "id": "startup_perks_io",
+        "url": "https://startupperks.io/",
         "cat": "aggregator",
     },
 ]

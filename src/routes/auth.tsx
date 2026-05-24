@@ -16,7 +16,7 @@ const emailSchema = z.string().trim().email("Bitte gültige E-Mail eingeben").ma
 const passwordSchema = z.string().min(8, "Mindestens 8 Zeichen").max(72);
 
 function AuthPage() {
-  const { user } = useAuth();
+  const { user, enterDemo } = useAuth();
   const navigate = useNavigate();
   const [mode, setMode] = useState<"signin" | "signup">("signup");
   const [email, setEmail] = useState("");
@@ -24,7 +24,7 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user) navigate({ to: "/discover" });
+    if (user) navigate({ to: "/heute" });
   }, [user, navigate]);
 
   const submit = async (e: React.FormEvent) => {
@@ -46,12 +46,15 @@ function AuthPage() {
         toast.success("Konto erstellt. Los geht's.");
         navigate({ to: "/onboarding" });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email: eR.data, password: pR.data });
+        const { error } = await supabase.auth.signInWithPassword({
+          email: eR.data,
+          password: pR.data,
+        });
         if (error) throw error;
-        navigate({ to: "/discover" });
+        navigate({ to: "/heute" });
       }
-    } catch (err: any) {
-      toast.error(err.message ?? "Etwas ist schiefgelaufen");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Etwas ist schiefgelaufen");
     } finally {
       setLoading(false);
     }
@@ -68,6 +71,12 @@ function AuthPage() {
     }
     if (result.redirected) return;
     navigate({ to: "/onboarding" });
+  };
+
+  const skipAuth = () => {
+    enterDemo();
+    toast.success("Demo-Modus aktiviert");
+    navigate({ to: "/heute" });
   };
 
   return (
@@ -97,27 +106,62 @@ function AuthPage() {
       </div>
 
       <div className="glass-pane p-7">
-        <Button variant="outline" className="h-11 w-full gap-2 rounded-xl border-white/60 bg-white/40 backdrop-blur" onClick={() => oauth("google")}>
+        <Button
+          variant="outline"
+          className="h-11 w-full gap-2 rounded-xl border-white/60 bg-white/40 backdrop-blur"
+          onClick={() => oauth("google")}
+        >
           <GoogleIcon className="h-4 w-4" />
           Mit Google fortfahren
         </Button>
-        <Button variant="outline" className="mt-2 h-11 w-full gap-2 rounded-xl border-white/60 bg-white/40 backdrop-blur" onClick={() => oauth("apple")}>
+        <Button
+          variant="outline"
+          className="mt-2 h-11 w-full gap-2 rounded-xl border-white/60 bg-white/40 backdrop-blur"
+          onClick={() => oauth("apple")}
+        >
           <AppleIcon className="h-4 w-4" />
           Mit Apple fortfahren
         </Button>
         <div className="my-5 flex items-center gap-3 text-[11px] font-mono uppercase tracking-[0.18em] text-[var(--smoke)]">
-          <div className="h-px flex-1 bg-[var(--ruled)]" /> oder <div className="h-px flex-1 bg-[var(--ruled)]" />
+          <div className="h-px flex-1 bg-[var(--ruled)]" /> oder{" "}
+          <div className="h-px flex-1 bg-[var(--ruled)]" />
         </div>
+        <Button
+          type="button"
+          variant="ghost"
+          className="mb-5 h-11 w-full rounded-xl border border-[var(--ruled)] bg-[var(--paper)]/70 text-[var(--ink)] hover:bg-[var(--paper)]"
+          onClick={skipAuth}
+        >
+          Ohne Anmeldung testen
+        </Button>
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="email">E-Mail</Label>
-            <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="password">Passwort</Label>
-            <Input id="password" type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <Input
+              id="password"
+              type="password"
+              autoComplete={mode === "signup" ? "new-password" : "current-password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
           </div>
-          <Button type="submit" className="shadow-ember h-11 w-full rounded-xl bg-[var(--ember)] text-[var(--cream)] hover:bg-[var(--ember-deep)]" disabled={loading}>
+          <Button
+            type="submit"
+            className="shadow-ember h-11 w-full rounded-xl bg-[var(--ember)] text-[var(--cream)] hover:bg-[var(--ember-deep)]"
+            disabled={loading}
+          >
             {loading ? "Bitte warten…" : mode === "signup" ? "Konto erstellen" : "Anmelden"}
           </Button>
         </form>
@@ -140,10 +184,22 @@ function AuthPage() {
 function GoogleIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" aria-hidden="true">
-      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8a12 12 0 1 1 7.9-21l5.7-5.7A20 20 0 1 0 44 24c0-1.2-.1-2.4-.4-3.5z"/>
-      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8A12 12 0 0 1 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7A20 20 0 0 0 6.3 14.7z"/>
-      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2A12 12 0 0 1 12.7 28.5l-6.5 5A20 20 0 0 0 24 44z"/>
-      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3a12 12 0 0 1-4.1 5.6l6.2 5.2C40.9 36.2 44 30.6 44 24c0-1.2-.1-2.4-.4-3.5z"/>
+      <path
+        fill="#FFC107"
+        d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8a12 12 0 1 1 7.9-21l5.7-5.7A20 20 0 1 0 44 24c0-1.2-.1-2.4-.4-3.5z"
+      />
+      <path
+        fill="#FF3D00"
+        d="M6.3 14.7l6.6 4.8A12 12 0 0 1 24 12c3 0 5.8 1.1 7.9 3l5.7-5.7A20 20 0 0 0 6.3 14.7z"
+      />
+      <path
+        fill="#4CAF50"
+        d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2A12 12 0 0 1 12.7 28.5l-6.5 5A20 20 0 0 0 24 44z"
+      />
+      <path
+        fill="#1976D2"
+        d="M43.6 20.5H42V20H24v8h11.3a12 12 0 0 1-4.1 5.6l6.2 5.2C40.9 36.2 44 30.6 44 24c0-1.2-.1-2.4-.4-3.5z"
+      />
     </svg>
   );
 }
@@ -151,7 +207,7 @@ function GoogleIcon({ className }: { className?: string }) {
 function AppleIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 384 512" fill="currentColor" aria-hidden="true">
-      <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zM256.6 105.5c30.3-36 27.6-68.8 26.7-80.5-26.8 1.5-57.8 18.2-75.5 38.8-19.5 22-31 49.2-28.5 79.9 29 2.2 55.5-12.7 77.3-38.2z"/>
+      <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zM256.6 105.5c30.3-36 27.6-68.8 26.7-80.5-26.8 1.5-57.8 18.2-75.5 38.8-19.5 22-31 49.2-28.5 79.9 29 2.2 55.5-12.7 77.3-38.2z" />
     </svg>
   );
 }

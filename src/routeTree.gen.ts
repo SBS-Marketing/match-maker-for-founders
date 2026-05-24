@@ -25,11 +25,21 @@ import { Route as CoPilotRouteImport } from './routes/co-pilot'
 import { Route as CoFounderRouteImport } from './routes/co-founder'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TalentIndexRouteImport } from './routes/talent.index'
+import { Route as SteuerIndexRouteImport } from './routes/steuer.index'
 import { Route as RechtIndexRouteImport } from './routes/recht.index'
+import { Route as MentorenIndexRouteImport } from './routes/mentoren.index'
 import { Route as MatchesIndexRouteImport } from './routes/matches.index'
+import { Route as KapitalIndexRouteImport } from './routes/kapital.index'
+import { Route as GrowthIndexRouteImport } from './routes/growth.index'
 import { Route as FoerderungIndexRouteImport } from './routes/foerderung.index'
+import { Route as TalentSlugRouteImport } from './routes/talent.$slug'
+import { Route as SteuerSlugRouteImport } from './routes/steuer.$slug'
 import { Route as RechtSlugRouteImport } from './routes/recht.$slug'
+import { Route as MentorenSlugRouteImport } from './routes/mentoren.$slug'
 import { Route as MatchesIdRouteImport } from './routes/matches.$id'
+import { Route as KapitalSlugRouteImport } from './routes/kapital.$slug'
+import { Route as GrowthSlugRouteImport } from './routes/growth.$slug'
 import { Route as FoerderungSlugRouteImport } from './routes/foerderung.$slug'
 import { Route as ApiSttRouteImport } from './routes/api/stt'
 
@@ -113,30 +123,80 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TalentIndexRoute = TalentIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TalentRoute,
+} as any)
+const SteuerIndexRoute = SteuerIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SteuerRoute,
+} as any)
 const RechtIndexRoute = RechtIndexRouteImport.update({
   id: '/recht/',
   path: '/recht/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const MentorenIndexRoute = MentorenIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MentorenRoute,
 } as any)
 const MatchesIndexRoute = MatchesIndexRouteImport.update({
   id: '/matches/',
   path: '/matches/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KapitalIndexRoute = KapitalIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => KapitalRoute,
+} as any)
+const GrowthIndexRoute = GrowthIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => GrowthRoute,
+} as any)
 const FoerderungIndexRoute = FoerderungIndexRouteImport.update({
   id: '/foerderung/',
   path: '/foerderung/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const TalentSlugRoute = TalentSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => TalentRoute,
+} as any)
+const SteuerSlugRoute = SteuerSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => SteuerRoute,
 } as any)
 const RechtSlugRoute = RechtSlugRouteImport.update({
   id: '/recht/$slug',
   path: '/recht/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MentorenSlugRoute = MentorenSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => MentorenRoute,
+} as any)
 const MatchesIdRoute = MatchesIdRouteImport.update({
   id: '/matches/$id',
   path: '/matches/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const KapitalSlugRoute = KapitalSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => KapitalRoute,
+} as any)
+const GrowthSlugRoute = GrowthSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => GrowthRoute,
 } as any)
 const FoerderungSlugRoute = FoerderungSlugRouteImport.update({
   id: '/foerderung/$slug',
@@ -156,23 +216,33 @@ export interface FileRoutesByFullPath {
   '/co-pilot': typeof CoPilotRoute
   '/discover': typeof DiscoverRoute
   '/entdecken': typeof EntdeckenRoute
-  '/growth': typeof GrowthRoute
+  '/growth': typeof GrowthRouteWithChildren
   '/heute': typeof HeuteRoute
-  '/kapital': typeof KapitalRoute
+  '/kapital': typeof KapitalRouteWithChildren
   '/marketplace': typeof MarketplaceRoute
-  '/mentoren': typeof MentorenRoute
+  '/mentoren': typeof MentorenRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
-  '/steuer': typeof SteuerRoute
-  '/talent': typeof TalentRoute
+  '/steuer': typeof SteuerRouteWithChildren
+  '/talent': typeof TalentRouteWithChildren
   '/api/stt': typeof ApiSttRoute
   '/foerderung/$slug': typeof FoerderungSlugRoute
+  '/growth/$slug': typeof GrowthSlugRoute
+  '/kapital/$slug': typeof KapitalSlugRoute
   '/matches/$id': typeof MatchesIdRoute
+  '/mentoren/$slug': typeof MentorenSlugRoute
   '/recht/$slug': typeof RechtSlugRoute
+  '/steuer/$slug': typeof SteuerSlugRoute
+  '/talent/$slug': typeof TalentSlugRoute
   '/foerderung/': typeof FoerderungIndexRoute
+  '/growth/': typeof GrowthIndexRoute
+  '/kapital/': typeof KapitalIndexRoute
   '/matches/': typeof MatchesIndexRoute
+  '/mentoren/': typeof MentorenIndexRoute
   '/recht/': typeof RechtIndexRoute
+  '/steuer/': typeof SteuerIndexRoute
+  '/talent/': typeof TalentIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -181,23 +251,28 @@ export interface FileRoutesByTo {
   '/co-pilot': typeof CoPilotRoute
   '/discover': typeof DiscoverRoute
   '/entdecken': typeof EntdeckenRoute
-  '/growth': typeof GrowthRoute
   '/heute': typeof HeuteRoute
-  '/kapital': typeof KapitalRoute
   '/marketplace': typeof MarketplaceRoute
-  '/mentoren': typeof MentorenRoute
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
-  '/steuer': typeof SteuerRoute
-  '/talent': typeof TalentRoute
   '/api/stt': typeof ApiSttRoute
   '/foerderung/$slug': typeof FoerderungSlugRoute
+  '/growth/$slug': typeof GrowthSlugRoute
+  '/kapital/$slug': typeof KapitalSlugRoute
   '/matches/$id': typeof MatchesIdRoute
+  '/mentoren/$slug': typeof MentorenSlugRoute
   '/recht/$slug': typeof RechtSlugRoute
+  '/steuer/$slug': typeof SteuerSlugRoute
+  '/talent/$slug': typeof TalentSlugRoute
   '/foerderung': typeof FoerderungIndexRoute
+  '/growth': typeof GrowthIndexRoute
+  '/kapital': typeof KapitalIndexRoute
   '/matches': typeof MatchesIndexRoute
+  '/mentoren': typeof MentorenIndexRoute
   '/recht': typeof RechtIndexRoute
+  '/steuer': typeof SteuerIndexRoute
+  '/talent': typeof TalentIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -207,23 +282,33 @@ export interface FileRoutesById {
   '/co-pilot': typeof CoPilotRoute
   '/discover': typeof DiscoverRoute
   '/entdecken': typeof EntdeckenRoute
-  '/growth': typeof GrowthRoute
+  '/growth': typeof GrowthRouteWithChildren
   '/heute': typeof HeuteRoute
-  '/kapital': typeof KapitalRoute
+  '/kapital': typeof KapitalRouteWithChildren
   '/marketplace': typeof MarketplaceRoute
-  '/mentoren': typeof MentorenRoute
+  '/mentoren': typeof MentorenRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
-  '/steuer': typeof SteuerRoute
-  '/talent': typeof TalentRoute
+  '/steuer': typeof SteuerRouteWithChildren
+  '/talent': typeof TalentRouteWithChildren
   '/api/stt': typeof ApiSttRoute
   '/foerderung/$slug': typeof FoerderungSlugRoute
+  '/growth/$slug': typeof GrowthSlugRoute
+  '/kapital/$slug': typeof KapitalSlugRoute
   '/matches/$id': typeof MatchesIdRoute
+  '/mentoren/$slug': typeof MentorenSlugRoute
   '/recht/$slug': typeof RechtSlugRoute
+  '/steuer/$slug': typeof SteuerSlugRoute
+  '/talent/$slug': typeof TalentSlugRoute
   '/foerderung/': typeof FoerderungIndexRoute
+  '/growth/': typeof GrowthIndexRoute
+  '/kapital/': typeof KapitalIndexRoute
   '/matches/': typeof MatchesIndexRoute
+  '/mentoren/': typeof MentorenIndexRoute
   '/recht/': typeof RechtIndexRoute
+  '/steuer/': typeof SteuerIndexRoute
+  '/talent/': typeof TalentIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -246,11 +331,21 @@ export interface FileRouteTypes {
     | '/talent'
     | '/api/stt'
     | '/foerderung/$slug'
+    | '/growth/$slug'
+    | '/kapital/$slug'
     | '/matches/$id'
+    | '/mentoren/$slug'
     | '/recht/$slug'
+    | '/steuer/$slug'
+    | '/talent/$slug'
     | '/foerderung/'
+    | '/growth/'
+    | '/kapital/'
     | '/matches/'
+    | '/mentoren/'
     | '/recht/'
+    | '/steuer/'
+    | '/talent/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -259,23 +354,28 @@ export interface FileRouteTypes {
     | '/co-pilot'
     | '/discover'
     | '/entdecken'
-    | '/growth'
     | '/heute'
-    | '/kapital'
     | '/marketplace'
-    | '/mentoren'
     | '/onboarding'
     | '/plan'
     | '/profile'
-    | '/steuer'
-    | '/talent'
     | '/api/stt'
     | '/foerderung/$slug'
+    | '/growth/$slug'
+    | '/kapital/$slug'
     | '/matches/$id'
+    | '/mentoren/$slug'
     | '/recht/$slug'
+    | '/steuer/$slug'
+    | '/talent/$slug'
     | '/foerderung'
+    | '/growth'
+    | '/kapital'
     | '/matches'
+    | '/mentoren'
     | '/recht'
+    | '/steuer'
+    | '/talent'
   id:
     | '__root__'
     | '/'
@@ -296,11 +396,21 @@ export interface FileRouteTypes {
     | '/talent'
     | '/api/stt'
     | '/foerderung/$slug'
+    | '/growth/$slug'
+    | '/kapital/$slug'
     | '/matches/$id'
+    | '/mentoren/$slug'
     | '/recht/$slug'
+    | '/steuer/$slug'
+    | '/talent/$slug'
     | '/foerderung/'
+    | '/growth/'
+    | '/kapital/'
     | '/matches/'
+    | '/mentoren/'
     | '/recht/'
+    | '/steuer/'
+    | '/talent/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -310,16 +420,16 @@ export interface RootRouteChildren {
   CoPilotRoute: typeof CoPilotRoute
   DiscoverRoute: typeof DiscoverRoute
   EntdeckenRoute: typeof EntdeckenRoute
-  GrowthRoute: typeof GrowthRoute
+  GrowthRoute: typeof GrowthRouteWithChildren
   HeuteRoute: typeof HeuteRoute
-  KapitalRoute: typeof KapitalRoute
+  KapitalRoute: typeof KapitalRouteWithChildren
   MarketplaceRoute: typeof MarketplaceRoute
-  MentorenRoute: typeof MentorenRoute
+  MentorenRoute: typeof MentorenRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
   PlanRoute: typeof PlanRoute
   ProfileRoute: typeof ProfileRoute
-  SteuerRoute: typeof SteuerRoute
-  TalentRoute: typeof TalentRoute
+  SteuerRoute: typeof SteuerRouteWithChildren
+  TalentRoute: typeof TalentRouteWithChildren
   ApiSttRoute: typeof ApiSttRoute
   FoerderungSlugRoute: typeof FoerderungSlugRoute
   MatchesIdRoute: typeof MatchesIdRoute
@@ -443,12 +553,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/talent/': {
+      id: '/talent/'
+      path: '/'
+      fullPath: '/talent/'
+      preLoaderRoute: typeof TalentIndexRouteImport
+      parentRoute: typeof TalentRoute
+    }
+    '/steuer/': {
+      id: '/steuer/'
+      path: '/'
+      fullPath: '/steuer/'
+      preLoaderRoute: typeof SteuerIndexRouteImport
+      parentRoute: typeof SteuerRoute
+    }
     '/recht/': {
       id: '/recht/'
       path: '/recht'
       fullPath: '/recht/'
       preLoaderRoute: typeof RechtIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/mentoren/': {
+      id: '/mentoren/'
+      path: '/'
+      fullPath: '/mentoren/'
+      preLoaderRoute: typeof MentorenIndexRouteImport
+      parentRoute: typeof MentorenRoute
     }
     '/matches/': {
       id: '/matches/'
@@ -457,12 +588,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MatchesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/kapital/': {
+      id: '/kapital/'
+      path: '/'
+      fullPath: '/kapital/'
+      preLoaderRoute: typeof KapitalIndexRouteImport
+      parentRoute: typeof KapitalRoute
+    }
+    '/growth/': {
+      id: '/growth/'
+      path: '/'
+      fullPath: '/growth/'
+      preLoaderRoute: typeof GrowthIndexRouteImport
+      parentRoute: typeof GrowthRoute
+    }
     '/foerderung/': {
       id: '/foerderung/'
       path: '/foerderung'
       fullPath: '/foerderung/'
       preLoaderRoute: typeof FoerderungIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/talent/$slug': {
+      id: '/talent/$slug'
+      path: '/$slug'
+      fullPath: '/talent/$slug'
+      preLoaderRoute: typeof TalentSlugRouteImport
+      parentRoute: typeof TalentRoute
+    }
+    '/steuer/$slug': {
+      id: '/steuer/$slug'
+      path: '/$slug'
+      fullPath: '/steuer/$slug'
+      preLoaderRoute: typeof SteuerSlugRouteImport
+      parentRoute: typeof SteuerRoute
     }
     '/recht/$slug': {
       id: '/recht/$slug'
@@ -471,12 +630,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RechtSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mentoren/$slug': {
+      id: '/mentoren/$slug'
+      path: '/$slug'
+      fullPath: '/mentoren/$slug'
+      preLoaderRoute: typeof MentorenSlugRouteImport
+      parentRoute: typeof MentorenRoute
+    }
     '/matches/$id': {
       id: '/matches/$id'
       path: '/matches/$id'
       fullPath: '/matches/$id'
       preLoaderRoute: typeof MatchesIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/kapital/$slug': {
+      id: '/kapital/$slug'
+      path: '/$slug'
+      fullPath: '/kapital/$slug'
+      preLoaderRoute: typeof KapitalSlugRouteImport
+      parentRoute: typeof KapitalRoute
+    }
+    '/growth/$slug': {
+      id: '/growth/$slug'
+      path: '/$slug'
+      fullPath: '/growth/$slug'
+      preLoaderRoute: typeof GrowthSlugRouteImport
+      parentRoute: typeof GrowthRoute
     }
     '/foerderung/$slug': {
       id: '/foerderung/$slug'
@@ -495,6 +675,72 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface GrowthRouteChildren {
+  GrowthSlugRoute: typeof GrowthSlugRoute
+  GrowthIndexRoute: typeof GrowthIndexRoute
+}
+
+const GrowthRouteChildren: GrowthRouteChildren = {
+  GrowthSlugRoute: GrowthSlugRoute,
+  GrowthIndexRoute: GrowthIndexRoute,
+}
+
+const GrowthRouteWithChildren =
+  GrowthRoute._addFileChildren(GrowthRouteChildren)
+
+interface KapitalRouteChildren {
+  KapitalSlugRoute: typeof KapitalSlugRoute
+  KapitalIndexRoute: typeof KapitalIndexRoute
+}
+
+const KapitalRouteChildren: KapitalRouteChildren = {
+  KapitalSlugRoute: KapitalSlugRoute,
+  KapitalIndexRoute: KapitalIndexRoute,
+}
+
+const KapitalRouteWithChildren =
+  KapitalRoute._addFileChildren(KapitalRouteChildren)
+
+interface MentorenRouteChildren {
+  MentorenSlugRoute: typeof MentorenSlugRoute
+  MentorenIndexRoute: typeof MentorenIndexRoute
+}
+
+const MentorenRouteChildren: MentorenRouteChildren = {
+  MentorenSlugRoute: MentorenSlugRoute,
+  MentorenIndexRoute: MentorenIndexRoute,
+}
+
+const MentorenRouteWithChildren = MentorenRoute._addFileChildren(
+  MentorenRouteChildren,
+)
+
+interface SteuerRouteChildren {
+  SteuerSlugRoute: typeof SteuerSlugRoute
+  SteuerIndexRoute: typeof SteuerIndexRoute
+}
+
+const SteuerRouteChildren: SteuerRouteChildren = {
+  SteuerSlugRoute: SteuerSlugRoute,
+  SteuerIndexRoute: SteuerIndexRoute,
+}
+
+const SteuerRouteWithChildren =
+  SteuerRoute._addFileChildren(SteuerRouteChildren)
+
+interface TalentRouteChildren {
+  TalentSlugRoute: typeof TalentSlugRoute
+  TalentIndexRoute: typeof TalentIndexRoute
+}
+
+const TalentRouteChildren: TalentRouteChildren = {
+  TalentSlugRoute: TalentSlugRoute,
+  TalentIndexRoute: TalentIndexRoute,
+}
+
+const TalentRouteWithChildren =
+  TalentRoute._addFileChildren(TalentRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
@@ -502,16 +748,16 @@ const rootRouteChildren: RootRouteChildren = {
   CoPilotRoute: CoPilotRoute,
   DiscoverRoute: DiscoverRoute,
   EntdeckenRoute: EntdeckenRoute,
-  GrowthRoute: GrowthRoute,
+  GrowthRoute: GrowthRouteWithChildren,
   HeuteRoute: HeuteRoute,
-  KapitalRoute: KapitalRoute,
+  KapitalRoute: KapitalRouteWithChildren,
   MarketplaceRoute: MarketplaceRoute,
-  MentorenRoute: MentorenRoute,
+  MentorenRoute: MentorenRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
   PlanRoute: PlanRoute,
   ProfileRoute: ProfileRoute,
-  SteuerRoute: SteuerRoute,
-  TalentRoute: TalentRoute,
+  SteuerRoute: SteuerRouteWithChildren,
+  TalentRoute: TalentRouteWithChildren,
   ApiSttRoute: ApiSttRoute,
   FoerderungSlugRoute: FoerderungSlugRoute,
   MatchesIdRoute: MatchesIdRoute,

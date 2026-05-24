@@ -46,7 +46,7 @@ const DEFAULT_QA = [
 ];
 
 function CoPilotPage() {
-  const { user } = useAuth();
+  const { user, isDemo } = useAuth();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionTitle, setSessionTitle] = useState("Neue Session");
   const [editingTitle, setEditingTitle] = useState(false);
@@ -62,6 +62,28 @@ function CoPilotPage() {
   // bootstrap: session + context + messages
   useEffect(() => {
     if (!user) return;
+    if (isDemo) {
+      setSessionId("demo-session");
+      setSessionTitle("Demo Session");
+      setCtx({
+        role: "Founder mit Idee",
+        idea: "Mobile-first Plattform fuer Co-Founder Matching und Startup-Ressourcen",
+        stage: "MVP",
+        city: "Berlin",
+        goal: "Closed Beta mit 50 Gruendern starten",
+        risk: "Zu wenig aktive Profile auf beiden Seiten",
+      });
+      setMessages([
+        {
+          id: "demo-welcome",
+          role: "assistant",
+          content:
+            "Demo-Modus aktiv. Erzaehl mir kurz, was du als Naechstes bauen willst, und ich gebe dir einen konkreten 3-Schritte-Plan.",
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      return;
+    }
     (async () => {
       // session: latest or new
       const { data: sessions } = await supabase
@@ -106,7 +128,7 @@ function CoPilotPage() {
         .order("created_at", { ascending: true });
       if (msgs) setMessages(msgs as Msg[]);
     })();
-  }, [user]);
+  }, [user, isDemo]);
 
   // autoscroll
   useEffect(() => {
@@ -145,6 +167,29 @@ function CoPilotPage() {
     };
     setMessages((m) => [...m, userMsg]);
 
+    if (isDemo) {
+      window.setTimeout(() => {
+        setMessages((m) => [
+          ...m,
+          {
+            id: `demo-a-${Date.now()}`,
+            role: "assistant",
+            content:
+              "Demo-Antwort: Fokus jetzt auf 1) kurze Profilstrecke unter 3 Minuten, 2) Swipe + Marktplatz mit klaren Filtern, 3) erster Partner-/Guide-Bereich fuer Vertrauen. Danach messen wir Aktivierung, Matches und erste Nachrichten.",
+            created_at: new Date().toISOString(),
+          },
+        ]);
+        setQuickActions([
+          "Welche Features zuerst?",
+          "Was fehlt fuer Beta?",
+          "Wie monetarisieren?",
+          "Mobile UX pruefen",
+        ]);
+        setSending(false);
+      }, 650);
+      return;
+    }
+
     const { data: inserted } = await supabase
       .from("copilot_messages")
       .insert({ session_id: sessionId, user_id: user.id, role: "user", content: body })
@@ -157,7 +202,9 @@ function CoPilotPage() {
     // If no context yet, parse it from the first user message in background
     if (!ctx) {
       supabase.functions
-        .invoke("copilot", { body: { task: "context_parse", session_id: sessionId, message: body } })
+        .invoke("copilot", {
+          body: { task: "context_parse", session_id: sessionId, message: body },
+        })
         .then(async () => {
           const { data: ctxRow } = await supabase
             .from("copilot_context")
@@ -206,8 +253,8 @@ function CoPilotPage() {
         .from("copilot_sessions")
         .update({ updated_at: new Date().toISOString() })
         .eq("id", sessionId);
-    } catch (e: any) {
-      const msg = e?.message || "";
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "";
       if (msg.includes("429")) toast.error("Limit erreicht — bitte später erneut versuchen.");
       else if (msg.includes("402")) toast.error("Credits aufgebraucht.");
       else toast.error("Co-Pilot antwortet gerade nicht.");
@@ -250,15 +297,15 @@ function CoPilotPage() {
       className="min-h-[calc(100vh-4rem)] w-full"
       style={{ background: "var(--ink)", color: "var(--cream)" }}
     >
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+      <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6">
         <div className="grid gap-5 lg:grid-cols-[65fr_35fr]">
           {/* LEFT — Chat */}
           <div
-            className="flex h-[82vh] flex-col overflow-hidden rounded-2xl border border-white/10"
+            className="flex h-[calc(100dvh-11rem)] min-h-[520px] flex-col overflow-hidden rounded-2xl border border-white/10 sm:h-[82vh]"
             style={{ background: "rgba(255,255,255,0.02)" }}
           >
             {/* Header */}
-            <div className="flex items-center gap-3 border-b border-white/10 px-5 py-4">
+            <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3 sm:px-5 sm:py-4">
               <span
                 className="flex h-10 w-10 items-center justify-center rounded-xl"
                 style={{ background: "var(--ember)" }}
@@ -290,19 +337,21 @@ function CoPilotPage() {
               </div>
               <button
                 onClick={saveSessionTitle}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-[11.5px] font-semibold text-white/85 hover:bg-white/10"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-white/85 hover:bg-white/10 sm:w-auto sm:px-3 sm:py-1.5 sm:text-[11.5px] sm:font-semibold"
+                aria-label="Session speichern"
               >
-                <Save className="h-3.5 w-3.5" /> Session speichern
+                <Save className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Session speichern</span>
               </button>
             </div>
 
             {/* Messages */}
-            <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-6">
+            <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
               {messages.length === 0 && !sending && (
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-[14px] text-white/70">
                   <div className="mb-1 text-[var(--cream)]">
-                    „Erzähl mir kurz, was du gerade baust und wo du stehst — ich höre zu und mache dir
-                    einen konkreten nächsten Schritt."
+                    „Erzähl mir kurz, was du gerade baust und wo du stehst — ich höre zu und mache
+                    dir einen konkreten nächsten Schritt."
                   </div>
                   <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white/40">
                     Co-Pilot · bereit
@@ -312,7 +361,7 @@ function CoPilotPage() {
 
               {messages.map((m) =>
                 m.role === "user" ? (
-                  <div key={m.id} className="ml-auto max-w-[78%]">
+                  <div key={m.id} className="ml-auto max-w-[88%] sm:max-w-[78%]">
                     <div
                       className="rounded-2xl rounded-br-sm px-4 py-3 text-[14px] leading-snug"
                       style={{ background: "var(--cream)", color: "var(--ink)" }}
@@ -324,7 +373,7 @@ function CoPilotPage() {
                     </div>
                   </div>
                 ) : (
-                  <div key={m.id} className="max-w-[90%]">
+                  <div key={m.id} className="max-w-[96%] sm:max-w-[90%]">
                     <div className="rounded-2xl rounded-bl-sm border border-white/10 bg-white/5 px-4 py-3.5 text-[15px] leading-snug text-[var(--cream)] whitespace-pre-wrap">
                       {m.content}
                     </div>
@@ -353,13 +402,13 @@ function CoPilotPage() {
 
             {/* Composer */}
             <div className="border-t border-white/10 p-4">
-              <div className="mb-3 flex flex-wrap gap-1.5">
+              <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
                 {quickActions.slice(0, 4).map((s) => (
                   <button
                     key={s}
                     onClick={() => send(s)}
                     disabled={sending}
-                    className="rounded-full border border-white/12 bg-white/5 px-3 py-1 text-[11.5px] text-white/75 hover:bg-white/10 disabled:opacity-50"
+                    className="shrink-0 rounded-full border border-white/12 bg-white/5 px-3 py-1 text-[11.5px] text-white/75 hover:bg-white/10 disabled:opacity-50"
                   >
                     {s}
                   </button>
@@ -401,7 +450,10 @@ function CoPilotPage() {
 
           {/* RIGHT — Context panel */}
           <div className="flex flex-col gap-4">
-            <div className="rounded-2xl border border-white/10 p-5" style={{ background: "rgba(255,255,255,0.03)" }}>
+            <div
+              className="rounded-2xl border border-white/10 p-5"
+              style={{ background: "rgba(255,255,255,0.03)" }}
+            >
               <div className="flex items-center justify-between">
                 <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/55">
                   So habe ich dich verstanden
@@ -455,7 +507,10 @@ function CoPilotPage() {
               )}
             </div>
 
-            <div className="rounded-2xl border border-white/10 p-5" style={{ background: "rgba(255,255,255,0.03)" }}>
+            <div
+              className="rounded-2xl border border-white/10 p-5"
+              style={{ background: "rgba(255,255,255,0.03)" }}
+            >
               <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/55">
                 Quellen, auf die ich mich stütze
               </div>
@@ -481,7 +536,9 @@ function CoPilotPage() {
 function Field({ label, value }: { label: string; value?: string | null }) {
   return (
     <div>
-      <div className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-white/40">{label}</div>
+      <div className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-white/40">
+        {label}
+      </div>
       <div className="mt-0.5 text-[13.5px] leading-snug text-white/85">
         {value || <span className="text-white/35">— noch unbekannt —</span>}
       </div>

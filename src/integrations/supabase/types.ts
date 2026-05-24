@@ -263,6 +263,68 @@ export type Database = {
           },
         ]
       }
+      daily_tasks: {
+        Row: {
+          created_at: string
+          description: string
+          href: string
+          id: string
+          label: string | null
+          metadata: Json
+          minutes: number
+          service: string
+          status: string
+          task_date: string
+          task_key: string
+          title: string
+          updated_at: string
+          urgency: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          href: string
+          id?: string
+          label?: string | null
+          metadata?: Json
+          minutes?: number
+          service: string
+          status?: string
+          task_date?: string
+          task_key: string
+          title: string
+          updated_at?: string
+          urgency?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          href?: string
+          id?: string
+          label?: string | null
+          metadata?: Json
+          minutes?: number
+          service?: string
+          status?: string
+          task_date?: string
+          task_key?: string
+          title?: string
+          updated_at?: string
+          urgency?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deadlines: {
         Row: {
           created_at: string
@@ -398,26 +460,51 @@ export type Database = {
       messages: {
         Row: {
           body: string
+          conversation_id: string | null
           created_at: string
+          edited_at: string | null
           id: string
+          is_deleted: boolean | null
           match_id: string
+          reply_to_id: string | null
           sender_id: string
+          status: Database["public"]["Enums"]["message_status"] | null
+          attachments: Json | null
         }
         Insert: {
           body: string
+          conversation_id?: string | null
           created_at?: string
+          edited_at?: string | null
           id?: string
+          is_deleted?: boolean | null
           match_id: string
+          reply_to_id?: string | null
           sender_id: string
+          status?: Database["public"]["Enums"]["message_status"] | null
+          attachments?: Json | null
         }
         Update: {
           body?: string
+          conversation_id?: string | null
           created_at?: string
+          edited_at?: string | null
           id?: string
+          is_deleted?: boolean | null
           match_id?: string
+          reply_to_id?: string | null
           sender_id?: string
+          status?: Database["public"]["Enums"]["message_status"] | null
+          attachments?: Json | null
         }
         Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "messages_match_id_fkey"
             columns: ["match_id"]
@@ -529,6 +616,167 @@ export type Database = {
         }
         Relationships: []
       }
+      conversations: {
+        Row: {
+          id: string
+          match_id: string | null
+          user_a: string
+          user_b: string
+          last_message_at: string | null
+          last_message_preview: string | null
+          unread_count_a: number | null
+          unread_count_b: number | null
+          is_active: boolean | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          match_id?: string | null
+          user_a: string
+          user_b: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          unread_count_a?: number | null
+          unread_count_b?: number | null
+          is_active?: boolean | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          match_id?: string | null
+          user_a?: string
+          user_b?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          unread_count_a?: number | null
+          unread_count_b?: number | null
+          is_active?: boolean | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "mutual_matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_user_a_fkey"
+            columns: ["user_a"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_user_b_fkey"
+            columns: ["user_b"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          id: string
+          founder_id: string
+          title: string
+          description: string | null
+          problem: string | null
+          solution: string | null
+          stage: Database["public"]["Enums"]["project_stage"] | null
+          industry: string | null
+          tags: string[] | null
+          website_url: string | null
+          pitch_deck_url: string | null
+          logo_url: string | null
+          is_looking_for: string[] | null
+          is_public: boolean | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          founder_id: string
+          title: string
+          description?: string | null
+          problem?: string | null
+          solution?: string | null
+          stage?: Database["public"]["Enums"]["project_stage"] | null
+          industry?: string | null
+          tags?: string[] | null
+          website_url?: string | null
+          pitch_deck_url?: string | null
+          logo_url?: string | null
+          is_looking_for?: string[] | null
+          is_public?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          founder_id?: string
+          title?: string
+          description?: string | null
+          problem?: string | null
+          solution?: string | null
+          stage?: Database["public"]["Enums"]["project_stage"] | null
+          industry?: string | null
+          tags?: string[] | null
+          website_url?: string | null
+          pitch_deck_url?: string | null
+          logo_url?: string | null
+          is_looking_for?: string[] | null
+          is_public?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_founder_id_fkey"
+            columns: ["founder_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_embeddings: {
+        Row: {
+          id: string
+          profile_id: string
+          embedding: string  // vector als string repräsentiert
+          content_hash: string
+          model: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          embedding: string
+          content_hash: string
+          model?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          embedding?: string
+          content_hash?: string
+          model?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_embeddings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -549,6 +797,10 @@ export type Database = {
       founder_stage: "idea" | "mvp" | "revenue" | "scaling"
       profile_path: "founder" | "joiner"
       swipe_direction: "like" | "pass"
+      match_status: "pending" | "accepted" | "declined" | "blocked"
+      message_status: "sent" | "delivered" | "read"
+      project_stage: "idea" | "prototype" | "mvp" | "revenue" | "scaling"
+      availability_type: "full_time" | "part_time" | "freelance" | "open"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -682,6 +934,10 @@ export const Constants = {
       founder_stage: ["idea", "mvp", "revenue", "scaling"],
       profile_path: ["founder", "joiner"],
       swipe_direction: ["like", "pass"],
+      match_status: ["pending", "accepted", "declined", "blocked"],
+      message_status: ["sent", "delivered", "read"],
+      project_stage: ["idea", "prototype", "mvp", "revenue", "scaling"],
+      availability_type: ["full_time", "part_time", "freelance", "open"],
     },
   },
 } as const

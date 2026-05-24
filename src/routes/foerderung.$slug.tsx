@@ -4,7 +4,7 @@ import { SERVICE_BY_ID } from "@/data/services";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { CopilotMark, AITag } from "@/components/Copilot";
 import { Button } from "@/components/ui/button";
-import { Check, AlertTriangle, ArrowRight } from "lucide-react";
+import { Check, AlertTriangle, ArrowRight, ExternalLink } from "lucide-react";
 
 export const Route = createFileRoute("/foerderung/$slug")({
   loader: ({ params }) => {
@@ -41,7 +41,16 @@ function GrantDetail() {
             <span><b className="text-[var(--ember-deep)]">{grant.amount}</b> Volumen</span>
             <span><b>{grant.duration}</b></span>
             <span>Deadline: <b>{grant.deadline}</b></span>
+            {grant.region && <span>Region: <b>{grant.region}</b></span>}
           </div>
+          {(grant.category || grant.stage?.length) && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {grant.category && <span className="rounded-full bg-[var(--paper)] px-3 py-1 text-[11px] font-medium text-[var(--ink-soft)]">{grant.category}</span>}
+              {grant.stage?.slice(0, 4).map((stage) => (
+                <span key={stage} className="rounded-full bg-[var(--ember-tint)] px-3 py-1 text-[11px] font-medium text-[var(--ember-deep)]">{stage}</span>
+              ))}
+            </div>
+          )}
           <p className="mt-5 max-w-2xl text-[15px] leading-relaxed text-[var(--ink-soft)]">{grant.summary}</p>
 
           {/* Eligibility */}
@@ -102,9 +111,21 @@ function GrantDetail() {
             <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/20">
               <div className="h-full rounded-full bg-white" style={{ width: `${grant.prefilled}%` }} />
             </div>
-            <Button className="mt-5 h-11 w-full gap-2 rounded-xl bg-[var(--cream)] text-[var(--ink)] hover:bg-white">
-              Antrag weiterführen <ArrowRight className="h-4 w-4" />
+            <Button asChild className="mt-5 h-11 w-full gap-2 rounded-xl bg-[var(--cream)] text-[var(--ink)] hover:bg-white">
+              <a href={grant.applyUrl || grant.sourceUrl || "#"} target="_blank" rel="noopener">
+                Antrag weiterführen <ArrowRight className="h-4 w-4" />
+              </a>
             </Button>
+            {grant.sourceUrl && (
+              <a
+                href={grant.sourceUrl}
+                target="_blank"
+                rel="noopener"
+                className="mt-3 inline-flex w-full items-center justify-center gap-1.5 text-[12px] font-semibold text-white/80 hover:text-white"
+              >
+                Offizielle Programmseite <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            )}
           </div>
 
           <div className="glass-pane p-5">

@@ -15,6 +15,7 @@ import {
 import { INDUSTRIES, getIndustry, type Industry, type IndustryId } from "../../onboarding/industries";
 import { RadarChart } from "@/components/onboarding/RadarChart";
 import { LoadingConverge } from "@/components/onboarding/LoadingConverge";
+import { writePlanContext } from "@/lib/plan-draft";
 
 export const Route = createFileRoute("/onboarding")({
   component: () => (
@@ -136,7 +137,7 @@ function stepsFor(industry: IndustryId | null, path: FounderType | null): string
 // ─────────────────────────────────────────────────────────────
 
 function Onboarding() {
-  const { user } = useAuth();
+  const { user, isDemo } = useAuth();
   const navigate = useNavigate();
   const [state, setState] = useState<State>(() => {
     if (typeof window === "undefined") return EMPTY_STATE;
@@ -234,11 +235,38 @@ function Onboarding() {
     setSubmitting(true);
     try {
       const scores = calculateAllScores(state.answers);
+      writePlanContext({
+        userName: user.user_metadata?.name || user.email?.split("@")[0] || "Founder",
+        path: state.path,
+        industry: state.industry,
+        industryLabel: industry.label,
+        ventureTerm: industry.terms.venture,
+        partnerTerm: industry.terms.partner,
+        copilotContext: industry.copilot_context,
+        context: state.context,
+        skills: state.skills,
+        scores,
+        createdAt: new Date().toISOString(),
+      });
+
+      if (isDemo) {
+        try {
+          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(STEP_KEY);
+        } catch { /* ignore */ }
+        navigate({ to: "/plan" });
+        return;
+      }
 
       // Persist profile founder_type + industry
       await supabase
         .from("profiles")
-        .update({ founder_type: state.path, industry: state.industry })
+        .update({
+          founder_type: state.path,
+          industry: state.industry,
+          venture_term: industry.terms.venture,
+          partner_term: industry.terms.partner,
+        })
         .eq("id", user.id);
 
       // Persist context for founder/hybrid
@@ -279,36 +307,18 @@ function Onboarding() {
         scores,
       });
 
-      // Trigger plan generation (fire and forget – it can take a while)
-      supabase.functions
-        .invoke("copilot", {
-          body: {
-            task: "plan_generate",
-            message: "",
-            industry: state.industry,
-            venture_term: industry.terms.venture,
-            partner_term: industry.terms.partner,
-            copilot_context: industry.copilot_context,
-          },
-        })
-        .catch(() => undefined);
-
       try {
         localStorage.removeItem(STORAGE_KEY);
         localStorage.removeItem(STEP_KEY);
       } catch { /* ignore */ }
 
-      // Trigger tutorial overlay on /heute
-      try { sessionStorage.setItem("mf_tutorial", "1"); } catch {}
-
-      // Redirect to dashboard
-      navigate({ to: "/heute" });
+      navigate({ to: "/plan" });
     } catch (e) {
       console.error(e);
       toast.error("Speichern fehlgeschlagen. Bitte erneut versuchen.");
       setSubmitting(false);
     }
-  }, [user, state, navigate, industry]);
+  }, [user, isDemo, state, navigate, industry]);
 
   if (submitting) {
     return (

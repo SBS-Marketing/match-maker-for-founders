@@ -1,0 +1,825 @@
+{
+  "generated_at": "2026-05-22T22:54:11.475918+00:00",
+  "grants": [
+    {
+      "slug": "exist-gruenderstipendium",
+      "name": "EXIST-Gründerstipendium",
+      "body": "BMWK · DLR Projektträger",
+      "amount": "bis ca. €125.000",
+      "duration": "12 Monate",
+      "deadline": "Laufend über Hochschule",
+      "fit": 82,
+      "prefilled": 70,
+      "summary": "EXIST-Gründerstipendium passt fuer fruehe Gruenderteams mit innovativem Kern. Fokus: Lebenshaltung, Sachmittel und Coaching in Deutschland.",
+      "region": "Deutschland",
+      "category": "stipendium",
+      "stage": [
+        "idee",
+        "pre-seed",
+        "hochschule"
+      ],
+      "sourceUrl": "https://www.exist.de/EXIST/Navigation/DE/Gruendungsfoerderung/EXIST-Gruendungsstipendium/exist-gruendungsstipendium.html",
+      "applyUrl": "https://www.exist.de/EXIST/Navigation/DE/Gruendungsfoerderung/EXIST-Gruendungsstipendium/Antragstellung/antragstellung.html",
+      "scrapeStatus": "error",
+      "eligibility": [
+        {
+          "item": "Region: Deutschland",
+          "ok": true,
+          "note": "Sitz oder Vorhaben muss zur Programmregion passen."
+        },
+        {
+          "item": "Konkretes Vorhaben",
+          "ok": true,
+          "note": "Idee, Zielgruppe und Nutzen muessen nachvollziehbar sein."
+        },
+        {
+          "item": "Innovationsgrad",
+          "ok": "warn",
+          "note": "Technischer oder wissenschaftlicher Neuheitsgrad sauber belegen."
+        },
+        {
+          "item": "Hochschul-/Forschungspartner",
+          "ok": "warn",
+          "note": "Bei EXIST meist zwingend vor Antrag klaeren."
+        }
+      ],
+      "timeline": [
+        {
+          "phase": "Fit-Check",
+          "weeks": "Wo 1",
+          "desc": "Programmregion, Stage, Team und Foerderlogik pruefen."
+        },
+        {
+          "phase": "Skizze & Unterlagen",
+          "weeks": "Wo 2-3",
+          "desc": "Kurzkonzept, Finanzplan und Nachweise vorbereiten."
+        },
+        {
+          "phase": "Einreichung",
+          "weeks": "Wo 4",
+          "desc": "Portal, Projekttraeger oder Betreuungspartner nutzen."
+        },
+        {
+          "phase": "Rueckfragen & Bewilligung",
+          "weeks": "Wo 5+",
+          "desc": "Formalia, Nachreichungen und Start der Foerderperiode."
+        }
+      ],
+      "materials": [
+        {
+          "item": "Kurzbeschreibung / Pitch",
+          "done": false
+        },
+        {
+          "item": "Businessplan oder Projektskizze",
+          "done": false
+        },
+        {
+          "item": "Finanzplan",
+          "done": false
+        },
+        {
+          "item": "Lebenslaeufe des Teams",
+          "done": false
+        },
+        {
+          "item": "Hochschul- oder Forschungspartner",
+          "done": false
+        }
+      ]
+    },
+    {
+      "slug": "gruendungsbonus-berlin",
+      "name": "GründungsBONUS Berlin",
+      "body": "IBB Business Team",
+      "amount": "bis €50.000",
+      "duration": "12 Monate",
+      "deadline": "Rollierend",
+      "fit": 79,
+      "prefilled": 67,
+      "summary": "GründungsBONUS Berlin ist ein Foerderprogramm fuer Gruender in Berlin. Matchfoundr prueft Eignung, Materialien und naechste Antragsschritte.",
+      "region": "Berlin",
+      "category": "zuschuss",
+      "stage": [
+        "gruendung",
+        "early",
+        "prototype"
+      ],
+      "sourceUrl": "https://www.ibb-business-team.de/gruendungsbonus",
+      "applyUrl": "https://www.ibb-business-team.de/gruendungsbonus",
+      "scrapeStatus": "error",
+      "eligibility": [
+        {
+          "item": "Region: Berlin",
+          "ok": true,
+          "note": "Sitz oder Vorhaben muss zur Programmregion passen."
+        },
+        {
+          "item": "Konkretes Vorhaben",
+          "ok": true,
+          "note": "Idee, Zielgruppe und Nutzen muessen nachvollziehbar sein."
+        },
+        {
+          "item": "Antragsfaehige Unterlagen",
+          "ok": "warn",
+          "note": "Businessplan, Kostenplan und De-minimis/Beihilfe pruefen."
+        }
+      ],
+      "timeline": [
+        {
+          "phase": "Fit-Check",
+          "weeks": "Wo 1",
+          "desc": "Programmregion, Stage, Team und Foerderlogik pruefen."
+        },
+        {
+          "phase": "Skizze & Unterlagen",
+          "weeks": "Wo 2-3",
+          "desc": "Kurzkonzept, Finanzplan und Nachweise vorbereiten."
+        },
+        {
+          "phase": "Einreichung",
+          "weeks": "Wo 4",
+          "desc": "Portal, Projekttraeger oder Betreuungspartner nutzen."
+        },
+        {
+          "phase": "Rueckfragen & Bewilligung",
+          "weeks": "Wo 5+",
+          "desc": "Formalia, Nachreichungen und Start der Foerderperiode."
+        }
+      ],
+      "materials": [
+        {
+          "item": "Kurzbeschreibung / Pitch",
+          "done": false
+        },
+        {
+          "item": "Businessplan oder Projektskizze",
+          "done": false
+        },
+        {
+          "item": "Finanzplan",
+          "done": false
+        },
+        {
+          "item": "Kosten- und Meilensteinplan",
+          "done": false
+        },
+        {
+          "item": "De-minimis-/Beihilfeangaben",
+          "done": false
+        }
+      ]
+    },
+    {
+      "slug": "ifb-innorampup",
+      "name": "InnoRampUp",
+      "body": "IFB Hamburg",
+      "amount": "bis €150.000",
+      "duration": "Projektabhängig",
+      "deadline": "Rollierend",
+      "fit": 79,
+      "prefilled": 67,
+      "summary": "InnoRampUp ist ein Foerderprogramm fuer Gruender in Hamburg. Matchfoundr prueft Eignung, Materialien und naechste Antragsschritte.",
+      "region": "Hamburg",
+      "category": "zuschuss",
+      "stage": [
+        "pre-seed",
+        "prototype",
+        "innovation"
+      ],
+      "sourceUrl": "https://www.ifbhh.de/foerderprogramm/innorampup",
+      "applyUrl": "https://www.ifbhh.de/foerderprogramm/innorampup",
+      "scrapeStatus": "error",
+      "eligibility": [
+        {
+          "item": "Region: Hamburg",
+          "ok": true,
+          "note": "Sitz oder Vorhaben muss zur Programmregion passen."
+        },
+        {
+          "item": "Konkretes Vorhaben",
+          "ok": true,
+          "note": "Idee, Zielgruppe und Nutzen muessen nachvollziehbar sein."
+        },
+        {
+          "item": "Antragsfaehige Unterlagen",
+          "ok": "warn",
+          "note": "Businessplan, Kostenplan und De-minimis/Beihilfe pruefen."
+        }
+      ],
+      "timeline": [
+        {
+          "phase": "Fit-Check",
+          "weeks": "Wo 1",
+          "desc": "Programmregion, Stage, Team und Foerderlogik pruefen."
+        },
+        {
+          "phase": "Skizze & Unterlagen",
+          "weeks": "Wo 2-3",
+          "desc": "Kurzkonzept, Finanzplan und Nachweise vorbereiten."
+        },
+        {
+          "phase": "Einreichung",
+          "weeks": "Wo 4",
+          "desc": "Portal, Projekttraeger oder Betreuungspartner nutzen."
+        },
+        {
+          "phase": "Rueckfragen & Bewilligung",
+          "weeks": "Wo 5+",
+          "desc": "Formalia, Nachreichungen und Start der Foerderperiode."
+        }
+      ],
+      "materials": [
+        {
+          "item": "Kurzbeschreibung / Pitch",
+          "done": false
+        },
+        {
+          "item": "Businessplan oder Projektskizze",
+          "done": false
+        },
+        {
+          "item": "Finanzplan",
+          "done": false
+        },
+        {
+          "item": "Kosten- und Meilensteinplan",
+          "done": false
+        },
+        {
+          "item": "De-minimis-/Beihilfeangaben",
+          "done": false
+        }
+      ]
+    },
+    {
+      "slug": "startup-bw-pre-seed",
+      "name": "Start-up BW Pre-Seed",
+      "body": "Land Baden-Württemberg · Startup BW",
+      "amount": "bis €200.000",
+      "duration": "Finanzierungsrunde",
+      "deadline": "Über Betreuungspartner",
+      "fit": 79,
+      "prefilled": 67,
+      "summary": "Start-up BW Pre-Seed unterstuetzt die Pre-Seed- oder Angel-Phase. Relevant, wenn Team, Marktchance und naechste Finanzierung konkret werden.",
+      "region": "Baden-Württemberg",
+      "category": "pre-seed",
+      "stage": [
+        "pre-seed",
+        "prototype",
+        "team"
+      ],
+      "sourceUrl": "https://www.startupbw.de/foerderprogramme/start-up-bw-pre-seed",
+      "applyUrl": "https://www.startupbw.de/foerderprogramme/start-up-bw-pre-seed",
+      "scrapeStatus": "error",
+      "eligibility": [
+        {
+          "item": "Region: Baden-Württemberg",
+          "ok": true,
+          "note": "Sitz oder Vorhaben muss zur Programmregion passen."
+        },
+        {
+          "item": "Konkretes Vorhaben",
+          "ok": true,
+          "note": "Idee, Zielgruppe und Nutzen muessen nachvollziehbar sein."
+        },
+        {
+          "item": "Team & Cap Table",
+          "ok": "warn",
+          "note": "Rollen, Beteiligungen und Investmentlogik vorbereiten."
+        }
+      ],
+      "timeline": [
+        {
+          "phase": "Fit-Check",
+          "weeks": "Wo 1",
+          "desc": "Programmregion, Stage, Team und Foerderlogik pruefen."
+        },
+        {
+          "phase": "Skizze & Unterlagen",
+          "weeks": "Wo 2-3",
+          "desc": "Kurzkonzept, Finanzplan und Nachweise vorbereiten."
+        },
+        {
+          "phase": "Einreichung",
+          "weeks": "Wo 4",
+          "desc": "Portal, Projekttraeger oder Betreuungspartner nutzen."
+        },
+        {
+          "phase": "Rueckfragen & Bewilligung",
+          "weeks": "Wo 5+",
+          "desc": "Formalia, Nachreichungen und Start der Foerderperiode."
+        }
+      ],
+      "materials": [
+        {
+          "item": "Kurzbeschreibung / Pitch",
+          "done": false
+        },
+        {
+          "item": "Businessplan oder Projektskizze",
+          "done": false
+        },
+        {
+          "item": "Finanzplan",
+          "done": false
+        },
+        {
+          "item": "Kosten- und Meilensteinplan",
+          "done": false
+        },
+        {
+          "item": "De-minimis-/Beihilfeangaben",
+          "done": false
+        }
+      ]
+    },
+    {
+      "slug": "exist-forschungstransfer",
+      "name": "EXIST-Forschungstransfer",
+      "body": "BMWK · DLR Projektträger",
+      "amount": "bis ca. €250.000+",
+      "duration": "18 Monate + Phase II",
+      "deadline": "Stichtage / Projektträger prüfen",
+      "fit": 75,
+      "prefilled": 63,
+      "summary": "EXIST-Forschungstransfer passt zu technologie- oder FuE-lastigen Vorhaben mit klarer Entwicklungsetappe und belastbarem Projektplan.",
+      "region": "Deutschland",
+      "category": "forschung",
+      "stage": [
+        "forschung",
+        "deeptech",
+        "pre-seed"
+      ],
+      "sourceUrl": "https://www.exist.de/EXIST/Navigation/DE/Gruendungsfoerderung/EXIST-Forschungstransfer/exist-forschungstransfer.html",
+      "applyUrl": "https://www.exist.de/EXIST/Navigation/DE/Gruendungsfoerderung/EXIST-Forschungstransfer/Antragstellung/antragstellung.html",
+      "scrapeStatus": "error",
+      "eligibility": [
+        {
+          "item": "Region: Deutschland",
+          "ok": true,
+          "note": "Sitz oder Vorhaben muss zur Programmregion passen."
+        },
+        {
+          "item": "Konkretes Vorhaben",
+          "ok": true,
+          "note": "Idee, Zielgruppe und Nutzen muessen nachvollziehbar sein."
+        },
+        {
+          "item": "Innovationsgrad",
+          "ok": "warn",
+          "note": "Technischer oder wissenschaftlicher Neuheitsgrad sauber belegen."
+        },
+        {
+          "item": "Hochschul-/Forschungspartner",
+          "ok": "warn",
+          "note": "Bei EXIST meist zwingend vor Antrag klaeren."
+        }
+      ],
+      "timeline": [
+        {
+          "phase": "Fit-Check",
+          "weeks": "Wo 1",
+          "desc": "Programmregion, Stage, Team und Foerderlogik pruefen."
+        },
+        {
+          "phase": "Skizze & Unterlagen",
+          "weeks": "Wo 2-3",
+          "desc": "Kurzkonzept, Finanzplan und Nachweise vorbereiten."
+        },
+        {
+          "phase": "Einreichung",
+          "weeks": "Wo 4",
+          "desc": "Portal, Projekttraeger oder Betreuungspartner nutzen."
+        },
+        {
+          "phase": "Rueckfragen & Bewilligung",
+          "weeks": "Wo 5+",
+          "desc": "Formalia, Nachreichungen und Start der Foerderperiode."
+        }
+      ],
+      "materials": [
+        {
+          "item": "Kurzbeschreibung / Pitch",
+          "done": false
+        },
+        {
+          "item": "Businessplan oder Projektskizze",
+          "done": false
+        },
+        {
+          "item": "Finanzplan",
+          "done": false
+        },
+        {
+          "item": "Lebenslaeufe des Teams",
+          "done": false
+        },
+        {
+          "item": "Hochschul- oder Forschungspartner",
+          "done": false
+        }
+      ]
+    },
+    {
+      "slug": "invest-zuschuss-wagniskapital",
+      "name": "INVEST Zuschuss für Wagniskapital",
+      "body": "BAFA · Business Angels",
+      "amount": "20% Erwerbszuschuss",
+      "duration": "Investmentabhängig",
+      "deadline": "Laufend",
+      "fit": 75,
+      "prefilled": 63,
+      "summary": "INVEST Zuschuss für Wagniskapital unterstuetzt die Pre-Seed- oder Angel-Phase. Relevant, wenn Team, Marktchance und naechste Finanzierung konkret werden.",
+      "region": "Deutschland",
+      "category": "kapital",
+      "stage": [
+        "pre-seed",
+        "seed",
+        "angel"
+      ],
+      "sourceUrl": "https://www.bafa.de/DE/Wirtschaft/Beratung_Finanzierung/Invest/invest_node.html",
+      "applyUrl": "https://fms.bafa.de/BafaFrame/invest",
+      "scrapeStatus": "error",
+      "eligibility": [
+        {
+          "item": "Region: Deutschland",
+          "ok": true,
+          "note": "Sitz oder Vorhaben muss zur Programmregion passen."
+        },
+        {
+          "item": "Konkretes Vorhaben",
+          "ok": true,
+          "note": "Idee, Zielgruppe und Nutzen muessen nachvollziehbar sein."
+        },
+        {
+          "item": "Team & Cap Table",
+          "ok": "warn",
+          "note": "Rollen, Beteiligungen und Investmentlogik vorbereiten."
+        }
+      ],
+      "timeline": [
+        {
+          "phase": "Fit-Check",
+          "weeks": "Wo 1",
+          "desc": "Programmregion, Stage, Team und Foerderlogik pruefen."
+        },
+        {
+          "phase": "Skizze & Unterlagen",
+          "weeks": "Wo 2-3",
+          "desc": "Kurzkonzept, Finanzplan und Nachweise vorbereiten."
+        },
+        {
+          "phase": "Einreichung",
+          "weeks": "Wo 4",
+          "desc": "Portal, Projekttraeger oder Betreuungspartner nutzen."
+        },
+        {
+          "phase": "Rueckfragen & Bewilligung",
+          "weeks": "Wo 5+",
+          "desc": "Formalia, Nachreichungen und Start der Foerderperiode."
+        }
+      ],
+      "materials": [
+        {
+          "item": "Kurzbeschreibung / Pitch",
+          "done": false
+        },
+        {
+          "item": "Businessplan oder Projektskizze",
+          "done": false
+        },
+        {
+          "item": "Finanzplan",
+          "done": false
+        },
+        {
+          "item": "Kosten- und Meilensteinplan",
+          "done": false
+        },
+        {
+          "item": "De-minimis-/Beihilfeangaben",
+          "done": false
+        }
+      ]
+    },
+    {
+      "slug": "go-inno",
+      "name": "go-inno Innovationsgutschein",
+      "body": "BMWK · Innovationsberatung",
+      "amount": "bis 50% Beratungskosten",
+      "duration": "Beratungsprojekt",
+      "deadline": "Laufend",
+      "fit": 75,
+      "prefilled": 63,
+      "summary": "go-inno Innovationsgutschein ist ein Foerderprogramm fuer Gruender in Deutschland. Matchfoundr prueft Eignung, Materialien und naechste Antragsschritte.",
+      "region": "Deutschland",
+      "category": "beratung",
+      "stage": [
+        "innovation",
+        "mittelstand",
+        "prototype"
+      ],
+      "sourceUrl": "https://www.bmwk.de/Redaktion/DE/Artikel/Technologie/go-inno.html",
+      "applyUrl": "https://www.bmwk.de/Redaktion/DE/Artikel/Technologie/go-inno.html",
+      "scrapeStatus": "error",
+      "eligibility": [
+        {
+          "item": "Region: Deutschland",
+          "ok": true,
+          "note": "Sitz oder Vorhaben muss zur Programmregion passen."
+        },
+        {
+          "item": "Konkretes Vorhaben",
+          "ok": true,
+          "note": "Idee, Zielgruppe und Nutzen muessen nachvollziehbar sein."
+        },
+        {
+          "item": "Antragsfaehige Unterlagen",
+          "ok": "warn",
+          "note": "Businessplan, Kostenplan und De-minimis/Beihilfe pruefen."
+        }
+      ],
+      "timeline": [
+        {
+          "phase": "Fit-Check",
+          "weeks": "Wo 1",
+          "desc": "Programmregion, Stage, Team und Foerderlogik pruefen."
+        },
+        {
+          "phase": "Skizze & Unterlagen",
+          "weeks": "Wo 2-3",
+          "desc": "Kurzkonzept, Finanzplan und Nachweise vorbereiten."
+        },
+        {
+          "phase": "Einreichung",
+          "weeks": "Wo 4",
+          "desc": "Portal, Projekttraeger oder Betreuungspartner nutzen."
+        },
+        {
+          "phase": "Rueckfragen & Bewilligung",
+          "weeks": "Wo 5+",
+          "desc": "Formalia, Nachreichungen und Start der Foerderperiode."
+        }
+      ],
+      "materials": [
+        {
+          "item": "Kurzbeschreibung / Pitch",
+          "done": false
+        },
+        {
+          "item": "Businessplan oder Projektskizze",
+          "done": false
+        },
+        {
+          "item": "Finanzplan",
+          "done": false
+        },
+        {
+          "item": "Kosten- und Meilensteinplan",
+          "done": false
+        },
+        {
+          "item": "De-minimis-/Beihilfeangaben",
+          "done": false
+        }
+      ]
+    },
+    {
+      "slug": "profit-berlin",
+      "name": "ProFIT Berlin",
+      "body": "IBB Business Team",
+      "amount": "bis €1,5 Mio.",
+      "duration": "Projektabhängig",
+      "deadline": "Rollierend",
+      "fit": 72,
+      "prefilled": 60,
+      "summary": "ProFIT Berlin passt zu technologie- oder FuE-lastigen Vorhaben mit klarer Entwicklungsetappe und belastbarem Projektplan.",
+      "region": "Berlin",
+      "category": "fue",
+      "stage": [
+        "prototype",
+        "fue",
+        "seed"
+      ],
+      "sourceUrl": "https://www.ibb-business-team.de/profit",
+      "applyUrl": "https://www.ibb-business-team.de/profit",
+      "scrapeStatus": "error",
+      "eligibility": [
+        {
+          "item": "Region: Berlin",
+          "ok": true,
+          "note": "Sitz oder Vorhaben muss zur Programmregion passen."
+        },
+        {
+          "item": "Konkretes Vorhaben",
+          "ok": true,
+          "note": "Idee, Zielgruppe und Nutzen muessen nachvollziehbar sein."
+        },
+        {
+          "item": "Antragsfaehige Unterlagen",
+          "ok": "warn",
+          "note": "Businessplan, Kostenplan und De-minimis/Beihilfe pruefen."
+        }
+      ],
+      "timeline": [
+        {
+          "phase": "Fit-Check",
+          "weeks": "Wo 1",
+          "desc": "Programmregion, Stage, Team und Foerderlogik pruefen."
+        },
+        {
+          "phase": "Skizze & Unterlagen",
+          "weeks": "Wo 2-3",
+          "desc": "Kurzkonzept, Finanzplan und Nachweise vorbereiten."
+        },
+        {
+          "phase": "Einreichung",
+          "weeks": "Wo 4",
+          "desc": "Portal, Projekttraeger oder Betreuungspartner nutzen."
+        },
+        {
+          "phase": "Rueckfragen & Bewilligung",
+          "weeks": "Wo 5+",
+          "desc": "Formalia, Nachreichungen und Start der Foerderperiode."
+        }
+      ],
+      "materials": [
+        {
+          "item": "Kurzbeschreibung / Pitch",
+          "done": false
+        },
+        {
+          "item": "Businessplan oder Projektskizze",
+          "done": false
+        },
+        {
+          "item": "Finanzplan",
+          "done": false
+        },
+        {
+          "item": "Kosten- und Meilensteinplan",
+          "done": false
+        },
+        {
+          "item": "De-minimis-/Beihilfeangaben",
+          "done": false
+        }
+      ]
+    },
+    {
+      "slug": "kfw-erp-gruenderkredit-startgeld",
+      "name": "ERP-Gründerkredit - StartGeld",
+      "body": "KfW · Finanzierung",
+      "amount": "bis €125.000",
+      "duration": "bis 10 Jahre",
+      "deadline": "Laufend über Hausbank",
+      "fit": 65,
+      "prefilled": 53,
+      "summary": "ERP-Gründerkredit - StartGeld ist eine Finanzierungsoption fuer Gruendung, Nachfolge oder fruehe Investitionen. Volumen: bis €125.000, Laufzeit: bis 10 Jahre.",
+      "region": "Deutschland",
+      "category": "kredit",
+      "stage": [
+        "gruendung",
+        "nachfolge",
+        "early"
+      ],
+      "sourceUrl": "https://www.kfw.de/inlandsfoerderung/Unternehmen/Gr%C3%BCnden-Nachfolgen/F%C3%B6rderprodukte/ERP-Gr%C3%BCnderkredit-Startgeld-(067)/",
+      "applyUrl": "https://www.kfw.de/inlandsfoerderung/Unternehmen/Gr%C3%BCnden-Nachfolgen/F%C3%B6rderprodukte/ERP-Gr%C3%BCnderkredit-Startgeld-(067)/",
+      "scrapeStatus": "error",
+      "eligibility": [
+        {
+          "item": "Region: Deutschland",
+          "ok": true,
+          "note": "Sitz oder Vorhaben muss zur Programmregion passen."
+        },
+        {
+          "item": "Konkretes Vorhaben",
+          "ok": true,
+          "note": "Idee, Zielgruppe und Nutzen muessen nachvollziehbar sein."
+        },
+        {
+          "item": "Tragfaehiger Finanzplan",
+          "ok": "warn",
+          "note": "Hausbank und Kapitaldienstfaehigkeit vorbereiten."
+        }
+      ],
+      "timeline": [
+        {
+          "phase": "Finanzierungsbedarf klaeren",
+          "weeks": "Wo 1",
+          "desc": "Investitionen, Liquiditaet und Eigenmittel sauber aufstellen."
+        },
+        {
+          "phase": "Hausbankgespraech",
+          "weeks": "Wo 2-3",
+          "desc": "Unterlagen einreichen, KfW/NRW.BANK-Produkt pruefen lassen."
+        },
+        {
+          "phase": "Bewilligung & Abruf",
+          "weeks": "Wo 4+",
+          "desc": "Kreditentscheidung, Vertragsunterlagen, Mittelabruf."
+        }
+      ],
+      "materials": [
+        {
+          "item": "Kurzbeschreibung / Pitch",
+          "done": false
+        },
+        {
+          "item": "Businessplan oder Projektskizze",
+          "done": false
+        },
+        {
+          "item": "Finanzplan",
+          "done": false
+        },
+        {
+          "item": "BWA / Liquiditaetsplanung",
+          "done": false
+        },
+        {
+          "item": "Hausbank-Unterlagen",
+          "done": false
+        }
+      ]
+    },
+    {
+      "slug": "nrwbank-gruendungskredit",
+      "name": "NRW.BANK.Gründungskredit",
+      "body": "NRW.BANK",
+      "amount": "bis €10 Mio.",
+      "duration": "bis 20 Jahre",
+      "deadline": "Laufend über Hausbank",
+      "fit": 62,
+      "prefilled": 50,
+      "summary": "NRW.BANK.Gründungskredit ist eine Finanzierungsoption fuer Gruendung, Nachfolge oder fruehe Investitionen. Volumen: bis €10 Mio., Laufzeit: bis 20 Jahre.",
+      "region": "Nordrhein-Westfalen",
+      "category": "kredit",
+      "stage": [
+        "gruendung",
+        "nachfolge",
+        "wachstum"
+      ],
+      "sourceUrl": "https://www.nrwbank.de/de/foerderung/foerderprodukte/15204/nrwbankgruendungskredit.html",
+      "applyUrl": "https://www.nrwbank.de/de/foerderung/foerderprodukte/15204/nrwbankgruendungskredit.html",
+      "scrapeStatus": "error",
+      "eligibility": [
+        {
+          "item": "Region: Nordrhein-Westfalen",
+          "ok": true,
+          "note": "Sitz oder Vorhaben muss zur Programmregion passen."
+        },
+        {
+          "item": "Konkretes Vorhaben",
+          "ok": true,
+          "note": "Idee, Zielgruppe und Nutzen muessen nachvollziehbar sein."
+        },
+        {
+          "item": "Tragfaehiger Finanzplan",
+          "ok": "warn",
+          "note": "Hausbank und Kapitaldienstfaehigkeit vorbereiten."
+        }
+      ],
+      "timeline": [
+        {
+          "phase": "Finanzierungsbedarf klaeren",
+          "weeks": "Wo 1",
+          "desc": "Investitionen, Liquiditaet und Eigenmittel sauber aufstellen."
+        },
+        {
+          "phase": "Hausbankgespraech",
+          "weeks": "Wo 2-3",
+          "desc": "Unterlagen einreichen, KfW/NRW.BANK-Produkt pruefen lassen."
+        },
+        {
+          "phase": "Bewilligung & Abruf",
+          "weeks": "Wo 4+",
+          "desc": "Kreditentscheidung, Vertragsunterlagen, Mittelabruf."
+        }
+      ],
+      "materials": [
+        {
+          "item": "Kurzbeschreibung / Pitch",
+          "done": false
+        },
+        {
+          "item": "Businessplan oder Projektskizze",
+          "done": false
+        },
+        {
+          "item": "Finanzplan",
+          "done": false
+        },
+        {
+          "item": "BWA / Liquiditaetsplanung",
+          "done": false
+        },
+        {
+          "item": "Hausbank-Unterlagen",
+          "done": false
+        }
+      ]
+    }
+  ]
+}

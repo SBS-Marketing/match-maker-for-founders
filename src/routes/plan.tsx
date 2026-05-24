@@ -6,32 +6,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingConverge } from "@/components/onboarding/LoadingConverge";
 import { CopilotMark } from "@/components/Copilot";
+import {
+  PLAN_CACHE_KEY,
+  buildLocalPlanSlides,
+  readPlanContext,
+  type PlanSlide as Slide,
+} from "@/lib/plan-draft";
 
 export const Route = createFileRoute("/plan")({
   component: PlanPage,
 });
 
-type Slide =
-  | { type: "headline"; title: string; subtitle?: string; tag?: string }
-  | { type: "situation"; label?: string; text: string }
-  | {
-      type: "track";
-      nummer: number;
-      label?: string;
-      title: string;
-      why?: string;
-      steps?: string[];
-      timeframe?: string;
-      priority?: "hoch" | "mittel" | "niedrig";
-    }
-  | { type: "first_step"; label?: string; action: string; why?: string }
-  | { type: "dealbreaker"; label?: string; risk: string | null; mitigation?: string };
-
-const PLAN_CACHE_KEY = "mf_plan_slides";
-
 function PlanPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, session, loading, isDemo } = useAuth();
   const [slides, setSlides] = useState<Slide[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [idx, setIdx] = useState(0);
@@ -39,6 +27,7 @@ function PlanPage() {
 
   useEffect(() => {
     let cancelled = false;
+    if (loading) return;
 
     try {
       const cached = localStorage.getItem(PLAN_CACHE_KEY);
@@ -51,18 +40,29 @@ function PlanPage() {
       }
     } catch { /* ignore */ }
 
-    if (!user) return;
+    const onboardingContext = readPlanContext();
+    const fallbackSlides = filterSlides(buildLocalPlanSlides(onboardingContext));
+
+    if (!user || isDemo || !session) {
+      if (fallbackSlides.length > 0) setSlides(fallbackSlides);
+      else setError("Plan konnte nicht erstellt werden.");
+      return;
+    }
 
     (async () => {
       try {
         const { data, error: err } = await supabase.functions.invoke("copilot", {
-          body: { task: "plan_generate", message: "" },
+          body: { task: "plan_generate", message: "", extra: { onboarding: onboardingContext } },
         });
         if (cancelled) return;
         if (err) throw err;
         const raw = data?.slides;
         const arr: Slide[] = Array.isArray(raw) ? raw : [];
         if (arr.length === 0) {
+          if (fallbackSlides.length > 0) {
+            setSlides(fallbackSlides);
+            return;
+          }
           setError("Plan konnte nicht erstellt werden.");
           return;
         }
@@ -72,12 +72,16 @@ function PlanPage() {
       } catch (e) {
         if (cancelled) return;
         console.error(e);
+        if (fallbackSlides.length > 0) {
+          setSlides(fallbackSlides);
+          return;
+        }
         setError("Plan konnte nicht geladen werden.");
       }
     })();
 
     return () => { cancelled = true; };
-  }, [user]);
+  }, [user, session, loading, isDemo]);
 
   const total = slides?.length ?? 0;
   const isLast = idx === total - 1;

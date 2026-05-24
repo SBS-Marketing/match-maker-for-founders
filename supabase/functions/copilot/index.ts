@@ -77,6 +77,10 @@ function extractDraft(kimiData: Record<string, unknown>, kimiRaw: string): strin
   return text
 }
 
+function stringOrUndefined(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
+}
+
 // ─── Main handler ────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -131,6 +135,15 @@ Deno.serve(async (req) => {
       goal:  contextData?.goal,
       risk:  contextData?.risk,
     }
+    const onboarding = extra?.onboarding && typeof extra.onboarding === 'object'
+      ? extra.onboarding as Record<string, unknown>
+      : null
+    const onboardingContext = onboarding?.context && typeof onboarding.context === 'object'
+      ? onboarding.context as Record<string, unknown>
+      : null
+    const onboardingSkills = onboarding?.skills && typeof onboarding.skills === 'object'
+      ? onboarding.skills as Record<string, unknown>
+      : null
 
     let result: Record<string, unknown> = {}
 
@@ -223,14 +236,28 @@ Deno.serve(async (req) => {
         ctx.venture_term = profileFull.venture_term
         ctx.partner_term = profileFull.partner_term
       }
+      if (onboarding) {
+        ctx.industry     = ctx.industry     || stringOrUndefined(onboarding.industry)
+        ctx.venture_term = ctx.venture_term || stringOrUndefined(onboarding.ventureTerm)
+        ctx.partner_term = ctx.partner_term || stringOrUndefined(onboarding.partnerTerm)
+        ctx.copilot_context = ctx.copilot_context || stringOrUndefined(onboarding.copilotContext)
+      }
+      if (onboardingContext) {
+        ctx.idea  = ctx.idea  || stringOrUndefined(onboardingContext.idea)
+        ctx.role  = ctx.role  || stringOrUndefined(onboardingContext.role)
+        ctx.stage = ctx.stage || stringOrUndefined(onboardingContext.stage)
+        ctx.goal  = ctx.goal  || stringOrUndefined(onboardingContext.goal)
+        ctx.risk  = ctx.risk  || stringOrUndefined(onboardingContext.risk)
+      }
 
       // Sonnet gets full context directly — no Kimi middleman for plan
       const fullContext = JSON.stringify({
         founder: ctx,
-        assessment_scores: assessment?.scores || null,
-        skills: skills?.skills || null,
-        looking_for: skills?.looking_for || null,
-        availability_hrs: skills?.availability || null,
+        assessment_scores: assessment?.scores || onboarding?.scores || null,
+        skills: skills?.skills || onboardingSkills?.selected || null,
+        looking_for: skills?.looking_for || onboardingSkills?.looking_for || null,
+        availability_hrs: skills?.availability || onboardingSkills?.availability || null,
+        onboarding_context: onboarding || null,
       })
 
       const sonnetPrompt = SONNET_PROMPTS.plan_presentation(ctx, fullContext)
