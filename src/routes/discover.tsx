@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthGate } from "@/components/AuthGate";
 import { Button } from "@/components/ui/button";
-import { Heart, X, MapPin, SlidersHorizontal, ChevronDown, MessageCircle } from "lucide-react";
+import { Heart, X, MapPin, SlidersHorizontal, ChevronDown, MessageCircle, Layers, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { SparkView, useSparkProfiles } from "@/components/matchfoundr/SparkView";
 
 const AVATAR_COLORS = [
   "var(--ember)",
@@ -39,6 +40,8 @@ export const Route = createFileRoute("/discover")({
     </AuthGate>
   ),
 });
+
+type ViewMode = "spark" | "grid";
 
 type Profile = {
   id: string;
@@ -154,6 +157,7 @@ const DEMO_PROFILES: Profile[] = [
 function Discover() {
   const { user, isDemo } = useAuth();
   const navigate = useNavigate();
+  const [viewMode, setViewMode] = useState<ViewMode>("spark");
   const [queue, setQueue] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [meOnboarded, setMeOnboarded] = useState<boolean | null>(null);
@@ -162,6 +166,9 @@ function Discover() {
   const [fStage, setFStage] = useState<FilterValue>("all");
   const [fCommit, setFCommit] = useState<FilterValue>("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Spark view hook
+  const { profiles: sparkProfiles, loading: sparkLoading, handleSwipe: handleSparkSwipe } = useSparkProfiles();
 
   const filtered = queue.filter(
     (p) =>
@@ -397,54 +404,95 @@ function Discover() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-10 pb-24 sm:px-6">
-      <div className="eyebrow">Entdecken · {filtered.length} Founder</div>
-      <h1 className="mt-4 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-        Menschen für <span className="font-serif italic font-normal">dich</span>.
-      </h1>
+    <div className="mx-auto max-w-7xl px-4 pt-10 pb-24 sm:px-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="eyebrow">Entdecken · {viewMode === "spark" ? sparkProfiles.length : filtered.length} Founder</div>
+          <h1 className="mt-4 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+            Menschen für <span className="font-serif italic font-normal">dich</span>.
+          </h1>
+        </div>
+        {/* View Toggle */}
+        <div className="flex items-center gap-1 rounded-xl p-1" style={{
+          background: "rgba(251,250,247,0.6)",
+          backdropFilter: "blur(12px)",
+          border: "1px solid rgba(21,20,15,0.08)",
+        }}>
+          <button
+            onClick={() => setViewMode("spark")}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium transition"
+            style={{
+              background: viewMode === "spark" ? "var(--ember)" : "transparent",
+              color: viewMode === "spark" ? "var(--cream)" : "var(--smoke)",
+            }}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Spark
+          </button>
+          <button
+            onClick={() => setViewMode("grid")}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium transition"
+            style={{
+              background: viewMode === "grid" ? "var(--ember)" : "transparent",
+              color: viewMode === "grid" ? "var(--cream)" : "var(--smoke)",
+            }}
+          >
+            <Layers className="h-3.5 w-3.5" />
+            Grid
+          </button>
+        </div>
+      </div>
 
-      {filterBar}
+      {viewMode === "spark" ? (
+        <SparkView
+          profiles={sparkProfiles}
+          onSwipe={handleSparkSwipe}
+          loading={sparkLoading}
+        />
+      ) : (
+        <>
+          {filterBar}
 
-      <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((p) => {
-          const name = p.display_name ?? "?";
-          return (
-            <article key={p.id} className="glass-pane flex flex-col p-6">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="flex h-11 w-11 items-center justify-center rounded-full overflow-hidden font-mono text-[13px] font-semibold"
-                    style={{
-                      background: colorFor(name),
-                      color: "var(--cream)",
-                      boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.2)",
-                    }}
-                  >
-                    {p.photo_url ? (
-                      <img src={p.photo_url} alt={name} className="h-full w-full object-cover" />
-                    ) : (
-                      initials(name)
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-[15px] font-semibold leading-tight text-[var(--ink)]">
-                      {name}
-                    </div>
-                    {p.location && (
-                      <div className="mt-0.5 flex items-center gap-1 text-[12px] text-[var(--smoke)]">
-                        <MapPin className="h-3 w-3" /> {p.location}
+          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((p) => {
+              const name = p.display_name ?? "?";
+              return (
+                <article key={p.id} className="glass-pane flex flex-col p-6">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex h-11 w-11 items-center justify-center rounded-full overflow-hidden font-mono text-[13px] font-semibold"
+                        style={{
+                          background: colorFor(name),
+                          color: "var(--cream)",
+                          boxShadow: "inset 0 0 0 1.5px rgba(255,255,255,0.2)",
+                        }}
+                      >
+                        {p.photo_url ? (
+                          <img src={p.photo_url} alt={name} className="h-full w-full object-cover" />
+                        ) : (
+                          initials(name)
+                        )}
                       </div>
-                    )}
+                      <div>
+                        <div className="text-[15px] font-semibold leading-tight text-[var(--ink)]">
+                          {name}
+                        </div>
+                        {p.location && (
+                          <div className="mt-0.5 flex items-center gap-1 text-[12px] text-[var(--smoke)]">
+                            <MapPin className="h-3 w-3" /> {p.location}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => swipe(p.id, "pass")}
+                      aria-label="Überspringen"
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--smoke)] transition hover:bg-[rgba(21,20,15,0.06)] hover:text-[var(--ink)]"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
-                </div>
-                <button
-                  onClick={() => swipe(p.id, "pass")}
-                  aria-label="Überspringen"
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--smoke)] transition hover:bg-[rgba(21,20,15,0.06)] hover:text-[var(--ink)]"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
 
               <div className="mt-4 flex flex-wrap gap-1.5">
                 {p.role && <Chip>{roleLabel[p.role]}</Chip>}
@@ -494,6 +542,8 @@ function Discover() {
           );
         })}
       </div>
+    </>
+  )}
     </div>
   );
 }
