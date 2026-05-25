@@ -1,0 +1,1 @@
+import{m as t}from"./index-CO4ObEDO.js";import{P as o}from"./PartnerIndex-COY7W3zw.js";import"./Copilot-D0GQxR3g.js";import"./ServiceIcon-BRAi6sIG.js";import"./map-pin-BxR0XbD8.js";import"./arrow-right-BUHK6Uip.js";const n=()=>t.jsx(o,{service:"capital",title:"Kapitalzugang",accent:"sortiert"});export{n as component};

@@ -1,0 +1,1 @@
+import{e as r,m as o}from"./index-CO4ObEDO.js";import{P as e}from"./PartnerDetail-B6pUdQW3.js";import"./Copilot-D0GQxR3g.js";import"./ServiceIcon-BRAi6sIG.js";import"./map-pin-BxR0XbD8.js";import"./check-C6ig1rXa.js";import"./external-link-BkuNGcqv.js";function x(){const{partner:t}=r.useLoaderData();return o.jsx(e,{partner:t})}export{x as component};

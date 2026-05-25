@@ -1,1 +1,0 @@
-import{u as n,v as u,r as i,m as s}from"./index-DC2Tgkxf.js";function m({children:a}){const{user:t,loading:e}=n(),r=u();return i.useEffect(()=>{!e&&!t&&r({to:"/auth"})},[t,e,r]),e||!t?s.jsx("div",{className:"flex min-h-[60vh] items-center justify-center text-sm text-muted-foreground",children:"Lade…"}):s.jsx(s.Fragment,{children:a})}export{m as A};

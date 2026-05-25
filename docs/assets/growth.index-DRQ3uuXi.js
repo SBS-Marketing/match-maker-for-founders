@@ -1,0 +1,1 @@
+import{m as t}from"./index-CO4ObEDO.js";import{P as r}from"./PartnerIndex-COY7W3zw.js";import"./Copilot-D0GQxR3g.js";import"./ServiceIcon-BRAi6sIG.js";import"./map-pin-BxR0XbD8.js";import"./arrow-right-BUHK6Uip.js";const s=()=>t.jsx(r,{service:"growth",title:"Growth-Partner",accent:"einsatzbereit"});export{s as component};
