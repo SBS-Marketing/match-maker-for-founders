@@ -1,0 +1,1 @@
+import{m as t}from"./index-DC2Tgkxf.js";import{P as e}from"./PartnerIndex-B14AznIx.js";import"./Copilot-C2VumzsX.js";import"./ServiceIcon-CC8BCOTZ.js";import"./map-pin-BLl8rU3G.js";import"./arrow-right-CPnu7eow.js";const a=()=>t.jsx(e,{service:"talent",title:"Talent-Pipeline",accent:"kuratiert"});export{a as component};

@@ -1,0 +1,1 @@
+import{m as t}from"./index-DC2Tgkxf.js";import{P as r}from"./PartnerIndex-B14AznIx.js";import"./Copilot-C2VumzsX.js";import"./ServiceIcon-CC8BCOTZ.js";import"./map-pin-BLl8rU3G.js";import"./arrow-right-CPnu7eow.js";const s=()=>t.jsx(r,{service:"tax",title:"Steuerpartner",accent:"vorgefiltert"});export{s as component};
