@@ -1,0 +1,47 @@
+{
+  "scraped_at": "2026-05-26T10:40:31.187668",
+  "sources": [
+    {
+      "id": "startupstash",
+      "url": "https://startupstash.com/startup-deals-and-discounts/",
+      "scraped_at": "2026-05-26T10:40:19.629502",
+      "error": "Client error '404 Not Found' for url 'https://startupstash.com/startup-deals-and-discounts/'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+      "text": null,
+      "deal_links": []
+    },
+    {
+      "id": "saasworthy_programs",
+      "url": "https://www.saasworthy.com/list/startup-programs",
+      "scraped_at": "2026-05-26T10:40:22.175630",
+      "error": "Client error '403 Forbidden' for url 'https://www.saasworthy.com/list/startup-programs'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403",
+      "text": null,
+      "deal_links": []
+    },
+    {
+      "id": "saas_discount",
+      "url": "https://saasdiscount.com/",
+      "scraped_at": "2026-05-26T10:40:24.291047",
+      "error": null,
+      "text": "",
+      "deal_links": []
+    },
+    {
+      "id": "wellfound_deals",
+      "url": "https://wellfound.com/startup-resources",
+      "scraped_at": "2026-05-26T10:40:26.709457",
+      "error": "Client error '403 Forbidden' for url 'https://wellfound.com/startup-resources'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403",
+      "text": null,
+      "deal_links": []
+    },
+    {
+      "id": "getlatka_deals",
+      "url": "https://getlatka.com/startup-deals",
+      "scraped_at": "2026-05-26T10:40:28.857695",
+      "error": "Client error '404 Not Found' for url 'https://getlatka.com/startup-deals'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404",
+      "text": null,
+      "deal_links": []
+    }
+  ],
+  "discovered_links": [],
+  "discovered_count": 0
+}
