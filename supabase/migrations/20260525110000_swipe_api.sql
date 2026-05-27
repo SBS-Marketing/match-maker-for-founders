@@ -10,6 +10,7 @@ declare
   reverse_swipe public.swipes%rowtype;
   existing_match public.mutual_matches%rowtype;
   new_conv_id uuid;
+  new_match_id uuid;
 begin
   -- Nur bei 'like' prüfen
   if new.direction != 'like' then
@@ -39,13 +40,14 @@ begin
     return new;  -- Bereits ein Match
   end if;
 
-  -- Conversation erstellen
+  -- Conversation erstellen oder bestehende wiederverwenden
   insert into public.conversations (user_a, user_b, is_active)
   values (
     least(new.swiper_id, new.target_id),
     greatest(new.swiper_id, new.target_id),
     true
   )
+  on conflict (user_a, user_b) do update set is_active = true
   returning id into new_conv_id;
 
   -- Mutual Match anlegen
@@ -59,7 +61,12 @@ begin
     greatest(new.swiper_id, new.target_id),
     'new',
     new_conv_id
-  );
+  )
+  returning id into new_match_id;
+
+  update public.conversations
+  set match_id = new_match_id
+  where id = new_conv_id;
 
   return new;
 end $$;
@@ -71,7 +78,7 @@ begin
     select 1 from pg_trigger where tgname = 'trg_swipes_mutual_match'
   ) then
     create trigger trg_swipes_mutual_match
-      after insert on public.swipes
+      after insert or update of direction on public.swipes
       for each row execute function public.handle_swipe_mutual_match();
   end if;
 end $$;
@@ -91,6 +98,10 @@ declare
   result jsonb;
   is_mutual boolean := false;
 begin
+  if coalesce(auth.role(), '') <> 'service_role' and auth.uid() is distinct from p_swiper_id then
+    raise exception 'Not allowed to swipe as another user' using errcode = '42501';
+  end if;
+
   -- Idempotenter Upsert
   insert into public.swipes (swiper_id, target_id, direction)
   values (p_swiper_id, p_target_id, p_direction)
@@ -112,3 +123,6 @@ begin
     'direction', p_direction
   );
 end $$;
+
+revoke all on function public.perform_swipe(uuid, uuid, public.swipe_direction) from public, anon;
+grant execute on function public.perform_swipe(uuid, uuid, public.swipe_direction) to authenticated, service_role;

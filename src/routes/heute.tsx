@@ -23,7 +23,12 @@ import { ServiceIcon } from "@/components/ServiceIcon";
 import { CopilotMark, AITag, FitScore } from "@/components/Copilot";
 import { Button } from "@/components/ui/button";
 import { TutorialOverlay, shouldShowTutorial } from "@/components/onboarding/TutorialOverlay";
-import { buildLocalPlanSlides, readPlanContext, type PlanContext, type PlanSlide } from "@/lib/plan-draft";
+import {
+  buildLocalPlanSlides,
+  readPlanContext,
+  type PlanContext,
+  type PlanSlide,
+} from "@/lib/plan-draft";
 
 export const Route = createFileRoute("/heute")({
   head: () => ({ meta: [{ title: "Heute · Command Center — matchfoundr" }] }),
@@ -91,7 +96,8 @@ function CommandCenter() {
   }, [dailyState]);
 
   const today = useMemo(
-    () => new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" }),
+    () =>
+      new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" }),
     [],
   );
   const userName = planContext?.userName || "Founder";
@@ -117,7 +123,9 @@ function CommandCenter() {
   const taskDate = useMemo(() => getLocalDateKey(), []);
   const visibleTasks = dailyTasks.filter((task) => !dailyState.snoozed.includes(task.id));
   const completedCount = dailyTasks.filter((task) => dailyState.completed.includes(task.id)).length;
-  const openVisibleCount = visibleTasks.filter((task) => !dailyState.completed.includes(task.id)).length;
+  const openVisibleCount = visibleTasks.filter(
+    (task) => !dailyState.completed.includes(task.id),
+  ).length;
   const progress = dailyTasks.length ? Math.round((completedCount / dailyTasks.length) * 100) : 0;
   const messages = useMemo(() => buildMessages(topGrant, topPartners), [topGrant, topPartners]);
   const nextFocus = visibleTasks.find((task) => !dailyState.completed.includes(task.id));
@@ -147,7 +155,9 @@ function CommandCenter() {
       const missing = dailyTasks.filter((task) => !knownKeys.has(task.id));
       if (missing.length > 0) {
         await supabase.from("daily_tasks").upsert(
-          missing.map((task) => toDailyTaskInsert(user.id, taskDate, task, remoteStatusFor(task.id, dailyState))),
+          missing.map((task) =>
+            toDailyTaskInsert(user.id, taskDate, task, remoteStatusFor(task.id, dailyState)),
+          ),
           { onConflict: "user_id,task_date,task_key" },
         );
       }
@@ -156,8 +166,12 @@ function CommandCenter() {
       const snoozed = rows.filter((row) => row.status === "snoozed").map((row) => row.task_key);
       setDailyState((current) => ({
         ...current,
-        completed: Array.from(new Set([...completed, ...current.completed.filter((id) => !knownKeys.has(id))])),
-        snoozed: Array.from(new Set([...snoozed, ...current.snoozed.filter((id) => !knownKeys.has(id))])),
+        completed: Array.from(
+          new Set([...completed, ...current.completed.filter((id) => !knownKeys.has(id))]),
+        ),
+        snoozed: Array.from(
+          new Set([...snoozed, ...current.snoozed.filter((id) => !knownKeys.has(id))]),
+        ),
       }));
       setRemoteReady(true);
     }
@@ -168,36 +182,46 @@ function CommandCenter() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, user?.id, isDemo, taskDate, dailyTasks.map((task) => task.id).join("|")]);
 
-  const toggleComplete = useCallback((id: string) => {
-    const task = dailyTasks.find((item) => item.id === id);
-    const willComplete = !dailyState.completed.includes(id);
-    setDailyState((current) => {
-      const done = current.completed.includes(id);
-      const completed = done ? current.completed.filter((item) => item !== id) : [...current.completed, id];
-      return { ...current, completed };
-    });
-    if (session && user && !isDemo && task) {
-      persistDailyTask(user.id, taskDate, task, willComplete ? "done" : "open");
-    }
-  }, [dailyState.completed, dailyTasks, isDemo, session, taskDate, user]);
+  const toggleComplete = useCallback(
+    (id: string) => {
+      const task = dailyTasks.find((item) => item.id === id);
+      const willComplete = !dailyState.completed.includes(id);
+      setDailyState((current) => {
+        const done = current.completed.includes(id);
+        const completed = done
+          ? current.completed.filter((item) => item !== id)
+          : [...current.completed, id];
+        return { ...current, completed };
+      });
+      if (session && user && !isDemo && task) {
+        persistDailyTask(user.id, taskDate, task, willComplete ? "done" : "open");
+      }
+    },
+    [dailyState.completed, dailyTasks, isDemo, session, taskDate, user],
+  );
 
-  const snooze = useCallback((id: string) => {
-    const task = dailyTasks.find((item) => item.id === id);
-    setDailyState((current) => ({
-      ...current,
-      snoozed: current.snoozed.includes(id) ? current.snoozed : [...current.snoozed, id],
-    }));
-    if (session && user && !isDemo && task) {
-      persistDailyTask(user.id, taskDate, task, "snoozed");
-    }
-    toast.success("Für heute ausgeblendet");
-  }, [dailyTasks, isDemo, session, taskDate, user]);
+  const snooze = useCallback(
+    (id: string) => {
+      const task = dailyTasks.find((item) => item.id === id);
+      setDailyState((current) => ({
+        ...current,
+        snoozed: current.snoozed.includes(id) ? current.snoozed : [...current.snoozed, id],
+      }));
+      if (session && user && !isDemo && task) {
+        persistDailyTask(user.id, taskDate, task, "snoozed");
+      }
+      toast.success("Für heute ausgeblendet");
+    },
+    [dailyTasks, isDemo, session, taskDate, user],
+  );
 
   const refreshDaily = useCallback(() => {
     setPlanContext(readPlanContext());
     setDailyState({ completed: [], snoozed: [], refreshedAt: new Date().toISOString() });
     if (session && user && !isDemo) {
-      Promise.all(dailyTasks.map((task) => persistDailyTask(user.id, taskDate, task, "open"))).catch(() => undefined);
+      Promise.all(
+        dailyTasks.map((task) => persistDailyTask(user.id, taskDate, task, "open")),
+      ).catch(() => undefined);
     }
     toast.success("Heute neu priorisiert");
   }, [dailyTasks, isDemo, session, taskDate, user]);
@@ -210,7 +234,9 @@ function CommandCenter() {
           <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
             Guten Morgen, {firstName}
             <span className="text-[var(--ember)]">.</span>{" "}
-            <span className="font-serif italic font-normal text-[var(--smoke)]">Das zählt heute.</span>
+            <span className="font-serif italic font-normal text-[var(--smoke)]">
+              Das zählt heute.
+            </span>
           </h1>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -237,12 +263,33 @@ function CommandCenter() {
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        <MetricCard label="Heute offen" value={String(openVisibleCount)} sub={`${completedCount}/${dailyTasks.length} erledigt`} />
-        <MetricCard label="Pipeline" value={`${GRANTS.length + PARTNERS.length}`} sub="Deals, Förderung, Partner" />
-        <MetricCard label="Plan-Fortschritt" value={`${progress}%`} sub={remoteReady ? "serverseitig gespeichert" : planContext ? "aus Onboarding berechnet" : "Fallback aktiv"} />
+        <MetricCard
+          label="Heute offen"
+          value={String(openVisibleCount)}
+          sub={`${completedCount}/${dailyTasks.length} erledigt`}
+        />
+        <MetricCard
+          label="Pipeline"
+          value={`${GRANTS.length + PARTNERS.length}`}
+          sub="Deals, Förderung, Partner"
+        />
+        <MetricCard
+          label="Plan-Fortschritt"
+          value={`${progress}%`}
+          sub={
+            remoteReady
+              ? "serverseitig gespeichert"
+              : planContext
+                ? "aus Onboarding berechnet"
+                : "Fallback aktiv"
+          }
+        />
       </div>
 
-      <div data-tour="focus" className="glass-pane-ink mt-6 grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-6">
+      <div
+        data-tour="focus"
+        className="glass-pane-ink mt-6 grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-6"
+      >
         <div>
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <AITag tone="dark">Co-Pilot</AITag>
@@ -251,7 +298,8 @@ function CommandCenter() {
             </span>
           </div>
           <p className="max-w-2xl font-serif text-[20px] italic leading-snug text-[var(--cream)]">
-            {nextFocus?.desc ?? "Alle Daily-Actions sind erledigt. Öffne deinen Plan, wenn du die nächste Priorität nachziehen willst."}
+            {nextFocus?.desc ??
+              "Alle Daily-Actions sind erledigt. Öffne deinen Plan, wenn du die nächste Priorität nachziehen willst."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -265,7 +313,10 @@ function CommandCenter() {
           )}
           {nextFocus && (
             <Link to={nextFocus.href}>
-              <Button variant="ghost" className="h-10 rounded-lg border border-white/15 bg-white/5 px-4 text-[13px] text-[var(--cream)] hover:bg-white/10">
+              <Button
+                variant="ghost"
+                className="h-10 rounded-lg border border-white/15 bg-white/5 px-4 text-[13px] text-[var(--cream)] hover:bg-white/10"
+              >
                 Öffnen
               </Button>
             </Link>
@@ -278,16 +329,26 @@ function CommandCenter() {
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <div className="eyebrow">Wochenplan</div>
-              <p className="mt-1 text-[13px] text-[var(--smoke)]">Aus deinem Planentwurf abgeleitet, damit die Daily Page nicht im luftleeren Raum hängt.</p>
+              <p className="mt-1 text-[13px] text-[var(--smoke)]">
+                Aus deinem Planentwurf abgeleitet, damit die Daily Page nicht im luftleeren Raum
+                hängt.
+              </p>
             </div>
             <FitScore value={Math.max(62, 92 - dailyState.snoozed.length * 6)} label="klar" />
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             {weeklyPlan.map((item) => (
-              <div key={item.title} className="rounded-2xl border border-[var(--ruled)] bg-white/45 p-4">
-                <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--ember-deep)]">{item.when}</div>
+              <div
+                key={item.title}
+                className="rounded-2xl border border-[var(--ruled)] bg-white/45 p-4"
+              >
+                <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--ember-deep)]">
+                  {item.when}
+                </div>
                 <div className="mt-2 text-[14px] font-semibold tracking-tight">{item.title}</div>
-                <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--smoke)]">{item.desc}</p>
+                <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--smoke)]">
+                  {item.desc}
+                </p>
               </div>
             ))}
           </div>
@@ -321,7 +382,9 @@ function CommandCenter() {
           <ul className="mt-4 space-y-3">
             {buildAgenda(visibleTasks).map((item) => (
               <li key={item.t} className="flex items-start gap-3">
-                <span className="w-10 font-mono text-[11px] font-semibold text-[var(--ember-deep)]">{item.t}</span>
+                <span className="w-10 font-mono text-[11px] font-semibold text-[var(--ember-deep)]">
+                  {item.t}
+                </span>
                 <div>
                   <div className="text-[13.5px] font-semibold">{item.what}</div>
                   <div className="text-[11px] text-[var(--smoke)]">{item.who}</div>
@@ -329,7 +392,10 @@ function CommandCenter() {
               </li>
             ))}
           </ul>
-          <Link to="/co-pilot" className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-semibold">
+          <Link
+            to="/co-pilot"
+            className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-semibold"
+          >
             Co-Pilot fragen <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </section>
@@ -351,10 +417,15 @@ function CommandCenter() {
                 <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--ember-deep)]">
                   {topGrant.prefilled}% vorausgefüllt
                 </span>
-                <span className="font-mono text-[11px] text-[var(--smoke)]">Fit {topGrant.fit}</span>
+                <span className="font-mono text-[11px] text-[var(--smoke)]">
+                  Fit {topGrant.fit}
+                </span>
               </div>
               <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[rgba(21,20,15,0.08)]">
-                <div className="h-full rounded-full bg-[var(--ember)]" style={{ width: `${topGrant.prefilled}%` }} />
+                <div
+                  className="h-full rounded-full bg-[var(--ember)]"
+                  style={{ width: `${topGrant.prefilled}%` }}
+                />
               </div>
             </div>
             <div className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--ink)]">
@@ -380,8 +451,12 @@ function CommandCenter() {
               >
                 <ServiceBadge id={message.sId} />
                 <div className="min-w-0">
-                  <div className="truncate text-[14px] font-semibold tracking-tight">{message.name}</div>
-                  <div className="mt-0.5 truncate text-[12px] text-[var(--smoke)]">{message.status} · {message.note}</div>
+                  <div className="truncate text-[14px] font-semibold tracking-tight">
+                    {message.name}
+                  </div>
+                  <div className="mt-0.5 truncate text-[12px] text-[var(--smoke)]">
+                    {message.status} · {message.note}
+                  </div>
                 </div>
                 <span className="font-mono text-[11px] text-[var(--smoke)]">{message.t}</span>
               </Link>
@@ -392,12 +467,21 @@ function CommandCenter() {
         <div className="glass-pane p-5">
           <div className="eyebrow">Kontext</div>
           <div className="mt-4 space-y-3 text-[13px]">
-            <ContextRow label="Vorhaben" value={planContext?.context.idea || "Noch kein Onboarding-Kontext"} />
+            <ContextRow
+              label="Vorhaben"
+              value={planContext?.context.idea || "Noch kein Onboarding-Kontext"}
+            />
             <ContextRow label="Phase" value={planContext?.context.stage || "frühe Phase"} />
-            <ContextRow label="Ziel" value={planContext?.context.goal || "nächsten belastbaren Schritt finden"} />
+            <ContextRow
+              label="Ziel"
+              value={planContext?.context.goal || "nächsten belastbaren Schritt finden"}
+            />
             <ContextRow label="Risiko" value={planContext?.context.risk || "Priorität schärfen"} />
           </div>
-          <Link to="/onboarding" className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-semibold">
+          <Link
+            to="/onboarding"
+            className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-semibold"
+          >
             Kontext aktualisieren <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -424,22 +508,42 @@ function DailyActionCard({
     <div
       className="grid gap-3 rounded-2xl border p-3 sm:grid-cols-[40px_1fr_auto] sm:items-center"
       style={{
-        background: done ? "rgba(21,20,15,0.03)" : task.urgency === "hoch" ? "rgba(226,81,28,0.06)" : "rgba(251,250,247,0.55)",
-        borderColor: done ? "rgba(21,20,15,0.06)" : task.urgency === "hoch" ? "rgba(226,81,28,0.18)" : "rgba(21,20,15,0.06)",
+        background: done
+          ? "rgba(21,20,15,0.03)"
+          : task.urgency === "hoch"
+            ? "rgba(226,81,28,0.06)"
+            : "rgba(251,250,247,0.55)",
+        borderColor: done
+          ? "rgba(21,20,15,0.06)"
+          : task.urgency === "hoch"
+            ? "rgba(226,81,28,0.18)"
+            : "rgba(21,20,15,0.06)",
       }}
     >
       <ServiceBadge id={task.sId} />
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <span className={done ? "text-[14px] font-semibold tracking-tight text-[var(--smoke)] line-through" : "text-[14px] font-semibold tracking-tight"}>
+          <span
+            className={
+              done
+                ? "text-[14px] font-semibold tracking-tight text-[var(--smoke)] line-through"
+                : "text-[14px] font-semibold tracking-tight"
+            }
+          >
             {task.title}
           </span>
-          <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--smoke)]">· {s.short}</span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--smoke)]">
+            · {s.short}
+          </span>
         </div>
         <div className="mt-0.5 text-[12px] leading-relaxed text-[var(--smoke)]">{task.desc}</div>
         <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-[var(--ink-soft)]">
-          <span className="inline-flex items-center gap-1"><Clock3 className="h-3 w-3" /> {task.minutes} Min</span>
-          <span className="inline-flex items-center gap-1"><Sparkles className="h-3 w-3" /> {task.label}</span>
+          <span className="inline-flex items-center gap-1">
+            <Clock3 className="h-3 w-3" /> {task.minutes} Min
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <Sparkles className="h-3 w-3" /> {task.label}
+          </span>
         </div>
       </div>
       <div className="flex gap-2 sm:justify-end">
@@ -450,7 +554,10 @@ function DailyActionCard({
           Später
         </Button>
         <Link to={task.href}>
-          <Button size="sm" className="rounded-full bg-[var(--ink)] text-[var(--cream)] hover:bg-[var(--ink-soft)]">
+          <Button
+            size="sm"
+            className="rounded-full bg-[var(--ink)] text-[var(--cream)] hover:bg-[var(--ink-soft)]"
+          >
             Öffnen
           </Button>
         </Link>
@@ -462,7 +569,9 @@ function DailyActionCard({
 function MetricCard({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
     <div className="glass-pane-soft p-4">
-      <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--smoke)]">{label}</div>
+      <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--smoke)]">
+        {label}
+      </div>
       <div className="mt-2 text-3xl font-semibold tracking-tight text-[var(--ink)]">{value}</div>
       <div className="mt-1 text-[12px] text-[var(--smoke)]">{sub}</div>
     </div>
@@ -484,7 +593,9 @@ function ServiceBadge({ id }: { id: ServiceId }) {
 function ContextRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-[var(--ruled)] bg-white/40 p-3">
-      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--smoke)]">{label}</div>
+      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--smoke)]">
+        {label}
+      </div>
       <div className="mt-1 text-[13px] leading-relaxed text-[var(--ink)]">{value}</div>
     </div>
   );
@@ -496,14 +607,17 @@ function buildDailyTasks(
   grant = GRANTS[0],
   partners = PARTNERS,
 ): DailyTask[] {
-  const partner = context?.path === "talent" ? partnersFor("talent")[0] : partnersFor("mentor")[0] || partners[0];
+  const partner =
+    context?.path === "talent" ? partnersFor("talent")[0] : partnersFor("mentor")[0] || partners[0];
   const growth = partnersFor("growth")[0] || partner;
   const tasks: DailyTask[] = [
     {
       id: "plan-first-step",
       sId: "cofounder",
       title: "Ersten Plan-Schritt festziehen",
-      desc: firstStep?.action || "Öffne deinen Plan und entscheide, welche Aktion heute wirklich zählt.",
+      desc:
+        firstStep?.action ||
+        "Öffne deinen Plan und entscheide, welche Aktion heute wirklich zählt.",
       href: "/plan",
       label: "Plan",
       urgency: "hoch",
@@ -513,7 +627,9 @@ function buildDailyTasks(
       id: "funding-fit",
       sId: "funding",
       title: `${grant?.name || "Förderprogramm"} prüfen`,
-      desc: grant ? `${grant.amount}, ${grant.duration}. Prüfe Materialien und nächsten Antragsschritt.` : "Prüfe die Top-Förderung für deine aktuelle Phase.",
+      desc: grant
+        ? `${grant.amount}, ${grant.duration}. Prüfe Materialien und nächsten Antragsschritt.`
+        : "Prüfe die Top-Förderung für deine aktuelle Phase.",
       href: grant ? `/foerderung/${grant.slug}` : "/foerderung",
       label: "Funding",
       urgency: "hoch",
@@ -533,7 +649,9 @@ function buildDailyTasks(
       id: "growth-signal",
       sId: "growth",
       title: "Ein Marktsignal erzeugen",
-      desc: growth?.blurb || "Starte eine kleine Outreach- oder Landingpage-Aktion, die echte Rückmeldung bringt.",
+      desc:
+        growth?.blurb ||
+        "Starte eine kleine Outreach- oder Landingpage-Aktion, die echte Rückmeldung bringt.",
       href: "/growth",
       label: "GTM",
       urgency: "mittel",
@@ -670,16 +788,27 @@ function remoteStatusFor(id: string, state: DailyState): DailyTaskStatus {
   return "open";
 }
 
-function persistDailyTask(userId: string, taskDate: string, task: DailyTask, status: DailyTaskStatus): void {
-  supabase
+async function persistDailyTask(
+  userId: string,
+  taskDate: string,
+  task: DailyTask,
+  status: DailyTaskStatus,
+): Promise<void> {
+  const { error } = await supabase
     .from("daily_tasks")
-    .upsert(toDailyTaskInsert(userId, taskDate, task, status), { onConflict: "user_id,task_date,task_key" })
-    .then(({ error }) => {
-      if (error) toast.error("Daily konnte nicht gespeichert werden");
+    .upsert(toDailyTaskInsert(userId, taskDate, task, status), {
+      onConflict: "user_id,task_date,task_key",
     });
+
+  if (error) toast.error("Daily konnte nicht gespeichert werden");
 }
 
-function toDailyTaskInsert(userId: string, taskDate: string, task: DailyTask, status: DailyTaskStatus) {
+function toDailyTaskInsert(
+  userId: string,
+  taskDate: string,
+  task: DailyTask,
+  status: DailyTaskStatus,
+) {
   return {
     user_id: userId,
     task_date: taskDate,

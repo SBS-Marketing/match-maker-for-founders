@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { Tables } from "@/integrations/supabase/types";
+import { edgeFunctionHeaders, edgeFunctionUrl } from "@/lib/edge-functions";
 
 // ─────────────────────────────────────────────────────────────
 // matchfoundr · Matching Hook
@@ -18,8 +19,6 @@ export type MatchingState = {
   computing: boolean;
   error: string | null;
 };
-
-const EDGE_FUNCTION_URL = import.meta.env.VITE_SUPABASE_EDGE_FUNCTION_URL ?? '';
 
 export function useMatching() {
   const { user, session } = useAuth();
@@ -39,15 +38,9 @@ export function useMatching() {
       }
       setState((s) => ({ ...s, loading: true, error: null }));
       try {
-        const res = await fetch(
-          `${EDGE_FUNCTION_URL}/matching/recommendations?limit=${limit}`,
-          {
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const res = await fetch(edgeFunctionUrl("matching", `recommendations?limit=${limit}`), {
+          headers: edgeFunctionHeaders(session.access_token),
+        });
         if (!res.ok) {
           const err = await res.json().catch(() => ({ error: "Unbekannter Fehler" }));
           throw new Error(err.error);
@@ -63,7 +56,7 @@ export function useMatching() {
         setState((s) => ({ ...s, loading: false }));
       }
     },
-    [user, session]
+    [user, session],
   );
 
   /** Triggert Neuberechnung der Matches via Edge Function */
@@ -74,12 +67,9 @@ export function useMatching() {
     }
     setState((s) => ({ ...s, computing: true, error: null }));
     try {
-      const res = await fetch(`${EDGE_FUNCTION_URL}/matching/compute`, {
+      const res = await fetch(edgeFunctionUrl("matching", "compute"), {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-        },
+        headers: edgeFunctionHeaders(session.access_token),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: "Unbekannter Fehler" }));
@@ -118,7 +108,7 @@ export function useMatching() {
         recommendations: s.recommendations.filter((r) => r.target_id !== targetId),
       }));
     },
-    [user]
+    [user],
   );
 
   return {

@@ -7,13 +7,26 @@
 -- ─────────────────────────────────────────────────────────────
 
 -- ═════════════════════════════════════════════════════════════
--- 1. ENUMS
+-- 1. EXTENSIONS + ENUMS
 -- ═════════════════════════════════════════════════════════════
 
-create type if not exists public.match_status as enum ('pending', 'accepted', 'declined', 'blocked');
-create type if not exists public.message_status as enum ('sent', 'delivered', 'read');
-create type if not exists public.project_stage as enum ('idea', 'prototype', 'mvp', 'revenue', 'scaling');
-create type if not exists public.availability_type as enum ('full_time', 'part_time', 'freelance', 'open');
+create extension if not exists vector;
+
+do $$
+begin
+  if not exists (select 1 from pg_type where typname = 'match_status' and typnamespace = 'public'::regnamespace) then
+    create type public.match_status as enum ('pending', 'accepted', 'declined', 'blocked');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'message_status' and typnamespace = 'public'::regnamespace) then
+    create type public.message_status as enum ('sent', 'delivered', 'read');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'project_stage' and typnamespace = 'public'::regnamespace) then
+    create type public.project_stage as enum ('idea', 'prototype', 'mvp', 'revenue', 'scaling');
+  end if;
+  if not exists (select 1 from pg_type where typname = 'availability_type' and typnamespace = 'public'::regnamespace) then
+    create type public.availability_type as enum ('full_time', 'part_time', 'freelance', 'open');
+  end if;
+end $$;
 
 -- ═════════════════════════════════════════════════════════════
 -- 2. PROFILES ERWEITERUNG
@@ -101,6 +114,9 @@ alter table public.messages
   add column if not exists edited_at timestamptz,
   add column if not exists is_deleted boolean default false;
 
+alter table public.messages
+  alter column match_id drop not null;
+
 -- Index für Conversation-Lookup
  create index if not exists idx_messages_conversation on public.messages(conversation_id, created_at desc);
  create index if not exists idx_messages_match on public.messages(match_id, created_at desc);
@@ -156,9 +172,16 @@ begin
   return new;
 end $$;
 
-create trigger if not exists trg_projects_updated_at
-  before update on public.projects
-  for each row execute function public.set_updated_at();
+do $$
+begin
+  if not exists (
+    select 1 from pg_trigger where tgname = 'trg_projects_updated_at'
+  ) then
+    create trigger trg_projects_updated_at
+      before update on public.projects
+      for each row execute function public.set_updated_at();
+  end if;
+end $$;
 
 -- ═════════════════════════════════════════════════════════════
 -- 10. TRIGGER: Neuer User → Profile anlegen
@@ -200,7 +223,10 @@ end $$;
 do $$
 begin
   if not exists (
-    select 1 from pg_trigger where tgname = 'trg_auth_users_insert'
+    select 1
+    from pg_trigger
+    where tgrelid = 'auth.users'::regclass
+      and tgfoid = 'public.handle_new_user()'::regprocedure
   ) then
     create trigger trg_auth_users_insert
       after insert on auth.users
@@ -251,27 +277,32 @@ alter table public.user_roles         enable row level security;
 -- 13. RLS — PROFILES
 -- ═════════════════════════════════════════════════════════════
 
-create policy if not exists "Profiles: public read"
+drop policy if exists "Profiles: public read" on public.profiles;
+create policy "Profiles: public read"
   on public.profiles for select using (true);
 
-create policy if not exists "Profiles: own write"
+drop policy if exists "Profiles: own write" on public.profiles;
+create policy "Profiles: own write"
   on public.profiles for update using (auth.uid() = id);
 
 -- ═════════════════════════════════════════════════════════════
 -- 14. RLS — PROJECTS
 -- ═════════════════════════════════════════════════════════════
 
-create policy if not exists "Projects: public read"
+drop policy if exists "Projects: public read" on public.projects;
+create policy "Projects: public read"
   on public.projects for select using (is_public = true);
 
-create policy if not exists "Projects: founder full access"
+drop policy if exists "Projects: founder full access" on public.projects;
+create policy "Projects: founder full access"
   on public.projects for all using (auth.uid() = founder_id);
 
 -- ═════════════════════════════════════════════════════════════
 -- 15. RLS — CONVERSATIONS
 -- ═════════════════════════════════════════════════════════════
 
-create policy if not exists "Conversations: participants only"
+drop policy if exists "Conversations: participants only" on public.conversations;
+create policy "Conversations: participants only"
   on public.conversations for all
   using (auth.uid() = user_a or auth.uid() = user_b);
 
@@ -279,7 +310,8 @@ create policy if not exists "Conversations: participants only"
 -- 16. RLS — MESSAGES
 -- ═════════════════════════════════════════════════════════════
 
-create policy if not exists "Messages: participants read"
+drop policy if exists "Messages: participants read" on public.messages;
+create policy "Messages: participants read"
   on public.messages for select
   using (
     exists (
@@ -294,11 +326,13 @@ create policy if not exists "Messages: participants read"
     )
   );
 
-create policy if not exists "Messages: sender insert"
+drop policy if exists "Messages: sender insert" on public.messages;
+create policy "Messages: sender insert"
   on public.messages for insert
   with check (auth.uid() = sender_id);
 
-create policy if not exists "Messages: sender update own"
+drop policy if exists "Messages: sender update own" on public.messages;
+create policy "Messages: sender update own"
   on public.messages for update
   using (auth.uid() = sender_id);
 
@@ -306,21 +340,25 @@ create policy if not exists "Messages: sender update own"
 -- 17. RLS — SWIPES
 -- ═════════════════════════════════════════════════════════════
 
-create policy if not exists "Swipes: own read"
+drop policy if exists "Swipes: own read" on public.swipes;
+create policy "Swipes: own read"
   on public.swipes for select using (auth.uid() = swiper_id);
 
-create policy if not exists "Swipes: own insert"
+drop policy if exists "Swipes: own insert" on public.swipes;
+create policy "Swipes: own insert"
   on public.swipes for insert with check (auth.uid() = swiper_id);
 
 -- ═════════════════════════════════════════════════════════════
 -- 18. RLS — MATCHES / MUTUAL_MATCHES
 -- ═════════════════════════════════════════════════════════════
 
-create policy if not exists "Matches: participants read"
+drop policy if exists "Matches: participants read" on public.matches;
+create policy "Matches: participants read"
   on public.matches for select
   using (auth.uid() = user_a or auth.uid() = user_b);
 
-create policy if not exists "Mutual matches: participants read"
+drop policy if exists "Mutual matches: participants read" on public.mutual_matches;
+create policy "Mutual matches: participants read"
   on public.mutual_matches for select
   using (auth.uid() = user_a or auth.uid() = user_b);
 
@@ -328,34 +366,40 @@ create policy if not exists "Mutual matches: participants read"
 -- 19. RLS — FOUNDER_SKILLS
 -- ═════════════════════════════════════════════════════════════
 
-create policy if not exists "Founder skills: public read"
+drop policy if exists "Founder skills: public read" on public.founder_skills;
+create policy "Founder skills: public read"
   on public.founder_skills for select using (true);
 
-create policy if not exists "Founder skills: own write"
+drop policy if exists "Founder skills: own write" on public.founder_skills;
+create policy "Founder skills: own write"
   on public.founder_skills for all using (auth.uid() = user_id);
 
 -- ═════════════════════════════════════════════════════════════
 -- 20. RLS — PROFILE_EMBEDDINGS (nur Service-Role / eigener User)
 -- ═════════════════════════════════════════════════════════════
 
-create policy if not exists "Embeddings: own read"
+drop policy if exists "Embeddings: own read" on public.profile_embeddings;
+create policy "Embeddings: own read"
   on public.profile_embeddings for select using (auth.uid() = profile_id);
 
 -- ═════════════════════════════════════════════════════════════
 -- 21. RLS — USER_ROLES
 -- ═════════════════════════════════════════════════════════════
 
-create policy if not exists "User roles: own read"
+drop policy if exists "User roles: own read" on public.user_roles;
+create policy "User roles: own read"
   on public.user_roles for select using (auth.uid() = user_id);
 
 -- ═════════════════════════════════════════════════════════════
 -- 22. RLS — MATCH_RESULTS / INTERACTIONS
 -- ═════════════════════════════════════════════════════════════
 
-create policy if not exists "Match results: own read"
+drop policy if exists "Match results: own read" on public.match_results;
+create policy "Match results: own read"
   on public.match_results for select using (auth.uid() = user_id);
 
-create policy if not exists "Match interactions: own write"
+drop policy if exists "Match interactions: own write" on public.match_interactions;
+create policy "Match interactions: own write"
   on public.match_interactions for all using (auth.uid() = user_id);
 
 -- ═════════════════════════════════════════════════════════════

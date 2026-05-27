@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,10 +10,16 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Lockup } from "@/components/Logo";
 
-export const Route = createFileRoute("/auth")({ component: AuthPage });
+export const Route = createFileRoute("/auth")({ component: AuthShell });
 
 const emailSchema = z.string().trim().email("Bitte gültige E-Mail eingeben").max(255);
 const passwordSchema = z.string().min(8, "Mindestens 8 Zeichen").max(72);
+
+function AuthShell() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  if (pathname !== "/auth") return <Outlet />;
+  return <AuthPage />;
+}
 
 function AuthPage() {
   const { user, enterDemo } = useAuth();
@@ -124,8 +130,8 @@ function AuthPage() {
             {mode === "signup"
               ? "Beginne mit deinem matchfoundr-Konto."
               : mode === "signin"
-              ? "Melde dich an, um weiterzumachen."
-              : "Login ohne Passwort per E-Mail-Link."}
+                ? "Melde dich an, um weiterzumachen."
+                : "Login ohne Passwort per E-Mail-Link."}
           </p>
         </div>
       </div>
@@ -192,10 +198,10 @@ function AuthPage() {
             {loading
               ? "Bitte warten…"
               : mode === "signup"
-              ? "Konto erstellen"
-              : mode === "signin"
-              ? "Anmelden"
-              : "Magic Link senden"}
+                ? "Konto erstellen"
+                : mode === "signin"
+                  ? "Anmelden"
+                  : "Magic Link senden"}
           </Button>
         </form>
         <div className="mt-4 flex flex-col gap-2 text-center text-sm">

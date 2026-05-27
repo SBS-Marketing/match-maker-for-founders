@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import type { Tables } from "@/integrations/supabase/types";
+import { edgeFunctionHeaders, edgeFunctionUrl } from "@/lib/edge-functions";
 
 // ─────────────────────────────────────────────────────────────
 // matchfoundr · Swipe Hook
@@ -30,8 +31,6 @@ export type SwipeState = {
   lastResult: SwipeResult | null;
 };
 
-const EDGE_FUNCTION_URL = import.meta.env.VITE_SUPABASE_EDGE_FUNCTION_URL ?? "";
-
 export function useSwiping() {
   const { user, session } = useAuth();
   const [state, setState] = useState<SwipeState>({
@@ -51,12 +50,9 @@ export function useSwiping() {
       }
       setState((s) => ({ ...s, swiping: true, error: null }));
       try {
-        const res = await fetch(`${EDGE_FUNCTION_URL}/swipe`, {
+        const res = await fetch(edgeFunctionUrl("swipe"), {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
-          },
+          headers: edgeFunctionHeaders(session.access_token),
           body: JSON.stringify({ target_id: targetId, direction }),
         });
         if (!res.ok) {
@@ -76,7 +72,7 @@ export function useSwiping() {
         setState((s) => ({ ...s, swiping: false }));
       }
     },
-    [user, session]
+    [user, session],
   );
 
   /** Lädt die Swipe-Historie des Users */
@@ -87,11 +83,8 @@ export function useSwiping() {
     }
     setState((s) => ({ ...s, loading: true, error: null }));
     try {
-      const res = await fetch(`${EDGE_FUNCTION_URL}/swipe/history`, {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-        },
+      const res = await fetch(edgeFunctionUrl("swipe", "history"), {
+        headers: edgeFunctionHeaders(session.access_token),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: "Unbekannter Fehler" }));
@@ -119,7 +112,7 @@ export function useSwiping() {
           target_id: targetId,
           direction,
         },
-        { onConflict: "swiper_id,target_id" }
+        { onConflict: "swiper_id,target_id" },
       );
       if (error) {
         setState((s) => ({ ...s, error: error.message }));
@@ -127,7 +120,7 @@ export function useSwiping() {
       }
       return true;
     },
-    [user]
+    [user],
   );
 
   return {

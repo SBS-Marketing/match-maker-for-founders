@@ -3,14 +3,10 @@
 // Tinder-like Card Stack mit Framer Motion Pan-Gesture
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { useState, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion, useMotionValue, useTransform, PanInfo, AnimatePresence } from "framer-motion";
 import { Heart, X, Star, MapPin, Briefcase, Zap, ChevronRight } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -33,12 +29,16 @@ export interface SwipeProfile {
   years_experience: number | null;
   match_score?: number;
   match_explanation?: Record<string, unknown>;
+  path?: string | null;
+  onboarded_at?: string | null;
 }
 
 interface SparkViewProps {
   profiles: SwipeProfile[];
-  onSwipe: (profileId: string, direction: "like" | "pass" | "save") => void;
-  onMatch?: (profile: SwipeProfile) => void;
+  onSwipe: (
+    profileId: string,
+    direction: "like" | "pass" | "save",
+  ) => boolean | void | Promise<boolean | void>;
   loading?: boolean;
 }
 
@@ -48,15 +48,29 @@ const SWIPE_THRESHOLD = 120;
 const ROTATION_FACTOR = 12;
 
 const CARD_COLORS = [
-  "#E2511C", "#3D5A4A", "#8B5A3C", "#2A251F", "#6B635A",
-  "#F0843A", "#5A4A2A", "#B23B0E", "#4A5A3D", "#5A3D5A",
+  "#E2511C",
+  "#3D5A4A",
+  "#8B5A3C",
+  "#2A251F",
+  "#6B635A",
+  "#F0843A",
+  "#5A4A2A",
+  "#B23B0E",
+  "#4A5A3D",
+  "#5A3D5A",
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function initials(name: string | null): string {
   if (!name) return "?";
-  return name.split(/\s+/).map((p) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+  return name
+    .split(/\s+/)
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 }
 
 function avatarColor(name: string | null): string {
@@ -92,8 +106,7 @@ function commitLabel(commit: string | null): string {
   const map: Record<string, string> = {
     full_time: "Vollzeit",
     part_time: "Teilzeit",
-    freelance: "Freelance",
-    open: "Offen",
+    exploring: "Sondiert",
   };
   return map[commit ?? ""] ?? "—";
 }
@@ -106,15 +119,26 @@ function FitRing({ score, size = 72 }: { score?: number; size?: number }) {
   const offset = circumference - (pct / 100) * circumference;
 
   return (
-    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+    <div
+      className="relative inline-flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
       <svg width={size} height={size} className="-rotate-90">
         <circle
-          cx={size / 2} cy={size / 2} r={(size - 8) / 2}
-          fill="none" stroke="rgba(21,20,15,0.08)" strokeWidth={3}
+          cx={size / 2}
+          cy={size / 2}
+          r={(size - 8) / 2}
+          fill="none"
+          stroke="rgba(21,20,15,0.08)"
+          strokeWidth={3}
         />
         <circle
-          cx={size / 2} cy={size / 2} r={(size - 8) / 2}
-          fill="none" stroke="var(--ember)" strokeWidth={3}
+          cx={size / 2}
+          cy={size / 2}
+          r={(size - 8) / 2}
+          fill="none"
+          stroke="var(--ember)"
+          strokeWidth={3}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
@@ -137,21 +161,31 @@ function ReasoningSidebar({ profile }: { profile: SwipeProfile }) {
   const reasons = [
     exp.skill_overlap && { icon: Zap, label: "Skill-Overlap", value: `${exp.skill_overlap}%` },
     exp.location && { icon: MapPin, label: "Standort", value: `${exp.location}%` },
-    exp.embedding_similarity && { icon: Star, label: "KI-Similarity", value: `${exp.embedding_similarity}%` },
+    exp.embedding_similarity && {
+      icon: Star,
+      label: "KI-Similarity",
+      value: `${exp.embedding_similarity}%`,
+    },
     exp.distance_km && { icon: MapPin, label: "Distanz", value: `${exp.distance_km} km` },
   ].filter(Boolean) as { icon: typeof Zap; label: string; value: string }[];
 
   const commonSkills = (exp.common_skills as string[]) ?? [];
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl p-5" style={{
-      background: "rgba(251,250,247,0.55)",
-      backdropFilter: "blur(20px)",
-      border: "1px solid rgba(255,255,255,0.6)",
-    }}>
+    <div
+      className="flex flex-col gap-4 rounded-2xl p-5"
+      style={{
+        background: "rgba(251,250,247,0.55)",
+        backdropFilter: "blur(20px)",
+        border: "1px solid rgba(255,255,255,0.6)",
+      }}
+    >
       <div className="flex items-center gap-2">
         <SparkleIcon className="h-4 w-4" style={{ color: "var(--ember)" }} />
-        <span className="text-[12px] font-semibold uppercase tracking-wider" style={{ color: "var(--smoke)" }}>
+        <span
+          className="text-[12px] font-semibold uppercase tracking-wider"
+          style={{ color: "var(--smoke)" }}
+        >
           KI-Matching
         </span>
       </div>
@@ -176,7 +210,9 @@ function ReasoningSidebar({ profile }: { profile: SwipeProfile }) {
                 <r.icon className="h-3.5 w-3.5" />
                 {r.label}
               </span>
-              <span className="font-semibold" style={{ color: "var(--ink)" }}>{r.value}</span>
+              <span className="font-semibold" style={{ color: "var(--ink)" }}>
+                {r.value}
+              </span>
             </div>
           ))}
         </div>
@@ -184,16 +220,23 @@ function ReasoningSidebar({ profile }: { profile: SwipeProfile }) {
 
       {commonSkills.length > 0 && (
         <div>
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: "var(--smoke)" }}>
+          <div
+            className="mb-2 text-[11px] font-semibold uppercase tracking-wider"
+            style={{ color: "var(--smoke)" }}
+          >
             Gemeinsame Skills
           </div>
           <div className="flex flex-wrap gap-1.5">
             {commonSkills.map((s) => (
-              <span key={s} className="rounded-full px-2.5 py-1 text-[11px] font-medium" style={{
-                background: "rgba(226,81,28,0.12)",
-                color: "var(--ember-deep)",
-                border: "1px solid rgba(226,81,28,0.2)",
-              }}>
+              <span
+                key={s}
+                className="rounded-full px-2.5 py-1 text-[11px] font-medium"
+                style={{
+                  background: "rgba(226,81,28,0.12)",
+                  color: "var(--ember-deep)",
+                  border: "1px solid rgba(226,81,28,0.2)",
+                }}
+              >
                 {s}
               </span>
             ))}
@@ -206,7 +249,16 @@ function ReasoningSidebar({ profile }: { profile: SwipeProfile }) {
 
 function SparkleIcon({ className, style }: { className?: string; style?: React.CSSProperties }) {
   return (
-    <svg className={className} style={style} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className={className}
+      style={style}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6 7.7 7.7M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" />
       <circle cx="12" cy="12" r="3" />
     </svg>
@@ -255,11 +307,14 @@ function SwipeCard({
       exit={{ x: 0, opacity: 0, transition: { duration: 0.2 } }}
       transition={{ type: "spring", stiffness: 300, damping: 25 }}
     >
-      <div className="relative h-full w-full overflow-hidden rounded-3xl" style={{
-        background: "var(--cream)",
-        boxShadow: "0 25px 60px -20px rgba(21,20,15,0.25), 0 8px 20px -8px rgba(21,20,15,0.1)",
-        border: "1px solid rgba(21,20,15,0.06)",
-      }}>
+      <div
+        className="relative h-full w-full overflow-hidden rounded-3xl"
+        style={{
+          background: "var(--cream)",
+          boxShadow: "0 25px 60px -20px rgba(21,20,15,0.25), 0 8px 20px -8px rgba(21,20,15,0.1)",
+          border: "1px solid rgba(21,20,15,0.06)",
+        }}
+      >
         {/* Photo / Avatar Area */}
         <div className="relative h-[55%] w-full overflow-hidden" style={{ background: bg }}>
           {profile.photo_url ? (
@@ -272,17 +327,28 @@ function SwipeCard({
             </div>
           )}
           {/* Gradient overlay */}
-          <div className="absolute inset-x-0 bottom-0 h-32" style={{
-            background: "linear-gradient(to top, rgba(21,20,15,0.7), transparent)",
-          }} />
+          <div
+            className="absolute inset-x-0 bottom-0 h-32"
+            style={{
+              background: "linear-gradient(to top, rgba(21,20,15,0.7), transparent)",
+            }}
+          />
           {/* Name overlay */}
           <div className="absolute bottom-4 left-5 right-5">
             <div className="flex items-end justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-white">{name}</h2>
                 <div className="mt-1 flex items-center gap-2 text-[13px] text-white/80">
-                  {profile.city && <><MapPin className="h-3 w-3" /> {profile.city}</>}
-                  {profile.role && <><Briefcase className="h-3 w-3" /> {roleLabel(profile.role)}</>}
+                  {profile.city && (
+                    <>
+                      <MapPin className="h-3 w-3" /> {profile.city}
+                    </>
+                  )}
+                  {profile.role && (
+                    <>
+                      <Briefcase className="h-3 w-3" /> {roleLabel(profile.role)}
+                    </>
+                  )}
                 </div>
               </div>
               {profile.match_score !== undefined && (
@@ -295,10 +361,16 @@ function SwipeCard({
           {/* Swipe indicators */}
           {isTop && (
             <>
-              <motion.div className="absolute left-5 top-5 rounded-xl border-4 border-green-500 px-4 py-2" style={{ opacity: opacityLike, rotate: -15 }}>
+              <motion.div
+                className="absolute left-5 top-5 rounded-xl border-4 border-green-500 px-4 py-2"
+                style={{ opacity: opacityLike, rotate: -15 }}
+              >
                 <span className="text-2xl font-bold uppercase text-green-500">Like</span>
               </motion.div>
-              <motion.div className="absolute right-5 top-5 rounded-xl border-4 border-red-500 px-4 py-2" style={{ opacity: opacityPass, rotate: 15 }}>
+              <motion.div
+                className="absolute right-5 top-5 rounded-xl border-4 border-red-500 px-4 py-2"
+                style={{ opacity: opacityPass, rotate: 15 }}
+              >
                 <span className="text-2xl font-bold uppercase text-red-500">Nope</span>
               </motion.div>
             </>
@@ -308,22 +380,19 @@ function SwipeCard({
         {/* Info Area */}
         <div className="flex h-[45%] flex-col p-5">
           <div className="flex flex-wrap gap-2">
-            {profile.stage && (
-              <Chip>{stageLabel(profile.stage)}</Chip>
-            )}
-            {profile.commitment && (
-              <Chip muted>{commitLabel(profile.commitment)}</Chip>
-            )}
-            {profile.industry && (
-              <Chip muted>{profile.industry}</Chip>
-            )}
+            {profile.stage && <Chip>{stageLabel(profile.stage)}</Chip>}
+            {profile.commitment && <Chip muted>{commitLabel(profile.commitment)}</Chip>}
+            {profile.industry && <Chip muted>{profile.industry}</Chip>}
             {profile.years_experience !== null && (
               <Chip muted>{profile.years_experience} Jahre Erfahrung</Chip>
             )}
           </div>
 
           {profile.vision && (
-            <p className="mt-3 line-clamp-3 text-[14px] leading-relaxed" style={{ color: "var(--ink-soft)" }}>
+            <p
+              className="mt-3 line-clamp-3 text-[14px] leading-relaxed"
+              style={{ color: "var(--ink-soft)" }}
+            >
               „{profile.vision}"
             </p>
           )}
@@ -331,10 +400,14 @@ function SwipeCard({
           {profile.skills && profile.skills.length > 0 && (
             <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
               {profile.skills.slice(0, 6).map((s) => (
-                <span key={s} className="rounded-full px-2.5 py-1 text-[11px] font-medium" style={{
-                  background: "rgba(21,20,15,0.06)",
-                  color: "var(--smoke)",
-                }}>
+                <span
+                  key={s}
+                  className="rounded-full px-2.5 py-1 text-[11px] font-medium"
+                  style={{
+                    background: "rgba(21,20,15,0.06)",
+                    color: "var(--smoke)",
+                  }}
+                >
                   {s}
                 </span>
               ))}
@@ -348,10 +421,13 @@ function SwipeCard({
 
 function Chip({ children, muted = false }: { children: React.ReactNode; muted?: boolean }) {
   return (
-    <span className="rounded-full px-3 py-1 text-[12px] font-medium" style={{
-      background: muted ? "rgba(21,20,15,0.06)" : "rgba(226,81,28,0.12)",
-      color: muted ? "var(--smoke)" : "var(--ember-deep)",
-    }}>
+    <span
+      className="rounded-full px-3 py-1 text-[12px] font-medium"
+      style={{
+        background: muted ? "rgba(21,20,15,0.06)" : "rgba(226,81,28,0.12)",
+        color: muted ? "var(--smoke)" : "var(--ember-deep)",
+      }}
+    >
       {children}
     </span>
   );
@@ -414,31 +490,36 @@ function ActionButtons({
 
 // ─── Main SparkView Component ──────────────────────────────────────────────
 
-export function SparkView({ profiles, onSwipe, onMatch, loading }: SparkViewProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [direction, setDirection] = useState<"like" | "pass" | "save" | null>(null);
+export function SparkView({ profiles, onSwipe, loading }: SparkViewProps) {
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => new Set());
+  const visibleProfiles = profiles.filter((profile) => !dismissedIds.has(profile.id));
+  const currentProfile = visibleProfiles[0];
+  const nextProfile = visibleProfiles[1];
 
-  const currentProfile = profiles[currentIndex];
-  const nextProfile = profiles[currentIndex + 1];
+  useEffect(() => {
+    const profileIds = new Set(profiles.map((profile) => profile.id));
+    setDismissedIds((ids) => new Set([...ids].filter((id) => profileIds.has(id))));
+  }, [profiles]);
 
-  const handleSwipe = useCallback((dir: "like" | "pass" | "save") => {
-    if (!currentProfile) return;
-    setDirection(dir);
-    onSwipe(currentProfile.id, dir);
-    setCurrentIndex((i) => i + 1);
-
-    if (dir === "like" && onMatch) {
-      // Simulate match check — in real app, check API response
-      setTimeout(() => onMatch(currentProfile), 300);
-    }
-  }, [currentProfile, onSwipe, onMatch]);
+  const handleSwipe = useCallback(
+    async (dir: "like" | "pass" | "save") => {
+      if (!currentProfile) return;
+      const accepted = await onSwipe(currentProfile.id, dir);
+      if (accepted !== false) {
+        setDismissedIds((ids) => new Set(ids).add(currentProfile.id));
+      }
+    },
+    [currentProfile, onSwipe],
+  );
 
   if (loading) {
     return (
       <div className="flex h-[600px] items-center justify-center">
         <div className="text-center">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-[var(--ember)] border-t-transparent" />
-          <p className="text-sm" style={{ color: "var(--smoke)" }}>Lade Matches…</p>
+          <p className="text-sm" style={{ color: "var(--smoke)" }}>
+            Lade Matches…
+          </p>
         </div>
       </div>
     );
@@ -452,13 +533,14 @@ export function SparkView({ profiles, onSwipe, onMatch, loading }: SparkViewProp
           Alles gesehen!
         </h3>
         <p className="max-w-sm text-[14px]" style={{ color: "var(--smoke)" }}>
-          Du hast alle aktuellen Founder-Profile durchgeswiped. Komm später wieder — es gibt immer neue Matches.
+          Du hast alle aktuellen Founder-Profile durchgeswiped. Komm später wieder — es gibt immer
+          neue Matches.
         </p>
         <Button
-          onClick={() => setCurrentIndex(0)}
+          onClick={() => window.location.reload()}
           className="mt-2 h-11 gap-2 rounded-xl bg-[var(--ember)] text-[var(--cream)] hover:bg-[var(--ember-deep)]"
         >
-          Nochmal von vorne <ChevronRight className="h-4 w-4" />
+          Neu laden <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
     );
@@ -508,12 +590,18 @@ export function SparkView({ profiles, onSwipe, onMatch, loading }: SparkViewProp
           <ReasoningSidebar profile={currentProfile} />
 
           {/* Quick Stats */}
-          <div className="mt-4 rounded-2xl p-5" style={{
-            background: "rgba(251,250,247,0.55)",
-            backdropFilter: "blur(20px)",
-            border: "1px solid rgba(255,255,255,0.6)",
-          }}>
-            <div className="mb-3 text-[12px] font-semibold uppercase tracking-wider" style={{ color: "var(--smoke)" }}>
+          <div
+            className="mt-4 rounded-2xl p-5"
+            style={{
+              background: "rgba(251,250,247,0.55)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(255,255,255,0.6)",
+            }}
+          >
+            <div
+              className="mb-3 text-[12px] font-semibold uppercase tracking-wider"
+              style={{ color: "var(--smoke)" }}
+            >
               Profil-Details
             </div>
             <div className="flex flex-col gap-2.5 text-[13px]">
@@ -521,10 +609,17 @@ export function SparkView({ profiles, onSwipe, onMatch, loading }: SparkViewProp
               <DetailRow label="Rolle" value={roleLabel(currentProfile.role)} />
               <DetailRow label="Stage" value={stageLabel(currentProfile.stage)} />
               <DetailRow label="Verfügbarkeit" value={commitLabel(currentProfile.commitment)} />
-              <DetailRow label="Erfahrung" value={currentProfile.years_experience ? `${currentProfile.years_experience} Jahre` : "—"} />
+              <DetailRow
+                label="Erfahrung"
+                value={
+                  currentProfile.years_experience ? `${currentProfile.years_experience} Jahre` : "—"
+                }
+              />
               {currentProfile.looking_for && (
                 <div className="mt-1">
-                  <div className="mb-1 text-[11px]" style={{ color: "var(--smoke)" }}>Sucht</div>
+                  <div className="mb-1 text-[11px]" style={{ color: "var(--smoke)" }}>
+                    Sucht
+                  </div>
                   <div className="text-[13px] leading-relaxed" style={{ color: "var(--ink)" }}>
                     {currentProfile.looking_for}
                   </div>
@@ -542,145 +637,11 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between">
       <span style={{ color: "var(--smoke)" }}>{label}</span>
-      <span className="font-medium" style={{ color: "var(--ink)" }}>{value}</span>
+      <span className="font-medium" style={{ color: "var(--ink)" }}>
+        {value}
+      </span>
     </div>
   );
-}
-
-// ─── Hook: useSparkProfiles ────────────────────────────────────────────────
-
-export function useSparkProfiles() {
-  const { user, isDemo } = useAuth();
-  const [profiles, setProfiles] = useState<SwipeProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
-
-    if (isDemo) {
-      // Demo profiles with match scores
-      setProfiles([
-        {
-          id: "demo-anna",
-          display_name: "Anna Wojcik",
-          photo_url: null,
-          bio: "Full-Stack Developer mit AI-Fokus",
-          skills: ["React", "Node.js", "Python", "AI/ML", "PostgreSQL"],
-          industry: "Tech",
-          role: "tech",
-          stage: "mvp",
-          location: "Berlin",
-          city: "Berlin",
-          lat: 52.52, lng: 13.405,
-          looking_for: "Business Co-Founder mit Sales-Erfahrung",
-          vision: "Ich baue eine KI-gestützte Plattform für automatisierte Kundenbetreuung. MVP ist live, erste 50 Kunden.",
-          commitment: "full_time",
-          years_experience: 7,
-          match_score: 87,
-          match_explanation: {
-            skill_overlap: 65,
-            location: 95,
-            embedding_similarity: 92,
-            distance_km: 0,
-            common_skills: ["React", "Node.js"],
-          },
-        },
-        {
-          id: "demo-lena",
-          display_name: "Dr. Lena Heller",
-          photo_url: null,
-          bio: "Startup-Juristin & Legal Tech",
-          skills: ["Vertragsrecht", "GmbH-Gründung", "ESOP", "IP", "Venture Capital"],
-          industry: "Legal Tech",
-          role: "business",
-          stage: "revenue",
-          location: "München",
-          city: "München",
-          lat: 48.135, lng: 11.582,
-          looking_for: "Technical Co-Founder für Legal-Tech-Plattform",
-          vision: "Legal Tech Plattform für automatisierte Vertragsprüfung. 200+ Kunden, 50k MRR. Skalierungsphase.",
-          commitment: "full_time",
-          years_experience: 9,
-          match_score: 72,
-          match_explanation: {
-            skill_overlap: 45,
-            location: 80,
-            embedding_similarity: 78,
-            distance_km: 504,
-            common_skills: ["PostgreSQL"],
-          },
-        },
-        {
-          id: "demo-felix",
-          display_name: "Felix Krämer",
-          photo_url: null,
-          bio: "Product Manager & Growth Hacker",
-          skills: ["Product", "Growth", "GTM", "B2B SaaS", "Analytics"],
-          industry: "SaaS",
-          role: "product",
-          stage: "idea",
-          location: "Hamburg",
-          city: "Hamburg",
-          lat: 53.551, lng: 9.994,
-          looking_for: "Technical Co-Founder für B2B SaaS",
-          vision: "Operator mit zwei Exits, stark in Positionierung und ersten 20 Kunden. Suche Tech-Partner für neues Projekt.",
-          commitment: "part_time",
-          years_experience: 12,
-          match_score: 91,
-          match_explanation: {
-            skill_overlap: 70,
-            location: 85,
-            embedding_similarity: 95,
-            distance_km: 289,
-            common_skills: ["B2B SaaS", "Analytics"],
-          },
-        },
-      ]);
-      setLoading(false);
-      return;
-    }
-
-    // Real API call
-    try {
-      const { data, error } = await supabase.functions.invoke("matching/recommendations", {
-        body: { limit: 20 },
-      });
-      if (error) throw error;
-      setProfiles(data?.recommendations?.map((r: any) => ({
-        ...r.target,
-        match_score: r.combined_score,
-        match_explanation: r.explanation,
-      })) ?? []);
-    } catch (e) {
-      console.error("Failed to load recommendations:", e);
-      toast.error("Konnte Matches nicht laden");
-    } finally {
-      setLoading(false);
-    }
-  }, [user, isDemo]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  const handleSwipe = useCallback(async (profileId: string, direction: "like" | "pass" | "save") => {
-    if (isDemo) {
-      toast.success(direction === "like" ? "Like gespeichert (Demo)" : direction === "save" ? "Gespeichert (Demo)" : "Übersprungen");
-      return;
-    }
-    try {
-      const { error } = await supabase.functions.invoke("swipe", {
-        body: { target_id: profileId, direction: direction === "save" ? "like" : direction },
-      });
-      if (error) throw error;
-      if (direction === "like") toast.success("Like gesendet! 💚");
-    } catch (e) {
-      toast.error("Swipe fehlgeschlagen");
-    }
-  }, [isDemo]);
-
-  return { profiles, loading, handleSwipe, reload: load };
 }
 
 export default SparkView;

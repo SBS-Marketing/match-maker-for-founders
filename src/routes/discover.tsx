@@ -4,9 +4,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthGate } from "@/components/AuthGate";
 import { Button } from "@/components/ui/button";
-import { Heart, X, MapPin, SlidersHorizontal, ChevronDown, MessageCircle, Layers, Sparkles } from "lucide-react";
+import {
+  Heart,
+  X,
+  MapPin,
+  SlidersHorizontal,
+  ChevronDown,
+  MessageCircle,
+  Layers,
+  Sparkles,
+} from "lucide-react";
 import { toast } from "sonner";
-import { SparkView, useSparkProfiles } from "@/components/matchfoundr/SparkView";
+import { SparkView } from "@/components/matchfoundr/SparkView";
+import { useSparkProfiles } from "@/hooks/useSparkProfiles";
 
 const AVATAR_COLORS = [
   "var(--ember)",
@@ -168,7 +178,12 @@ function Discover() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Spark view hook
-  const { profiles: sparkProfiles, loading: sparkLoading, handleSwipe: handleSparkSwipe } = useSparkProfiles();
+  const {
+    profiles: sparkProfiles,
+    loading: sparkLoading,
+    handleSwipe: handleSparkSwipe,
+    removeProfile: removeSparkProfile,
+  } = useSparkProfiles();
 
   const filtered = queue.filter(
     (p) =>
@@ -235,8 +250,9 @@ function Discover() {
 
   const swipe = async (targetId: string, direction: "like" | "pass") => {
     if (!user) return;
-    setQueue((q) => q.filter((x) => x.id !== targetId));
     if (isDemo) {
+      setQueue((q) => q.filter((x) => x.id !== targetId));
+      removeSparkProfile(targetId);
       if (direction === "like") toast.success("Demo-Like gespeichert");
       return;
     }
@@ -244,6 +260,8 @@ function Discover() {
       .from("swipes")
       .insert({ swiper_id: user.id, target_id: targetId, direction });
     if (error) return toast.error(error.message);
+    setQueue((q) => q.filter((x) => x.id !== targetId));
+    removeSparkProfile(targetId);
     if (direction === "like") {
       const ua = user.id < targetId ? user.id : targetId;
       const ub = user.id < targetId ? targetId : user.id;
@@ -271,6 +289,7 @@ function Discover() {
       .insert({ swiper_id: user.id, target_id: targetId, direction: "like" });
     if (error && !error.message.includes("duplicate")) return toast.error(error.message);
     setQueue((q) => q.filter((x) => x.id !== targetId));
+    removeSparkProfile(targetId);
     const ua = user.id < targetId ? user.id : targetId;
     const ub = user.id < targetId ? targetId : user.id;
     const { data: m } = await supabase
@@ -317,7 +336,13 @@ function Discover() {
     );
   }
 
-  if (queue.length === 0) {
+  const handleSyncedSparkSwipe = async (profileId: string, direction: "like" | "pass" | "save") => {
+    const ok = await handleSparkSwipe(profileId, direction);
+    if (ok) setQueue((q) => q.filter((x) => x.id !== profileId));
+    return ok;
+  };
+
+  if (queue.length === 0 && !sparkLoading && sparkProfiles.length === 0) {
     return (
       <div className="mx-auto max-w-md px-4 py-20">
         <div className="glass-pane p-10 text-center">
@@ -383,7 +408,7 @@ function Discover() {
     </div>
   );
 
-  if (filtered.length === 0) {
+  if (viewMode === "grid" && filtered.length === 0) {
     return (
       <div className="mx-auto max-w-2xl px-4 pt-10 pb-24 sm:px-6">
         <div className="eyebrow">Entdecken</div>
@@ -407,17 +432,22 @@ function Discover() {
     <div className="mx-auto max-w-7xl px-4 pt-10 pb-24 sm:px-6">
       <div className="flex items-center justify-between">
         <div>
-          <div className="eyebrow">Entdecken · {viewMode === "spark" ? sparkProfiles.length : filtered.length} Founder</div>
+          <div className="eyebrow">
+            Entdecken · {viewMode === "spark" ? sparkProfiles.length : filtered.length} Founder
+          </div>
           <h1 className="mt-4 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
             Menschen für <span className="font-serif italic font-normal">dich</span>.
           </h1>
         </div>
         {/* View Toggle */}
-        <div className="flex items-center gap-1 rounded-xl p-1" style={{
-          background: "rgba(251,250,247,0.6)",
-          backdropFilter: "blur(12px)",
-          border: "1px solid rgba(21,20,15,0.08)",
-        }}>
+        <div
+          className="flex items-center gap-1 rounded-xl p-1"
+          style={{
+            background: "rgba(251,250,247,0.6)",
+            backdropFilter: "blur(12px)",
+            border: "1px solid rgba(21,20,15,0.08)",
+          }}
+        >
           <button
             onClick={() => setViewMode("spark")}
             className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium transition"
@@ -446,7 +476,7 @@ function Discover() {
       {viewMode === "spark" ? (
         <SparkView
           profiles={sparkProfiles}
-          onSwipe={handleSparkSwipe}
+          onSwipe={handleSyncedSparkSwipe}
           loading={sparkLoading}
         />
       ) : (
@@ -469,7 +499,11 @@ function Discover() {
                         }}
                       >
                         {p.photo_url ? (
-                          <img src={p.photo_url} alt={name} className="h-full w-full object-cover" />
+                          <img
+                            src={p.photo_url}
+                            alt={name}
+                            className="h-full w-full object-cover"
+                          />
                         ) : (
                           initials(name)
                         )}
@@ -494,56 +528,56 @@ function Discover() {
                     </button>
                   </div>
 
-              <div className="mt-4 flex flex-wrap gap-1.5">
-                {p.role && <Chip>{roleLabel[p.role]}</Chip>}
-                {p.stage && <Chip>{stageLabel[p.stage]}</Chip>}
-                {p.commitment && <Chip>{commitLabel[p.commitment]}</Chip>}
-              </div>
+                  <div className="mt-4 flex flex-wrap gap-1.5">
+                    {p.role && <Chip>{roleLabel[p.role]}</Chip>}
+                    {p.stage && <Chip>{stageLabel[p.stage]}</Chip>}
+                    {p.commitment && <Chip>{commitLabel[p.commitment]}</Chip>}
+                  </div>
 
-              {p.vision && (
-                <p className="mt-4 text-[13px] leading-relaxed text-[var(--ink-soft)] line-clamp-4">
-                  „{p.vision}"
-                </p>
-              )}
-              {!p.vision && p.looking_for && (
-                <p className="mt-4 text-[13px] leading-relaxed text-[var(--ink-soft)] line-clamp-4">
-                  {p.looking_for}
-                </p>
-              )}
+                  {p.vision && (
+                    <p className="mt-4 text-[13px] leading-relaxed text-[var(--ink-soft)] line-clamp-4">
+                      „{p.vision}"
+                    </p>
+                  )}
+                  {!p.vision && p.looking_for && (
+                    <p className="mt-4 text-[13px] leading-relaxed text-[var(--ink-soft)] line-clamp-4">
+                      {p.looking_for}
+                    </p>
+                  )}
 
-              {p.skills && p.skills.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {p.skills.slice(0, 4).map((s) => (
-                    <Chip key={s} muted>
-                      {s}
-                    </Chip>
-                  ))}
-                </div>
-              )}
+                  {p.skills && p.skills.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-1.5">
+                      {p.skills.slice(0, 4).map((s) => (
+                        <Chip key={s} muted>
+                          {s}
+                        </Chip>
+                      ))}
+                    </div>
+                  )}
 
-              <div className="mt-auto flex items-center gap-2 border-t border-[rgba(21,20,15,0.08)] pt-4">
-                <Button
-                  size="sm"
-                  onClick={() => swipe(p.id, "like")}
-                  className="shadow-ember h-9 flex-1 gap-1.5 rounded-full bg-[var(--ember)] text-[13px] text-[var(--cream)] hover:bg-[var(--ember-deep)]"
-                >
-                  <Heart className="h-3.5 w-3.5" /> Interessiert
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => message(p.id)}
-                  className="glass-pill h-9 gap-1.5 px-3 text-[13px] text-[var(--ink)]"
-                >
-                  <MessageCircle className="h-3.5 w-3.5" /> Schreiben
-                </Button>
-              </div>
-            </article>
-          );
-        })}
-      </div>
-    </>
-  )}
+                  <div className="mt-auto flex items-center gap-2 border-t border-[rgba(21,20,15,0.08)] pt-4">
+                    <Button
+                      size="sm"
+                      onClick={() => swipe(p.id, "like")}
+                      className="shadow-ember h-9 flex-1 gap-1.5 rounded-full bg-[var(--ember)] text-[13px] text-[var(--cream)] hover:bg-[var(--ember-deep)]"
+                    >
+                      <Heart className="h-3.5 w-3.5" /> Interessiert
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => message(p.id)}
+                      className="glass-pill h-9 gap-1.5 px-3 text-[13px] text-[var(--ink)]"
+                    >
+                      <MessageCircle className="h-3.5 w-3.5" /> Schreiben
+                    </Button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }

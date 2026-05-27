@@ -12,9 +12,17 @@ function AuthCallbackPage() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Supabase holt sich den Code aus der URL und tauscht ihn gegen eine Session
-        const { data, error } = await supabase.auth.getSession();
-        if (error) throw error;
+        const url = new URL(window.location.href);
+        const code = url.searchParams.get("code");
+        const sessionResult = await supabase.auth.getSession();
+        let data = sessionResult.data;
+        if (sessionResult.error) throw sessionResult.error;
+
+        if (!data.session && code) {
+          const exchanged = await supabase.auth.exchangeCodeForSession(code);
+          if (exchanged.error) throw exchanged.error;
+          data = exchanged.data;
+        }
 
         if (data.session) {
           setStatus("success");

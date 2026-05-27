@@ -60,10 +60,15 @@ end $$;
 create or replace function public.mark_conversation_read(p_conversation_id uuid, p_user_id uuid)
 returns void language plpgsql security definer set search_path = public as $$
 begin
+  if coalesce(auth.role(), '') <> 'service_role' and auth.uid() is distinct from p_user_id then
+    raise exception 'Not allowed to mark another user conversation as read' using errcode = '42501';
+  end if;
+
   update public.conversations
   set unread_count_a = case when user_a = p_user_id then 0 else unread_count_a end,
       unread_count_b = case when user_b = p_user_id then 0 else unread_count_b end
-  where id = p_conversation_id;
+  where id = p_conversation_id
+    and (user_a = p_user_id or user_b = p_user_id);
 end $$;
 
 -- Funktion: Nachricht senden (inkl. Validierung)
@@ -79,6 +84,10 @@ declare
   new_msg_id uuid;
   conv record;
 begin
+  if coalesce(auth.role(), '') <> 'service_role' and auth.uid() is distinct from p_sender_id then
+    raise exception 'Not allowed to send as another user' using errcode = '42501';
+  end if;
+
   -- Prüfen ob User Teil der Conversation ist
   select * into conv from public.conversations
   where id = p_conversation_id and (user_a = p_sender_id or user_b = p_sender_id);
@@ -102,3 +111,8 @@ begin
 
   return new_msg_id;
 end $$;
+
+revoke all on function public.mark_conversation_read(uuid, uuid) from public, anon;
+revoke all on function public.send_message(uuid, uuid, text, uuid, jsonb) from public, anon;
+grant execute on function public.mark_conversation_read(uuid, uuid) to authenticated, service_role;
+grant execute on function public.send_message(uuid, uuid, text, uuid, jsonb) to authenticated, service_role;

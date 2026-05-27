@@ -26,6 +26,7 @@ create index if not exists idx_waitlist_token  on public.waitlist(token);
 alter table public.waitlist enable row level security;
 
 -- Policy: Jeder kann sich eintragen (Insert)
+drop policy if exists "Allow public insert to waitlist" on public.waitlist;
 create policy "Allow public insert to waitlist"
   on public.waitlist
   for insert
@@ -34,11 +35,12 @@ create policy "Allow public insert to waitlist"
 
 -- Policy: Nur Admins können alles sehen
 -- (admin-Check über bestehende has_role-Funktion)
+drop policy if exists "Allow admin full access on waitlist" on public.waitlist;
 create policy "Allow admin full access on waitlist"
   on public.waitlist
   for all
   to authenticated
-  using (public.has_role('admin', auth.uid()));
+  using (public.has_role(auth.uid(), 'admin'));
 
 -- ── 2. Updated-At Trigger ──────────────────────────────────────────────────
 create or replace function public.handle_waitlist_updated_at()
@@ -49,9 +51,16 @@ begin
 end;
 $$;
 
-create trigger trg_waitlist_updated_at
-  before update on public.waitlist
-  for each row execute function public.handle_waitlist_updated_at();
+do $$
+begin
+  if not exists (
+    select 1 from pg_trigger where tgname = 'trg_waitlist_updated_at'
+  ) then
+    create trigger trg_waitlist_updated_at
+      before update on public.waitlist
+      for each row execute function public.handle_waitlist_updated_at();
+  end if;
+end $$;
 
 -- ── 3. RPC: Waitlist-Eintrag + Bestätigungsmail auslösen ───────────────────
 -- Wird von einer Edge Function (Resend.io) oder direkt vom Client aufgerufen
@@ -109,6 +118,10 @@ security definer
 set search_path = public
 as $$
 begin
+  if coalesce(auth.role(), '') <> 'service_role' and not public.has_role(auth.uid(), 'admin') then
+    raise exception 'Admin role required' using errcode = '42501';
+  end if;
+
   return (
     select jsonb_build_object(
       'total', count(*),
@@ -129,3 +142,6 @@ $$;
 
 -- ── 6. Enum: waitlist_status (für saubere Typisierung) ─────────────────────
 -- Hinweis: Check-Constraint statt Enum für leichte Erweiterbarkeit
+
+revoke all on function public.waitlist_stats() from public, anon, authenticated;
+grant execute on function public.waitlist_stats() to authenticated, service_role;

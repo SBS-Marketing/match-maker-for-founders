@@ -36,27 +36,25 @@ const Ctx = createContext<AuthCtx>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isDemo, setIsDemo] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem(DEMO_AUTH_KEY) === "1";
-  });
+  const [isDemo, setIsDemo] = useState(false);
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+    const applySession = (s: Session | null) => {
       setSession(s);
       if (s) {
         localStorage.removeItem(DEMO_AUTH_KEY);
         setIsDemo(false);
+      } else {
+        setIsDemo(localStorage.getItem(DEMO_AUTH_KEY) === "1");
       }
       setLoading(false);
+    };
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      applySession(s);
     });
     supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      if (data.session) {
-        localStorage.removeItem(DEMO_AUTH_KEY);
-        setIsDemo(false);
-      }
-      setLoading(false);
+      applySession(data.session);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -85,4 +83,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Auth state lives in the provider, but consumers need the hook from the same module.
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(Ctx);

@@ -41,6 +41,8 @@ import { Route as MatchesIdRouteImport } from './routes/matches.$id'
 import { Route as KapitalSlugRouteImport } from './routes/kapital.$slug'
 import { Route as GrowthSlugRouteImport } from './routes/growth.$slug'
 import { Route as FoerderungSlugRouteImport } from './routes/foerderung.$slug'
+import { Route as AuthWaitlistConfirmRouteImport } from './routes/auth.waitlist-confirm'
+import { Route as AuthUpdatePasswordRouteImport } from './routes/auth.update-password'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ApiSttRouteImport } from './routes/api/stt'
 
@@ -204,6 +206,16 @@ const FoerderungSlugRoute = FoerderungSlugRouteImport.update({
   path: '/foerderung/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthWaitlistConfirmRoute = AuthWaitlistConfirmRouteImport.update({
+  id: '/waitlist-confirm',
+  path: '/waitlist-confirm',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthUpdatePasswordRoute = AuthUpdatePasswordRouteImport.update({
+  id: '/update-password',
+  path: '/update-password',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/callback',
   path: '/callback',
@@ -234,6 +246,8 @@ export interface FileRoutesByFullPath {
   '/talent': typeof TalentRouteWithChildren
   '/api/stt': typeof ApiSttRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/update-password': typeof AuthUpdatePasswordRoute
+  '/auth/waitlist-confirm': typeof AuthWaitlistConfirmRoute
   '/foerderung/$slug': typeof FoerderungSlugRoute
   '/growth/$slug': typeof GrowthSlugRoute
   '/kapital/$slug': typeof KapitalSlugRoute
@@ -265,6 +279,8 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/api/stt': typeof ApiSttRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/update-password': typeof AuthUpdatePasswordRoute
+  '/auth/waitlist-confirm': typeof AuthWaitlistConfirmRoute
   '/foerderung/$slug': typeof FoerderungSlugRoute
   '/growth/$slug': typeof GrowthSlugRoute
   '/kapital/$slug': typeof KapitalSlugRoute
@@ -302,6 +318,8 @@ export interface FileRoutesById {
   '/talent': typeof TalentRouteWithChildren
   '/api/stt': typeof ApiSttRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/update-password': typeof AuthUpdatePasswordRoute
+  '/auth/waitlist-confirm': typeof AuthWaitlistConfirmRoute
   '/foerderung/$slug': typeof FoerderungSlugRoute
   '/growth/$slug': typeof GrowthSlugRoute
   '/kapital/$slug': typeof KapitalSlugRoute
@@ -340,6 +358,8 @@ export interface FileRouteTypes {
     | '/talent'
     | '/api/stt'
     | '/auth/callback'
+    | '/auth/update-password'
+    | '/auth/waitlist-confirm'
     | '/foerderung/$slug'
     | '/growth/$slug'
     | '/kapital/$slug'
@@ -371,6 +391,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/api/stt'
     | '/auth/callback'
+    | '/auth/update-password'
+    | '/auth/waitlist-confirm'
     | '/foerderung/$slug'
     | '/growth/$slug'
     | '/kapital/$slug'
@@ -407,6 +429,8 @@ export interface FileRouteTypes {
     | '/talent'
     | '/api/stt'
     | '/auth/callback'
+    | '/auth/update-password'
+    | '/auth/waitlist-confirm'
     | '/foerderung/$slug'
     | '/growth/$slug'
     | '/kapital/$slug'
@@ -677,6 +701,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FoerderungSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/waitlist-confirm': {
+      id: '/auth/waitlist-confirm'
+      path: '/waitlist-confirm'
+      fullPath: '/auth/waitlist-confirm'
+      preLoaderRoute: typeof AuthWaitlistConfirmRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/update-password': {
+      id: '/auth/update-password'
+      path: '/update-password'
+      fullPath: '/auth/update-password'
+      preLoaderRoute: typeof AuthUpdatePasswordRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/callback'
@@ -696,10 +734,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthUpdatePasswordRoute: typeof AuthUpdatePasswordRoute
+  AuthWaitlistConfirmRoute: typeof AuthWaitlistConfirmRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
+  AuthUpdatePasswordRoute: AuthUpdatePasswordRoute,
+  AuthWaitlistConfirmRoute: AuthWaitlistConfirmRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)

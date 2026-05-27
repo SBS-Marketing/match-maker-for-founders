@@ -39,6 +39,7 @@ create index if not exists idx_app_secrets_key on public.app_secrets(key_name);
 alter table public.app_secrets enable row level security;
 
 -- Kein direkter Lesezugriff für normale Nutzer
+drop policy if exists "Deny all direct select on app_secrets" on public.app_secrets;
 create policy "Deny all direct select on app_secrets"
   on public.app_secrets
   for select
@@ -57,6 +58,10 @@ as $$
 declare
   v_secret text;
 begin
+  if coalesce(auth.role(), '') <> 'service_role' then
+    raise exception 'Service role required' using errcode = '42501';
+  end if;
+
   -- Wenn vault verfügbar ist: Nutze vault.decrypted_secrets
   -- Hinweis: vault.secrets ist eine Supabase-spezifische View
   select decrypted_secret into v_secret
@@ -90,7 +95,7 @@ declare
   v_app_secret_id uuid;
 begin
   -- Prüfen, ob der Aufrufer Admin ist
-  if not public.has_role('admin', auth.uid()) then
+  if coalesce(auth.role(), '') <> 'service_role' and not public.has_role(auth.uid(), 'admin') then
     raise exception 'Admin role required';
   end if;
 
@@ -132,7 +137,7 @@ security definer
 set search_path = public
 as $$
 begin
-  if not public.has_role('admin', auth.uid()) then
+  if coalesce(auth.role(), '') <> 'service_role' and not public.has_role(auth.uid(), 'admin') then
     raise exception 'Admin role required';
   end if;
 
@@ -160,11 +165,12 @@ create table if not exists public.secret_access_log (
 
 -- RLS: Nur Admin sieht Logs
 alter table public.secret_access_log enable row level security;
+drop policy if exists "Admin access on secret_access_log" on public.secret_access_log;
 create policy "Admin access on secret_access_log"
   on public.secret_access_log
   for select
   to authenticated
-  using (public.has_role('admin', auth.uid()));
+  using (public.has_role(auth.uid(), 'admin'));
 
 -- ── 7. Trigger-Funktion: Logging für get_secret ────────────────────────────
 create or replace function public.log_secret_access()
@@ -184,3 +190,11 @@ comment on function public.get_secret(text) is
 
 comment on table public.app_secrets is
   'Metadaten-Tabelle für Vault-Secrets. Die eigentlichen Werte leben NUR in vault.secrets und sind über get_secret() abrufbar.';
+
+revoke all on function public.get_secret(text) from public, anon, authenticated;
+grant execute on function public.get_secret(text) to service_role;
+
+revoke all on function public.upsert_secret(text, text, text) from public, anon;
+revoke all on function public.delete_secret(text) from public, anon;
+grant execute on function public.upsert_secret(text, text, text) to authenticated, service_role;
+grant execute on function public.delete_secret(text) to authenticated, service_role;

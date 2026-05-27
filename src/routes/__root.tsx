@@ -81,14 +81,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Ein fokussiertes Netzwerk für Gründer:innen auf der Suche nach ihrem ersten Partner. Echte Profile, kein Lebenslauf-Theater." },
       { name: "author", content: "matchfoundr" },
       { property: "og:title", content: "matchfoundr — Finde deinen Co-Founder" },
-      { property: "og:description", content: "Ein fokussiertes Netzwerk für Gründer:innen auf der Suche nach ihrem ersten Partner. Echte Profile, kein Lebenslauf-Theater." },
+      {
+        property: "og:description",
+        content:
+          "Ein fokussiertes Netzwerk für Gründer:innen auf der Suche nach ihrem ersten Partner. Echte Profile, kein Lebenslauf-Theater.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "matchfoundr — Finde deinen Co-Founder" },
-      { name: "twitter:description", content: "Ein fokussiertes Netzwerk für Gründer:innen auf der Suche nach ihrem ersten Partner. Echte Profile, kein Lebenslauf-Theater." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/26c0fb19-309d-44d0-9023-d94f2ebea7f5/id-preview-5ea9b318--41c05ab0-4da2-4cbd-9158-844edcb7bfe3.lovable.app-1779392066619.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/26c0fb19-309d-44d0-9023-d94f2ebea7f5/id-preview-5ea9b318--41c05ab0-4da2-4cbd-9158-844edcb7bfe3.lovable.app-1779392066619.png" },
+      {
+        name: "twitter:description",
+        content:
+          "Ein fokussiertes Netzwerk für Gründer:innen auf der Suche nach ihrem ersten Partner. Echte Profile, kein Lebenslauf-Theater.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/26c0fb19-309d-44d0-9023-d94f2ebea7f5/id-preview-5ea9b318--41c05ab0-4da2-4cbd-9158-844edcb7bfe3.lovable.app-1779392066619.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/26c0fb19-309d-44d0-9023-d94f2ebea7f5/id-preview-5ea9b318--41c05ab0-4da2-4cbd-9158-844edcb7bfe3.lovable.app-1779392066619.png",
+      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
