@@ -1,21 +1,6 @@
 {
-  "generated_at": "2026-06-02T11:11:25.033997",
-  "source_file": "deals_2026-06-02.json",
-  "stats": {
-    "total_deals": 36,
-    "total_value_approx": "Variiert",
-    "categories": 7,
-    "by_category": {
-      "cloud": 10,
-      "saas": 10,
-      "ai": 3,
-      "legal": 5,
-      "marketing": 5,
-      "hr": 2,
-      "community": 1
-    },
-    "last_updated": "2026-06-02"
-  },
+  "generated_at": "2026-06-02T11:11:24.897230",
+  "count": 36,
   "deals": [
     {
       "id": "aws-activate",
@@ -35,9 +20,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.896990",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "normalized_at": "2026-06-02T11:11:24.896990"
     },
     {
       "id": "gcp-startup",
@@ -57,9 +40,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897007",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "normalized_at": "2026-06-02T11:11:24.897007"
     },
     {
       "id": "azure-startup",
@@ -79,9 +60,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897013",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "normalized_at": "2026-06-02T11:11:24.897013"
     },
     {
       "id": "vercel-startup",
@@ -101,9 +80,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897021",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "normalized_at": "2026-06-02T11:11:24.897021"
     },
     {
       "id": "digitalocean",
@@ -123,9 +100,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897025",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "normalized_at": "2026-06-02T11:11:24.897025"
     },
     {
       "id": "cloudflare",
@@ -145,9 +120,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897031",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "normalized_at": "2026-06-02T11:11:24.897031"
     },
     {
       "id": "railway",
@@ -167,9 +140,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897038",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "normalized_at": "2026-06-02T11:11:24.897038"
     },
     {
       "id": "fly-io",
@@ -189,9 +160,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897048",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "normalized_at": "2026-06-02T11:11:24.897048"
     },
     {
       "id": "render",
@@ -211,9 +180,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897054",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "normalized_at": "2026-06-02T11:11:24.897054"
     },
     {
       "id": "planetscale",
@@ -233,9 +200,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897059",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "normalized_at": "2026-06-02T11:11:24.897059"
     },
     {
       "id": "notion-startup",
@@ -255,9 +220,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897063",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "normalized_at": "2026-06-02T11:11:24.897063"
     },
     {
       "id": "hubspot-startup",
@@ -277,9 +240,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897068",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "normalized_at": "2026-06-02T11:11:24.897068"
     },
     {
       "id": "intercom",
@@ -299,9 +260,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897072",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "normalized_at": "2026-06-02T11:11:24.897072"
     },
     {
       "id": "linear-startup",
@@ -321,9 +280,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897079",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "normalized_at": "2026-06-02T11:11:24.897079"
     },
     {
       "id": "retool-startup",
@@ -343,9 +300,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897083",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "normalized_at": "2026-06-02T11:11:24.897083"
     },
     {
       "id": "1password",
@@ -365,9 +320,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897088",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "normalized_at": "2026-06-02T11:11:24.897088"
     },
     {
       "id": "miro",
@@ -387,9 +340,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897093",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "normalized_at": "2026-06-02T11:11:24.897093"
     },
     {
       "id": "postman",
@@ -409,9 +360,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897098",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "normalized_at": "2026-06-02T11:11:24.897098"
     },
     {
       "id": "segment-startup",
@@ -431,9 +380,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897102",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "normalized_at": "2026-06-02T11:11:24.897102"
     },
     {
       "id": "mixpanel",
@@ -453,9 +400,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897107",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "normalized_at": "2026-06-02T11:11:24.897107"
     },
     {
       "id": "anthropic-startup",
@@ -475,9 +420,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897114",
-      "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "normalized_at": "2026-06-02T11:11:24.897114"
     },
     {
       "id": "huggingface",
@@ -497,9 +440,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897119",
-      "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "normalized_at": "2026-06-02T11:11:24.897119"
     },
     {
       "id": "replicate",
@@ -519,9 +460,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897125",
-      "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "normalized_at": "2026-06-02T11:11:24.897125"
     },
     {
       "id": "stripe-atlas",
@@ -541,9 +480,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897131",
-      "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
+      "normalized_at": "2026-06-02T11:11:24.897131"
     },
     {
       "id": "brex",
@@ -563,9 +500,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897134",
-      "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
+      "normalized_at": "2026-06-02T11:11:24.897134"
     },
     {
       "id": "lexoffice",
@@ -585,9 +520,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897139",
-      "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
+      "normalized_at": "2026-06-02T11:11:24.897139"
     },
     {
       "id": "sevdesk",
@@ -607,9 +540,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897143",
-      "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
+      "normalized_at": "2026-06-02T11:11:24.897143"
     },
     {
       "id": "wise-business",
@@ -629,9 +560,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897148",
-      "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
+      "normalized_at": "2026-06-02T11:11:24.897148"
     },
     {
       "id": "mailchimp",
@@ -651,9 +580,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897152",
-      "cat_icon": "📣",
-      "cat_label": "Marketing"
+      "normalized_at": "2026-06-02T11:11:24.897152"
     },
     {
       "id": "semrush",
@@ -673,9 +600,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897156",
-      "cat_icon": "📣",
-      "cat_label": "Marketing"
+      "normalized_at": "2026-06-02T11:11:24.897156"
     },
     {
       "id": "brevo",
@@ -695,9 +620,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897163",
-      "cat_icon": "📣",
-      "cat_label": "Marketing"
+      "normalized_at": "2026-06-02T11:11:24.897163"
     },
     {
       "id": "hunter",
@@ -717,9 +640,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897167",
-      "cat_icon": "📣",
-      "cat_label": "Marketing"
+      "normalized_at": "2026-06-02T11:11:24.897167"
     },
     {
       "id": "phantombuster",
@@ -739,9 +660,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897172",
-      "cat_icon": "📣",
-      "cat_label": "Marketing"
+      "normalized_at": "2026-06-02T11:11:24.897172"
     },
     {
       "id": "deel",
@@ -761,9 +680,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897178",
-      "cat_icon": "👥",
-      "cat_label": "HR & Talent"
+      "normalized_at": "2026-06-02T11:11:24.897178"
     },
     {
       "id": "remote-com",
@@ -783,9 +700,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897184",
-      "cat_icon": "👥",
-      "cat_label": "HR & Talent"
+      "normalized_at": "2026-06-02T11:11:24.897184"
     },
     {
       "id": "f6s-deals",
@@ -805,9 +720,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-06-02T11:11:24.897189",
-      "cat_icon": "🤝",
-      "cat_label": "Community"
+      "normalized_at": "2026-06-02T11:11:24.897189"
     }
   ]
 }
