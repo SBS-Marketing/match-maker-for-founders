@@ -45,7 +45,7 @@ function AuthPage() {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email: eR.data,
-          password: pR.data,
+          password: password,
           options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
         });
         if (error) throw error;
@@ -53,7 +53,7 @@ function AuthPage() {
       } else if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({
           email: eR.data,
-          password: pR.data,
+          password: password,
         });
         if (error) throw error;
         navigate({ to: "/heute" });

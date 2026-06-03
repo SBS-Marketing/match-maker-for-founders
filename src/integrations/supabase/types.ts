@@ -263,6 +263,60 @@ export type Database = {
           },
         ]
       }
+      daily_tasks: {
+        Row: {
+          created_at: string
+          description: string | null
+          href: string | null
+          id: string
+          label: string | null
+          metadata: Json | null
+          minutes: number | null
+          service: string | null
+          status: string
+          task_date: string
+          task_key: string
+          title: string
+          updated_at: string
+          urgency: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          href?: string | null
+          id?: string
+          label?: string | null
+          metadata?: Json | null
+          minutes?: number | null
+          service?: string | null
+          status?: string
+          task_date: string
+          task_key: string
+          title: string
+          updated_at?: string
+          urgency?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          href?: string | null
+          id?: string
+          label?: string | null
+          metadata?: Json | null
+          minutes?: number | null
+          service?: string | null
+          status?: string
+          task_date?: string
+          task_key?: string
+          title?: string
+          updated_at?: string
+          urgency?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       deadlines: {
         Row: {
           created_at: string
@@ -374,6 +428,36 @@ export type Database = {
         }
         Relationships: []
       }
+      match_results: {
+        Row: {
+          created_at: string
+          fit_score: number | null
+          id: string
+          is_hidden: boolean
+          reasons: Json | null
+          target_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fit_score?: number | null
+          id?: string
+          is_hidden?: boolean
+          reasons?: Json | null
+          target_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fit_score?: number | null
+          id?: string
+          is_hidden?: boolean
+          reasons?: Json | null
+          target_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           created_at: string
@@ -435,15 +519,18 @@ export type Database = {
           founder_type: string | null
           id: string
           industry: string | null
+          is_onboarded: boolean
           location: string | null
           looking_for: string | null
           onboarded_at: string | null
+          partner_term: string | null
           path: Database["public"]["Enums"]["profile_path"] | null
           photo_url: string | null
           role: Database["public"]["Enums"]["founder_role"] | null
           skills: string[] | null
           stage: Database["public"]["Enums"]["founder_stage"] | null
           updated_at: string
+          venture_term: string | null
           vision: string | null
         }
         Insert: {
@@ -453,15 +540,18 @@ export type Database = {
           founder_type?: string | null
           id: string
           industry?: string | null
+          is_onboarded?: boolean
           location?: string | null
           looking_for?: string | null
           onboarded_at?: string | null
+          partner_term?: string | null
           path?: Database["public"]["Enums"]["profile_path"] | null
           photo_url?: string | null
           role?: Database["public"]["Enums"]["founder_role"] | null
           skills?: string[] | null
           stage?: Database["public"]["Enums"]["founder_stage"] | null
           updated_at?: string
+          venture_term?: string | null
           vision?: string | null
         }
         Update: {
@@ -471,15 +561,18 @@ export type Database = {
           founder_type?: string | null
           id?: string
           industry?: string | null
+          is_onboarded?: boolean
           location?: string | null
           looking_for?: string | null
           onboarded_at?: string | null
+          partner_term?: string | null
           path?: Database["public"]["Enums"]["profile_path"] | null
           photo_url?: string | null
           role?: Database["public"]["Enums"]["founder_role"] | null
           skills?: string[] | null
           stage?: Database["public"]["Enums"]["founder_stage"] | null
           updated_at?: string
+          venture_term?: string | null
           vision?: string | null
         }
         Relationships: []
@@ -529,17 +622,55 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist: {
+        Row: {
+          confirmed_at: string | null
+          created_at: string
+          email: string
+          id: string
+          metadata: Json | null
+          name: string | null
+          status: string
+          token: string | null
+        }
+        Insert: {
+          confirmed_at?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          metadata?: Json | null
+          name?: string | null
+          status?: string
+          token?: string | null
+        }
+        Update: {
+          confirmed_at?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          metadata?: Json | null
+          name?: string | null
+          status?: string
+          token?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      confirm_waitlist_entry: { Args: { p_token: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      join_waitlist: {
+        Args: { p_email: string; p_metadata?: Json; p_name?: string }
+        Returns: string
       }
     }
     Enums: {
