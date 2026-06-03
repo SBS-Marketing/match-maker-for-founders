@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { CalendarDays, Check, ChevronLeft, ChevronRight, Clock3, Plus, Trash2 } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { Check, ChevronLeft, ChevronRight, Clock3, Plus, Trash2, X } from "lucide-react";
 import { AuthGate } from "@/components/AuthGate";
 import { Button } from "@/components/ui/button";
 import { GRANTS } from "@/data/grants";
@@ -39,6 +39,7 @@ function CalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>(() => readEvents());
   const [selectedDay, setSelectedDay] = useState(todayKey);
   const [monthCursor, setMonthCursor] = useState(() => startOfMonth(new Date()));
+  const [sheet, setSheet] = useState<"day" | "create" | null>(null);
   const [title, setTitle] = useState("");
   const [time, setTime] = useState("10:00");
   const [type, setType] = useState<CalendarEvent["type"]>("call");
@@ -49,12 +50,6 @@ function CalendarPage() {
   const selectedEvents = (eventsByDate.get(selectedDay) ?? [])
     .slice()
     .sort((a, b) => a.time.localeCompare(b.time));
-  const upcoming = seededEvents
-    .filter((event) => !event.done && event.date >= todayKey)
-    .slice()
-    .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
-  const next = upcoming[0];
-
   useEffect(() => {
     writeEvents(events);
   }, [events]);
@@ -74,6 +69,7 @@ function CalendarPage() {
       ...current,
     ]);
     setTitle("");
+    setSheet("day");
   }
 
   function updateEvent(id: string, patch: Partial<CalendarEvent>) {
@@ -101,235 +97,234 @@ function CalendarPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pt-5 pb-24 sm:px-6 sm:pt-8">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <div className="eyebrow">Kalender</div>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-            Monatsansicht für Termine und Deadlines.
+    <div className="mx-auto flex h-[calc(100svh-10rem)] max-w-7xl flex-col overflow-hidden px-3 pt-3 sm:px-5 sm:pt-5 lg:h-[calc(100svh-6.5rem)]">
+      <header className="flex shrink-0 items-center justify-between gap-2 pb-3">
+        <div className="min-w-0">
+          <div className="text-[12px] font-semibold text-[var(--smoke)]">
+            {monthCursor.getFullYear()}
+          </div>
+          <h1 className="truncate text-[30px] font-semibold leading-tight tracking-tight sm:text-[38px]">
+            {formatMonth(monthCursor)}
           </h1>
-          <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-[var(--smoke)]">
-            Antragsfristen, Partner-Calls und Teamtermine landen in einer ruhigen Monatsansicht mit schnellem Tagesplan.
-          </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex shrink-0 items-center gap-1.5">
           <Button
             variant="ghost"
             onClick={jumpToday}
-            className="glass-pill rounded-full px-4 text-[13px]"
+            className="hidden h-10 rounded-full px-4 text-[13px] sm:inline-flex"
           >
             Heute
           </Button>
-          <Link to="/heute">
-            <Button className="rounded-full bg-[var(--ember)] px-4 text-[13px] text-white shadow-ember hover:bg-[var(--ember-deep)]">
-              Fokus
-            </Button>
-          </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => jumpMonth(-1)}
+            className="glass-pill h-10 w-10 rounded-full p-0"
+            aria-label="Vorheriger Monat"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => jumpMonth(1)}
+            className="glass-pill h-10 w-10 rounded-full p-0"
+            aria-label="Nächster Monat"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={() => setSheet("create")}
+            className="h-10 w-10 rounded-full bg-[var(--ember)] p-0 text-white shadow-ember hover:bg-[var(--ember-deep)]"
+            aria-label="Termin hinzufügen"
+          >
+            <Plus className="h-5 w-5" />
+          </Button>
         </div>
-      </div>
+      </header>
 
-      <div className="mt-5 grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
-        <section className="glass-pane p-3 sm:p-5">
-          <div className="flex items-center justify-between gap-3 px-1 pb-4">
-            <div>
-              <div className="text-[13px] font-medium text-[var(--smoke)]">
-                {monthCursor.getFullYear()}
-              </div>
-              <div className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                {formatMonth(monthCursor)}
-              </div>
+      <section className="glass-pane flex min-h-0 flex-1 flex-col overflow-hidden p-2 sm:p-4">
+        <div className="grid shrink-0 grid-cols-7 border-b border-[var(--ruled)] pb-2">
+          {WEEKDAYS.map((day) => (
+            <div
+              key={day}
+              className="text-center text-[11px] font-semibold text-[var(--smoke)]"
+            >
+              {day}
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => jumpMonth(-1)}
-                className="glass-pill h-10 w-10 rounded-full p-0"
-                aria-label="Vorheriger Monat"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => jumpMonth(1)}
-                className="glass-pill h-10 w-10 rounded-full p-0"
-                aria-label="Nächster Monat"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+          ))}
+        </div>
 
-          <div className="grid grid-cols-7 border-b border-[var(--ruled)] pb-2">
-            {WEEKDAYS.map((day) => (
-              <div
-                key={day}
-                className="text-center font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--smoke)]"
+        <div className="mt-2 grid min-h-0 flex-1 grid-cols-7 grid-rows-6 gap-1 sm:gap-2">
+          {monthDays.map((day) => {
+            const dayEvents = eventsByDate.get(day.key) ?? [];
+            const active = day.key === selectedDay;
+            return (
+              <button
+                key={day.key}
+                onClick={() => {
+                  setSelectedDay(day.key);
+                  setSheet("day");
+                }}
+                className={[
+                  "relative flex min-h-0 flex-col overflow-hidden rounded-[14px] border p-1.5 text-left transition sm:rounded-[18px] sm:p-2.5",
+                  active
+                    ? "border-[var(--ember)] bg-[var(--ember-tint)] text-[var(--ember-deep)] shadow-warm"
+                    : "border-transparent bg-white/42 hover:border-[var(--ruled)] hover:bg-white/75",
+                  !day.inMonth && !active ? "opacity-35" : "",
+                ].join(" ")}
               >
-                {day}
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-2 grid grid-cols-7 gap-1 sm:gap-2">
-            {monthDays.map((day) => {
-              const dayEvents = eventsByDate.get(day.key) ?? [];
-              const active = day.key === selectedDay;
-              return (
-                <button
-                  key={day.key}
-                  onClick={() => setSelectedDay(day.key)}
+                <span
                   className={[
-                    "relative flex min-h-[66px] flex-col rounded-[18px] border p-2 text-left transition sm:min-h-[96px] sm:p-3",
-                    active
-                      ? "border-[var(--ember)] bg-[var(--ember-tint)] text-[var(--ember-deep)] shadow-warm"
-                      : "border-transparent bg-white/42 hover:border-[var(--ruled)] hover:bg-white/70",
-                    !day.inMonth && !active ? "opacity-40" : "",
+                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold",
+                    day.isToday && !active
+                      ? "bg-[var(--ember)] text-white"
+                      : active
+                        ? "bg-white/70 text-[var(--ember-deep)]"
+                        : "text-[var(--ink)]",
                   ].join(" ")}
                 >
+                  {day.date.getDate()}
+                </span>
+                <span className="mt-auto flex min-h-2 gap-1">
+                  {dayEvents.slice(0, 4).map((event) => (
+                    <span
+                      key={event.id}
+                      className={[
+                        "h-1.5 w-1.5 rounded-full",
+                        active ? "bg-[var(--ember)]" : dotClass(event.type),
+                      ].join(" ")}
+                    />
+                  ))}
+                </span>
+                {dayEvents.length > 0 && (
                   <span
                     className={[
-                      "flex h-7 w-7 items-center justify-center rounded-full text-[13px] font-semibold",
-                      day.isToday && !active
-                        ? "bg-[var(--ember)] text-white"
-                        : active
-                          ? "bg-white/70 text-[var(--ember-deep)]"
-                          : "text-[var(--ink)]",
+                      "mt-1 hidden max-w-full truncate text-[10.5px] font-medium leading-tight sm:block",
+                      active ? "text-[var(--ember-deep)]/75" : "text-[var(--smoke)]",
                     ].join(" ")}
                   >
-                    {day.date.getDate()}
+                    {dayEvents[0].title}
                   </span>
-                  <span className="mt-auto flex gap-1">
-                    {dayEvents.slice(0, 3).map((event) => (
-                      <span
-                        key={event.id}
-                        className={[
-                          "h-1.5 w-1.5 rounded-full",
-                          active ? "bg-[var(--ember)]" : dotClass(event.type),
-                        ].join(" ")}
-                      />
-                    ))}
-                  </span>
-                  {dayEvents.length > 0 && (
-                    <span
-                      className={[
-                        "mt-1 hidden truncate text-[10.5px] font-medium sm:block",
-                        active ? "text-[var(--ember-deep)]/75" : "text-[var(--smoke)]",
-                      ].join(" ")}
-                    >
-                      {dayEvents[0].title}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </section>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
-        <aside className="space-y-4">
-          <section className="glass-pane-ink p-5">
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10">
-                <CalendarDays className="h-5 w-5" />
-              </span>
-              <div>
-                <div className="text-[15px] font-semibold text-[var(--cream)]">
-                  {formatDate(selectedDay)}
+      {sheet && (
+        <CalendarSheet title={sheet === "create" ? "Termin hinzufügen" : formatDate(selectedDay)} onClose={() => setSheet(null)}>
+          {sheet === "day" ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="eyebrow">Tagesplan</div>
+                  <p className="mt-1 text-[13px] text-[var(--smoke)]">
+                    {selectedEvents.length
+                      ? `${selectedEvents.length} Einträge`
+                      : "Noch nichts geplant"}
+                  </p>
                 </div>
-                <div className="text-[12px] text-white/55">
-                  {selectedEvents.length
-                    ? `${selectedEvents.length} Einträge`
-                    : "Kein Termin an diesem Tag"}
-                </div>
+                <Button
+                  onClick={() => setSheet("create")}
+                  className="h-9 gap-1.5 rounded-full bg-[var(--ember)] px-3 text-[12px] text-white hover:bg-[var(--ember-deep)]"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Neu
+                </Button>
+              </div>
+              <div className="max-h-[42svh] space-y-2 overflow-y-auto pr-1">
+                {selectedEvents.map((event) => (
+                  <EventRow
+                    key={event.id}
+                    event={event}
+                    onUpdate={updateEvent}
+                    onRemove={removeEvent}
+                  />
+                ))}
+                {selectedEvents.length === 0 && (
+                  <div className="rounded-2xl border border-dashed border-[var(--ruled)] p-4 text-[13px] text-[var(--smoke)]">
+                    Dieser Tag ist frei.
+                  </div>
+                )}
               </div>
             </div>
-            <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-              <div className="text-[20px] font-semibold leading-snug text-[var(--cream)]">
-                {selectedEvents[0]?.title ||
-                  next?.title ||
-                  "Plane den nächsten Antragsschritt oder Partner-Call."}
-              </div>
-              {(selectedEvents[0] || next) && (
-                <div className="mt-3 flex items-center gap-2 text-[13px] text-white/65">
-                  <Clock3 className="h-4 w-4" /> {(selectedEvents[0] || next)?.time} Uhr ·{" "}
-                  {labelFor((selectedEvents[0] || next)?.type ?? "task")}
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className="glass-pane p-4 sm:p-5">
-            <div className="mb-4 flex items-center justify-between">
+          ) : (
+            <div className="space-y-4">
               <div>
-                <div className="eyebrow">Tagesplan</div>
-                <p className="mt-1 text-[12.5px] text-[var(--smoke)]">
-                  {formatShortDate(selectedDay)} · {selectedEvents.length} Termine
+                <div className="eyebrow">{formatShortDate(selectedDay)}</div>
+                <p className="mt-1 text-[13px] text-[var(--smoke)]">
+                  Neuer Eintrag für {formatDate(selectedDay)}
                 </p>
               </div>
-              <Link to="/unterlagen" className="text-[13px] font-semibold">
-                Unterlagen
-              </Link>
-            </div>
-            <div className="space-y-3">
-              {selectedEvents.map((event) => (
-                <EventRow
-                  key={event.id}
-                  event={event}
-                  onUpdate={updateEvent}
-                  onRemove={removeEvent}
-                />
-              ))}
-              {selectedEvents.length === 0 && (
-                <div className="rounded-2xl border border-dashed border-[var(--ruled)] p-4 text-[13px] text-[var(--smoke)]">
-                  Für diesen Tag ist noch nichts geplant.
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className="glass-pane p-4 sm:p-5">
-            <div className="eyebrow">Termin hinzufügen</div>
-            <div className="mt-4 grid gap-3">
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder={`Neuer Termin am ${formatShortDate(selectedDay)}`}
-                className="rounded-2xl border border-[var(--ruled)] bg-white/70 px-3 py-2 text-[13px] outline-none focus:border-[var(--ember)]"
+                placeholder="Titel"
+                className="h-12 w-full rounded-2xl border border-[var(--ruled)] bg-white/75 px-4 text-[15px] outline-none focus:border-[var(--ember)]"
               />
               <input
                 type="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className="rounded-2xl border border-[var(--ruled)] bg-white/70 px-3 py-2 text-[13px] outline-none focus:border-[var(--ember)]"
+                className="h-12 w-full rounded-2xl border border-[var(--ruled)] bg-white/75 px-4 text-[15px] outline-none focus:border-[var(--ember)]"
               />
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {(["call", "deadline", "task"] as const).map((kind) => (
-                <button
-                  key={kind}
-                  onClick={() => setType(kind)}
-                  className={[
-                    "rounded-full border px-3 py-1.5 text-[12px] font-semibold transition",
-                    type === kind
-                      ? "border-[var(--ember)] bg-[var(--ember-tint)] text-[var(--ember-deep)]"
-                      : "border-[var(--ruled)] bg-white/55 text-[var(--smoke)]",
-                  ].join(" ")}
-                >
-                  {labelFor(kind)}
-                </button>
-              ))}
+              <div className="grid grid-cols-3 gap-2">
+                {(["call", "deadline", "task"] as const).map((kind) => (
+                  <button
+                    key={kind}
+                    onClick={() => setType(kind)}
+                    className={[
+                      "h-10 rounded-full border px-2 text-[12px] font-semibold transition",
+                      type === kind
+                        ? "border-[var(--ember)] bg-[var(--ember-tint)] text-[var(--ember-deep)]"
+                        : "border-[var(--ruled)] bg-white/55 text-[var(--smoke)]",
+                    ].join(" ")}
+                  >
+                    {labelFor(kind)}
+                  </button>
+                ))}
+              </div>
               <Button
                 onClick={addEvent}
                 disabled={!title.trim()}
-                className="h-8 gap-1.5 rounded-full bg-[var(--ember)] px-3 text-[12px] text-[var(--cream)] hover:bg-[var(--ember-deep)]"
+                className="h-11 w-full rounded-2xl bg-[var(--ember)] text-white hover:bg-[var(--ember-deep)]"
               >
-                <Plus className="h-3.5 w-3.5" /> Hinzufügen
+                Hinzufügen
               </Button>
             </div>
-          </section>
-        </aside>
-      </div>
+          )}
+        </CalendarSheet>
+      )}
+    </div>
+  );
+}
+
+function CalendarSheet({
+  title,
+  children,
+  onClose,
+}: {
+  title: string;
+  children: React.ReactNode;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-[rgba(23,21,15,0.28)] px-3 pb-[86px] backdrop-blur-[1px] sm:items-center sm:pb-6">
+      <section className="w-full max-w-[440px] rounded-[24px] border border-[var(--ruled)] bg-[var(--surface)] p-4 shadow-warm-lg sm:p-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="truncate text-[20px] font-semibold tracking-tight">{title}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--smoke)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink)]"
+            aria-label="Kalenderdialog schließen"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        {children}
+      </section>
     </div>
   );
 }

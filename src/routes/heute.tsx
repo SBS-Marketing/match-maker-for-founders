@@ -26,7 +26,6 @@ import type { Json } from "@/integrations/supabase/types";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { CopilotMark } from "@/components/Copilot";
 import { Button } from "@/components/ui/button";
-import { TutorialOverlay, shouldShowTutorial } from "@/components/onboarding/TutorialOverlay";
 import {
   buildLocalPlanSlides,
   readPlanContext,
@@ -73,20 +72,12 @@ const QUICK_PROMPTS = [
 
 function CommandCenter() {
   const { user, session, isDemo } = useAuth();
-  const [showTutorial, setShowTutorial] = useState(false);
   const [planContext, setPlanContext] = useState<PlanContext | null>(() => readPlanContext());
   const [dailyState, setDailyState] = useState<DailyState>(() => readDailyState());
   const [remoteReady, setRemoteReady] = useState(false);
   const [copilotInput, setCopilotInput] = useState("");
   const [copilotAnswer, setCopilotAnswer] = useState<string | null>(null);
   const [copilotSending, setCopilotSending] = useState(false);
-
-  useEffect(() => {
-    if (shouldShowTutorial()) {
-      const t = window.setTimeout(() => setShowTutorial(true), 250);
-      return () => window.clearTimeout(t);
-    }
-  }, []);
 
   useEffect(() => {
     writeDailyState(dailyState);
@@ -525,7 +516,6 @@ function CommandCenter() {
         </aside>
       </div>
 
-      {showTutorial && <TutorialOverlay onClose={() => setShowTutorial(false)} />}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import {
   Bell,
@@ -11,14 +11,17 @@ import {
   ListChecks,
   LogOut,
   MessageCircle,
+  MoreHorizontal,
   Sparkles,
   Store,
   User,
   UsersRound,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { PageOnboarding } from "@/components/onboarding/PageOnboarding";
 
 type NavItem = { to: string; label: string; short: string; icon: LucideIcon };
 
@@ -35,6 +38,17 @@ const NAV: NavItem[] = [
   { to: "/kanban", label: "Kanban", short: "Board", icon: Kanban },
   { to: "/team", label: "Team", short: "Team", icon: UsersRound },
 ];
+
+const MOBILE_PRIMARY: NavItem[] = [
+  { to: "/heute", label: "Heute", short: "Heute", icon: Home },
+  { to: "/matches", label: "Chats", short: "Chats", icon: MessageCircle },
+  { to: "/kalender", label: "Kalender", short: "Kal", icon: CalendarDays },
+  { to: "/co-pilot", label: "Co-Pilot", short: "Pilot", icon: Sparkles },
+];
+
+const MOBILE_MORE: NavItem[] = NAV.filter(
+  (item) => !MOBILE_PRIMARY.some((primary) => primary.to === item.to),
+);
 
 // Seitentitel für die Topbar aus dem Pfad ableiten.
 const TITLES: { match: (p: string) => boolean; title: string }[] = [
@@ -68,6 +82,7 @@ function titleFor(pathname: string): string {
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const title = titleFor(pathname);
+  const { user } = useAuth();
 
   return (
     <div className="flex min-h-screen">
@@ -77,6 +92,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main className="relative z-10 flex-1 pb-24 lg:pb-10">{children}</main>
       </div>
       <MobileBottomNav pathname={pathname} />
+      {user && <PageOnboarding pathname={pathname} />}
     </div>
   );
 }
@@ -248,19 +264,61 @@ function Topbar({ title }: { title: string }) {
 
 export function MobileBottomNav({ pathname }: { pathname: string }) {
   const { user } = useAuth();
+  const [open, setOpen] = useState(false);
   if (!user) return null;
+
+  const moreActive = MOBILE_MORE.some((item) => pathname.startsWith(item.to));
 
   return (
     <nav aria-label="Hauptnavigation" className="fixed inset-x-0 bottom-0 z-50 lg:hidden">
-      <div className="mx-auto flex h-[74px] max-w-[34rem] items-start gap-1 overflow-x-auto border-t border-[var(--ruled-soft)] bg-[rgba(255,255,255,0.88)] px-2 pt-2 pb-[18px] shadow-warm backdrop-blur-xl">
-        {NAV.map(({ to, short, icon: Icon }) => {
+      {open && (
+        <div className="mx-auto mb-2 max-w-[34rem] px-3">
+          <div className="rounded-[18px] border border-[var(--ruled)] bg-[rgba(255,255,255,0.96)] p-2 shadow-warm-lg backdrop-blur-xl">
+            <div className="mb-1 flex items-center justify-between px-2 py-1">
+              <span className="text-[12px] font-semibold text-[var(--smoke)]">Mehr Bereiche</span>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--smoke)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink)]"
+                aria-label="Mehr-Menü schließen"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-1">
+              {MOBILE_MORE.map(({ to, label, icon: Icon }) => {
+                const active = pathname.startsWith(to);
+                return (
+                  <Link
+                    key={to}
+                    to={to}
+                    onClick={() => setOpen(false)}
+                    className={[
+                      "flex min-h-11 items-center gap-2 rounded-[13px] px-3 text-[13px] font-semibold transition",
+                      active
+                        ? "bg-[var(--ember-tint)] text-[var(--ember-deep)]"
+                        : "text-[var(--smoke)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink)]",
+                    ].join(" ")}
+                  >
+                    <Icon className="h-[17px] w-[17px] shrink-0" aria-hidden="true" />
+                    <span className="truncate">{label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="mx-auto grid h-[74px] max-w-[34rem] grid-cols-5 items-start gap-1 border-t border-[var(--ruled-soft)] bg-[rgba(255,255,255,0.92)] px-2 pt-2 pb-[18px] shadow-warm backdrop-blur-xl">
+        {MOBILE_PRIMARY.map(({ to, short, icon: Icon }) => {
           const active = pathname.startsWith(to);
           return (
             <Link
               key={to}
               to={to}
+              onClick={() => setOpen(false)}
               className={[
-                "flex min-w-[58px] flex-col items-center justify-center gap-1 rounded-[13px] px-1 py-1.5 text-[10px] leading-none transition",
+                "flex min-w-0 flex-col items-center justify-center gap-1 rounded-[13px] px-1 py-1.5 text-[10px] leading-none transition",
                 active
                   ? "bg-[var(--ember-tint)] font-bold text-[var(--ember-deep)]"
                   : "font-medium text-[var(--faint)] hover:text-[var(--ink)]",
@@ -271,6 +329,21 @@ export function MobileBottomNav({ pathname }: { pathname: string }) {
             </Link>
           );
         })}
+        <button
+          type="button"
+          onClick={() => setOpen((current) => !current)}
+          className={[
+            "flex min-w-0 flex-col items-center justify-center gap-1 rounded-[13px] px-1 py-1.5 text-[10px] leading-none transition",
+            open || moreActive
+              ? "bg-[var(--ember-tint)] font-bold text-[var(--ember-deep)]"
+              : "font-medium text-[var(--faint)] hover:text-[var(--ink)]",
+          ].join(" ")}
+          aria-expanded={open}
+          aria-label="Mehr Navigation öffnen"
+        >
+          <MoreHorizontal className="h-[18px] w-[18px]" aria-hidden="true" />
+          <span>Mehr</span>
+        </button>
       </div>
     </nav>
   );
