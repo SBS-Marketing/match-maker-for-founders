@@ -127,12 +127,13 @@ function CommandCenter() {
       setRemoteReady(false);
       return;
     }
+    const currentUserId = user.id;
     let cancelled = false;
     async function syncDailyTasks() {
       const { data, error } = await supabase
         .from("daily_tasks")
         .select("task_key,status")
-        .eq("user_id", user.id)
+        .eq("user_id", currentUserId)
         .eq("task_date", taskDate);
 
       if (cancelled) return;
@@ -147,7 +148,7 @@ function CommandCenter() {
       if (missing.length > 0) {
         await supabase.from("daily_tasks").upsert(
           missing.map((task) =>
-            toDailyTaskInsert(user.id, taskDate, task, remoteStatusFor(task.id, dailyState)),
+            toDailyTaskInsert(currentUserId, taskDate, task, remoteStatusFor(task.id, dailyState)),
           ),
           { onConflict: "user_id,task_date,task_key" },
         );

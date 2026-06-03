@@ -199,7 +199,7 @@ function GrantDetail() {
                   {grant.category}
                 </span>
               )}
-              {grant.stage?.slice(0, 4).map((stage) => (
+              {grant.stage?.slice(0, 4).map((stage: string) => (
                 <span
                   key={stage}
                   className="rounded-full bg-[var(--ember-tint)] px-3 py-1 text-[11px] font-medium text-[var(--ember-deep)]"
@@ -220,7 +220,7 @@ function GrantDetail() {
               <AITag tone="dark">Co-Pilot · Eligibility-Check</AITag>
             </div>
             <ul className="space-y-2.5">
-              {grant.eligibility.map((e) => {
+              {grant.eligibility.map((e: { item: string; ok: boolean | "warn"; note?: string }) => {
                 const isOk = e.ok === true;
                 const isWarn = e.ok === "warn";
                 return (
@@ -249,7 +249,7 @@ function GrantDetail() {
           <div className="glass-pane mt-5 p-5">
             <div className="eyebrow">Timeline</div>
             <div className="mt-4 space-y-3">
-              {grant.timeline.map((p, i) => (
+              {grant.timeline.map((p: { phase: string; weeks: string; desc: string }, i: number) => (
                 <div key={p.phase} className="grid grid-cols-[60px_1fr] gap-3">
                   <div>
                     <div className="font-mono text-[11px] font-semibold text-[var(--ember-deep)]">{`0${i + 1}`}</div>
