@@ -25,53 +25,56 @@ export const Route = createFileRoute("/")({
  * Brand tokens
  * ──────────────────────────────────────────────────────────────────────── */
 const M = {
-  ink: "#15140f",
+  canvas: "#FAF8F3",
+  canvasDeep: "#F4F0E8",
+  surface: "#FFFFFF",
+  surfaceSoft: "#F7F3EC",
+  ink: "#17150F",
   inkSoft: "#2A251F",
-  smoke: "#6B635A",
+  smoke: "#6E665C",
+  faint: "#9A9286",
   ember: "#E2511C",
   emberDeep: "#B23B0E",
-  emberLight: "#F0843A",
-  emberTint: "#FCE4D5",
-  cream: "#FBFAF7",
-  paper: "#F3EFE6",
+  emberLight: "#F2622A",
+  emberTint: "#FBE7DA",
+  cream: "#FFFFFF",
+  paper: "#FAF8F3",
+  border: "rgba(23,21,15,0.09)",
+  borderSoft: "rgba(23,21,15,0.055)",
+  shadow: "0 1px 2px rgba(23,21,15,0.04), 0 10px 26px -18px rgba(23,21,15,0.18)",
+  shadowLg: "0 2px 6px rgba(23,21,15,0.05), 0 28px 56px -28px rgba(23,21,15,0.24)",
+  emberGrad: "linear-gradient(150deg, #F2622A 0%, #E2511C 46%, #B83C10 100%)",
   fontSans: '"Geist", -apple-system, system-ui, sans-serif',
   fontMono: '"Geist Mono", ui-monospace, monospace',
-  fontSerif: '"Instrument Serif", Georgia, serif',
+  fontSerif: '"Geist", -apple-system, system-ui, sans-serif',
 };
 
 const GLASS = {
   pane: {
-    background: "rgba(251,250,247,0.62)",
-    backdropFilter: "blur(28px) saturate(140%)",
-    WebkitBackdropFilter: "blur(28px) saturate(140%)",
-    border: "1px solid rgba(255,255,255,0.7)",
-    boxShadow:
-      "inset 0 1px 0 rgba(255,255,255,0.85), inset 0 0 0 1px rgba(255,255,255,0.18), 0 30px 60px -24px rgba(21,20,15,0.18), 0 2px 6px rgba(21,20,15,0.04)",
-    borderRadius: 24,
-  } as CSSProperties,
-  paneSoft: {
-    background: "rgba(251,250,247,0.45)",
-    backdropFilter: "blur(18px) saturate(130%)",
-    WebkitBackdropFilter: "blur(18px) saturate(130%)",
-    border: "1px solid rgba(255,255,255,0.55)",
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7), 0 8px 24px -10px rgba(21,20,15,0.10)",
+    background: M.surface,
+    border: `1px solid ${M.border}`,
+    boxShadow: M.shadow,
     borderRadius: 18,
   } as CSSProperties,
+  paneSoft: {
+    background: M.surface,
+    border: `1px solid ${M.borderSoft}`,
+    boxShadow: M.shadow,
+    borderRadius: 16,
+  } as CSSProperties,
   pill: {
-    background: "rgba(251,250,247,0.55)",
-    backdropFilter: "blur(16px) saturate(140%)",
-    WebkitBackdropFilter: "blur(16px) saturate(140%)",
-    border: "1px solid rgba(255,255,255,0.65)",
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.8), 0 6px 18px -8px rgba(21,20,15,0.12)",
+    background: "rgba(255,255,255,0.88)",
+    backdropFilter: "blur(18px)",
+    WebkitBackdropFilter: "blur(18px)",
+    border: `1px solid ${M.border}`,
+    boxShadow: M.shadow,
     borderRadius: 999,
   } as CSSProperties,
   paneInk: {
-    background: "rgba(21,20,15,0.55)",
-    backdropFilter: "blur(24px) saturate(140%)",
-    WebkitBackdropFilter: "blur(24px) saturate(140%)",
-    border: "1px solid rgba(255,255,255,0.08)",
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08), 0 20px 50px -20px rgba(0,0,0,0.4)",
-    borderRadius: 20,
+    background: M.emberGrad,
+    border: "none",
+    boxShadow: "0 2px 6px rgba(178,59,14,0.18), 0 30px 60px -26px rgba(178,59,14,0.55)",
+    borderRadius: 22,
     color: M.cream,
   } as CSSProperties,
 };
@@ -83,7 +86,11 @@ function IconMF({
   size = 22,
   color = M.ink,
   spark = M.ember,
-}: { size?: number; color?: string; spark?: string }) {
+}: {
+  size?: number;
+  color?: string;
+  spark?: string;
+}) {
   const h = size;
   const w = size * 1.4;
   return (
@@ -94,8 +101,20 @@ function IconMF({
       fill="none"
       style={{ display: "block", aspectRatio: "1.4 / 1" }}
     >
-      <path d="M8 14 L62 50 L8 86" stroke={color} strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M132 14 L78 50 L132 86" stroke={spark} strokeWidth="14" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M8 14 L62 50 L8 86"
+        stroke={color}
+        strokeWidth="14"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M132 14 L78 50 L132 86"
+        stroke={spark}
+        strokeWidth="14"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
       <circle cx="70" cy="50" r="6" fill={color} />
     </svg>
   );
@@ -105,15 +124,36 @@ function IconMF({
  * Icons
  * ──────────────────────────────────────────────────────────────────────── */
 type IconName =
-  | "people" | "gavel" | "ledger" | "seal" | "arrow-up" | "compass" | "spark2" | "pulse"
-  | "shield" | "layers" | "arrowR" | "check2" | "plus2" | "clock" | "mic" | "play" | "send" | "sparkles";
+  | "people"
+  | "gavel"
+  | "ledger"
+  | "seal"
+  | "arrow-up"
+  | "compass"
+  | "spark2"
+  | "pulse"
+  | "shield"
+  | "layers"
+  | "arrowR"
+  | "check2"
+  | "plus2"
+  | "clock"
+  | "mic"
+  | "play"
+  | "send"
+  | "sparkles";
 
 function SvcIcon({
   name,
   size = 18,
   color = "currentColor",
   stroke = 1.7,
-}: { name: IconName; size?: number; color?: string; stroke?: number }) {
+}: {
+  name: IconName;
+  size?: number;
+  color?: string;
+  stroke?: number;
+}) {
   const paths: Record<IconName, ReactNode> = {
     people: (
       <>
@@ -212,14 +252,78 @@ type Service = {
   icon: IconName;
 };
 const SERVICES: Service[] = [
-  { id: "cofounder", label: "Co-Founder", short: "Co-Founder", blurb: "Der Mensch, mit dem du baust.", count: 412, hue: "#E2511C", icon: "people" },
-  { id: "legal", label: "Recht & Verträge", short: "Recht", blurb: "Anwälte für Gründung, IP, ESOP, Cap Table.", count: 86, hue: "#3D5A4A", icon: "gavel" },
-  { id: "tax", label: "Steuer & Buchhaltung", short: "Steuer", blurb: "Steuerberater, die Startups verstehen.", count: 64, hue: "#8B5A3C", icon: "ledger" },
-  { id: "funding", label: "Förderprogramme", short: "Förderung", blurb: "EXIST, ProFIT, INVEST. Live-Matching.", count: 31, hue: "#B23B0E", icon: "seal" },
-  { id: "capital", label: "Kapital & Investoren", short: "Kapital", blurb: "Pre-Seed, Angels, Family Offices.", count: 214, hue: "#2A251F", icon: "arrow-up" },
-  { id: "mentor", label: "Mentoren & Advisor", short: "Mentor", blurb: "Operator, die das schon gebaut haben.", count: 178, hue: "#F0843A", icon: "compass" },
-  { id: "talent", label: "Talent & Hires", short: "Talent", blurb: "Erste fünf Hires. Vorgefiltert.", count: 540, hue: "#5A4A2A", icon: "spark2" },
-  { id: "growth", label: "Growth & GTM", short: "Growth", blurb: "GTM-Operator, PR, Performance, SEO.", count: 122, hue: "#6B635A", icon: "pulse" },
+  {
+    id: "cofounder",
+    label: "Co-Founder",
+    short: "Co-Founder",
+    blurb: "Der Mensch, mit dem du baust.",
+    count: 412,
+    hue: "#E2511C",
+    icon: "people",
+  },
+  {
+    id: "legal",
+    label: "Recht & Verträge",
+    short: "Recht",
+    blurb: "Anwälte für Gründung, IP, ESOP, Cap Table.",
+    count: 86,
+    hue: "#13957A",
+    icon: "gavel",
+  },
+  {
+    id: "tax",
+    label: "Steuer & Buchhaltung",
+    short: "Steuer",
+    blurb: "Steuerberater, die Startups verstehen.",
+    count: 64,
+    hue: "#D79014",
+    icon: "ledger",
+  },
+  {
+    id: "funding",
+    label: "Förderprogramme",
+    short: "Förderung",
+    blurb: "EXIST, ProFIT, INVEST. Live-Matching.",
+    count: 31,
+    hue: "#E03A2E",
+    icon: "seal",
+  },
+  {
+    id: "capital",
+    label: "Kapital & Investoren",
+    short: "Kapital",
+    blurb: "Pre-Seed, Angels, Family Offices.",
+    count: 214,
+    hue: "#3A6FD6",
+    icon: "arrow-up",
+  },
+  {
+    id: "mentor",
+    label: "Mentoren & Advisor",
+    short: "Mentor",
+    blurb: "Operator, die das schon gebaut haben.",
+    count: 178,
+    hue: "#8A55D2",
+    icon: "compass",
+  },
+  {
+    id: "talent",
+    label: "Talent & Hires",
+    short: "Talent",
+    blurb: "Erste fünf Hires. Vorgefiltert.",
+    count: 540,
+    hue: "#2E9E50",
+    icon: "spark2",
+  },
+  {
+    id: "growth",
+    label: "Growth & GTM",
+    short: "Growth",
+    blurb: "GTM-Operator, PR, Performance, SEO.",
+    count: 122,
+    hue: "#DB4B93",
+    icon: "pulse",
+  },
 ];
 const SVC_BY_ID = Object.fromEntries(SERVICES.map((s) => [s.id, s])) as Record<string, Service>;
 
@@ -251,12 +355,35 @@ function AITag({ children = "AI" }: { children?: ReactNode }) {
   );
 }
 
-function Avatar({ name, size = 44, ring = false }: { name: string; size?: number; ring?: boolean }) {
-  const palette = ["#E2511C", "#B23B0E", "#2A251F", "#6B635A", "#F0843A", "#8B5A3C", "#3D5A4A", "#5A4A2A"];
+function Avatar({
+  name,
+  size = 44,
+  ring = false,
+}: {
+  name: string;
+  size?: number;
+  ring?: boolean;
+}) {
+  const palette = [
+    "#E2511C",
+    "#13957A",
+    "#D79014",
+    "#E03A2E",
+    "#3A6FD6",
+    "#8A55D2",
+    "#2E9E50",
+    "#DB4B93",
+  ];
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
   const bg = palette[h % palette.length];
-  const initials = name.split(/\s+/).map((s) => s[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+  const initials = name
+    .split(/\s+/)
+    .map((s) => s[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
   return (
     <div
       style={{
@@ -374,13 +501,34 @@ function ServiceTile({ s, accented = false }: { s: Service; accented?: boolean }
       >
         <SvcIcon name={s.icon} size={19} color={M.cream} stroke={2} />
       </div>
-      <div style={{ fontFamily: M.fontSans, fontWeight: 600, fontSize: 19, letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+      <div
+        style={{
+          fontFamily: M.fontSans,
+          fontWeight: 600,
+          fontSize: 19,
+          letterSpacing: "-0.02em",
+          lineHeight: 1.1,
+        }}
+      >
         {s.label}
       </div>
-      <div style={{ fontSize: 13, lineHeight: 1.45, color: accented ? "rgba(255,255,255,0.82)" : M.smoke }}>
+      <div
+        style={{
+          fontSize: 13,
+          lineHeight: 1.45,
+          color: accented ? "rgba(255,255,255,0.82)" : M.smoke,
+        }}
+      >
         {s.blurb}
       </div>
-      <div style={{ marginTop: "auto", display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+      <div
+        style={{
+          marginTop: "auto",
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+        }}
+      >
         <span
           style={{
             fontFamily: M.fontMono,
@@ -437,8 +585,25 @@ function Section({
 }) {
   const bg = tone === "paper" ? M.paper : M.cream;
   return (
-    <section id={id} style={{ background: bg, color: M.ink, padding: pad, position: "relative", overflow: "hidden" }}>
-      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 64px", position: "relative", zIndex: 1 }}>
+    <section
+      id={id}
+      style={{
+        background: bg,
+        color: M.ink,
+        padding: pad,
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 1240,
+          margin: "0 auto",
+          padding: "0 64px",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
         {children}
       </div>
     </section>
@@ -458,7 +623,10 @@ function LNav() {
   ];
   const [menuOpen, setMenuOpen] = useState(false);
   return (
-    <div className="landing-nav-shell" style={{ position: "sticky", top: 16, zIndex: 50, padding: "0 64px", marginTop: 16 }}>
+    <div
+      className="landing-nav-shell"
+      style={{ position: "sticky", top: 16, zIndex: 50, padding: "0 64px", marginTop: 16 }}
+    >
       <div
         className="landing-nav-inner"
         style={{
@@ -566,11 +734,26 @@ function LNav() {
             padding: 0,
           }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+          >
             {menuOpen ? (
-              <><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></>
+              <>
+                <line x1="6" y1="6" x2="18" y2="18" />
+                <line x1="18" y1="6" x2="6" y2="18" />
+              </>
             ) : (
-              <><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></>
+              <>
+                <line x1="4" y1="7" x2="20" y2="7" />
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="17" x2="20" y2="17" />
+              </>
             )}
           </svg>
         </button>
@@ -610,7 +793,9 @@ function LNav() {
                 }}
               >
                 {i.live && (
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#3D9970" }} />
+                  <span
+                    style={{ width: 6, height: 6, borderRadius: "50%", background: "#3D9970" }}
+                  />
                 )}
                 {i.t}
               </a>
@@ -638,42 +823,14 @@ function LNav() {
   );
 }
 
-
 function HeroBackdrop() {
-  const blobs = [
-    { w: "60%", h: "80%", top: "-30%", right: "-10%", c: "rgba(226,81,28,0.42)", b: 90 },
-    { w: "50%", h: "60%", bottom: "-20%", left: "-10%", c: "rgba(240,132,58,0.32)", b: 110 },
-    { w: "45%", h: "55%", top: "15%", left: "20%", c: "rgba(252,228,213,0.6)", b: 110 },
-    { w: "24%", h: "28%", top: "5%", left: "-5%", c: "rgba(178,59,14,0.22)", b: 80 },
-  ];
   return (
     <>
-      <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-        {blobs.map((b, i) => (
-          <div
-            key={i}
-            style={{
-              position: "absolute",
-              width: b.w,
-              height: b.h,
-              top: b.top,
-              right: b.right,
-              bottom: b.bottom,
-              left: b.left,
-              background: `radial-gradient(circle at center, ${b.c}, transparent 65%)`,
-              filter: `blur(${b.b}px)`,
-            }}
-          />
-        ))}
-      </div>
       <div
         style={{
           position: "absolute",
           inset: 0,
-          opacity: 0.05,
-          backgroundImage:
-            "linear-gradient(rgba(21,20,15,1) 1px, transparent 1px), linear-gradient(90deg, rgba(21,20,15,1) 1px, transparent 1px)",
-          backgroundSize: "56px 56px",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.72), rgba(250,248,243,0) 42%)",
           pointerEvents: "none",
         }}
       />
@@ -683,7 +840,17 @@ function HeroBackdrop() {
 
 function HeroCopilot() {
   return (
-    <div className="hero-copilot" style={{ ...GLASS.pane, padding: 24, display: "flex", flexDirection: "column", gap: 14, position: "relative" }}>
+    <div
+      className="hero-copilot"
+      style={{
+        ...GLASS.pane,
+        padding: 24,
+        display: "flex",
+        flexDirection: "column",
+        gap: 14,
+        position: "relative",
+      }}
+    >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span
@@ -700,7 +867,11 @@ function HeroCopilot() {
             <IconMF size={18} color={M.cream} spark={M.ember} />
           </span>
           <div>
-            <div style={{ fontWeight: 600, fontSize: 14.5, letterSpacing: "-0.01em", color: M.ink }}>Co-Pilot</div>
+            <div
+              style={{ fontWeight: 600, fontSize: 14.5, letterSpacing: "-0.01em", color: M.ink }}
+            >
+              Co-Pilot
+            </div>
             <div
               style={{
                 fontFamily: M.fontMono,
@@ -741,11 +912,19 @@ function HeroCopilot() {
         >
           Du · 10:14
         </div>
-        „B2B-SaaS, zwei Monate Prototyp, ich bin Designer, suche technischen Co-Founder. Wir wollen Q3 ausgründen — GmbH in
-        Berlin. Was brauche ich jetzt?"
+        „B2B-SaaS, zwei Monate Prototyp, ich bin Designer, suche technischen Co-Founder. Wir wollen
+        Q3 ausgründen — GmbH in Berlin. Was brauche ich jetzt?"
       </div>
 
-      <div style={{ ...GLASS.paneSoft, padding: 18, display: "flex", flexDirection: "column", gap: 14 }}>
+      <div
+        style={{
+          ...GLASS.paneSoft,
+          padding: 18,
+          display: "flex",
+          flexDirection: "column",
+          gap: 14,
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <IconMF size={14} color={M.ink} spark={M.ember} />
           <span
@@ -770,10 +949,14 @@ function HeroCopilot() {
             color: M.ink,
           }}
         >
-          „Drei Dinge parallel: einen technischen Co-Founder, einen Anwalt für den Gründervertrag, und du solltest EXIST in
-          den nächsten 6 Wochen anschauen — Q3 ist machbar, wenn ihr jetzt startet."
+          „Drei Dinge parallel: einen technischen Co-Founder, einen Anwalt für den Gründervertrag,
+          und du solltest EXIST in den nächsten 6 Wochen anschauen — Q3 ist machbar, wenn ihr jetzt
+          startet."
         </p>
-        <div className="hero-copilot-recs" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+        <div
+          className="hero-copilot-recs"
+          style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}
+        >
           {[
             { sId: "cofounder", n: "Anna W.", l: "Backend · Berlin", fit: 94 },
             { sId: "legal", n: "Dr. Lena H.", l: "GmbH · ESOP", fit: 91 },
@@ -817,7 +1000,15 @@ function HeroCopilot() {
                     {s.short}
                   </span>
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: "-0.01em", color: M.ink, lineHeight: 1.2 }}>
+                <div
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    letterSpacing: "-0.01em",
+                    color: M.ink,
+                    lineHeight: 1.2,
+                  }}
+                >
                   {r.n}
                 </div>
                 <div style={{ fontSize: 11, color: M.smoke, marginTop: 2 }}>{r.l}</div>
@@ -875,7 +1066,10 @@ function HeroCopilot() {
         </div>
       </div>
 
-      <div className="hero-copilot-chips" style={{ display: "flex", flexWrap: "wrap", gap: 6, paddingTop: 4 }}>
+      <div
+        className="hero-copilot-chips"
+        style={{ display: "flex", flexWrap: "wrap", gap: 6, paddingTop: 4 }}
+      >
         {SERVICES.map((s) => (
           <ServiceChip key={s.id} s={s} />
         ))}
@@ -886,7 +1080,10 @@ function HeroCopilot() {
 
 function LHero() {
   return (
-    <div className="landing-hero" style={{ position: "relative", background: M.paper, overflow: "hidden" }}>
+    <div
+      className="landing-hero"
+      style={{ position: "relative", background: M.paper, overflow: "hidden" }}
+    >
       <HeroBackdrop />
       <LNav />
       <div
@@ -955,18 +1152,27 @@ function LHero() {
           >
             Alles, was ein
             <br />
-            <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>Founder</span> braucht
+            <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>
+              Founder
+            </span>{" "}
+            braucht
             <span style={{ color: M.ember }}>.</span>
             <br />
             <span style={{ color: M.smoke }}>KI-vermittelt.</span>
           </h1>
 
-          <p style={{ fontSize: 19, lineHeight: 1.55, color: M.smoke, marginTop: 28, maxWidth: 520 }}>
-            Co-Founder, Anwälte, Steuerberater, Förderprogramme, Mentoren, frühe Hires — ein Co-Pilot, der versteht, wo du
-            gerade stehst und genau die richtigen Menschen und Programme an einen Tisch holt.
+          <p
+            style={{ fontSize: 19, lineHeight: 1.55, color: M.smoke, marginTop: 28, maxWidth: 520 }}
+          >
+            Co-Founder, Anwälte, Steuerberater, Förderprogramme, Mentoren, frühe Hires — ein
+            Co-Pilot, der versteht, wo du gerade stehst und genau die richtigen Menschen und
+            Programme an einen Tisch holt.
           </p>
 
-          <div className="landing-hero-actions" style={{ display: "flex", gap: 12, marginTop: 36, flexWrap: "wrap" }}>
+          <div
+            className="landing-hero-actions"
+            style={{ display: "flex", gap: 12, marginTop: 36, flexWrap: "wrap" }}
+          >
             <Link
               className="landing-hero-primary"
               to="/co-pilot"
@@ -1044,7 +1250,9 @@ function LHero() {
                 >
                   {s.k}
                 </div>
-                <div style={{ fontSize: 11.5, color: M.smoke, lineHeight: 1.4, marginTop: 8 }}>{s.s}</div>
+                <div style={{ fontSize: 11.5, color: M.smoke, lineHeight: 1.4, marginTop: 8 }}>
+                  {s.s}
+                </div>
               </div>
             ))}
           </div>
@@ -1093,17 +1301,82 @@ function LogoWall() {
         >
           Partner-Netzwerk
         </span>
-        <div className="landing-logo-wall-logos" style={{ flex: 1, display: "flex", alignItems: "center", gap: 38, opacity: 0.85, flexWrap: "wrap" }}>
-          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontSans, fontSize: 18, fontWeight: 700, letterSpacing: "-0.03em" }}>EXIST</span>
-          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontSize: 19 }}>Bird &amp; Bird</span>
-          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontSans, fontSize: 14, fontWeight: 700, letterSpacing: "0.32em" }}>PROFIT</span>
-          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontMono, fontSize: 14 }}>bafa /</span>
-          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontSans, fontSize: 17, fontWeight: 600, letterSpacing: "-0.02em" }}>KfW</span>
-          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontSize: 18 }}>Osborne Clarke</span>
-          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontSans, fontSize: 15, fontWeight: 600, letterSpacing: "-0.015em" }}>
+        <div
+          className="landing-logo-wall-logos"
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            gap: 38,
+            opacity: 0.85,
+            flexWrap: "wrap",
+          }}
+        >
+          <span
+            className="landing-logo-wall-logo"
+            style={{
+              fontFamily: M.fontSans,
+              fontSize: 18,
+              fontWeight: 700,
+              letterSpacing: "-0.03em",
+            }}
+          >
+            EXIST
+          </span>
+          <span
+            className="landing-logo-wall-logo"
+            style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontSize: 19 }}
+          >
+            Bird &amp; Bird
+          </span>
+          <span
+            className="landing-logo-wall-logo"
+            style={{
+              fontFamily: M.fontSans,
+              fontSize: 14,
+              fontWeight: 700,
+              letterSpacing: "0.32em",
+            }}
+          >
+            PROFIT
+          </span>
+          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontMono, fontSize: 14 }}>
+            bafa /
+          </span>
+          <span
+            className="landing-logo-wall-logo"
+            style={{
+              fontFamily: M.fontSans,
+              fontSize: 17,
+              fontWeight: 600,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            KfW
+          </span>
+          <span
+            className="landing-logo-wall-logo"
+            style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontSize: 18 }}
+          >
+            Osborne Clarke
+          </span>
+          <span
+            className="landing-logo-wall-logo"
+            style={{
+              fontFamily: M.fontSans,
+              fontSize: 15,
+              fontWeight: 600,
+              letterSpacing: "-0.015em",
+            }}
+          >
             SignalIduna
           </span>
-          <span className="landing-logo-wall-logo" style={{ fontFamily: M.fontMono, fontSize: 13, textTransform: "lowercase" }}>n26·labs</span>
+          <span
+            className="landing-logo-wall-logo"
+            style={{ fontFamily: M.fontMono, fontSize: 13, textTransform: "lowercase" }}
+          >
+            n26·labs
+          </span>
         </div>
       </div>
     </div>
@@ -1135,7 +1408,10 @@ function LProblem() {
   ];
   return (
     <Section tone="paper" pad="140px 0">
-      <div className="landing-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+      <div
+        className="landing-two-col"
+        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}
+      >
         <div>
           <Eyebrow>01 · Das Problem</Eyebrow>
           <h2
@@ -1150,12 +1426,18 @@ function LProblem() {
           >
             Der Founder-Stack
             <br />
-            ist <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>kaputt</span>
+            ist{" "}
+            <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>
+              kaputt
+            </span>
             <span style={{ color: M.ember }}>.</span>
           </h2>
-          <p style={{ marginTop: 24, fontSize: 18, lineHeight: 1.6, color: M.smoke, maxWidth: 480 }}>
-            Du brauchst sechs verschiedene Menschen, um eine GmbH durch ihr erstes Jahr zu bringen. Sie sitzen in sechs
-            verschiedenen Tabs, in sechs verschiedenen Tonalitäten, mit sechs verschiedenen Preisen.
+          <p
+            style={{ marginTop: 24, fontSize: 18, lineHeight: 1.6, color: M.smoke, maxWidth: 480 }}
+          >
+            Du brauchst sechs verschiedene Menschen, um eine GmbH durch ihr erstes Jahr zu bringen.
+            Sie sitzen in sechs verschiedenen Tabs, in sechs verschiedenen Tonalitäten, mit sechs
+            verschiedenen Preisen.
             <br />
             <br />
             Niemand sortiert das für dich. Niemand außer einem Co-Pilot, der weiß, wo du stehst.
@@ -1224,7 +1506,14 @@ function LProblem() {
               "M50 320 C 200 400, 350 350, 440 100",
               "M150 50 C 220 200, 380 250, 400 420",
             ].map((d, i) => (
-              <path key={i} d={d} stroke={M.ink} strokeWidth="1.5" fill="none" strokeDasharray="2 4" />
+              <path
+                key={i}
+                d={d}
+                stroke={M.ink}
+                strokeWidth="1.5"
+                fill="none"
+                strokeDasharray="2 4"
+              />
             ))}
           </svg>
         </div>
@@ -1281,7 +1570,16 @@ function StepMini({ kind }: { kind: "chat" | "plan" | "pipeline" }) {
         </div>
         <div style={{ alignSelf: "flex-start", display: "inline-flex", gap: 4 }}>
           {[0, 1, 2].map((j) => (
-            <span key={j} style={{ width: 5, height: 5, borderRadius: "50%", background: M.smoke, opacity: 0.6 }} />
+            <span
+              key={j}
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: "50%",
+                background: M.smoke,
+                opacity: 0.6,
+              }}
+            />
           ))}
         </div>
       </div>
@@ -1377,9 +1675,18 @@ function StepMini({ kind }: { kind: "chat" | "plan" | "pipeline" }) {
         >
           EXIST · 78%
         </span>
-        <span style={{ fontFamily: M.fontMono, fontSize: 9.5, color: M.ember, fontWeight: 600 }}>12 Tage</span>
+        <span style={{ fontFamily: M.fontMono, fontSize: 9.5, color: M.ember, fontWeight: 600 }}>
+          12 Tage
+        </span>
       </div>
-      <div style={{ height: 5, borderRadius: 999, background: "rgba(21,20,15,0.06)", overflow: "hidden" }}>
+      <div
+        style={{
+          height: 5,
+          borderRadius: 999,
+          background: "rgba(21,20,15,0.06)",
+          overflow: "hidden",
+        }}
+      >
         <div style={{ width: "78%", height: "100%", background: M.ember }} />
       </div>
       <div style={{ marginTop: 4, display: "flex", flexDirection: "column", gap: 6 }}>
@@ -1404,7 +1711,13 @@ function StepMini({ kind }: { kind: "chat" | "plan" | "pipeline" }) {
             >
               {r.done && <SvcIcon name="check2" size={9} color={M.cream} stroke={3} />}
             </span>
-            <span style={{ flex: 1, color: r.done ? M.smoke : M.ink, textDecoration: r.done ? "line-through" : "none" }}>
+            <span
+              style={{
+                flex: 1,
+                color: r.done ? M.smoke : M.ink,
+                textDecoration: r.done ? "line-through" : "none",
+              }}
+            >
               {r.t}
             </span>
             <span style={{ fontFamily: M.fontMono, fontSize: 10, color: M.smoke }}>{r.d}</span>
@@ -1450,12 +1763,23 @@ function LHowItWorks() {
             color: M.ink,
           }}
         >
-          Drei Schritte. <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400, color: M.smoke }}>
+          Drei Schritte.{" "}
+          <span
+            style={{
+              fontFamily: M.fontSerif,
+              fontStyle: "italic",
+              fontWeight: 400,
+              color: M.smoke,
+            }}
+          >
             Kein Dashboard zu pflegen.
           </span>
         </h2>
       </div>
-      <div className="landing-card-grid landing-card-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
+      <div
+        className="landing-card-grid landing-card-grid-3"
+        style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}
+      >
         {steps.map((s) => (
           <div
             key={s.n}
@@ -1529,17 +1853,32 @@ function LMarketplace() {
           >
             Acht Dinge, die du brauchst<span style={{ color: M.ember }}>.</span>
             <br />
-            <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400, color: M.smoke }}>
+            <span
+              style={{
+                fontFamily: M.fontSerif,
+                fontStyle: "italic",
+                fontWeight: 400,
+                color: M.smoke,
+              }}
+            >
               Einmal sortiert.
             </span>
           </h2>
         </div>
         <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.6, color: M.smoke, maxWidth: 380 }}>
-          1.847 vorgeprüfte Partner — keiner zahlt für Sichtbarkeit. Die Reihenfolge ergibt sich aus deiner Phase, nicht
-          aus Anzeigenpreis. Co-Pilot zeigt nur, was jetzt sinnvoll ist.
+          1.847 vorgeprüfte Partner — keiner zahlt für Sichtbarkeit. Die Reihenfolge ergibt sich aus
+          deiner Phase, nicht aus Anzeigenpreis. Co-Pilot zeigt nur, was jetzt sinnvoll ist.
         </p>
       </div>
-      <div className="landing-card-grid landing-market-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridAutoRows: "220px", gap: 16 }}>
+      <div
+        className="landing-card-grid landing-market-grid"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gridAutoRows: "220px",
+          gap: 16,
+        }}
+      >
         {SERVICES.map((s, i) => (
           <ServiceTile key={s.id} s={s} accented={i === 0} />
         ))}
@@ -1561,7 +1900,8 @@ function LMarketplace() {
         <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
           <AITag>Co-Pilot</AITag>
           <span style={{ fontSize: 14, color: M.ink }}>
-            Für deine Phase <span style={{ color: M.smoke }}>(Prototyp · vor Ausgründung)</span> empfehle ich:{" "}
+            Für deine Phase <span style={{ color: M.smoke }}>(Prototyp · vor Ausgründung)</span>{" "}
+            empfehle ich:{" "}
             <span style={{ fontWeight: 600 }}>Co-Founder → Recht → Förderung → Mentor</span>{" "}
             <span style={{ color: M.smoke }}>— in dieser Reihenfolge.</span>
           </span>
@@ -1592,7 +1932,13 @@ function LCoPilotMoment() {
   return (
     <section
       id="copilot"
-      style={{ background: M.ink, color: M.cream, padding: "140px 0", position: "relative", overflow: "hidden" }}
+      style={{
+        background: M.ink,
+        color: M.cream,
+        padding: "140px 0",
+        position: "relative",
+        overflow: "hidden",
+      }}
     >
       <div
         style={{
@@ -1601,7 +1947,7 @@ function LCoPilotMoment() {
           right: "-10%",
           width: "60%",
           height: "90%",
-          background: "radial-gradient(circle at center, rgba(226,81,28,0.45), transparent 60%)",
+          background: "transparent",
           filter: "blur(80px)",
           pointerEvents: "none",
         }}
@@ -1613,7 +1959,7 @@ function LCoPilotMoment() {
           left: "-10%",
           width: "50%",
           height: "70%",
-          background: "radial-gradient(circle at center, rgba(178,59,14,0.30), transparent 60%)",
+          background: "transparent",
           filter: "blur(90px)",
           pointerEvents: "none",
         }}
@@ -1622,10 +1968,7 @@ function LCoPilotMoment() {
         style={{
           position: "absolute",
           inset: 0,
-          opacity: 0.05,
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,1) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)",
-          backgroundSize: "56px 56px",
+          opacity: 0,
         }}
       />
       <div
@@ -1653,12 +1996,25 @@ function LCoPilotMoment() {
               color: M.cream,
             }}
           >
-            Er versteht, wo du <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>wirklich</span> stehst
+            Er versteht, wo du{" "}
+            <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>
+              wirklich
+            </span>{" "}
+            stehst
             <span style={{ color: M.ember }}>.</span>
           </h2>
-          <p style={{ marginTop: 24, fontSize: 17, lineHeight: 1.6, color: "rgba(251,250,247,0.7)", maxWidth: 460 }}>
-            Kein Search-Feld. Kein Quiz. Du sprichst, er denkt mit — und holt im Hintergrund die Menschen und Programme
-            zusammen, die zu deiner konkreten Phase passen. Mit Begründung, nicht Zufall.
+          <p
+            style={{
+              marginTop: 24,
+              fontSize: 17,
+              lineHeight: 1.6,
+              color: "rgba(251,250,247,0.7)",
+              maxWidth: 460,
+            }}
+          >
+            Kein Search-Feld. Kein Quiz. Du sprichst, er denkt mit — und holt im Hintergrund die
+            Menschen und Programme zusammen, die zu deiner konkreten Phase passen. Mit Begründung,
+            nicht Zufall.
           </p>
           <div style={{ marginTop: 32, display: "flex", flexDirection: "column", gap: 14 }}>
             {[
@@ -1705,7 +2061,12 @@ function LCoPilotMoment() {
                 <div>
                   <div style={{ fontWeight: 600, fontSize: 15.5, color: M.cream }}>{f.t}</div>
                   <div
-                    style={{ fontSize: 13.5, color: "rgba(251,250,247,0.65)", marginTop: 4, lineHeight: 1.5 }}
+                    style={{
+                      fontSize: 13.5,
+                      color: "rgba(251,250,247,0.65)",
+                      marginTop: 4,
+                      lineHeight: 1.5,
+                    }}
                   >
                     {f.d}
                   </div>
@@ -1734,14 +2095,17 @@ function LCoPilotMoment() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25), 0 8px 16px -6px rgba(178,59,14,0.5)",
+                boxShadow:
+                  "inset 0 1px 0 rgba(255,255,255,0.25), 0 8px 16px -6px rgba(178,59,14,0.5)",
               }}
             >
               <IconMF size={18} color={M.cream} spark={M.cream} />
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontWeight: 600, fontSize: 15, letterSpacing: "-0.015em" }}>Co-Pilot</span>
+                <span style={{ fontWeight: 600, fontSize: 15, letterSpacing: "-0.015em" }}>
+                  Co-Pilot
+                </span>
                 <AITag>live</AITag>
               </div>
               <div
@@ -1757,7 +2121,11 @@ function LCoPilotMoment() {
                 Plan für Q3-Ausgründung · Berlin
               </div>
             </div>
-            <span style={{ fontFamily: M.fontMono, fontSize: 10.5, color: "rgba(255,255,255,0.4)" }}>09:48</span>
+            <span
+              style={{ fontFamily: M.fontMono, fontSize: 10.5, color: "rgba(255,255,255,0.4)" }}
+            >
+              09:48
+            </span>
           </div>
 
           <div style={{ padding: "20px 22px", display: "flex", flexDirection: "column", gap: 16 }}>
@@ -1773,7 +2141,8 @@ function LCoPilotMoment() {
                   color: M.cream,
                 }}
               >
-                „Ich bin Designer, B2B-SaaS-Prototyp für Friseur-Buchhaltung. Zwei Monate alt. Will Q3 ausgründen, Berlin."
+                „Ich bin Designer, B2B-SaaS-Prototyp für Friseur-Buchhaltung. Zwei Monate alt. Will
+                Q3 ausgründen, Berlin."
               </div>
             </div>
 
@@ -1816,13 +2185,24 @@ function LCoPilotMoment() {
                     lineHeight: 1.45,
                   }}
                 >
-                  „Drei Bewegungen parallel — sonst sitzt du im September fest. Ich habe Anna für die Tech-Seite, Dr.
-                  Heller für den Gründervertrag, und EXIST als Brücke bis Mai gefiltert."
+                  „Drei Bewegungen parallel — sonst sitzt du im September fest. Ich habe Anna für
+                  die Tech-Seite, Dr. Heller für den Gründervertrag, und EXIST als Brücke bis Mai
+                  gefiltert."
                 </p>
                 <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
                   {[
-                    { sId: "cofounder", t: "Anna Wojcik · 7 yrs Stripe", fit: 94, why: "Backend + B2B + Berlin" },
-                    { sId: "legal", t: "Dr. Lena Heller · Bird & Bird", fit: 91, why: "GmbH + ESOP, 14d response" },
+                    {
+                      sId: "cofounder",
+                      t: "Anna Wojcik · 7 yrs Stripe",
+                      fit: 94,
+                      why: "Backend + B2B + Berlin",
+                    },
+                    {
+                      sId: "legal",
+                      t: "Dr. Lena Heller · Bird & Bird",
+                      fit: 91,
+                      why: "GmbH + ESOP, 14d response",
+                    },
                     { sId: "funding", t: "EXIST · DLR", fit: 89, why: "€125k · Frist 28. Mai" },
                   ].map((r) => {
                     const s = SVC_BY_ID[r.sId];
@@ -1868,7 +2248,9 @@ function LCoPilotMoment() {
                           </div>
                           <div style={{ fontSize: 11, color: M.smoke }}>{r.why}</div>
                         </div>
-                        <span style={{ fontSize: 15, fontWeight: 600, color: M.ember }}>{r.fit}</span>
+                        <span style={{ fontSize: 15, fontWeight: 600, color: M.ember }}>
+                          {r.fit}
+                        </span>
                       </div>
                     );
                   })}
@@ -1957,7 +2339,10 @@ function LCoPilotMoment() {
 function LFunding() {
   return (
     <Section tone="paper" pad="140px 0" id="foerderung">
-      <div className="landing-two-col landing-section-inner" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
+      <div
+        className="landing-two-col landing-section-inner"
+        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}
+      >
         <div>
           <Eyebrow>05 · Förderung · live gematcht</Eyebrow>
           <div
@@ -1974,15 +2359,43 @@ function LFunding() {
           >
             €2.4M
           </div>
-          <p style={{ marginTop: 12, fontWeight: 500, fontSize: 22, lineHeight: 1.3, letterSpacing: "-0.02em", color: M.ink, maxWidth: 460 }}>
+          <p
+            style={{
+              marginTop: 12,
+              fontWeight: 500,
+              fontSize: 22,
+              lineHeight: 1.3,
+              letterSpacing: "-0.02em",
+              color: M.ink,
+              maxWidth: 460,
+            }}
+          >
             Fördermittel, die Co-Pilot 2025 für unsere Founder identifiziert und{" "}
-            <span style={{ fontFamily: M.fontSerif, fontStyle: "italic" }}>tatsächlich</span> bewilligt bekommen hat.
+            <span style={{ fontFamily: M.fontSerif, fontStyle: "italic" }}>tatsächlich</span>{" "}
+            bewilligt bekommen hat.
           </p>
-          <p style={{ marginTop: 16, fontSize: 14.5, lineHeight: 1.6, color: M.smoke, maxWidth: 460 }}>
-            EXIST, ProFIT, INVEST, ERP-Gründerkredit, KfW-Programme. Mit Vorprüfung, Antragsbegleitung und einem Anwalt,
-            der die Förder-Sprache spricht. Keine Stunden bei Beratern, die nichts wissen.
+          <p
+            style={{
+              marginTop: 16,
+              fontSize: 14.5,
+              lineHeight: 1.6,
+              color: M.smoke,
+              maxWidth: 460,
+            }}
+          >
+            EXIST, ProFIT, INVEST, ERP-Gründerkredit, KfW-Programme. Mit Vorprüfung,
+            Antragsbegleitung und einem Anwalt, der die Förder-Sprache spricht. Keine Stunden bei
+            Beratern, die nichts wissen.
           </p>
-          <div style={{ marginTop: 28, display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
+          <div
+            style={{
+              marginTop: 28,
+              display: "flex",
+              alignItems: "center",
+              gap: 18,
+              flexWrap: "wrap",
+            }}
+          >
             {["EXIST", "ProFIT", "INVEST", "KfW", "BAFA", "ERP"].map((p) => (
               <span
                 key={p}
@@ -2023,7 +2436,15 @@ function LFunding() {
           >
             <SvcIcon name="seal" size={280} color={M.cream} stroke={1.4} />
           </div>
-          <div className="landing-funding-card-head" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
+          <div
+            className="landing-funding-card-head"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              position: "relative",
+            }}
+          >
             <span
               className="landing-funding-card-title"
               style={{
@@ -2065,7 +2486,15 @@ function LFunding() {
           >
             €125.000
           </div>
-          <div className="landing-grant-meta" style={{ position: "relative", fontSize: 15, color: "rgba(255,255,255,0.85)", marginTop: 6 }}>
+          <div
+            className="landing-grant-meta"
+            style={{
+              position: "relative",
+              fontSize: 15,
+              color: "rgba(255,255,255,0.85)",
+              marginTop: 6,
+            }}
+          >
             pro Team · 12 Monate · zzgl. Sachkosten & Coaching
           </div>
           <div style={{ position: "relative", marginTop: 24 }}>
@@ -2084,7 +2513,14 @@ function LFunding() {
               <span>ANTRAG · 78%</span>
               <span>FRIST · 28. MAI</span>
             </div>
-            <div style={{ height: 6, borderRadius: 999, background: "rgba(255,255,255,0.18)", overflow: "hidden" }}>
+            <div
+              style={{
+                height: 6,
+                borderRadius: 999,
+                background: "rgba(255,255,255,0.18)",
+                overflow: "hidden",
+              }}
+            >
               <div style={{ width: "78%", height: "100%", background: M.cream }} />
             </div>
           </div>
@@ -2103,9 +2539,16 @@ function LFunding() {
             }}
           >
             <IconMF size={18} color={M.cream} spark={M.cream} />
-            <div style={{ fontSize: 13.5, lineHeight: 1.5, fontFamily: M.fontSerif, fontStyle: "italic" }}>
-              „3 Felder fehlen noch: Projektbeschreibung &lt;2.500 Zeichen, FuE-Quote, Hochschulanbindung. Ich kann das
-              aus deinem One-Pager vorausfüllen — willst du?"
+            <div
+              style={{
+                fontSize: 13.5,
+                lineHeight: 1.5,
+                fontFamily: M.fontSerif,
+                fontStyle: "italic",
+              }}
+            >
+              „3 Felder fehlen noch: Projektbeschreibung &lt;2.500 Zeichen, FuE-Quote,
+              Hochschulanbindung. Ich kann das aus deinem One-Pager vorausfüllen — willst du?"
             </div>
           </div>
           <div
@@ -2118,7 +2561,9 @@ function LFunding() {
               justifyContent: "space-between",
             }}
           >
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.75)" }}>Co-Pilot vorausfüllen lassen</span>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.75)" }}>
+              Co-Pilot vorausfüllen lassen
+            </span>
             <Link
               to="/co-pilot"
               style={{
@@ -2145,11 +2590,31 @@ function LFunding() {
 
 function LCompare() {
   const rows = [
-    { d: "Anwalt finden", solo: "6 Wochen · 4 Erstgespräche · €3.200", mf: "48h · 1 Erstgespräch · inkludiert" },
-    { d: "EXIST-Antrag schreiben", solo: "11 Wochen · 6 Iterationen", mf: "5 Wochen · Co-Pilot füllt 70% vor" },
-    { d: "Technischen Co-Founder finden", solo: "8 Monate LinkedIn-DMs", mf: "14 Tage bis erster Termin · 9 Slots" },
-    { d: "ESOP-Pool aufsetzen", solo: "Vorlage von Reddit · Anwalt prüft", mf: "Template + Bird & Bird-Review · 1 Woche" },
-    { d: "Steuerberater wechseln", solo: "Empfehlung aus Slack-Community", mf: '3 Vorgeprüfte · "versteht Cap Tables"' },
+    {
+      d: "Anwalt finden",
+      solo: "6 Wochen · 4 Erstgespräche · €3.200",
+      mf: "48h · 1 Erstgespräch · inkludiert",
+    },
+    {
+      d: "EXIST-Antrag schreiben",
+      solo: "11 Wochen · 6 Iterationen",
+      mf: "5 Wochen · Co-Pilot füllt 70% vor",
+    },
+    {
+      d: "Technischen Co-Founder finden",
+      solo: "8 Monate LinkedIn-DMs",
+      mf: "14 Tage bis erster Termin · 9 Slots",
+    },
+    {
+      d: "ESOP-Pool aufsetzen",
+      solo: "Vorlage von Reddit · Anwalt prüft",
+      mf: "Template + Bird & Bird-Review · 1 Woche",
+    },
+    {
+      d: "Steuerberater wechseln",
+      solo: "Empfehlung aus Slack-Community",
+      mf: '3 Vorgeprüfte · "versteht Cap Tables"',
+    },
     { d: "Mentor mit Branchen-Match", solo: "Glück", mf: "Office Hour · 14 aktive Operator" },
   ];
   return (
@@ -2166,11 +2631,22 @@ function LCompare() {
             color: M.ink,
           }}
         >
-          Wie viel Zeit du <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>zurück</span> bekommst
+          Wie viel Zeit du{" "}
+          <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>
+            zurück
+          </span>{" "}
+          bekommst
           <span style={{ color: M.ember }}>.</span>
         </h2>
       </div>
-      <div style={{ borderRadius: 24, overflow: "hidden", border: "1px solid rgba(21,20,15,0.10)", background: M.paper }}>
+      <div
+        style={{
+          borderRadius: 24,
+          overflow: "hidden",
+          border: "1px solid rgba(21,20,15,0.10)",
+          background: M.paper,
+        }}
+      >
         <div
           className="landing-compare-head"
           style={{
@@ -2206,12 +2682,36 @@ function LCompare() {
               background: i % 2 === 1 ? "rgba(255,255,255,0.4)" : "transparent",
             }}
           >
-            <div className="l-compare-task" style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.015em", color: M.ink }}>{r.d}</div>
-            <div className="l-compare-solo" style={{ fontSize: 13.5, color: M.smoke, display: "flex", alignItems: "center", gap: 8 }}>
+            <div
+              className="l-compare-task"
+              style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.015em", color: M.ink }}
+            >
+              {r.d}
+            </div>
+            <div
+              className="l-compare-solo"
+              style={{
+                fontSize: 13.5,
+                color: M.smoke,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
               <span style={{ width: 6, height: 6, borderRadius: "50%", background: M.smoke }} />
               {r.solo}
             </div>
-            <div className="l-compare-mf" style={{ fontSize: 13.5, color: M.ink, fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
+            <div
+              className="l-compare-mf"
+              style={{
+                fontSize: 13.5,
+                color: M.ink,
+                fontWeight: 500,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
               <SvcIcon name="check2" size={14} color={M.ember} stroke={2.5} />
               {r.mf}
             </div>
@@ -2293,7 +2793,13 @@ function QuoteCard({ q }: { q: Quote }) {
         <Avatar name={q.name} size={44} ring={hero} />
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: "-0.01em" }}>{q.name}</div>
-          <div style={{ fontSize: 11.5, color: hero ? "rgba(251,250,247,0.65)" : M.smoke, marginTop: 2 }}>
+          <div
+            style={{
+              fontSize: 11.5,
+              color: hero ? "rgba(251,250,247,0.65)" : M.smoke,
+              marginTop: 2,
+            }}
+          >
             {q.role} · {q.city}
           </div>
         </div>
@@ -2318,7 +2824,9 @@ function QuoteCard({ q }: { q: Quote }) {
           >
             {q.stat.k}
           </span>
-          <span style={{ fontSize: 12, color: hero ? "rgba(251,250,247,0.75)" : M.emberDeep }}>{q.stat.v}</span>
+          <span style={{ fontSize: 12, color: hero ? "rgba(251,250,247,0.75)" : M.emberDeep }}>
+            {q.stat.v}
+          </span>
         </div>
       </div>
     </div>
@@ -2377,13 +2885,20 @@ function LTestimonials() {
               color: M.ink,
             }}
           >
-            Drei <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>echte</span> Bewegungen.
+            Drei{" "}
+            <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>
+              echte
+            </span>{" "}
+            Bewegungen.
             <br />
             <span style={{ color: M.smoke }}>Aus den letzten 90 Tagen.</span>
           </h2>
         </div>
       </div>
-      <div className="landing-card-grid landing-quote-grid" style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: 18 }}>
+      <div
+        className="landing-card-grid landing-quote-grid"
+        style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: 18 }}
+      >
         {quotes.map((q) => (
           <QuoteCard key={q.name} q={q} />
         ))}
@@ -2438,11 +2953,18 @@ function PriceCard({ t }: { t: Tier }) {
             inset: 0,
             opacity: 0.6,
             pointerEvents: "none",
-            background: "radial-gradient(circle at 80% 0%, rgba(226,81,28,0.5), transparent 60%)",
+            background: "transparent",
           }}
         />
       )}
-      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div
+        style={{
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <span
           style={{
             fontFamily: M.fontMono,
@@ -2472,12 +2994,24 @@ function PriceCard({ t }: { t: Tier }) {
         )}
       </div>
       <div style={{ position: "relative" }}>
-        <span style={{ fontWeight: 600, fontSize: 56, letterSpacing: "-0.04em", lineHeight: 1, color: fg }}>
+        <span
+          style={{
+            fontWeight: 600,
+            fontSize: 56,
+            letterSpacing: "-0.04em",
+            lineHeight: 1,
+            color: fg,
+          }}
+        >
           {t.price}
         </span>
         <span style={{ fontSize: 14, color: smoke, marginLeft: 8 }}>{t.sub}</span>
       </div>
-      <p style={{ position: "relative", margin: 0, fontSize: 14.5, lineHeight: 1.55, color: smoke }}>{t.blurb}</p>
+      <p
+        style={{ position: "relative", margin: 0, fontSize: 14.5, lineHeight: 1.55, color: smoke }}
+      >
+        {t.blurb}
+      </p>
       <div
         style={{
           position: "relative",
@@ -2485,11 +3019,21 @@ function PriceCard({ t }: { t: Tier }) {
           flexDirection: "column",
           gap: 10,
           paddingTop: 18,
-          borderTop: ember || dark ? "1px solid rgba(255,255,255,0.10)" : "1px solid rgba(21,20,15,0.08)",
+          borderTop:
+            ember || dark ? "1px solid rgba(255,255,255,0.10)" : "1px solid rgba(21,20,15,0.08)",
         }}
       >
         {t.feats.map((f) => (
-          <div key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 13.5, lineHeight: 1.4 }}>
+          <div
+            key={f}
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 10,
+              fontSize: 13.5,
+              lineHeight: 1.4,
+            }}
+          >
             <SvcIcon name="check2" size={14} color={ember || dark ? M.ember : M.ink} stroke={2.5} />
             <span style={{ color: fg }}>{f}</span>
           </div>
@@ -2517,7 +3061,12 @@ function PriceCard({ t }: { t: Tier }) {
         }}
       >
         {t.cta}{" "}
-        <SvcIcon name="arrowR" size={13} color={ember ? M.cream : dark ? M.ink : M.cream} stroke={2.2} />
+        <SvcIcon
+          name="arrowR"
+          size={13}
+          color={ember ? M.cream : dark ? M.ink : M.cream}
+          stroke={2.2}
+        />
       </Link>
     </div>
   );
@@ -2585,15 +3134,34 @@ function LPricing() {
             color: M.ink,
           }}
         >
-          Ein Co-Pilot kostet weniger als <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>eine Erstberatung</span>
+          Ein Co-Pilot kostet weniger als{" "}
+          <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>
+            eine Erstberatung
+          </span>
           <span style={{ color: M.ember }}>.</span>
         </h2>
-        <p style={{ fontSize: 16.5, lineHeight: 1.55, color: M.smoke, maxWidth: 540, margin: "16px auto 0" }}>
-          Transparent. Jährlich kündbar. Niemand zahlt für Sichtbarkeit — Empfehlungen ergeben sich aus Phase, nicht aus
-          Provision.
+        <p
+          style={{
+            fontSize: 16.5,
+            lineHeight: 1.55,
+            color: M.smoke,
+            maxWidth: 540,
+            margin: "16px auto 0",
+          }}
+        >
+          Transparent. Jährlich kündbar. Niemand zahlt für Sichtbarkeit — Empfehlungen ergeben sich
+          aus Phase, nicht aus Provision.
         </p>
       </div>
-      <div className="landing-card-grid landing-pricing-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18, alignItems: "stretch" }}>
+      <div
+        className="landing-card-grid landing-pricing-grid"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 18,
+          alignItems: "stretch",
+        }}
+      >
         {tiers.map((t) => (
           <PriceCard key={t.name} t={t} />
         ))}
@@ -2640,7 +3208,15 @@ function LFaq() {
   const [openIdx, setOpenIdx] = useState<number>(0);
   return (
     <Section tone="cream" pad="140px 0">
-      <div className="landing-two-col landing-faq-grid" style={{ display: "grid", gridTemplateColumns: "0.85fr 1.15fr", gap: 80, alignItems: "flex-start" }}>
+      <div
+        className="landing-two-col landing-faq-grid"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "0.85fr 1.15fr",
+          gap: 80,
+          alignItems: "flex-start",
+        }}
+      >
         <div style={{ position: "sticky", top: 100 }}>
           <Eyebrow>09 · Was Founder uns fragen</Eyebrow>
           <h2
@@ -2655,11 +3231,20 @@ function LFaq() {
           >
             Sieben Fragen,
             <br />
-            <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400, color: M.smoke }}>
+            <span
+              style={{
+                fontFamily: M.fontSerif,
+                fontStyle: "italic",
+                fontWeight: 400,
+                color: M.smoke,
+              }}
+            >
               die wirklich kommen.
             </span>
           </h2>
-          <p style={{ marginTop: 20, fontSize: 15, lineHeight: 1.6, color: M.smoke, maxWidth: 360 }}>
+          <p
+            style={{ marginTop: 20, fontSize: 15, lineHeight: 1.6, color: M.smoke, maxWidth: 360 }}
+          >
             Wenn deine nicht dabei ist:{" "}
             <a
               href="mailto:founders@matchfoundr.com"
@@ -2732,7 +3317,15 @@ function LFaq() {
                       {it.q}
                     </div>
                     {open && (
-                      <p style={{ margin: "12px 0 0", fontSize: 15, lineHeight: 1.6, color: M.smoke, maxWidth: 620 }}>
+                      <p
+                        style={{
+                          margin: "12px 0 0",
+                          fontSize: 15,
+                          lineHeight: 1.6,
+                          color: M.smoke,
+                          maxWidth: 620,
+                        }}
+                      >
                         {it.a}
                       </p>
                     )}
@@ -2752,7 +3345,12 @@ function LFaq() {
                       marginTop: 2,
                     }}
                   >
-                    <SvcIcon name={open ? "check2" : "plus2"} size={12} color={open ? M.cream : M.ink} stroke={2.4} />
+                    <SvcIcon
+                      name={open ? "check2" : "plus2"}
+                      size={12}
+                      color={open ? M.cream : M.ink}
+                      stroke={2.4}
+                    />
                   </span>
                 </button>
               </div>
@@ -2783,7 +3381,7 @@ function LCta() {
           right: "-15%",
           width: "70%",
           height: "120%",
-          background: "radial-gradient(circle at center, rgba(226,81,28,0.55), transparent 60%)",
+          background: "transparent",
           filter: "blur(80px)",
           pointerEvents: "none",
         }}
@@ -2795,7 +3393,7 @@ function LCta() {
           left: "-15%",
           width: "60%",
           height: "90%",
-          background: "radial-gradient(circle at center, rgba(240,132,58,0.35), transparent 60%)",
+          background: "transparent",
           filter: "blur(100px)",
           pointerEvents: "none",
         }}
@@ -2804,10 +3402,7 @@ function LCta() {
         style={{
           position: "absolute",
           inset: 0,
-          opacity: 0.05,
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,1) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)",
-          backgroundSize: "56px 56px",
+          opacity: 0,
         }}
       />
       <div
@@ -2837,15 +3432,28 @@ function LCta() {
           >
             Erzähl dem
             <br />
-            <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>Co-Pilot</span>
+            <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>
+              Co-Pilot
+            </span>
             <br />
             von dir<span style={{ color: M.ember }}>.</span>
           </h2>
-          <p style={{ marginTop: 24, fontSize: 18, lineHeight: 1.55, color: "rgba(251,250,247,0.7)", maxWidth: 480 }}>
-            Fünf Minuten reichen. Du sprichst, er sortiert. Am Ende hast du drei konkrete Schritte und Menschen, die sie
-            mit dir gehen.
+          <p
+            style={{
+              marginTop: 24,
+              fontSize: 18,
+              lineHeight: 1.55,
+              color: "rgba(251,250,247,0.7)",
+              maxWidth: 480,
+            }}
+          >
+            Fünf Minuten reichen. Du sprichst, er sortiert. Am Ende hast du drei konkrete Schritte
+            und Menschen, die sie mit dir gehen.
           </p>
-          <div className="landing-cta-actions" style={{ display: "flex", gap: 12, marginTop: 36, flexWrap: "wrap" }}>
+          <div
+            className="landing-cta-actions"
+            style={{ display: "flex", gap: 12, marginTop: 36, flexWrap: "wrap" }}
+          >
             <Link
               to="/co-pilot"
               style={{
@@ -2931,13 +3539,16 @@ function LCta() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25), 0 8px 16px -6px rgba(178,59,14,0.5)",
+                boxShadow:
+                  "inset 0 1px 0 rgba(255,255,255,0.25), 0 8px 16px -6px rgba(178,59,14,0.5)",
               }}
             >
               <SvcIcon name="mic" size={20} color={M.cream} stroke={2} />
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: 16, letterSpacing: "-0.015em" }}>Sprachnachricht an Co-Pilot</div>
+              <div style={{ fontWeight: 600, fontSize: 16, letterSpacing: "-0.015em" }}>
+                Sprachnachricht an Co-Pilot
+              </div>
               <div
                 style={{
                   fontFamily: M.fontMono,
@@ -3011,9 +3622,9 @@ function LCta() {
                 color: M.cream,
               }}
             >
-              „Also, ich bin Designer, hab seit zwei Monaten einen Prototyp für… eigentlich Buchhaltung für kleine Salons,
-              und ich glaub' ich brauch' jemand Technisches, aber auch — keine Ahnung — wahrscheinlich einen Anwalt,
-              oder?{" "}
+              „Also, ich bin Designer, hab seit zwei Monaten einen Prototyp für… eigentlich
+              Buchhaltung für kleine Salons, und ich glaub' ich brauch' jemand Technisches, aber
+              auch — keine Ahnung — wahrscheinlich einen Anwalt, oder?{" "}
               <span
                 style={{
                   background: "rgba(226,81,28,0.30)",
@@ -3036,18 +3647,43 @@ function LCta() {
 
 function LFooter() {
   const cols = [
-    { h: "Plattform", items: ["Marketplace", "Co-Pilot", "Pipeline", "Förderung-Radar", "Beratungs-Buchung"] },
+    {
+      h: "Plattform",
+      items: ["Marketplace", "Co-Pilot", "Pipeline", "Förderung-Radar", "Beratungs-Buchung"],
+    },
     {
       h: "Disziplinen",
-      items: ["Co-Founder", "Recht & Verträge", "Steuer", "Förderung", "Mentoren", "Talent", "Growth"],
+      items: [
+        "Co-Founder",
+        "Recht & Verträge",
+        "Steuer",
+        "Förderung",
+        "Mentoren",
+        "Talent",
+        "Growth",
+      ],
     },
-    { h: "Unternehmen", items: ["Über uns", "Stories", "Karriere · 6 offen", "Presse", "Partner werden"] },
-    { h: "Rechtliches", items: ["Impressum", "Datenschutz", "AGB", "Cookies", "AV-Vertrag", "Security"] },
+    {
+      h: "Unternehmen",
+      items: ["Über uns", "Stories", "Karriere · 6 offen", "Presse", "Partner werden"],
+    },
+    {
+      h: "Rechtliches",
+      items: ["Impressum", "Datenschutz", "AGB", "Cookies", "AV-Vertrag", "Security"],
+    },
   ];
   return (
     <footer style={{ background: M.ink, color: M.cream, padding: "80px 0 36px" }}>
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 64px" }}>
-        <div className="landing-footer-grid" style={{ display: "grid", gridTemplateColumns: "1.4fr repeat(4, 1fr)", gap: 36, marginBottom: 56 }}>
+        <div
+          className="landing-footer-grid"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.4fr repeat(4, 1fr)",
+            gap: 36,
+            marginBottom: 56,
+          }}
+        >
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <IconMF size={28} color={M.cream} spark={M.ember} />
@@ -3055,9 +3691,17 @@ function LFooter() {
                 matchfoundr<span style={{ color: M.ember }}>.</span>
               </span>
             </div>
-            <p style={{ marginTop: 20, fontSize: 14, lineHeight: 1.6, color: "rgba(251,250,247,0.65)", maxWidth: 280 }}>
-              Eine Plattform für alles, was ein Founder im ersten Jahr braucht — vermittelt von einem Co-Pilot, der
-              zuhört.
+            <p
+              style={{
+                marginTop: 20,
+                fontSize: 14,
+                lineHeight: 1.6,
+                color: "rgba(251,250,247,0.65)",
+                maxWidth: 280,
+              }}
+            >
+              Eine Plattform für alles, was ein Founder im ersten Jahr braucht — vermittelt von
+              einem Co-Pilot, der zuhört.
             </p>
             <div
               style={{
@@ -3527,7 +4171,6 @@ const RESPONSIVE_CSS = `
   }
 }
 `;
-
 
 function Landing() {
   return (

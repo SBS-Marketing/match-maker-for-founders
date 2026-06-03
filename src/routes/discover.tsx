@@ -320,7 +320,7 @@ function Discover() {
           <div className="eyebrow">Profil unvollständig</div>
           <h2 className="mt-4 text-balance text-3xl font-semibold tracking-tight">
             Erst dein{" "}
-            <span className="font-serif italic font-normal text-[var(--ember)]">Profil</span>
+            <span className="text-[var(--ember)]">Profil</span>
           </h2>
           <p className="mt-4 text-[14px] text-[var(--smoke)]">
             Vervollständige dein Founder-Profil, bevor du andere Founder triffst.
@@ -348,7 +348,7 @@ function Discover() {
         <div className="glass-pane p-10 text-center">
           <div className="eyebrow">Alles gesehen</div>
           <h2 className="mt-4 text-balance text-3xl font-semibold tracking-tight">
-            Keine neuen <span className="font-serif italic font-normal">Profile</span>
+            Keine neuen <span className="text-[var(--ember)]">Profile</span>
           </h2>
           <p className="mt-4 text-[14px] text-[var(--smoke)]">
             Du hast alle aktuellen Founder gesehen. Schau später wieder vorbei.
@@ -413,7 +413,7 @@ function Discover() {
       <div className="mx-auto max-w-2xl px-4 pt-10 pb-24 sm:px-6">
         <div className="eyebrow">Entdecken</div>
         <h1 className="mt-4 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-          Keine <span className="font-serif italic font-normal">Treffer</span>.
+          Keine <span className="text-[var(--ember)]">Treffer</span>.
         </h1>
         {filterBar}
         <div className="glass-pane mt-6 p-10 text-center">
@@ -436,7 +436,7 @@ function Discover() {
             Entdecken · {viewMode === "spark" ? sparkProfiles.length : filtered.length} Founder
           </div>
           <h1 className="mt-4 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-            Menschen für <span className="font-serif italic font-normal">dich</span>.
+            Menschen für <span className="text-[var(--ember)]">dich</span>.
           </h1>
         </div>
         {/* View Toggle */}

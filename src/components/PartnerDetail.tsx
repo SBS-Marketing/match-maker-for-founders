@@ -89,7 +89,7 @@ export function PartnerDetail({ partner }: Props) {
             <div className="mt-4 space-y-4">
               {partner.vouches.map((vouch) => (
                 <div key={`${vouch.from}-${vouch.role}`}>
-                  <p className="font-serif text-[16px] italic leading-snug">"{vouch.quote}"</p>
+                  <p className="text-[15px] font-medium leading-relaxed text-[var(--ink-soft)]">"{vouch.quote}"</p>
                   <div className="mt-2 text-[12px] text-[var(--smoke)]">
                     <span className="font-semibold text-[var(--ink)]">{vouch.from}</span> · {vouch.role}
                   </div>

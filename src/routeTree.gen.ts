@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UnterlagenRouteImport } from './routes/unterlagen'
+import { Route as TeamRouteImport } from './routes/team'
 import { Route as TalentRouteImport } from './routes/talent'
 import { Route as SteuerRouteImport } from './routes/steuer'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -17,13 +19,17 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MentorenRouteImport } from './routes/mentoren'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as KapitalRouteImport } from './routes/kapital'
+import { Route as KanbanRouteImport } from './routes/kanban'
+import { Route as KalenderRouteImport } from './routes/kalender'
 import { Route as HeuteRouteImport } from './routes/heute'
 import { Route as GrowthRouteImport } from './routes/growth'
+import { Route as FirmaRouteImport } from './routes/firma'
 import { Route as EntdeckenRouteImport } from './routes/entdecken'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as CoPilotRouteImport } from './routes/co-pilot'
 import { Route as CoFounderRouteImport } from './routes/co-founder'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AufgabenRouteImport } from './routes/aufgaben'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TalentIndexRouteImport } from './routes/talent.index'
 import { Route as SteuerIndexRouteImport } from './routes/steuer.index'
@@ -46,6 +52,16 @@ import { Route as AuthUpdatePasswordRouteImport } from './routes/auth.update-pas
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ApiSttRouteImport } from './routes/api/stt'
 
+const UnterlagenRoute = UnterlagenRouteImport.update({
+  id: '/unterlagen',
+  path: '/unterlagen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamRoute = TeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TalentRoute = TalentRouteImport.update({
   id: '/talent',
   path: '/talent',
@@ -86,6 +102,16 @@ const KapitalRoute = KapitalRouteImport.update({
   path: '/kapital',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KanbanRoute = KanbanRouteImport.update({
+  id: '/kanban',
+  path: '/kanban',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KalenderRoute = KalenderRouteImport.update({
+  id: '/kalender',
+  path: '/kalender',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HeuteRoute = HeuteRouteImport.update({
   id: '/heute',
   path: '/heute',
@@ -94,6 +120,11 @@ const HeuteRoute = HeuteRouteImport.update({
 const GrowthRoute = GrowthRouteImport.update({
   id: '/growth',
   path: '/growth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FirmaRoute = FirmaRouteImport.update({
+  id: '/firma',
+  path: '/firma',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EntdeckenRoute = EntdeckenRouteImport.update({
@@ -119,6 +150,11 @@ const CoFounderRoute = CoFounderRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AufgabenRoute = AufgabenRouteImport.update({
+  id: '/aufgaben',
+  path: '/aufgaben',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -229,13 +265,17 @@ const ApiSttRoute = ApiSttRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/aufgaben': typeof AufgabenRoute
   '/auth': typeof AuthRouteWithChildren
   '/co-founder': typeof CoFounderRoute
   '/co-pilot': typeof CoPilotRoute
   '/discover': typeof DiscoverRoute
   '/entdecken': typeof EntdeckenRoute
+  '/firma': typeof FirmaRoute
   '/growth': typeof GrowthRouteWithChildren
   '/heute': typeof HeuteRoute
+  '/kalender': typeof KalenderRoute
+  '/kanban': typeof KanbanRoute
   '/kapital': typeof KapitalRouteWithChildren
   '/marketplace': typeof MarketplaceRoute
   '/mentoren': typeof MentorenRouteWithChildren
@@ -244,6 +284,8 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/steuer': typeof SteuerRouteWithChildren
   '/talent': typeof TalentRouteWithChildren
+  '/team': typeof TeamRoute
+  '/unterlagen': typeof UnterlagenRoute
   '/api/stt': typeof ApiSttRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
@@ -267,16 +309,22 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/aufgaben': typeof AufgabenRoute
   '/auth': typeof AuthRouteWithChildren
   '/co-founder': typeof CoFounderRoute
   '/co-pilot': typeof CoPilotRoute
   '/discover': typeof DiscoverRoute
   '/entdecken': typeof EntdeckenRoute
+  '/firma': typeof FirmaRoute
   '/heute': typeof HeuteRoute
+  '/kalender': typeof KalenderRoute
+  '/kanban': typeof KanbanRoute
   '/marketplace': typeof MarketplaceRoute
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
   '/profile': typeof ProfileRoute
+  '/team': typeof TeamRoute
+  '/unterlagen': typeof UnterlagenRoute
   '/api/stt': typeof ApiSttRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
@@ -301,13 +349,17 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/aufgaben': typeof AufgabenRoute
   '/auth': typeof AuthRouteWithChildren
   '/co-founder': typeof CoFounderRoute
   '/co-pilot': typeof CoPilotRoute
   '/discover': typeof DiscoverRoute
   '/entdecken': typeof EntdeckenRoute
+  '/firma': typeof FirmaRoute
   '/growth': typeof GrowthRouteWithChildren
   '/heute': typeof HeuteRoute
+  '/kalender': typeof KalenderRoute
+  '/kanban': typeof KanbanRoute
   '/kapital': typeof KapitalRouteWithChildren
   '/marketplace': typeof MarketplaceRoute
   '/mentoren': typeof MentorenRouteWithChildren
@@ -316,6 +368,8 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/steuer': typeof SteuerRouteWithChildren
   '/talent': typeof TalentRouteWithChildren
+  '/team': typeof TeamRoute
+  '/unterlagen': typeof UnterlagenRoute
   '/api/stt': typeof ApiSttRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
@@ -341,13 +395,17 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/aufgaben'
     | '/auth'
     | '/co-founder'
     | '/co-pilot'
     | '/discover'
     | '/entdecken'
+    | '/firma'
     | '/growth'
     | '/heute'
+    | '/kalender'
+    | '/kanban'
     | '/kapital'
     | '/marketplace'
     | '/mentoren'
@@ -356,6 +414,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/steuer'
     | '/talent'
+    | '/team'
+    | '/unterlagen'
     | '/api/stt'
     | '/auth/callback'
     | '/auth/update-password'
@@ -379,16 +439,22 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/aufgaben'
     | '/auth'
     | '/co-founder'
     | '/co-pilot'
     | '/discover'
     | '/entdecken'
+    | '/firma'
     | '/heute'
+    | '/kalender'
+    | '/kanban'
     | '/marketplace'
     | '/onboarding'
     | '/plan'
     | '/profile'
+    | '/team'
+    | '/unterlagen'
     | '/api/stt'
     | '/auth/callback'
     | '/auth/update-password'
@@ -412,13 +478,17 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/aufgaben'
     | '/auth'
     | '/co-founder'
     | '/co-pilot'
     | '/discover'
     | '/entdecken'
+    | '/firma'
     | '/growth'
     | '/heute'
+    | '/kalender'
+    | '/kanban'
     | '/kapital'
     | '/marketplace'
     | '/mentoren'
@@ -427,6 +497,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/steuer'
     | '/talent'
+    | '/team'
+    | '/unterlagen'
     | '/api/stt'
     | '/auth/callback'
     | '/auth/update-password'
@@ -451,13 +523,17 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AufgabenRoute: typeof AufgabenRoute
   AuthRoute: typeof AuthRouteWithChildren
   CoFounderRoute: typeof CoFounderRoute
   CoPilotRoute: typeof CoPilotRoute
   DiscoverRoute: typeof DiscoverRoute
   EntdeckenRoute: typeof EntdeckenRoute
+  FirmaRoute: typeof FirmaRoute
   GrowthRoute: typeof GrowthRouteWithChildren
   HeuteRoute: typeof HeuteRoute
+  KalenderRoute: typeof KalenderRoute
+  KanbanRoute: typeof KanbanRoute
   KapitalRoute: typeof KapitalRouteWithChildren
   MarketplaceRoute: typeof MarketplaceRoute
   MentorenRoute: typeof MentorenRouteWithChildren
@@ -466,6 +542,8 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   SteuerRoute: typeof SteuerRouteWithChildren
   TalentRoute: typeof TalentRouteWithChildren
+  TeamRoute: typeof TeamRoute
+  UnterlagenRoute: typeof UnterlagenRoute
   ApiSttRoute: typeof ApiSttRoute
   FoerderungSlugRoute: typeof FoerderungSlugRoute
   MatchesIdRoute: typeof MatchesIdRoute
@@ -477,6 +555,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/unterlagen': {
+      id: '/unterlagen'
+      path: '/unterlagen'
+      fullPath: '/unterlagen'
+      preLoaderRoute: typeof UnterlagenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/team': {
+      id: '/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/talent': {
       id: '/talent'
       path: '/talent'
@@ -533,6 +625,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KapitalRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/kanban': {
+      id: '/kanban'
+      path: '/kanban'
+      fullPath: '/kanban'
+      preLoaderRoute: typeof KanbanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kalender': {
+      id: '/kalender'
+      path: '/kalender'
+      fullPath: '/kalender'
+      preLoaderRoute: typeof KalenderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/heute': {
       id: '/heute'
       path: '/heute'
@@ -545,6 +651,13 @@ declare module '@tanstack/react-router' {
       path: '/growth'
       fullPath: '/growth'
       preLoaderRoute: typeof GrowthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/firma': {
+      id: '/firma'
+      path: '/firma'
+      fullPath: '/firma'
+      preLoaderRoute: typeof FirmaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/entdecken': {
@@ -580,6 +693,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aufgaben': {
+      id: '/aufgaben'
+      path: '/aufgaben'
+      fullPath: '/aufgaben'
+      preLoaderRoute: typeof AufgabenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -814,13 +934,17 @@ const TalentRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AufgabenRoute: AufgabenRoute,
   AuthRoute: AuthRouteWithChildren,
   CoFounderRoute: CoFounderRoute,
   CoPilotRoute: CoPilotRoute,
   DiscoverRoute: DiscoverRoute,
   EntdeckenRoute: EntdeckenRoute,
+  FirmaRoute: FirmaRoute,
   GrowthRoute: GrowthRouteWithChildren,
   HeuteRoute: HeuteRoute,
+  KalenderRoute: KalenderRoute,
+  KanbanRoute: KanbanRoute,
   KapitalRoute: KapitalRouteWithChildren,
   MarketplaceRoute: MarketplaceRoute,
   MentorenRoute: MentorenRouteWithChildren,
@@ -829,6 +953,8 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   SteuerRoute: SteuerRouteWithChildren,
   TalentRoute: TalentRouteWithChildren,
+  TeamRoute: TeamRoute,
+  UnterlagenRoute: UnterlagenRoute,
   ApiSttRoute: ApiSttRoute,
   FoerderungSlugRoute: FoerderungSlugRoute,
   MatchesIdRoute: MatchesIdRoute,

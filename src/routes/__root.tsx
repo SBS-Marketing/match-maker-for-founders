@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Toaster } from "@/components/ui/sonner";
-import { AppNav } from "@/components/AppNav";
+import { AppShell } from "@/components/AppShell";
 import { PageBackdrop } from "@/components/PageBackdrop";
 import { useRouterState } from "@tanstack/react-router";
 
@@ -113,7 +113,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap",
       },
     ],
   }),
@@ -125,7 +125,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="de">
       <head>
         <HeadContent />
       </head>
@@ -140,19 +140,30 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const variant = pathname.startsWith("/onboarding") ? "dusk" : "sunrise";
+
+  // Landing = eigene Marketing-Seite. Auth/Onboarding = bildschirmfüllende Flows.
+  // Alles andere = native App-Shell mit Sidebar + Topbar.
   const isLanding = pathname === "/";
+  const isFlow = pathname.startsWith("/auth") || pathname.startsWith("/onboarding");
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        {!isLanding && <PageBackdrop variant={variant} />}
-        <div className="relative z-10 flex min-h-screen flex-col">
-          {!isLanding && <AppNav />}
-          <main className="flex-1">
+        {isLanding ? (
+          <Outlet />
+        ) : isFlow ? (
+          <>
+            <PageBackdrop variant={pathname.startsWith("/onboarding") ? "dusk" : "sunrise"} />
+            <main className="relative z-10 min-h-screen">
+              <Outlet />
+            </main>
+          </>
+        ) : (
+          <AppShell>
+            <PageBackdrop variant="sunrise" />
             <Outlet />
-          </main>
-        </div>
+          </AppShell>
+        )}
         <Toaster />
       </AuthProvider>
     </QueryClientProvider>

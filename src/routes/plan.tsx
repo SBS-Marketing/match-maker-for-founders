@@ -131,7 +131,7 @@ function PlanPage() {
   if (error) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4" style={{ background: "var(--cream)" }}>
-        <p className="font-serif text-2xl text-[var(--ink)]">{error}</p>
+        <p className="text-2xl text-[var(--ink)]">{error}</p>
         <button
           onClick={goDashboard}
           className="rounded-2xl bg-[var(--ember)] px-6 py-3 font-medium text-[var(--cream)]"
@@ -278,7 +278,7 @@ function SlideRenderer({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.6 }}
-            className="max-w-3xl font-serif text-4xl leading-[1.05] md:text-6xl"
+            className="max-w-3xl text-4xl leading-[1.05] md:text-6xl"
           >
             {slide.title}
           </motion.h1>
@@ -322,7 +322,7 @@ function SlideRenderer({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
-            className="max-w-3xl font-serif text-3xl leading-[1.2] md:text-5xl"
+            className="max-w-3xl text-3xl leading-[1.2] md:text-5xl"
           >
             {slide.text}
           </motion.p>
@@ -356,7 +356,7 @@ function SlideRenderer({
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="font-serif text-3xl leading-[1.1] md:text-5xl"
+              className="text-3xl leading-[1.1] md:text-5xl"
             >
               {slide.title}
             </motion.h2>
@@ -422,7 +422,7 @@ function SlideRenderer({
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
-              className="font-serif text-3xl leading-[1.15] md:text-5xl"
+              className="text-3xl leading-[1.15] md:text-5xl"
             >
               {slide.action}
             </motion.h2>
@@ -480,7 +480,7 @@ function SlideRenderer({
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="font-serif text-2xl leading-[1.2] md:text-4xl"
+              className="text-2xl leading-[1.2] md:text-4xl"
             >
               {slide.risk}
             </motion.h2>

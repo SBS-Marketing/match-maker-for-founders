@@ -66,7 +66,7 @@ function WaitlistConfirmPage() {
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">
           Waitlist{" "}
-          <span className="font-serif italic font-normal text-[var(--ember)]">Bestaetigung</span>.
+          <span className="text-[var(--ember)]">Bestaetigung</span>.
         </h1>
         <p className="mt-3 text-sm text-[var(--smoke)]">{message}</p>
       </div>

@@ -19,12 +19,15 @@ function Marketplace() {
     <div className="mx-auto max-w-6xl px-4 pt-10 pb-24 sm:px-6">
       <div className="eyebrow">Marketplace</div>
       <h1 className="mt-3 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-        Was brauchst du <span className="font-serif italic font-normal">jetzt</span>?
+        Was brauchst du <span className="text-[var(--ember)]">jetzt</span>?
       </h1>
+      <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-[var(--smoke)]">
+        Wähle eine Kategorie oder lass den Co-Pilot direkt die passenden Angebote, Partner und Programme vorsortieren.
+      </p>
 
       {/* Co-Pilot routing banner */}
       <div className="glass-pane-ink mt-8 grid gap-4 p-5 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:p-6">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--ember)]">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/12">
           <CopilotMark size={18} color="var(--cream)" spark="var(--cream)" />
         </span>
         <div>
@@ -34,8 +37,8 @@ function Marketplace() {
               schneller als blättern
             </span>
           </div>
-          <p className="font-serif text-[18px] italic leading-snug text-[var(--cream)]">
-            „Sag mir, wo du gerade hängst — ich öffne die richtigen Türen parallel."
+          <p className="text-[17px] font-semibold leading-snug text-[var(--cream)]">
+            Sag mir, wo du gerade hängst. Ich öffne die richtigen Türen parallel.
           </p>
         </div>
         <Link

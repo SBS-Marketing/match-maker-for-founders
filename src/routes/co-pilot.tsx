@@ -295,7 +295,7 @@ function CoPilotPage() {
   return (
     <div
       className="min-h-[calc(100vh-4rem)] w-full"
-      style={{ background: "var(--ink)", color: "var(--cream)" }}
+      style={{ background: "var(--indigo-grad)", color: "var(--surface)" }}
     >
       <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6">
         <div className="grid gap-5 lg:grid-cols-[65fr_35fr]">
@@ -308,7 +308,7 @@ function CoPilotPage() {
             <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3 sm:px-5 sm:py-4">
               <span
                 className="flex h-10 w-10 items-center justify-center rounded-xl"
-                style={{ background: "var(--ember)" }}
+                style={{ background: "rgba(255,255,255,0.14)" }}
               >
                 <CopilotMark size={18} color="var(--cream)" spark="var(--cream)" />
               </span>
@@ -364,7 +364,7 @@ function CoPilotPage() {
                   <div key={m.id} className="ml-auto max-w-[88%] sm:max-w-[78%]">
                     <div
                       className="rounded-2xl rounded-br-sm px-4 py-3 text-[14px] leading-snug"
-                      style={{ background: "var(--cream)", color: "var(--ink)" }}
+                      style={{ background: "var(--surface)", color: "var(--indigo-deep)" }}
                     >
                       {m.content}
                     </div>
@@ -439,7 +439,7 @@ function CoPilotPage() {
                   type="submit"
                   disabled={sending || !input.trim()}
                   className="flex h-11 w-11 items-center justify-center rounded-xl text-[var(--cream)] disabled:opacity-50"
-                  style={{ background: "var(--ember)" }}
+                  style={{ background: "var(--indigo-grad)", boxShadow: "var(--indigo-glow)" }}
                   aria-label="Senden"
                 >
                   <Send className="h-4 w-4" />
@@ -489,7 +489,7 @@ function CoPilotPage() {
                     <button
                       onClick={reparseContext}
                       className="rounded-lg px-3 py-1.5 text-[11.5px] font-semibold text-[var(--cream)]"
-                      style={{ background: "var(--ember)" }}
+                      style={{ background: "var(--indigo)" }}
                     >
                       Speichern
                     </button>

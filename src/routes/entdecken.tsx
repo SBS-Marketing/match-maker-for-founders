@@ -65,7 +65,7 @@ function DiscoverPage() {
         <div className="eyebrow">Entdecken · 6 Profile zur Vorschau</div>
         <h1 className="mt-5 text-balance text-5xl font-semibold tracking-tight sm:text-6xl">
           Menschen, die du{" "}
-          <span className="font-serif italic font-normal">treffen solltest</span>.
+          <span className="text-[var(--ember)]">treffen solltest</span>.
         </h1>
         <p className="mt-6 max-w-2xl text-pretty text-[16px] leading-relaxed text-[var(--smoke)]">
           Eine kleine Auswahl an Foundern, die gerade bei matchfoundr unterwegs sind.
@@ -170,7 +170,7 @@ function DiscoverPage() {
           <div className="eyebrow">+ 240 weitere Founder</div>
           <h3 className="mt-4 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
             Mehr Founder{" "}
-            <span className="font-serif italic font-normal text-[var(--ember)]">entdecken</span>.
+            <span className="text-[var(--ember)]">entdecken</span>.
           </h3>
           <p className="mx-auto mt-4 max-w-md text-[14px] text-[var(--smoke)]">
             Melde dich an, um das vollständige Feed zu sehen und direkt zu schreiben.

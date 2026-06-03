@@ -88,7 +88,7 @@ function AdvisorDetail() {
             <div className="mt-4 space-y-4">
               {advisor.vouches.map((v: any) => (
                 <div key={v.from}>
-                  <p className="font-serif text-[16px] italic leading-snug">„{v.quote}"</p>
+                  <p className="text-[15px] font-medium leading-relaxed text-[var(--ink-soft)]">„{v.quote}"</p>
                   <div className="mt-2 text-[12px] text-[var(--smoke)]">
                     <span className="font-semibold text-[var(--ink)]">{v.from}</span> · {v.role}
                   </div>

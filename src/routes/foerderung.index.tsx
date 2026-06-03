@@ -18,8 +18,11 @@ export const Route = createFileRoute("/foerderung/")({
           <span className="eyebrow">Förderprogramme · {GRANTS.length || s.count} aktiv</span>
         </div>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-          Öffentliche <span className="font-serif italic font-normal">Förderung</span>, live gematcht.
+          Öffentliche <span className="text-[var(--ember)]">Förderung</span>, live gematcht.
         </h1>
+        <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-[var(--smoke)]">
+          Förderprogramme mit Fit-Score, Deadline und nächstem Antragsschritt, damit Neukunden direkt loslegen können.
+        </p>
         <div className="mt-10 grid gap-5 md:grid-cols-2">
           {GRANTS.map((g) => (
             <Link key={g.slug} to="/foerderung/$slug" params={{ slug: g.slug }} className="glass-pane block p-6 transition hover:-translate-y-0.5">

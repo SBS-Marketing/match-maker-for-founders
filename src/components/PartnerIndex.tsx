@@ -23,7 +23,7 @@ export function PartnerIndex({ service, title, accent }: Props) {
         <span className="eyebrow">{s.label} · {partners.length || s.count} kuratiert</span>
       </div>
       <h1 className="mt-4 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-        {title} <span className="font-serif italic font-normal">{accent}</span>.
+        {title} <span className="text-[var(--ember)]">{accent}</span>.
       </h1>
       <p className="mt-4 max-w-2xl text-[15px] text-[var(--smoke)]">{s.blurb}</p>
 

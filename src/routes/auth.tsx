@@ -112,17 +112,17 @@ function AuthPage() {
             {mode === "signup" ? (
               <>
                 Founder-Profil{" "}
-                <span className="font-serif italic font-normal text-[var(--ember)]">erstellen</span>
+                <span className="text-[var(--ember)]">erstellen</span>
               </>
             ) : mode === "signin" ? (
               <>
                 Willkommen{" "}
-                <span className="font-serif italic font-normal text-[var(--ember)]">zurück</span>
+                <span className="text-[var(--ember)]">zurück</span>
               </>
             ) : (
               <>
                 Magic{" "}
-                <span className="font-serif italic font-normal text-[var(--ember)]">Link</span>
+                <span className="text-[var(--ember)]">Link</span>
               </>
             )}
           </h1>

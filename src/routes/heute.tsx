@@ -2,15 +2,19 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
-  Calendar,
+  Building2,
+  CalendarDays,
   Check,
   CheckCircle2,
   Clock3,
-  FileText,
-  MessageSquare,
+  Kanban,
+  ListChecks,
+  Loader2,
   RefreshCw,
+  Send,
   Sparkles,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { AuthGate } from "@/components/AuthGate";
 import { SERVICE_BY_ID, type ServiceId } from "@/data/services";
@@ -20,7 +24,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { ServiceIcon } from "@/components/ServiceIcon";
-import { CopilotMark, AITag, FitScore } from "@/components/Copilot";
+import { CopilotMark } from "@/components/Copilot";
 import { Button } from "@/components/ui/button";
 import { TutorialOverlay, shouldShowTutorial } from "@/components/onboarding/TutorialOverlay";
 import {
@@ -50,17 +54,6 @@ type DailyTask = {
   minutes: number;
 };
 
-type DailyMessage = {
-  id: string;
-  sId: ServiceId;
-  name: string;
-  status: string;
-  note: string;
-  t: string;
-  hot?: boolean;
-  href: string;
-};
-
 type DailyState = {
   completed: string[];
   snoozed: string[];
@@ -70,19 +63,23 @@ type DailyState = {
 type DailyTaskStatus = "open" | "done" | "snoozed";
 
 const DAILY_STATE_KEY = "mf_daily_state_v1";
+const EMPTY_DAILY_STATE: DailyState = { completed: [], snoozed: [] };
 
-const EMPTY_DAILY_STATE: DailyState = {
-  completed: [],
-  snoozed: [],
-};
+const QUICK_PROMPTS = [
+  "Was ist heute der wichtigste nächste Schritt?",
+  "Hilf mir den EXIST-Antrag weiter auszufüllen.",
+  "Formuliere mir eine kurze Partner-Nachricht.",
+];
 
 function CommandCenter() {
   const { user, session, isDemo } = useAuth();
   const [showTutorial, setShowTutorial] = useState(false);
-  const [showWeek, setShowWeek] = useState(false);
   const [planContext, setPlanContext] = useState<PlanContext | null>(() => readPlanContext());
   const [dailyState, setDailyState] = useState<DailyState>(() => readDailyState());
   const [remoteReady, setRemoteReady] = useState(false);
+  const [copilotInput, setCopilotInput] = useState("");
+  const [copilotAnswer, setCopilotAnswer] = useState<string | null>(null);
+  const [copilotSending, setCopilotSending] = useState(false);
 
   useEffect(() => {
     if (shouldShowTutorial()) {
@@ -104,15 +101,12 @@ function CommandCenter() {
   const firstName = userName.split(" ")[0] || "Founder";
   const planSlides = useMemo(() => buildLocalPlanSlides(planContext), [planContext]);
   const firstStep = useMemo(() => planSlides.find(isFirstStep), [planSlides]);
-  const tracks = useMemo(() => planSlides.filter(isTrack), [planSlides]);
   const topGrant = GRANTS[0];
   const topPartners = useMemo(
     () => [
       ...partnersFor("mentor").slice(0, 1),
       ...partnersFor("growth").slice(0, 1),
       ...partnersFor("tax").slice(0, 1),
-      ...partnersFor("capital").slice(0, 1),
-      ...partnersFor("talent").slice(0, 1),
     ],
     [],
   );
@@ -123,13 +117,10 @@ function CommandCenter() {
   const taskDate = useMemo(() => getLocalDateKey(), []);
   const visibleTasks = dailyTasks.filter((task) => !dailyState.snoozed.includes(task.id));
   const completedCount = dailyTasks.filter((task) => dailyState.completed.includes(task.id)).length;
-  const openVisibleCount = visibleTasks.filter(
-    (task) => !dailyState.completed.includes(task.id),
-  ).length;
+  const openTasks = visibleTasks.filter((task) => !dailyState.completed.includes(task.id));
+  const nextFocus = openTasks[0];
+  const nextPartner = topPartners[0];
   const progress = dailyTasks.length ? Math.round((completedCount / dailyTasks.length) * 100) : 0;
-  const messages = useMemo(() => buildMessages(topGrant, topPartners), [topGrant, topPartners]);
-  const nextFocus = visibleTasks.find((task) => !dailyState.completed.includes(task.id));
-  const weeklyPlan = useMemo(() => buildWeeklyPlan(tracks, dailyTasks), [tracks, dailyTasks]);
 
   useEffect(() => {
     if (!session || !user || isDemo || dailyTasks.length === 0) {
@@ -218,6 +209,7 @@ function CommandCenter() {
   const refreshDaily = useCallback(() => {
     setPlanContext(readPlanContext());
     setDailyState({ completed: [], snoozed: [], refreshedAt: new Date().toISOString() });
+    setCopilotAnswer(null);
     if (session && user && !isDemo) {
       Promise.all(
         dailyTasks.map((task) => persistDailyTask(user.id, taskDate, task, "open")),
@@ -226,27 +218,53 @@ function CommandCenter() {
     toast.success("Heute neu priorisiert");
   }, [dailyTasks, isDemo, session, taskDate, user]);
 
+  const sendToCopilot = useCallback(
+    async (text?: string) => {
+      const body = (text ?? copilotInput).trim();
+      if (!body || copilotSending) return;
+      setCopilotInput("");
+      setCopilotSending(true);
+
+      if (!session || isDemo) {
+        window.setTimeout(() => {
+          setCopilotAnswer(buildLocalDailyCopilotAnswer(body, nextFocus, topGrant, planContext));
+          setCopilotSending(false);
+        }, 450);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase.functions.invoke("copilot", {
+          body: { task: "chat", message: body, extra: { onboarding: planContext } },
+        });
+        if (error) throw error;
+        setCopilotAnswer(
+          (data?.answer as string) ||
+            buildLocalDailyCopilotAnswer(body, nextFocus, topGrant, planContext),
+        );
+      } catch {
+        setCopilotAnswer(buildLocalDailyCopilotAnswer(body, nextFocus, topGrant, planContext));
+        toast.error("Co-Pilot nutzt gerade den lokalen Modus");
+      } finally {
+        setCopilotSending(false);
+      }
+    },
+    [copilotInput, copilotSending, isDemo, nextFocus, planContext, session, topGrant],
+  );
+
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-8 pb-24 sm:px-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <div className="eyebrow">{today} · Daily Overview</div>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
-            Guten Morgen, {firstName}
-            <span className="text-[var(--ember)]">.</span>{" "}
-            <span className="font-serif italic font-normal text-[var(--smoke)]">
-              Das zählt heute.
-            </span>
+    <div className="mx-auto max-w-6xl px-4 pt-5 pb-24 sm:px-6 sm:pt-8">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="eyebrow">{today}</div>
+          <h1 className="mt-2 max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl">
+            Hi {firstName}, dein Tagesplan.
           </h1>
+          <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-[var(--smoke)]">
+            Erst Fokus klären, dann Co-Pilot nutzen, danach in den passenden Workspace springen.
+          </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="ghost"
-            onClick={() => setShowWeek((value) => !value)}
-            className="glass-pill h-10 gap-2 rounded-full px-4 text-[13px]"
-          >
-            <Calendar className="h-3.5 w-3.5" /> Diese Woche
-          </Button>
+        <div className="flex gap-2">
           <Button
             variant="ghost"
             onClick={refreshDaily}
@@ -255,240 +273,332 @@ function CommandCenter() {
             <RefreshCw className="h-3.5 w-3.5" /> Neu sortieren
           </Button>
           <Link to="/plan">
-            <Button className="h-10 gap-2 rounded-full bg-[var(--ink)] px-4 text-[13px] text-[var(--cream)] hover:bg-[var(--ink-soft)]">
-              <CopilotMark size={14} color="var(--cream)" /> Plan öffnen
+            <Button className="h-10 gap-2 rounded-full bg-[var(--ember)] px-4 text-[13px] text-white shadow-ember hover:bg-[var(--ember-deep)]">
+              <CopilotMark size={14} color="white" /> Plan
             </Button>
           </Link>
         </div>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        <MetricCard
-          label="Heute offen"
-          value={String(openVisibleCount)}
-          sub={`${completedCount}/${dailyTasks.length} erledigt`}
-        />
-        <MetricCard
-          label="Pipeline"
-          value={`${GRANTS.length + PARTNERS.length}`}
-          sub="Deals, Förderung, Partner"
-        />
-        <MetricCard
-          label="Plan-Fortschritt"
+      <section className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
+        <TodayStat label="Offen" value={String(openTasks.length)} note="Tasks heute" />
+        <TodayStat
+          label="Fortschritt"
           value={`${progress}%`}
-          sub={
-            remoteReady
-              ? "serverseitig gespeichert"
-              : planContext
-                ? "aus Onboarding berechnet"
-                : "Fallback aktiv"
-          }
+          note={`${completedCount}/${dailyTasks.length} erledigt`}
         />
-      </div>
+        <TodayStat label="Status" value={remoteReady ? "Cloud" : "Lokal"} note="Daily Sync" />
+      </section>
 
-      <div
-        data-tour="focus"
-        className="glass-pane-ink mt-6 grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-6"
-      >
-        <div>
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            <AITag tone="dark">Co-Pilot</AITag>
-            <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-white/55">
-              {nextFocus ? `Empfohlener Fokus · ${nextFocus.minutes} Min` : "Heute erledigt"}
-            </span>
+      <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_0.92fr]">
+        <section
+          data-tour="focus"
+          className="glass-pane-ink grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center"
+        >
+          <div>
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <StepBadge number="1" label="Fokus heute" dark />
+              <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-white/55">
+                {nextFocus ? `${nextFocus.minutes} Min · ${nextFocus.label}` : "Heute erledigt"}
+              </span>
+            </div>
+            <h2 className="text-[22px] font-semibold leading-tight tracking-tight text-[var(--cream)]">
+              {nextFocus?.title || "Alles erledigt"}
+            </h2>
+            <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-white/70">
+              {nextFocus?.desc ??
+                "Öffne den Plan oder frage den Co-Pilot nach dem nächsten sinnvollen Sprint."}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2 text-[11px] text-white/55">
+              <span className="rounded-full bg-white/10 px-2.5 py-1">
+                {completedCount}/{dailyTasks.length} erledigt
+              </span>
+              {topGrant && (
+                <span className="rounded-full bg-white/10 px-2.5 py-1">
+                  {topGrant.name} · {topGrant.deadline}
+                </span>
+              )}
+            </div>
           </div>
-          <p className="max-w-2xl font-serif text-[20px] italic leading-snug text-[var(--cream)]">
-            {nextFocus?.desc ??
-              "Alle Daily-Actions sind erledigt. Öffne deinen Plan, wenn du die nächste Priorität nachziehen willst."}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
           {nextFocus && (
-            <Button
-              onClick={() => toggleComplete(nextFocus.id)}
-              className="h-10 gap-2 rounded-lg bg-[var(--cream)] px-4 text-[13px] font-semibold text-[var(--ink)] hover:bg-white"
-            >
-              <Check className="h-3.5 w-3.5" /> Erledigt
-            </Button>
-          )}
-          {nextFocus && (
-            <Link to={nextFocus.href}>
+            <div className="flex flex-wrap gap-2">
               <Button
-                variant="ghost"
-                className="h-10 rounded-lg border border-white/15 bg-white/5 px-4 text-[13px] text-[var(--cream)] hover:bg-white/10"
+                onClick={() => toggleComplete(nextFocus.id)}
+                className="h-10 gap-2 rounded-lg bg-[var(--cream)] px-4 text-[13px] font-semibold text-[var(--ink)] hover:bg-white"
               >
-                Öffnen
+                <Check className="h-3.5 w-3.5" /> Fertig
               </Button>
-            </Link>
-          )}
-        </div>
-      </div>
-
-      {showWeek && (
-        <section className="glass-pane mt-5 p-5">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <div className="eyebrow">Wochenplan</div>
-              <p className="mt-1 text-[13px] text-[var(--smoke)]">
-                Aus deinem Planentwurf abgeleitet, damit die Daily Page nicht im luftleeren Raum
-                hängt.
-              </p>
-            </div>
-            <FitScore value={Math.max(62, 92 - dailyState.snoozed.length * 6)} label="klar" />
-          </div>
-          <div className="grid gap-3 md:grid-cols-3">
-            {weeklyPlan.map((item) => (
-              <div
-                key={item.title}
-                className="rounded-2xl border border-[var(--ruled)] bg-white/45 p-4"
-              >
-                <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--ember-deep)]">
-                  {item.when}
-                </div>
-                <div className="mt-2 text-[14px] font-semibold tracking-tight">{item.title}</div>
-                <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--smoke)]">
-                  {item.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <div className="mt-6 grid gap-4 lg:grid-cols-[1.25fr_0.85fr_0.85fr]">
-        <section data-tour="conversations" className="glass-pane flex flex-col gap-3 p-5">
-          <div className="flex items-center justify-between">
-            <span className="eyebrow">Heute-Actions · {openVisibleCount} offen</span>
-            <span className="font-mono text-[11px] text-[var(--smoke)]">{progress}%</span>
-          </div>
-          {visibleTasks.map((task) => (
-            <DailyActionCard
-              key={task.id}
-              task={task}
-              done={dailyState.completed.includes(task.id)}
-              onDone={() => toggleComplete(task.id)}
-              onSnooze={() => snooze(task.id)}
-            />
-          ))}
-          {visibleTasks.length === 0 && (
-            <div className="rounded-2xl border border-[var(--ruled)] bg-white/45 p-5 text-[13px] text-[var(--smoke)]">
-              Alles für heute ausgeblendet. Über „Neu sortieren” holst du die Tasks zurück.
-            </div>
-          )}
-        </section>
-
-        <section data-tour="agenda" className="glass-pane p-5">
-          <div className="eyebrow">Agenda heute</div>
-          <ul className="mt-4 space-y-3">
-            {buildAgenda(visibleTasks).map((item) => (
-              <li key={item.t} className="flex items-start gap-3">
-                <span className="w-10 font-mono text-[11px] font-semibold text-[var(--ember-deep)]">
-                  {item.t}
-                </span>
-                <div>
-                  <div className="text-[13.5px] font-semibold">{item.what}</div>
-                  <div className="text-[11px] text-[var(--smoke)]">{item.who}</div>
-                </div>
-              </li>
-            ))}
-          </ul>
-          <Link
-            to="/co-pilot"
-            className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-semibold"
-          >
-            Co-Pilot fragen <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </section>
-
-        {topGrant && (
-          <Link
-            data-tour="funding"
-            to="/foerderung/$slug"
-            params={{ slug: topGrant.slug }}
-            className="glass-pane block p-5 transition hover:-translate-y-0.5"
-          >
-            <div className="eyebrow">Funding-Pipeline</div>
-            <div className="mt-4 text-[18px] font-semibold tracking-tight">{topGrant.name}</div>
-            <div className="text-[12px] text-[var(--smoke)]">
-              {topGrant.amount} · {topGrant.duration} · {topGrant.deadline}
-            </div>
-            <div className="mt-4">
-              <div className="flex items-baseline justify-between">
-                <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--ember-deep)]">
-                  {topGrant.prefilled}% vorausgefüllt
-                </span>
-                <span className="font-mono text-[11px] text-[var(--smoke)]">
-                  Fit {topGrant.fit}
-                </span>
-              </div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[rgba(21,20,15,0.08)]">
-                <div
-                  className="h-full rounded-full bg-[var(--ember)]"
-                  style={{ width: `${topGrant.prefilled}%` }}
-                />
-              </div>
-            </div>
-            <div className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--ink)]">
-              Antrag weiterführen <ArrowRight className="h-3.5 w-3.5" />
-            </div>
-          </Link>
-        )}
-      </div>
-
-      <section className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="glass-pane p-5">
-          <div className="eyebrow">Aktive Signale</div>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {messages.map((message) => (
-              <Link
-                key={message.id}
-                to={message.href}
-                className="grid grid-cols-[40px_1fr_auto] items-center gap-3 rounded-2xl border p-3 transition hover:-translate-y-0.5"
-                style={{
-                  background: message.hot ? "rgba(226,81,28,0.06)" : "rgba(251,250,247,0.55)",
-                  borderColor: message.hot ? "rgba(226,81,28,0.18)" : "rgba(21,20,15,0.06)",
-                }}
-              >
-                <ServiceBadge id={message.sId} />
-                <div className="min-w-0">
-                  <div className="truncate text-[14px] font-semibold tracking-tight">
-                    {message.name}
-                  </div>
-                  <div className="mt-0.5 truncate text-[12px] text-[var(--smoke)]">
-                    {message.status} · {message.note}
-                  </div>
-                </div>
-                <span className="font-mono text-[11px] text-[var(--smoke)]">{message.t}</span>
+              <Link to={nextFocus.href}>
+                <Button
+                  variant="ghost"
+                  className="h-10 rounded-lg border border-white/15 bg-white/5 px-4 text-[13px] text-[var(--cream)] hover:bg-white/10"
+                >
+                  Öffnen
+                </Button>
               </Link>
+            </div>
+          )}
+        </section>
+
+        <section className="glass-pane flex flex-col p-4 sm:p-5">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl text-white" style={{ background: "var(--indigo-grad)" }}>
+              <CopilotMark size={18} color="white" />
+            </span>
+            <div>
+              <StepBadge number="2" label="Co-Pilot" />
+              <div className="mt-1 text-[12px] text-[var(--smoke)]">
+                Schreib direkt aus dem Tageskontext.
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-2">
+            {QUICK_PROMPTS.map((prompt) => (
+              <button
+                key={prompt}
+                onClick={() => sendToCopilot(prompt)}
+                className="rounded-2xl border border-[var(--ruled)] bg-white/55 px-3 py-2 text-left text-[12.5px] font-medium text-[var(--ink)] transition hover:bg-white"
+              >
+                {prompt}
+              </button>
             ))}
           </div>
-        </div>
 
-        <div className="glass-pane p-5">
-          <div className="eyebrow">Kontext</div>
-          <div className="mt-4 space-y-3 text-[13px]">
-            <ContextRow
-              label="Vorhaben"
-              value={planContext?.context.idea || "Noch kein Onboarding-Kontext"}
-            />
-            <ContextRow label="Phase" value={planContext?.context.stage || "frühe Phase"} />
-            <ContextRow
-              label="Ziel"
-              value={planContext?.context.goal || "nächsten belastbaren Schritt finden"}
-            />
-            <ContextRow label="Risiko" value={planContext?.context.risk || "Priorität schärfen"} />
+          <div className="mt-4 min-h-[112px] rounded-2xl border border-[var(--ruled)] bg-white/45 p-4">
+            {copilotSending ? (
+              <div className="flex h-full min-h-[80px] items-center justify-center gap-2 text-[13px] text-[var(--smoke)]">
+                <Loader2 className="h-4 w-4 animate-spin" /> Co-Pilot denkt mit...
+              </div>
+            ) : copilotAnswer ? (
+              <p className="whitespace-pre-line text-[13.5px] leading-relaxed text-[var(--ink)]">
+                {copilotAnswer}
+              </p>
+            ) : (
+              <p className="text-[13.5px] leading-relaxed text-[var(--smoke)]">
+                Frage nach Priorität, Antrag, Nachricht oder nächstem Sprint.
+              </p>
+            )}
           </div>
-          <Link
-            to="/onboarding"
-            className="mt-5 inline-flex items-center gap-1.5 text-[13px] font-semibold"
-          >
-            Kontext aktualisieren <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+
+          <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
+            <textarea
+              value={copilotInput}
+              onChange={(e) => setCopilotInput(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                  e.preventDefault();
+                  sendToCopilot();
+                }
+              }}
+              rows={2}
+              placeholder="Co-Pilot fragen..."
+              className="min-h-[48px] resize-none rounded-2xl border border-[var(--ruled)] bg-white/70 px-3 py-2 text-[13px] outline-none transition focus:border-[var(--ember)] focus:bg-white"
+            />
+            <Button
+              onClick={() => sendToCopilot()}
+              disabled={!copilotInput.trim() || copilotSending}
+              className="h-full min-h-[48px] rounded-2xl bg-[var(--ember)] px-4 text-white hover:bg-[var(--ember-deep)]"
+              aria-label="An Co-Pilot senden"
+            >
+              {copilotSending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        </section>
+      </div>
+
+      <section className="glass-pane mt-5 p-4 sm:p-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <StepBadge number="3" label="Weiterarbeiten" />
+            <p className="mt-1 text-[12.5px] text-[var(--smoke)]">
+              Öffne genau den Bereich, den du jetzt brauchst.
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <WorkspaceCard
+            icon={Kanban}
+            label="Board"
+            title="Kanban"
+            desc="Status und Owner prüfen"
+            href="/kanban"
+          />
+          <WorkspaceCard
+            icon={ListChecks}
+            label="Tasks"
+            title="Aufgaben"
+            desc={`${openTasks.length} offene Punkte`}
+            href="/aufgaben"
+          />
+          <WorkspaceCard
+            icon={CalendarDays}
+            label="Termine"
+            title="Kalender"
+            desc="Deadlines und Calls"
+            href="/kalender"
+          />
+          <WorkspaceCard
+            icon={Building2}
+            label="Profil"
+            title="Firma"
+            desc="Landingpage pflegen"
+            href="/firma"
+          />
         </div>
       </section>
 
+      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_0.7fr]">
+        <section data-tour="conversations" className="glass-pane p-4 sm:p-5">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <div className="eyebrow">Tagesliste</div>
+              <p className="mt-1 text-[12.5px] text-[var(--smoke)]">
+                {completedCount}/{dailyTasks.length} erledigt ·{" "}
+                {remoteReady ? "gespeichert" : "lokal"}
+              </p>
+            </div>
+            <Link
+              to="/aufgaben"
+              className="inline-flex items-center gap-1.5 text-[13px] font-semibold"
+            >
+              Alle <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="grid gap-2">
+            {visibleTasks.slice(0, 4).map((task) => (
+              <DailyActionCard
+                key={task.id}
+                task={task}
+                done={dailyState.completed.includes(task.id)}
+                onDone={() => toggleComplete(task.id)}
+                onSnooze={() => snooze(task.id)}
+              />
+            ))}
+            {visibleTasks.length === 0 && (
+              <div className="rounded-2xl border border-[var(--ruled)] bg-white/45 p-5 text-[13px] text-[var(--smoke)]">
+                Alles für heute ausgeblendet. Über „Neu sortieren” holst du die Tasks zurück.
+              </div>
+            )}
+          </div>
+        </section>
+
+        <aside className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+          {topGrant && (
+            <Link
+              to="/foerderung/$slug"
+              params={{ slug: topGrant.slug }}
+              className="glass-pane-soft block p-4 transition hover:-translate-y-0.5"
+            >
+              <div className="eyebrow">Nächste Förderung</div>
+              <div className="mt-2 text-[15px] font-semibold tracking-tight">{topGrant.name}</div>
+              <div className="mt-1 text-[12px] text-[var(--smoke)]">
+                {topGrant.prefilled}% fertig · {topGrant.deadline}
+              </div>
+            </Link>
+          )}
+          {nextPartner && (
+            <Link
+              to={`/${nextPartner.service}`}
+              className="glass-pane-soft block p-4 transition hover:-translate-y-0.5"
+            >
+              <div className="eyebrow">Nächster Partner</div>
+              <div className="mt-2 text-[15px] font-semibold tracking-tight">
+                {nextPartner.name}
+              </div>
+              <div className="mt-1 text-[12px] text-[var(--smoke)]">{nextPartner.firm}</div>
+            </Link>
+          )}
+          <Link
+            to="/unterlagen"
+            className="glass-pane-soft block p-4 transition hover:-translate-y-0.5"
+          >
+            <div className="eyebrow">Unterlagen</div>
+            <div className="mt-2 text-[15px] font-semibold tracking-tight">Antragspaket</div>
+            <div className="mt-1 text-[12px] text-[var(--smoke)]">Materialien und Entwürfe</div>
+          </Link>
+        </aside>
+      </div>
+
       {showTutorial && <TutorialOverlay onClose={() => setShowTutorial(false)} />}
     </div>
+  );
+}
+
+function TodayStat({ label, value, note }: { label: string; value: string; note: string }) {
+  return (
+    <div className="glass-pane-soft min-w-0 p-3 sm:p-4">
+      <div className="truncate font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--smoke)] sm:text-[10px]">
+        {label}
+      </div>
+      <div className="mt-1 truncate text-xl font-semibold tracking-tight sm:text-2xl">{value}</div>
+      <div className="mt-0.5 truncate text-[10.5px] text-[var(--smoke)] sm:text-[12px]">{note}</div>
+    </div>
+  );
+}
+
+function StepBadge({
+  number,
+  label,
+  dark = false,
+}: {
+  number: string;
+  label: string;
+  dark?: boolean;
+}) {
+  return (
+    <div
+      className={[
+        "inline-flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.14em]",
+        dark ? "text-white/65" : "text-[var(--smoke)]",
+      ].join(" ")}
+    >
+      <span
+        className={[
+          "flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold",
+          dark ? "bg-white/12 text-[var(--cream)]" : "bg-[var(--ember-tint)] text-[var(--ember-deep)]",
+        ].join(" ")}
+      >
+        {number}
+      </span>
+      {label}
+    </div>
+  );
+}
+
+function WorkspaceCard({
+  icon: Icon,
+  label,
+  title,
+  desc,
+  href,
+}: {
+  icon: LucideIcon;
+  label: string;
+  title: string;
+  desc: string;
+  href: string;
+}) {
+  return (
+    <Link
+      to={href}
+      className="rounded-2xl border border-[var(--ruled)] bg-white/55 p-4 transition hover:-translate-y-0.5 hover:bg-white/75"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--ember-tint)] text-[var(--ember-deep)]">
+          <Icon className="h-4 w-4" />
+        </span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--smoke)]">
+          {label}
+        </span>
+      </div>
+      <div className="mt-3 text-[15px] font-semibold tracking-tight">{title}</div>
+      <div className="mt-1 text-[12px] text-[var(--smoke)]">{desc}</div>
+    </Link>
   );
 }
 
@@ -556,24 +666,12 @@ function DailyActionCard({
         <Link to={task.href}>
           <Button
             size="sm"
-            className="rounded-full bg-[var(--ink)] text-[var(--cream)] hover:bg-[var(--ink-soft)]"
+            className="rounded-full bg-[var(--ember)] text-white hover:bg-[var(--ember-deep)]"
           >
             Öffnen
           </Button>
         </Link>
       </div>
-    </div>
-  );
-}
-
-function MetricCard({ label, value, sub }: { label: string; value: string; sub: string }) {
-  return (
-    <div className="glass-pane-soft p-4">
-      <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--smoke)]">
-        {label}
-      </div>
-      <div className="mt-2 text-3xl font-semibold tracking-tight text-[var(--ink)]">{value}</div>
-      <div className="mt-1 text-[12px] text-[var(--smoke)]">{sub}</div>
     </div>
   );
 }
@@ -587,17 +685,6 @@ function ServiceBadge({ id }: { id: ServiceId }) {
     >
       <ServiceIcon name={s.icon} size={18} stroke={2} />
     </span>
-  );
-}
-
-function ContextRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-[var(--ruled)] bg-white/40 p-3">
-      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--smoke)]">
-        {label}
-      </div>
-      <div className="mt-1 text-[13px] leading-relaxed text-[var(--ink)]">{value}</div>
-    </div>
   );
 }
 
@@ -675,84 +762,24 @@ function buildDailyTasks(
   return tasks;
 }
 
-function buildMessages(grant = GRANTS[0], partners = PARTNERS): DailyMessage[] {
-  const mentor = partnersFor("mentor")[0];
-  const tax = partnersFor("tax")[0];
-  const capital = partnersFor("capital")[0];
-  const growth = partnersFor("growth")[0];
+function buildLocalDailyCopilotAnswer(
+  prompt: string,
+  nextFocus: DailyTask | undefined,
+  grant = GRANTS[0],
+  context: PlanContext | null,
+): string {
+  const idea = context?.context.idea || "dein Startup";
+  const focus = nextFocus?.title || "deinen nächsten belastbaren Schritt";
+  const grantLine = grant
+    ? `${grant.name} ist aktuell der stärkste Förder-Hebel.`
+    : "Prüfe zuerst den besten Förder-Hebel.";
   return [
-    {
-      id: "grant",
-      sId: "funding",
-      name: grant?.name || "Förderung",
-      status: grant?.deadline || "Fit prüfen",
-      note: `${grant?.prefilled || 60}% vorausgefüllt`,
-      t: "jetzt",
-      hot: true,
-      href: grant ? `/foerderung/${grant.slug}` : "/foerderung",
-    },
-    {
-      id: "mentor",
-      sId: "mentor",
-      name: mentor?.name || "Mentor Match",
-      status: "Office Hour",
-      note: mentor?.firm || "Co-Pilot Match",
-      t: "heute",
-      hot: true,
-      href: "/mentoren",
-    },
-    {
-      id: "tax",
-      sId: "tax",
-      name: tax?.name || "Tax Check",
-      status: "Unterlagen",
-      note: tax?.packages[0]?.name || "Erstcheck",
-      t: "morgen",
-      href: "/steuer",
-    },
-    {
-      id: "capital",
-      sId: "capital",
-      name: capital?.name || "Capital Desk",
-      status: "Finanzierung",
-      note: capital?.packages[0]?.name || "Readiness",
-      t: "2d",
-      href: "/kapital",
-    },
-    {
-      id: "growth",
-      sId: "growth",
-      name: growth?.name || "Growth Sprint",
-      status: "Marktsignal",
-      note: growth?.packages[0]?.name || "Sprint",
-      t: "3d",
-      href: "/growth",
-    },
-  ];
-}
-
-function buildAgenda(tasks: DailyTask[]) {
-  const slots = ["09:30", "11:00", "14:00", "16:30"];
-  return tasks.slice(0, 4).map((task, idx) => ({
-    t: slots[idx] || "17:00",
-    what: task.title,
-    who: SERVICE_BY_ID[task.sId].short,
-  }));
-}
-
-function buildWeeklyPlan(tracks: Extract<PlanSlide, { type: "track" }>[], tasks: DailyTask[]) {
-  if (tracks.length) {
-    return tracks.slice(0, 3).map((track, idx) => ({
-      when: idx === 0 ? "Heute" : idx === 1 ? "Morgen" : "Diese Woche",
-      title: track.title,
-      desc: track.steps?.[0] || track.why || "Nächsten Schritt definieren.",
-    }));
-  }
-  return tasks.slice(0, 3).map((task, idx) => ({
-    when: idx === 0 ? "Heute" : idx === 1 ? "Morgen" : "Diese Woche",
-    title: task.title,
-    desc: task.desc,
-  }));
+    `Kurzantwort zu: "${prompt}"`,
+    "",
+    `1. Starte mit ${focus}. Das ist der kleinste Schritt, der heute Bewegung in ${idea} bringt.`,
+    `2. ${grantLine} Sammle nur die fehlenden Unterlagen, statt den Antrag komplett neu zu denken.`,
+    "3. Wenn du jemandem schreiben willst: ein Satz Kontext, ein konkreter Ask, ein Terminvorschlag. Ich kann dir daraus direkt eine Nachricht formulieren.",
+  ].join("\n");
 }
 
 function readDailyState(): DailyState {
@@ -836,8 +863,4 @@ function urgencyToRemote(urgency: DailyTask["urgency"]): "high" | "medium" | "lo
 
 function isFirstStep(slide: PlanSlide): slide is Extract<PlanSlide, { type: "first_step" }> {
   return slide.type === "first_step";
-}
-
-function isTrack(slide: PlanSlide): slide is Extract<PlanSlide, { type: "track" }> {
-  return slide.type === "track";
 }

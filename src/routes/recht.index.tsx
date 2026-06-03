@@ -21,7 +21,7 @@ function RechtIndex() {
         <span className="eyebrow">Recht & Verträge · {s.count} Anwälte</span>
       </div>
       <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-        Anwälte, die <span className="font-serif italic font-normal">Startups</span> bauen.
+        Anwälte, die <span className="text-[var(--ember)]">Startups</span> bauen.
       </h1>
       <p className="mt-4 max-w-2xl text-[15px] text-[var(--smoke)]">
         GmbH, Gründervertrag, ESOP, Cap Table, IP. Vorgefiltert vom Co-Pilot — kein Stundensatz-Glücksspiel.

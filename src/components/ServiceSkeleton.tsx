@@ -17,7 +17,7 @@ export function ServiceSkeleton({ id }: { id: ServiceId }) {
       </div>
       <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
         {s.label.split(" ")[0]}{" "}
-        <span className="font-serif italic font-normal">kuratiert</span>.
+        <span className="text-[var(--ember)]">kuratiert</span>.
       </h1>
       <p className="mt-4 max-w-xl text-[15px] text-[var(--smoke)]">{s.blurb}</p>
 

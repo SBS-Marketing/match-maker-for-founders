@@ -478,7 +478,7 @@ function StepIndustry({
     <div className="flex flex-col gap-8">
       <header>
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">Schritt 1</p>
-        <h1 className="mt-2 font-serif text-4xl leading-tight text-[var(--ink)] md:text-5xl">
+        <h1 className="mt-2 text-4xl leading-tight text-[var(--ink)] md:text-5xl">
           Was <em className="text-[var(--ember)]">baust du auf</em>?
         </h1>
         <p className="mt-3 text-[var(--ink)]/60">Wähle deine Branche — alles weitere passt sich an.</p>
@@ -500,7 +500,7 @@ function StepIndustry({
               className="flex flex-col items-start gap-2 rounded-2xl border border-[var(--ink)]/10 p-5 text-left"
             >
               <span className="text-3xl">{ind.emoji}</span>
-              <span className="font-serif text-lg leading-tight">{ind.label}</span>
+              <span className="text-lg leading-tight">{ind.label}</span>
               <span className="text-xs opacity-70">{ind.description}</span>
             </motion.button>
           );
@@ -526,7 +526,7 @@ function StepType({ industry, onChoose }: { industry: Industry; onChoose: (p: Fo
     <div className="flex flex-col gap-8">
       <header>
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">Willkommen</p>
-        <h1 className="mt-2 font-serif text-4xl leading-tight text-[var(--ink)] md:text-5xl">
+        <h1 className="mt-2 text-4xl leading-tight text-[var(--ink)] md:text-5xl">
           Was beschreibt dich <em className="text-[var(--ember)]">am besten</em>?
         </h1>
       </header>
@@ -539,11 +539,11 @@ function StepType({ industry, onChoose }: { industry: Industry; onChoose: (p: Fo
             whileHover={{ scale: 1.01 }}
             className="group flex items-center gap-4 rounded-2xl border border-[var(--ink)]/10 bg-[var(--paper)] p-6 text-left transition-colors hover:border-[var(--ember)]"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--ink)] text-[var(--cream)] transition-colors group-hover:bg-[var(--ember)]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--ember)] text-white transition-colors group-hover:bg-[var(--ember)]">
               <Icon size={22} />
             </div>
             <div className="flex-1">
-              <div className="font-serif text-2xl text-[var(--ink)]">{title}</div>
+              <div className="text-2xl text-[var(--ink)]">{title}</div>
               <div className="text-sm text-[var(--ink)]/60">{sub}</div>
             </div>
             <ArrowRight size={20} className="text-[var(--ink)]/30 transition-all group-hover:translate-x-1 group-hover:text-[var(--ember)]" />
@@ -571,7 +571,7 @@ function StepInputMethod({
     <div className="flex flex-col gap-8">
       <header>
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">Schritt 1</p>
-        <h1 className="mt-2 font-serif text-4xl leading-tight text-[var(--ink)] md:text-5xl">
+        <h1 className="mt-2 text-4xl leading-tight text-[var(--ink)] md:text-5xl">
           Erzähl uns von <em className="text-[var(--ember)]">deinem Projekt</em>
         </h1>
         <p className="mt-3 text-[var(--ink)]/70">Wie willst du anfangen?</p>
@@ -587,7 +587,7 @@ function StepInputMethod({
             <Mic size={22} />
           </div>
           <div className="flex-1">
-            <div className="font-serif text-2xl text-[var(--ink)]">Per Voice</div>
+            <div className="text-2xl text-[var(--ink)]">Per Voice</div>
             <div className="text-sm text-[var(--ink)]/60">Sprich 30 – 90 Sekunden, wir extrahieren den Rest</div>
           </div>
         </motion.button>
@@ -597,11 +597,11 @@ function StepInputMethod({
           onClick={onForm}
           className="flex items-center gap-4 rounded-2xl border border-[var(--ink)]/10 bg-[var(--paper)] p-6 text-left hover:border-[var(--ember)]"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--ink)] text-[var(--cream)]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--ember)] text-white">
             <PencilLine size={22} />
           </div>
           <div className="flex-1">
-            <div className="font-serif text-2xl text-[var(--ink)]">Per Formular</div>
+            <div className="text-2xl text-[var(--ink)]">Per Formular</div>
             <div className="text-sm text-[var(--ink)]/60">Schritt für Schritt, 5 Fragen</div>
           </div>
         </motion.button>
@@ -713,7 +713,7 @@ function VoiceCapture({
     <div className="flex min-h-[70vh] flex-col items-center justify-center gap-8 text-center">
       <header>
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">Voice</p>
-        <h1 className="mt-2 font-serif text-4xl text-[var(--ink)]">Erzähl uns von deiner Idee</h1>
+        <h1 className="mt-2 text-4xl text-[var(--ink)]">Erzähl uns von deiner Idee</h1>
         <p className="mt-3 max-w-md text-[var(--ink)]/60">
           Was baust du, in welcher Rolle, wo stehst du, was willst du erreichen, was ist dein Risiko?
         </p>
@@ -724,7 +724,7 @@ function VoiceCapture({
         whileTap={{ scale: 0.95 }}
         animate={recording ? { scale: [1, 1.06, 1] } : { scale: 1 }}
         transition={recording ? { duration: 1.2, repeat: Infinity } : { duration: 0.2 }}
-        className="flex h-32 w-32 items-center justify-center rounded-full text-[var(--cream)] shadow-2xl"
+        className="flex h-32 w-32 items-center justify-center rounded-full text-[var(--cream)] shadow-warm-lg"
         style={{ background: recording ? "var(--ember-deep)" : "var(--ember)" }}
       >
         {recording ? <MicOff size={40} /> : <Mic size={40} />}
@@ -794,7 +794,7 @@ function StepContextQuestion({
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">
           Frage {idx + 1} von {questions.length}
         </p>
-        <h1 className="mt-3 font-serif text-3xl leading-tight text-[var(--ink)] md:text-4xl">
+        <h1 className="mt-3 text-3xl leading-tight text-[var(--ink)] md:text-4xl">
           {q.question}
         </h1>
 
@@ -914,7 +914,7 @@ function StepSkillPicker({
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">
           Deine Skills · {skills.selected.length}/{MAX_SKILLS}
         </p>
-        <h1 className="mt-2 font-serif text-3xl leading-tight text-[var(--ink)] md:text-4xl">
+        <h1 className="mt-2 text-3xl leading-tight text-[var(--ink)] md:text-4xl">
           Was bringst du <em className="text-[var(--ember)]">mit</em>?
         </h1>
       </header>
@@ -993,7 +993,7 @@ function StepLookingFor({
     <div className="flex min-h-[70vh] flex-col gap-6">
       <header>
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">Was suchst du?</p>
-        <h1 className="mt-2 font-serif text-3xl leading-tight text-[var(--ink)] md:text-4xl">
+        <h1 className="mt-2 text-3xl leading-tight text-[var(--ink)] md:text-4xl">
           Wie willst du <em className="text-[var(--ember)]">einsteigen</em>?
         </h1>
         <p className="mt-2 text-sm text-[var(--ink)]/60">Mehrfachauswahl möglich</p>
@@ -1053,13 +1053,13 @@ function StepAvailability({
     <div className="flex min-h-[70vh] flex-col gap-8">
       <header>
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">Verfügbarkeit</p>
-        <h1 className="mt-2 font-serif text-3xl leading-tight text-[var(--ink)] md:text-4xl">
+        <h1 className="mt-2 text-3xl leading-tight text-[var(--ink)] md:text-4xl">
           Wie viel Zeit kannst du <em className="text-[var(--ember)]">investieren</em>?
         </h1>
       </header>
 
       <div className="mt-12">
-        <div className="text-center font-serif text-5xl text-[var(--ember)]">{label}</div>
+        <div className="text-center text-5xl text-[var(--ember)]">{label}</div>
         <input
           type="range"
           min={5}
@@ -1134,7 +1134,7 @@ function StepAssessment({
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">
           Frage {idx + 1} von {ASSESSMENT_QUESTIONS.length} · ~2 Min.
         </p>
-        <h1 className="mt-4 font-serif text-2xl leading-snug text-[var(--ink)] md:text-3xl">
+        <h1 className="mt-4 text-2xl leading-snug text-[var(--ink)] md:text-3xl">
           {q.text}
         </h1>
       </header>
@@ -1206,17 +1206,17 @@ function StepOverview({
     <div className="flex flex-col gap-10 pb-24">
       <header>
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ember)]">Dein Profil</p>
-        <h1 className="mt-2 font-serif text-4xl leading-tight text-[var(--ink)]">
+        <h1 className="mt-2 text-4xl leading-tight text-[var(--ink)]">
           Sieht <em className="text-[var(--ember)]">gut aus</em>. Bereit?
         </h1>
       </header>
 
       {/* Type card */}
-      <section className="rounded-2xl bg-[var(--ink)] p-6 text-[var(--cream)]">
+      <section className="rounded-2xl p-6 text-white" style={{ background: "var(--ember-grad)" }}>
         <div className="font-mono text-xs uppercase tracking-[0.2em] opacity-60">
           {industry.emoji} {industry.label} · Typ
         </div>
-        <div className="mt-1 font-serif text-2xl capitalize">
+        <div className="mt-1 text-2xl capitalize">
           {state.path === "founder" && "🚀 Founder"}
           {state.path === "talent" && "🛠 Talent"}
           {state.path === "hybrid" && "✨ Hybrid"}
@@ -1267,7 +1267,7 @@ function StepOverview({
 
       <button
         onClick={onSubmit}
-        className="sticky bottom-4 mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--ember)] py-5 text-lg font-medium text-[var(--cream)] shadow-2xl"
+        className="sticky bottom-4 mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--ember)] py-5 text-lg font-medium text-[var(--cream)] shadow-warm-lg"
       >
         <Sparkles size={20} /> Deinen Plan generieren
       </button>

@@ -199,7 +199,7 @@ export function TutorialOverlay({ onClose }: { onClose: () => void }) {
           style={tipStyle}
         >
           <div
-            className="rounded-2xl border p-5 shadow-2xl"
+            className="rounded-2xl border p-5 shadow-warm-lg"
             style={{
               background: "var(--cream)",
               borderColor: "rgba(21,20,15,0.08)",
@@ -212,8 +212,8 @@ export function TutorialOverlay({ onClose }: { onClose: () => void }) {
             <h3 className="mt-2 text-[20px] font-semibold tracking-tight text-[var(--ink)]">
               {step.title}
             </h3>
-            <p className="mt-2 font-serif text-[15px] italic leading-snug text-[var(--smoke)]">
-              „{step.body}"
+            <p className="mt-2 text-[15px] leading-relaxed text-[var(--smoke)]">
+              {step.body}
             </p>
 
             <div className="mt-4 flex items-center justify-between gap-2">
@@ -237,7 +237,7 @@ export function TutorialOverlay({ onClose }: { onClose: () => void }) {
               </div>
               <Button
                 onClick={next}
-                className="h-9 rounded-lg bg-[var(--ink)] px-4 text-[12px] font-semibold text-[var(--cream)] hover:bg-[var(--ink-soft)]"
+                className="h-9 rounded-lg bg-[var(--ember)] px-4 text-[12px] font-semibold text-white hover:bg-[var(--ember-deep)]"
               >
                 {i >= STEPS.length - 1 ? "Loslegen" : "Weiter"}
               </Button>

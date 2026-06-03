@@ -5,43 +5,42 @@
 // ─────────────────────────────────────────────────────────────
 
 export type FounderContext = {
-  userName: string
-  role?: string
-  idea?: string
-  stage?: string
-  city?: string
-  goal?: string
-  risk?: string
+  userName: string;
+  role?: string;
+  idea?: string;
+  stage?: string;
+  city?: string;
+  goal?: string;
+  risk?: string;
   // Industry layer — adapts language + Co-Pilot tone
-  industry?: string         // e.g. "handwerk", "gastro", "tech"
-  venture_term?: string     // e.g. "Betrieb", "Lokal", "Startup"
-  partner_term?: string     // e.g. "Geschäftspartner", "Co-Founder"
-  copilot_context?: string  // injected industry context hint
-}
+  industry?: string; // e.g. "handwerk", "gastro", "tech"
+  venture_term?: string; // e.g. "Betrieb", "Lokal", "Startup"
+  partner_term?: string; // e.g. "Geschäftspartner", "Co-Founder"
+  copilot_context?: string; // injected industry context hint
+};
 
 export type TaskType =
-  | 'chat'
-  | 'context_parse'
-  | 'plan_generate'
-  | 'email_advisor_first'
-  | 'email_followup'
-  | 'email_cofounder'
-  | 'email_investor'
-  | 'email_exist_uni'
-  | 'document_exist'
-  | 'document_profit'
-  | 'document_pitch'
-  | 'advisor_reasons'
-  | 'daily_brief'
-  | 'deadline_extract'
-  | 'match_explain'
+  | "chat"
+  | "context_parse"
+  | "plan_generate"
+  | "email_advisor_first"
+  | "email_followup"
+  | "email_cofounder"
+  | "email_investor"
+  | "email_exist_uni"
+  | "document_exist"
+  | "document_profit"
+  | "document_pitch"
+  | "advisor_reasons"
+  | "daily_brief"
+  | "deadline_extract"
+  | "match_explain";
 
 // ─────────────────────────────────────────────────────────────
 // KIMI PROMPTS — Analysis, structure, data extraction
 // ─────────────────────────────────────────────────────────────
 
 export const KIMI_PROMPTS: Record<string, (ctx: FounderContext, input: string) => string> = {
-
   context_parse: (ctx, input) => `
     Du bist ein präziser Analyse-Assistent für Gründer.
     Extrahiere aus folgendem Text die strukturierten Informationen des Founders.
@@ -68,16 +67,16 @@ export const KIMI_PROMPTS: Record<string, (ctx: FounderContext, input: string) =
 
     Profil:
     - Name: ${ctx.userName}
-    - Branche: ${ctx.industry || 'allgemein'} ${ctx.copilot_context ? `(${ctx.copilot_context})` : ''}
-    - ${ctx.venture_term || 'Vorhaben'}: ${ctx.idea || 'unbekannt'}
-    - Rolle: ${ctx.role || 'unbekannt'}
-    - Stand: ${ctx.stage || 'unbekannt'}
-    - Stadt: ${ctx.city || 'unbekannt'}
-    - Ziel: ${ctx.goal || 'unbekannt'}
-    - Größtes Risiko: ${ctx.risk || 'unbekannt'}
+    - Branche: ${ctx.industry || "allgemein"} ${ctx.copilot_context ? `(${ctx.copilot_context})` : ""}
+    - ${ctx.venture_term || "Vorhaben"}: ${ctx.idea || "unbekannt"}
+    - Rolle: ${ctx.role || "unbekannt"}
+    - Stand: ${ctx.stage || "unbekannt"}
+    - Stadt: ${ctx.city || "unbekannt"}
+    - Ziel: ${ctx.goal || "unbekannt"}
+    - Größtes Risiko: ${ctx.risk || "unbekannt"}
 
     Wähle die 3 wichtigsten Spuren für DIESEN spezifischen Stand und diese Branche.
-    Beispiele je nach Branche: ${ctx.partner_term || 'Partner'} finden, Finanzierung, Zulassung/Recht,
+    Beispiele je nach Branche: ${ctx.partner_term || "Partner"} finden, Finanzierung, Zulassung/Recht,
     erste Kunden, Standort, Team aufbauen, Produkt entwickeln — was JETZT am meisten zählt.
 
     Antworte NUR mit validem JSON:
@@ -119,7 +118,7 @@ export const KIMI_PROMPTS: Record<string, (ctx: FounderContext, input: string) =
     }
   `,
 
-  document_exist_draft: (ctx, _input) => `
+  document_exist_draft: (ctx, input) => `
     Du bist Experte für EXIST-Gründerstipendium Anträge (BMWK/DLR).
     Erstelle einen strukturierten Rohtext-Entwurf für folgende Abschnitte
     basierend auf dem Founder-Profil.
@@ -130,6 +129,9 @@ export const KIMI_PROMPTS: Record<string, (ctx: FounderContext, input: string) =
     - Stand: ${ctx.stage}
     - Stadt: ${ctx.city}
     - Ziel: ${ctx.goal}
+
+    Antragsauftrag / Programmdaten:
+    ${input}
 
     Fülle aus (so konkret wie möglich, Platzhalter mit [AUSFÜLLEN] markieren):
     {
@@ -197,13 +199,13 @@ export const KIMI_PROMPTS: Record<string, (ctx: FounderContext, input: string) =
 
     Kontext:
     - Name: ${ctx.userName}
-    - Branche: ${ctx.industry || 'allgemein'} ${ctx.copilot_context ? `— ${ctx.copilot_context}` : ''}
-    - ${ctx.venture_term || 'Vorhaben'}: ${ctx.idea || 'unbekannt'}
-    - Rolle: ${ctx.role || 'unbekannt'}
-    - Stand: ${ctx.stage || 'unbekannt'}
-    - Stadt: ${ctx.city || 'unbekannt'}
-    - Ziel: ${ctx.goal || 'unbekannt'}
-    - Risiko: ${ctx.risk || 'unbekannt'}
+    - Branche: ${ctx.industry || "allgemein"} ${ctx.copilot_context ? `— ${ctx.copilot_context}` : ""}
+    - ${ctx.venture_term || "Vorhaben"}: ${ctx.idea || "unbekannt"}
+    - Rolle: ${ctx.role || "unbekannt"}
+    - Stand: ${ctx.stage || "unbekannt"}
+    - Stadt: ${ctx.city || "unbekannt"}
+    - Ziel: ${ctx.goal || "unbekannt"}
+    - Risiko: ${ctx.risk || "unbekannt"}
 
     Frage/Nachricht: "${message}"
 
@@ -233,14 +235,13 @@ export const KIMI_PROMPTS: Record<string, (ctx: FounderContext, input: string) =
       "neue_deadline_erkannt": null
     }
   `,
-}
+};
 
 // ─────────────────────────────────────────────────────────────
 // SONNET PROMPTS — Polish, tone, user-facing text
 // ─────────────────────────────────────────────────────────────
 
 export const SONNET_PROMPTS: Record<string, (ctx: FounderContext, draft: string) => string> = {
-
   chat: (ctx, draft) => `
     Du bist der Co-Pilot von matchfoundr — ein direkter, hilfreicher Assistent für Menschen die etwas aufbauen.
     Formuliere die folgende Antwort für ${ctx.userName}.
@@ -248,8 +249,8 @@ export const SONNET_PROMPTS: Record<string, (ctx: FounderContext, draft: string)
     Ton: Direkt, warm, wie ein erfahrener Mentor der ehrlich sagt wo man gerade steht.
     Kein "Natürlich!", kein "Gerne!", kein "Als KI kann ich...".
     Schreib auf Deutsch. Max 3 Absätze.
-    Benutze die Sprache der Branche — sag "${ctx.venture_term || 'Vorhaben'}" statt immer "Startup",
-    sag "${ctx.partner_term || 'Partner'}" statt immer "Co-Founder".
+    Benutze die Sprache der Branche — sag "${ctx.venture_term || "Vorhaben"}" statt immer "Startup",
+    sag "${ctx.partner_term || "Partner"}" statt immer "Co-Founder".
 
     Wenn der Inhalt signalisiert dass das Thema für den aktuellen Stand zu früh ist:
     → Kurz anerkennen dass die Frage gut ist
@@ -257,7 +258,7 @@ export const SONNET_PROMPTS: Record<string, (ctx: FounderContext, draft: string)
     → Direkt sagen was stattdessen jetzt zählt
     Ton dabei: wie ein Mentor der einen schützt, nicht wie einer der abblockt.
 
-    Kontext: ${ctx.idea || 'Vorhaben'} | ${ctx.stage || ''} | ${ctx.city || ''} | Branche: ${ctx.industry || 'allgemein'}
+    Kontext: ${ctx.idea || "Vorhaben"} | ${ctx.stage || ""} | ${ctx.city || ""} | Branche: ${ctx.industry || "allgemein"}
 
     Zu formulierender Inhalt:
     ${draft}
@@ -272,7 +273,7 @@ export const SONNET_PROMPTS: Record<string, (ctx: FounderContext, draft: string)
 
     Ton: Wie ein erfahrener Mentor der ${ctx.userName} direkt anspricht.
     Verwende "du". Kein Consulting-Sprech. Keine leeren Phrasen.
-    Branche: ${ctx.industry || 'allgemein'} — benutze passende Sprache (${ctx.venture_term || 'Vorhaben'}, ${ctx.partner_term || 'Partner'}).
+    Branche: ${ctx.industry || "allgemein"} — benutze passende Sprache (${ctx.venture_term || "Vorhaben"}, ${ctx.partner_term || "Partner"}).
 
     Plan-Daten: ${draft}
 
@@ -396,4 +397,4 @@ export const SONNET_PROMPTS: Record<string, (ctx: FounderContext, draft: string)
 
     Daten: ${draft}
   `,
-}
+};

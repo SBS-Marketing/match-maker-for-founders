@@ -47,7 +47,7 @@ function UpdatePasswordPage() {
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">
             Neues{" "}
-            <span className="font-serif italic font-normal text-[var(--ember)]">Passwort</span>.
+            <span className="text-[var(--ember)]">Passwort</span>.
           </h1>
           <p className="mt-3 text-sm text-[var(--smoke)]">
             Setze dein Passwort und spring direkt zur Daily Page.
