@@ -17,8 +17,8 @@ export function PartnerDetail({ partner }: Props) {
   const bookingUrl = partner.bookingUrl || partner.sourceUrl || "/co-pilot";
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-8 pb-24 sm:px-6">
-      <div className="flex items-center gap-2 text-[12px] text-[var(--smoke)]">
+    <div className="mx-auto flex h-[calc(100svh-10rem)] max-w-5xl flex-col overflow-hidden px-3 pt-3 sm:h-auto sm:px-6 sm:pt-8 sm:pb-24">
+      <div className="flex shrink-0 items-center gap-2 text-[12px] text-[var(--smoke)]">
         <Link to="/marketplace" className="hover:underline">Marketplace</Link>
         <span>/</span>
         <a href={service.route} className="inline-flex items-center gap-1.5 hover:underline">
@@ -29,8 +29,8 @@ export function PartnerDetail({ partner }: Props) {
         </a>
       </div>
 
-      <div className="mt-5 grid gap-6 lg:grid-cols-[1.18fr_0.82fr]">
-        <main>
+      <div className="mt-3 grid min-h-0 flex-1 gap-4 overflow-y-auto pr-1 sm:mt-5 sm:flex-none sm:overflow-visible lg:grid-cols-[1.18fr_0.82fr]">
+        <main className="min-w-0">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <div className="mb-3 flex items-center gap-2">
@@ -39,7 +39,7 @@ export function PartnerDetail({ partner }: Props) {
                 </span>
                 <AITag tone="light">verifizierter Match</AITag>
               </div>
-              <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">{partner.name}</h1>
+              <h1 className="text-balance text-[30px] font-semibold leading-tight tracking-tight sm:text-5xl">{partner.name}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-3 text-[14px] text-[var(--smoke)]">
                 <span>{partner.firm}</span>
                 <span className="inline-flex items-center gap-1">

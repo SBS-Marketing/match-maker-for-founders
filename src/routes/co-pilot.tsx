@@ -294,14 +294,14 @@ function CoPilotPage() {
 
   return (
     <div
-      className="min-h-[calc(100vh-4rem)] w-full"
+      className="h-[calc(100svh-9.5rem)] w-full overflow-hidden sm:min-h-[calc(100vh-4rem)] sm:overflow-visible"
       style={{ background: "var(--indigo-grad)", color: "var(--surface)" }}
     >
-      <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6">
-        <div className="grid gap-5 lg:grid-cols-[65fr_35fr]">
+      <div className="mx-auto h-full max-w-7xl px-3 py-3 sm:h-auto sm:px-6 sm:py-6">
+        <div className="grid h-full gap-5 lg:grid-cols-[65fr_35fr]">
           {/* LEFT — Chat */}
           <div
-            className="flex h-[calc(100dvh-11rem)] min-h-[520px] flex-col overflow-hidden rounded-2xl border border-white/10 sm:h-[82vh]"
+            className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 sm:h-[82vh] sm:min-h-[520px]"
             style={{ background: "rgba(255,255,255,0.02)" }}
           >
             {/* Header */}
@@ -449,7 +449,7 @@ function CoPilotPage() {
           </div>
 
           {/* RIGHT — Context panel */}
-          <div className="flex flex-col gap-4">
+          <div className="hidden flex-col gap-4 lg:flex">
             <div
               className="rounded-2xl border border-white/10 p-5"
               style={{ background: "rgba(255,255,255,0.03)" }}

@@ -63,6 +63,8 @@ type WorkItem = {
   due: string;
 };
 
+type TeamPanel = "status" | "invite" | "work" | "members" | "chat";
+
 const MEMBERS_KEY = "mf_team_members_v1";
 const CHAT_KEY = "mf_team_chat_v1";
 const BLACKBOARD_KEY = "mf_team_blackboard_v1";
@@ -93,6 +95,14 @@ const STATUS_STYLE: Record<WorkStatus, string> = {
   done: "bg-[var(--ember)] text-white",
 };
 
+const TEAM_PANELS: { id: TeamPanel; label: string }[] = [
+  { id: "status", label: "Status" },
+  { id: "invite", label: "Invite" },
+  { id: "work", label: "Arbeit" },
+  { id: "members", label: "Team" },
+  { id: "chat", label: "Chat" },
+];
+
 function TeamPage() {
   const context = useMemo(() => readPlanContext(), []);
   const [members, setMembers] = useState<TeamMember[]>(() => readMembers(context?.userName));
@@ -105,6 +115,7 @@ function TeamPage() {
   const [chatText, setChatText] = useState("");
   const [workTitle, setWorkTitle] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [activePanel, setActivePanel] = useState<TeamPanel>("status");
   const isOwner = identity.role === "owner";
   const inviteUrl =
     typeof window === "undefined"
@@ -265,17 +276,17 @@ function TeamPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pt-5 pb-24 sm:px-6 sm:pt-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <div className="mx-auto flex h-[calc(100svh-10rem)] max-w-7xl flex-col overflow-hidden px-3 pt-3 sm:h-auto sm:px-6 sm:pt-8">
+      <div className="flex shrink-0 flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="eyebrow">Team Workspace</div>
-          <h1 className="mt-2 max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h1 className="mt-1 max-w-3xl text-[24px] font-semibold leading-tight tracking-tight sm:mt-2 sm:text-4xl">
             Team-Lage, Blackboard und laufende Arbeit.
           </h1>
-          <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-[var(--smoke)]">
+          <p className="mt-2 hidden max-w-2xl text-[13.5px] leading-relaxed text-[var(--smoke)] sm:block">
             Ein Ort für Status, Owner, Invite-Links, offene Punkte und schnelle Abstimmung.
           </p>
-          <div className="mt-3 inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--ruled)] bg-white/70 px-3 py-1.5 text-[12px] font-semibold text-[var(--smoke)]">
+          <div className="mt-2 inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--ruled)] bg-white/70 px-3 py-1.5 text-[12px] font-semibold text-[var(--smoke)] sm:mt-3">
             <ShieldCheck className="h-3.5 w-3.5 text-[var(--ember)]" />
             <span className="truncate">
               Ansicht: {identity.role === "owner" ? "Founder/Admin" : "Teammitglied"} ·{" "}
@@ -297,7 +308,7 @@ function TeamPage() {
         </div>
       </div>
 
-      <section className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
+      <section className="mt-3 grid shrink-0 grid-cols-3 gap-2 sm:mt-5 sm:gap-3">
         <TeamStat
           label="Aktiv"
           value={`${activeMembers}/${members.length}`}
@@ -311,7 +322,30 @@ function TeamPage() {
         />
       </section>
 
-      <section className="glass-pane mt-5 grid gap-4 p-4 sm:p-5 lg:grid-cols-[1fr_auto] lg:items-center">
+      <div className="mt-3 grid shrink-0 grid-cols-5 gap-1 rounded-[16px] border border-[var(--ruled)] bg-white/55 p-1 lg:hidden">
+        {TEAM_PANELS.map((panel) => (
+          <button
+            key={panel.id}
+            type="button"
+            onClick={() => setActivePanel(panel.id)}
+            className={[
+              "h-9 rounded-[12px] px-1 text-[10.5px] font-semibold transition",
+              activePanel === panel.id
+                ? "bg-[var(--ember)] text-white shadow-ember"
+                : "text-[var(--smoke)]",
+            ].join(" ")}
+          >
+            {panel.label}
+          </button>
+        ))}
+      </div>
+
+      <section
+        className={[
+          "glass-pane mt-3 shrink-0 gap-4 p-4 sm:mt-5 sm:p-5 lg:grid lg:grid-cols-[1fr_auto] lg:items-center",
+          activePanel === "invite" ? "grid" : "hidden lg:grid",
+        ].join(" ")}
+      >
         <div className="flex min-w-0 items-start gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--ember-tint)] text-[var(--ember-deep)]">
             <Link2 className="h-5 w-5" />
@@ -353,8 +387,18 @@ function TeamPage() {
         </div>
       </section>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-[0.86fr_1.14fr]">
-        <section className="glass-pane-ink p-5">
+      <div
+        className={[
+          "mt-3 min-h-0 flex-1 gap-4 lg:mt-5 lg:grid lg:grid-cols-[0.86fr_1.14fr]",
+          activePanel === "status" || activePanel === "work" ? "grid" : "hidden lg:grid",
+        ].join(" ")}
+      >
+        <section
+          className={[
+            "glass-pane-ink min-h-0 p-4 sm:p-5",
+            activePanel === "status" ? "block" : "hidden lg:block",
+          ].join(" ")}
+        >
           <div className="mb-4 flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10">
               <Megaphone className="h-5 w-5" />
@@ -382,7 +426,12 @@ function TeamPage() {
           </div>
         </section>
 
-        <section className="glass-pane p-4 sm:p-5">
+        <section
+          className={[
+            "glass-pane min-h-0 flex-col p-4 sm:p-5 lg:flex",
+            activePanel === "work" ? "flex" : "hidden lg:flex",
+          ].join(" ")}
+        >
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <div className="eyebrow">Woran gearbeitet wird</div>
@@ -412,7 +461,7 @@ function TeamPage() {
           </div>
           )}
 
-          <div className="grid gap-3">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
             {workItems.map((item) => (
               <WorkCard
                 key={item.id}
@@ -428,8 +477,18 @@ function TeamPage() {
         </section>
       </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_0.86fr]">
-        <section className="glass-pane p-4 sm:p-5">
+      <div
+        className={[
+          "mt-3 min-h-0 flex-1 gap-4 lg:mt-5 lg:grid lg:grid-cols-[1fr_0.86fr]",
+          activePanel === "members" || activePanel === "chat" ? "grid" : "hidden lg:grid",
+        ].join(" ")}
+      >
+        <section
+          className={[
+            "glass-pane min-h-0 flex-col p-4 sm:p-5 lg:flex",
+            activePanel === "members" ? "flex" : "hidden lg:flex",
+          ].join(" ")}
+        >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="eyebrow">{isOwner ? "Team bearbeiten" : "Teammitglieder"}</div>
@@ -466,7 +525,7 @@ function TeamPage() {
           </div>
           )}
 
-          <div className="grid gap-3">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
             {members.map((member) => (
               <MemberCard
                 key={member.id}
@@ -479,7 +538,12 @@ function TeamPage() {
           </div>
         </section>
 
-        <section className="glass-pane flex min-h-[520px] flex-col p-4 sm:p-5">
+        <section
+          className={[
+            "glass-pane min-h-0 flex-col p-4 sm:p-5 lg:flex lg:min-h-[520px]",
+            activePanel === "chat" ? "flex" : "hidden lg:flex",
+          ].join(" ")}
+        >
           <div className="mb-4 flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl text-white" style={{ background: "var(--indigo-grad)" }}>
               <MessageCircle className="h-4 w-4" />

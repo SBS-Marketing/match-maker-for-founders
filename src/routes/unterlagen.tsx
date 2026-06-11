@@ -25,6 +25,7 @@ function DocumentsPage() {
   const documents = useMemo(() => buildDocuments(), []);
   const [status, setStatus] = useState<DocumentStatus>(() => readStatus(documents));
   const [draft, setDraft] = useState(() => buildDraft(planContext?.context.idea, grant?.name));
+  const [activePanel, setActivePanel] = useState<"checklist" | "draft">("checklist");
   const doneCount = documents.filter((doc) => status[doc.id]).length;
   const pct = Math.round((doneCount / documents.length) * 100);
 
@@ -42,14 +43,14 @@ function DocumentsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-5 pb-24 sm:px-6 sm:pt-8">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="mx-auto flex h-[calc(100svh-10rem)] max-w-6xl flex-col overflow-hidden px-3 pt-3 sm:h-auto sm:px-6 sm:pt-8">
+      <div className="flex shrink-0 flex-wrap items-end justify-between gap-3">
         <div>
           <div className="eyebrow">Antragspaket</div>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h1 className="mt-1 text-[24px] font-semibold leading-tight tracking-tight sm:mt-2 sm:text-4xl">
             Unterlagen, die wirklich noch offen sind.
           </h1>
-          <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-[var(--smoke)]">
+          <p className="mt-2 hidden max-w-2xl text-[14px] leading-relaxed text-[var(--smoke)] sm:block">
             Ein kompakter Paketstatus für Anträge: fehlende Bausteine abhaken und Co-Pilot direkt Entwürfe erzeugen lassen.
           </p>
         </div>
@@ -60,8 +61,68 @@ function DocumentsPage() {
         </Link>
       </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-        <section className="glass-pane-ink p-5">
+      <section className="glass-pane-ink mt-3 shrink-0 p-3 sm:mt-5 sm:p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 sm:h-11 sm:w-11">
+              <FolderOpen className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <div className="text-[15px] font-semibold text-[var(--cream)]">Paketstatus</div>
+              <div className="truncate text-[12px] text-white/55">{grant?.name || "Förderprogramm"}</div>
+            </div>
+          </div>
+          <div className="shrink-0 text-right">
+            <div className="text-3xl font-semibold tracking-tight text-[var(--cream)]">{pct}%</div>
+            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/45">
+              {doneCount}/{documents.length}
+            </div>
+          </div>
+        </div>
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+          <div className="h-full rounded-full bg-white" style={{ width: `${pct}%` }} />
+        </div>
+        <Button
+          onClick={() => {
+            generateDraft();
+            setActivePanel("draft");
+          }}
+          className="mt-3 h-10 w-full gap-2 rounded-xl bg-[var(--cream)] text-[var(--ink)] hover:bg-white sm:hidden"
+        >
+          <Wand2 className="h-4 w-4" /> Co-Pilot Entwurf
+        </Button>
+      </section>
+
+      <div className="mt-3 grid shrink-0 grid-cols-2 gap-1 rounded-[16px] border border-[var(--ruled)] bg-white/55 p-1 lg:hidden">
+        <button
+          type="button"
+          onClick={() => setActivePanel("checklist")}
+          className={[
+            "h-9 rounded-[12px] text-[12px] font-semibold transition",
+            activePanel === "checklist" ? "bg-[var(--ember)] text-white shadow-ember" : "text-[var(--smoke)]",
+          ].join(" ")}
+        >
+          Checkliste
+        </button>
+        <button
+          type="button"
+          onClick={() => setActivePanel("draft")}
+          className={[
+            "h-9 rounded-[12px] text-[12px] font-semibold transition",
+            activePanel === "draft" ? "bg-[var(--ember)] text-white shadow-ember" : "text-[var(--smoke)]",
+          ].join(" ")}
+        >
+          Entwurf
+        </button>
+      </div>
+
+      <div
+        className={[
+          "mt-3 min-h-0 flex-1 gap-4 lg:mt-5 lg:grid lg:grid-cols-[0.9fr_1.1fr]",
+          activePanel === "checklist" ? "grid" : "hidden lg:grid",
+        ].join(" ")}
+      >
+        <section className="glass-pane-ink hidden p-5 lg:block">
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10">
               <FolderOpen className="h-5 w-5" />
@@ -92,9 +153,14 @@ function DocumentsPage() {
           </Button>
         </section>
 
-        <section className="glass-pane p-4 sm:p-5">
-          <div className="eyebrow">Checkliste</div>
-          <div className="mt-4 grid gap-3">
+        <section
+          className={[
+            "glass-pane min-h-0 flex-col p-3 sm:p-5 lg:flex",
+            activePanel === "checklist" ? "flex" : "hidden lg:flex",
+          ].join(" ")}
+        >
+          <div className="eyebrow shrink-0">Checkliste</div>
+          <div className="mt-3 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 sm:mt-4">
             {documents.map((doc) => (
               <button
                 key={doc.id}
@@ -129,7 +195,12 @@ function DocumentsPage() {
         </section>
       </div>
 
-      <section className="glass-pane mt-5 p-4 sm:p-5">
+      <section
+        className={[
+          "glass-pane mt-3 min-h-0 flex-1 flex-col p-3 sm:mt-5 sm:p-5 lg:flex-none",
+          activePanel === "draft" ? "flex" : "hidden lg:flex",
+        ].join(" ")}
+      >
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
             <div className="eyebrow">Co-Pilot Entwurf</div>
@@ -145,7 +216,7 @@ function DocumentsPage() {
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           rows={10}
-          className="w-full resize-y rounded-2xl border border-[var(--ruled)] bg-white/65 p-4 text-[13.5px] leading-relaxed outline-none focus:border-[var(--ember)]"
+          className="min-h-0 flex-1 resize-none rounded-2xl border border-[var(--ruled)] bg-white/65 p-4 text-[13.5px] leading-relaxed outline-none focus:border-[var(--ember)] lg:min-h-[260px]"
         />
       </section>
     </div>

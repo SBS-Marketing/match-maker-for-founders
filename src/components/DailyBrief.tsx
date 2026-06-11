@@ -15,8 +15,12 @@ import {
 
 export function DailyBrief({ input, dateKey }: { input: LocalBriefInput; dateKey: string }) {
   const { user, session, isDemo } = useAuth();
+  // Memo keyt auf den JSON-Inhalt, nicht auf die Objekt-Identität des Inputs.
   const signature = JSON.stringify(input);
-  const local = useMemo(() => buildLocalDailyBrief(input), [signature]);
+  const local = useMemo(
+    () => buildLocalDailyBrief(JSON.parse(signature) as LocalBriefInput),
+    [signature],
+  );
   const [copilot, setCopilot] = useState<DailyBriefData | null>(() => {
     const cached = readCachedBrief(dateKey);
     return cached?.source === "copilot" ? cached : null;
@@ -61,13 +65,13 @@ export function DailyBrief({ input, dateKey }: { input: LocalBriefInput; dateKey
   const canRefresh = Boolean(session && user && !isDemo);
 
   return (
-    <div className="glass-pane-ink mt-5 p-5 sm:p-6">
+    <div className="mt-5 rounded-[18px] border border-[var(--ruled)] bg-[var(--surface)] p-5 shadow-warm sm:p-6">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
-          <CopilotMark size={14} color="var(--cream)" />
-          <AITag tone="dark">Co-Pilot · Tageszusammenfassung</AITag>
+          <CopilotMark size={14} color="var(--ember)" />
+          <AITag>Co-Pilot · Tageszusammenfassung</AITag>
           {brief.source === "local" && (
-            <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-white/45">
+            <span className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-[var(--faint)]">
               offline
             </span>
           )}
@@ -76,7 +80,7 @@ export function DailyBrief({ input, dateKey }: { input: LocalBriefInput; dateKey
           <button
             onClick={() => fetchCopilot(true)}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11.5px] font-semibold text-white/85 hover:bg-white/10 disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--ruled)] bg-[var(--surface-soft)] px-3 py-1.5 text-[11.5px] font-semibold text-[var(--smoke)] hover:text-[var(--ink)] disabled:opacity-60"
           >
             {loading ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -88,11 +92,13 @@ export function DailyBrief({ input, dateKey }: { input: LocalBriefInput; dateKey
         )}
       </div>
 
-      <p className="mt-3 max-w-2xl text-[19px] font-semibold leading-snug text-[var(--cream)]">
+      <p className="mt-3 max-w-2xl text-[19px] font-semibold leading-snug text-[var(--ink)]">
         {brief.highlight}
       </p>
       {brief.body && (
-        <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-white/75">{brief.body}</p>
+        <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-[var(--smoke)]">
+          {brief.body}
+        </p>
       )}
 
       {brief.actions.length > 0 && (
@@ -100,9 +106,9 @@ export function DailyBrief({ input, dateKey }: { input: LocalBriefInput; dateKey
           {brief.actions.map((action) => (
             <li
               key={action}
-              className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[12px] text-[var(--cream)]"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--ember-tint)] px-3 py-1.5 text-[12px] font-medium text-[var(--ember-deep)]"
             >
-              <Sparkles className="h-3 w-3 text-[var(--ember-light)]" />
+              <Sparkles className="h-3 w-3" />
               {action}
             </li>
           ))}

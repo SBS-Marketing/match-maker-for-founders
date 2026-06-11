@@ -25,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { CopilotMark } from "@/components/Copilot";
+import { DailyBrief } from "@/components/DailyBrief";
 import { Button } from "@/components/ui/button";
 import {
   buildLocalPlanSlides,
@@ -282,6 +283,22 @@ function CommandCenter() {
         <TodayStat label="Status" value={remoteReady ? "Cloud" : "Lokal"} note="Daily Sync" />
       </section>
 
+      <DailyBrief
+        dateKey={taskDate}
+        input={{
+          firstName,
+          openCount: openTasks.length,
+          completedCount,
+          totalTasks: dailyTasks.length,
+          grantName: topGrant?.name,
+          grantDeadline: topGrant?.deadline,
+          idea: planContext?.context.idea,
+          goal: planContext?.context.goal,
+          risk: planContext?.context.risk,
+          nextFocus: nextFocus?.title,
+        }}
+      />
+
       <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_0.92fr]">
         <section
           data-tour="focus"
@@ -334,7 +351,10 @@ function CommandCenter() {
 
         <section className="glass-pane flex flex-col p-4 sm:p-5">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl text-white" style={{ background: "var(--indigo-grad)" }}>
+            <span
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
+              style={{ background: "var(--indigo-grad)" }}
+            >
               <CopilotMark size={18} color="white" />
             </span>
             <div>
@@ -495,7 +515,7 @@ function CommandCenter() {
           )}
           {nextPartner && (
             <Link
-              to={`/${nextPartner.service}`}
+              to={SERVICE_BY_ID[nextPartner.service as ServiceId]?.route ?? "/marketplace"}
               className="glass-pane-soft block p-4 transition hover:-translate-y-0.5"
             >
               <div className="eyebrow">Nächster Partner</div>
@@ -515,7 +535,6 @@ function CommandCenter() {
           </Link>
         </aside>
       </div>
-
     </div>
   );
 }
@@ -551,7 +570,9 @@ function StepBadge({
       <span
         className={[
           "flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold",
-          dark ? "bg-white/12 text-[var(--cream)]" : "bg-[var(--ember-tint)] text-[var(--ember-deep)]",
+          dark
+            ? "bg-white/12 text-[var(--cream)]"
+            : "bg-[var(--ember-tint)] text-[var(--ember-deep)]",
         ].join(" ")}
       >
         {number}

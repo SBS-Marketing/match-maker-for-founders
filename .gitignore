@@ -30,3 +30,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Lokale Env — nie committen (anon key ist public, aber Service-Keys gehören hier NIE rein)
+.env
+.env.local

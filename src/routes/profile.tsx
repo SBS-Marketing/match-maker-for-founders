@@ -89,10 +89,6 @@ function writeExtras(extras: ProfileExtras): void {
   }
 }
 
-// notification_prefs ist erst nach der Migration in den generierten Typen.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const dbAny = supabase as any;
-
 function ProfilePage() {
   const { user, isDemo } = useAuth();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -465,7 +461,9 @@ function SocialEditor({
             <input
               value={social.url}
               onChange={(e) =>
-                onChange(socials.map((s) => (s.id === social.id ? { ...s, url: e.target.value } : s)))
+                onChange(
+                  socials.map((s) => (s.id === social.id ? { ...s, url: e.target.value } : s)),
+                )
               }
               placeholder={Meta.placeholder}
               className="h-7 min-w-0 flex-1 rounded-md border border-[var(--ruled)] bg-[var(--surface)] px-2 text-[12px] outline-none focus:border-[var(--ember)]"
@@ -506,12 +504,12 @@ function DigestPreference({ userId }: { userId: string }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    dbAny
+    supabase
       .from("notification_prefs")
       .select("daily_digest")
       .eq("user_id", userId)
       .maybeSingle()
-      .then(({ data }: { data: { daily_digest: boolean } | null }) => {
+      .then(({ data }) => {
         if (data) setEnabled(data.daily_digest);
       });
   }, [userId]);
@@ -520,7 +518,7 @@ function DigestPreference({ userId }: { userId: string }) {
     const next = !enabled;
     setEnabled(next);
     setSaving(true);
-    const { error } = await dbAny
+    const { error } = await supabase
       .from("notification_prefs")
       .upsert({ user_id: userId, daily_digest: next }, { onConflict: "user_id" });
     if (error) {

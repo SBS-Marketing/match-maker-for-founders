@@ -182,14 +182,14 @@ function Matches() {
     );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 pb-24 sm:px-6 md:py-10">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <div className="mx-auto flex h-[calc(100svh-10rem)] max-w-6xl flex-col overflow-hidden px-3 pt-3 sm:h-auto sm:px-6 md:py-10">
+      <div className="flex shrink-0 flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <div className="eyebrow mb-3">Inbox</div>
-          <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+          <div className="eyebrow mb-1 sm:mb-3">Inbox</div>
+          <h1 className="text-balance text-[28px] font-semibold leading-tight tracking-tight sm:text-5xl">
             Chats mit deinen <span className="text-[var(--ember)]">Matches</span>.
           </h1>
-          <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-[var(--smoke)]">
+          <p className="mt-3 hidden max-w-2xl text-[15px] leading-relaxed text-[var(--smoke)] sm:block">
             Erst Gespräche, dann Kontext: aktive Founder-Chats stehen vorne, Förderprogramme und
             Partnerangebote bleiben griffbereit als Gesprächsgrundlage.
           </p>
@@ -202,7 +202,7 @@ function Matches() {
         </Link>
       </div>
 
-      <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-7 hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           icon={Inbox}
           label="Ungelesen"
@@ -229,7 +229,7 @@ function Matches() {
         />
       </div>
 
-      <div className="mt-6 flex gap-2 overflow-x-auto pb-1">
+      <div className="mt-3 grid shrink-0 grid-cols-4 gap-1 rounded-[16px] border border-[var(--ruled)] bg-white/55 p-1 sm:mt-6 sm:flex sm:overflow-x-auto sm:border-0 sm:bg-transparent sm:p-0 sm:pb-1">
         <FilterButton active={active === "chats"} onClick={() => setActive("chats")}>
           Chats
         </FilterButton>
@@ -244,62 +244,64 @@ function Matches() {
         </FilterButton>
       </div>
 
-      <div className="mt-7 grid gap-5 lg:grid-cols-[1fr_0.92fr]">
-        {visiblePeople && (
-          <section className="glass-pane p-5">
-            <SectionHeader
-              icon={MessageCircle}
-              title="Aktive Chats"
-              meta={`${unreadCount} ungelesen`}
-            />
-            {chatThreads.length === 0 ? (
-              <EmptyState
-                text="Noch keine Chats. Geh entdecken, speichere Profile oder sende Likes."
-                cta="Founder entdecken"
-                to="/discover"
+      <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1 sm:mt-7">
+        <div className="grid gap-5 lg:grid-cols-[1fr_0.92fr]">
+          {visiblePeople && (
+            <section className="glass-pane p-4 sm:p-5">
+              <SectionHeader
+                icon={MessageCircle}
+                title="Aktive Chats"
+                meta={`${unreadCount} ungelesen`}
               />
-            ) : (
-              <div className="mt-4 grid gap-3">
-                {chatThreads.map((thread) => (
-                  <ChatThreadCard key={thread.id} thread={thread} />
-                ))}
-              </div>
-            )}
+              {chatThreads.length === 0 ? (
+                <EmptyState
+                  text="Noch keine Chats. Geh entdecken, speichere Profile oder sende Likes."
+                  cta="Founder entdecken"
+                  to="/discover"
+                />
+              ) : (
+                <div className="mt-4 grid gap-3">
+                  {chatThreads.map((thread) => (
+                    <ChatThreadCard key={thread.id} thread={thread} />
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+
+          {visiblePeople && <ChatAssistantCard grants={savedGrants} offers={selectedOffers} />}
+        </div>
+
+        {visibleFunding && (
+          <section className="glass-pane mt-4 p-4 sm:mt-5 sm:p-5">
+            <SectionHeader
+              icon={Landmark}
+              title="Gesprächskontext: Förderprogramme"
+              meta={`${savedGrants.length} Programme`}
+            />
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {savedGrants.map(({ grant, isDraft, openItems }) => (
+                <GrantCard key={grant.slug} grant={grant} isDraft={isDraft} openItems={openItems} />
+              ))}
+            </div>
           </section>
         )}
 
-        {visiblePeople && <ChatAssistantCard grants={savedGrants} offers={selectedOffers} />}
+        {visibleOffers && (
+          <section className="glass-pane mt-4 p-4 sm:mt-5 sm:p-5">
+            <SectionHeader
+              icon={Handshake}
+              title="Ausgewählte Angebote & Partner"
+              meta={`${selectedOffers.length} Ressourcen`}
+            />
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {selectedOffers.map((partner) => (
+                <OfferCard key={`${partner.service}-${partner.slug}`} partner={partner} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
-
-      {visibleFunding && (
-        <section className="glass-pane mt-5 p-5">
-          <SectionHeader
-            icon={Landmark}
-            title="Gesprächskontext: Förderprogramme"
-            meta={`${savedGrants.length} Programme`}
-          />
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {savedGrants.map(({ grant, isDraft, openItems }) => (
-              <GrantCard key={grant.slug} grant={grant} isDraft={isDraft} openItems={openItems} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {visibleOffers && (
-        <section className="glass-pane mt-5 p-5">
-          <SectionHeader
-            icon={Handshake}
-            title="Ausgewählte Angebote & Partner"
-            meta={`${selectedOffers.length} Ressourcen`}
-          />
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {selectedOffers.map((partner) => (
-              <OfferCard key={`${partner.service}-${partner.slug}`} partner={partner} />
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 }
@@ -450,7 +452,7 @@ function FilterButton({
   return (
     <button
       onClick={onClick}
-      className="shrink-0 rounded-full border px-4 py-2 text-[12.5px] font-semibold transition"
+      className="min-w-0 truncate rounded-[12px] border px-1 py-2 text-[10.5px] font-semibold transition sm:shrink-0 sm:rounded-full sm:px-4 sm:text-[12.5px]"
       style={{
         background: active ? "var(--ink)" : "rgba(255,255,255,0.55)",
         color: active ? "var(--cream)" : "var(--ink)",

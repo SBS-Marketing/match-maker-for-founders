@@ -155,8 +155,8 @@ function GrantDetail() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-8 pb-20 sm:px-6">
-      <div className="flex items-center gap-2 text-[12px] text-[var(--smoke)]">
+    <div className="mx-auto flex h-[calc(100svh-10rem)] max-w-5xl flex-col overflow-hidden px-3 pt-3 sm:h-auto sm:px-6 sm:pt-8 sm:pb-20">
+      <div className="flex shrink-0 items-center gap-2 text-[12px] text-[var(--smoke)]">
         <Link to="/marketplace" className="hover:underline">
           Marketplace
         </Link>
@@ -172,9 +172,9 @@ function GrantDetail() {
         </Link>
       </div>
 
-      <div className="mt-5 grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
-        <div>
-          <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">{grant.name}</h1>
+      <div className="mt-3 grid min-h-0 flex-1 gap-4 overflow-y-auto pr-1 sm:mt-5 sm:flex-none sm:overflow-visible lg:grid-cols-[1.3fr_0.7fr]">
+        <div className="min-w-0">
+          <h1 className="text-[30px] font-semibold leading-tight tracking-tight sm:text-5xl">{grant.name}</h1>
           <div className="mt-2 text-[14px] text-[var(--smoke)]">{grant.body}</div>
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-[13.5px]">
             <span>

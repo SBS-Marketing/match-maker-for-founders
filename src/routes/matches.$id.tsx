@@ -168,8 +168,8 @@ function Chat() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-3 py-4 md:px-8 md:py-6">
-      <div className="eyebrow mb-3 flex items-center gap-2.5 px-2 md:mb-4">
+    <div className="mx-auto flex h-[calc(100svh-10rem)] max-w-7xl flex-col overflow-hidden px-3 pt-3 md:h-auto md:px-8 md:py-6">
+      <div className="eyebrow mb-3 flex shrink-0 items-center gap-2.5 px-2 md:mb-4">
         <Link to="/matches" className="hover:text-[var(--ink)]">
           Matches
         </Link>
@@ -177,7 +177,7 @@ function Chat() {
         <span style={{ color: "var(--ink)" }}>{other?.display_name ?? "…"}</span>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[300px_1fr_280px]">
+      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[300px_1fr_280px]">
         {/* Threads */}
         <div className="glass-pane hidden max-h-[calc(100vh-160px)] flex-col overflow-hidden p-0 lg:flex">
           <div className="p-5 pb-3.5">
@@ -242,7 +242,7 @@ function Chat() {
         </div>
 
         {/* Conversation */}
-        <div className="glass-pane flex h-[calc(100dvh-11rem)] min-h-[520px] flex-col overflow-hidden p-0 lg:max-h-[calc(100vh-160px)]">
+        <div className="glass-pane flex h-full min-h-0 flex-col overflow-hidden p-0 md:h-[calc(100dvh-11rem)] md:min-h-[520px] lg:max-h-[calc(100vh-160px)]">
           {/* Header */}
           <div
             className="flex items-center gap-3 border-b px-4 py-3 md:gap-3.5 md:px-5 md:py-4"

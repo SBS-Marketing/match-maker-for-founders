@@ -15,19 +15,19 @@ export function PartnerIndex({ service, title, accent }: Props) {
   const partners = partnersFor(service);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-10 pb-24 sm:px-6">
-      <div className="flex items-center gap-2">
+    <div className="mx-auto flex h-[calc(100svh-10rem)] max-w-5xl flex-col overflow-hidden px-3 pt-3 sm:h-auto sm:px-6 sm:pt-10 sm:pb-24">
+      <div className="flex shrink-0 items-center gap-2">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--cream)]" style={{ background: s.hue }}>
           <ServiceIcon name={s.icon} size={16} stroke={2} />
         </span>
         <span className="eyebrow">{s.label} · {partners.length || s.count} kuratiert</span>
       </div>
-      <h1 className="mt-4 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+      <h1 className="mt-3 shrink-0 text-balance text-[28px] font-semibold leading-tight tracking-tight sm:mt-4 sm:text-5xl">
         {title} <span className="text-[var(--ember)]">{accent}</span>.
       </h1>
-      <p className="mt-4 max-w-2xl text-[15px] text-[var(--smoke)]">{s.blurb}</p>
+      <p className="mt-4 hidden max-w-2xl text-[15px] text-[var(--smoke)] sm:block">{s.blurb}</p>
 
-      <div className="mt-8 grid gap-5 md:grid-cols-2">
+      <div className="mt-4 grid min-h-0 flex-1 gap-4 overflow-y-auto pr-1 sm:mt-8 sm:flex-none sm:overflow-visible md:grid-cols-2">
         {partners.map((partner) => (
           <article key={partner.slug} className="glass-pane p-5">
             <div className="flex items-start justify-between gap-4">

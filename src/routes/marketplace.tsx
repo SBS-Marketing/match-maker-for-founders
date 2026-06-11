@@ -16,17 +16,17 @@ export const Route = createFileRoute("/marketplace")({
 
 function Marketplace() {
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-10 pb-24 sm:px-6">
-      <div className="eyebrow">Marketplace</div>
-      <h1 className="mt-3 text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+    <div className="mx-auto flex h-[calc(100svh-10rem)] max-w-6xl flex-col overflow-hidden px-3 pt-3 sm:h-auto sm:px-6 sm:pt-10 sm:pb-24">
+      <div className="eyebrow shrink-0">Marketplace</div>
+      <h1 className="mt-2 shrink-0 text-balance text-[28px] font-semibold leading-tight tracking-tight sm:mt-3 sm:text-5xl">
         Was brauchst du <span className="text-[var(--ember)]">jetzt</span>?
       </h1>
-      <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-[var(--smoke)]">
+      <p className="mt-3 hidden max-w-2xl text-[15px] leading-relaxed text-[var(--smoke)] sm:block">
         Wähle eine Kategorie oder lass den Co-Pilot direkt die passenden Angebote, Partner und Programme vorsortieren.
       </p>
 
       {/* Co-Pilot routing banner */}
-      <div className="glass-pane-ink mt-8 grid gap-4 p-5 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:p-6">
+      <div className="glass-pane-ink mt-3 shrink-0 grid gap-3 p-4 sm:mt-8 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:p-6">
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/12">
           <CopilotMark size={18} color="var(--cream)" spark="var(--cream)" />
         </span>
@@ -49,7 +49,7 @@ function Marketplace() {
         </Link>
       </div>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-4 grid min-h-0 flex-1 gap-3 overflow-y-auto pr-1 sm:mt-8 sm:flex-none sm:overflow-visible sm:grid-cols-2 lg:grid-cols-4">
         {SERVICES.map((s, i) => (
           <ServiceTile key={s.id} service={s} accented={i === 0} />
         ))}

@@ -20,11 +20,12 @@ function WaitlistConfirmPage() {
       setMessage("Der Bestaetigungslink ist unvollstaendig.");
       return;
     }
-    const confirmedToken: string = token;
-
+    const confirmToken = token;
     let cancelled = false;
     async function confirm() {
-      const { data, error } = await supabase.rpc("confirm_waitlist_entry", { p_token: confirmedToken });
+      const { data, error } = await supabase.rpc("confirm_waitlist_entry", {
+        p_token: confirmToken,
+      });
       if (cancelled) return;
 
       if (error || !data) {
@@ -66,8 +67,7 @@ function WaitlistConfirmPage() {
 
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">
-          Waitlist{" "}
-          <span className="text-[var(--ember)]">Bestaetigung</span>.
+          Waitlist <span className="text-[var(--ember)]">Bestaetigung</span>.
         </h1>
         <p className="mt-3 text-sm text-[var(--smoke)]">{message}</p>
       </div>

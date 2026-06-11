@@ -222,8 +222,8 @@ function Header({
           Deine Startup-Landingpage.
         </h1>
         <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-[var(--smoke)]">
-          Bau dein Profil als modulare Landingpage — Blöcke per Drag&Drop sortieren, Co-Pilot
-          füllt vor. Teilbar als Profil-Link.
+          Bau dein Profil als modulare Landingpage — Blöcke per Drag&Drop sortieren, Co-Pilot füllt
+          vor. Teilbar als Profil-Link.
         </p>
         {mode === "edit" && (
           <div className="mt-3 flex flex-wrap gap-2">
@@ -425,7 +425,11 @@ function CopilotFillButton({
       disabled={busy}
       className="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-[11.5px] font-semibold text-[var(--ember-deep)] hover:bg-[var(--ember-tint)] disabled:opacity-60"
     >
-      {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+      {busy ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      ) : (
+        <Sparkles className="h-3.5 w-3.5" />
+      )}
       Co-Pilot
     </button>
   );
@@ -461,7 +465,10 @@ function applyCopilotAnswer(
   answer: string,
   onPatch: (patch: Partial<CompanyBlock>) => void,
 ) {
-  const lines = answer.split("\n").map((l) => l.trim()).filter(Boolean);
+  const lines = answer
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
   switch (block.type) {
     case "hero":
       onPatch({
@@ -544,8 +551,16 @@ function BlockEditor({
     case "hero":
       return (
         <div className="grid gap-3 sm:grid-cols-2">
-          <TextInput label="Eyebrow" value={block.eyebrow} onChange={(v) => onPatch({ eyebrow: v })} />
-          <TextInput label="Untertitel" value={block.subtitle} onChange={(v) => onPatch({ subtitle: v })} />
+          <TextInput
+            label="Eyebrow"
+            value={block.eyebrow}
+            onChange={(v) => onPatch({ eyebrow: v })}
+          />
+          <TextInput
+            label="Untertitel"
+            value={block.subtitle}
+            onChange={(v) => onPatch({ subtitle: v })}
+          />
           <TextInput
             label="Bild-URL (optional)"
             value={block.imageUrl || ""}
@@ -565,8 +580,16 @@ function BlockEditor({
             rows={3}
             className="sm:col-span-2"
           />
-          <TextInput label="CTA-Label" value={block.ctaLabel || ""} onChange={(v) => onPatch({ ctaLabel: v })} />
-          <TextInput label="CTA-Link" value={block.ctaHref || ""} onChange={(v) => onPatch({ ctaHref: v })} />
+          <TextInput
+            label="CTA-Label"
+            value={block.ctaLabel || ""}
+            onChange={(v) => onPatch({ ctaLabel: v })}
+          />
+          <TextInput
+            label="CTA-Link"
+            value={block.ctaHref || ""}
+            onChange={(v) => onPatch({ ctaHref: v })}
+          />
         </div>
       );
     case "about":
@@ -578,7 +601,12 @@ function BlockEditor({
             value={block.title || ""}
             onChange={(v) => onPatch({ title: v })}
           />
-          <TextArea label="Inhalt" value={block.body} onChange={(v) => onPatch({ body: v })} rows={5} />
+          <TextArea
+            label="Inhalt"
+            value={block.body}
+            onChange={(v) => onPatch({ body: v })}
+            rows={5}
+          />
         </div>
       );
     case "metrics":
@@ -629,21 +657,25 @@ function BlockEditor({
     case "highlights":
       return (
         <div className="space-y-3">
-          <TextInput label="Titel" value={block.title || ""} onChange={(v) => onPatch({ title: v })} />
+          <TextInput
+            label="Titel"
+            value={block.title || ""}
+            onChange={(v) => onPatch({ title: v })}
+          />
           {block.items.map((it, idx) => (
             <TextInput
               key={idx}
               label={`Highlight ${idx + 1}`}
               value={it}
-              onChange={(v) =>
-                onPatch({ items: block.items.map((m, i) => (i === idx ? v : m)) })
-              }
+              onChange={(v) => onPatch({ items: block.items.map((m, i) => (i === idx ? v : m)) })}
             />
           ))}
           <ListAddRemove
             onAdd={() => onPatch({ items: [...block.items, ""] })}
             onRemove={
-              block.items.length > 1 ? () => onPatch({ items: block.items.slice(0, -1) }) : undefined
+              block.items.length > 1
+                ? () => onPatch({ items: block.items.slice(0, -1) })
+                : undefined
             }
           />
         </div>
@@ -702,7 +734,11 @@ function BlockEditor({
     case "team":
       return (
         <div className="space-y-3">
-          <TextInput label="Titel" value={block.title || ""} onChange={(v) => onPatch({ title: v })} />
+          <TextInput
+            label="Titel"
+            value={block.title || ""}
+            onChange={(v) => onPatch({ title: v })}
+          />
           <div className="space-y-3">
             {block.members.map((member, idx) => (
               <div
@@ -743,9 +779,7 @@ function BlockEditor({
                   value={member.linkedin || ""}
                   onChange={(v) =>
                     onPatch({
-                      members: block.members.map((m, i) =>
-                        i === idx ? { ...m, linkedin: v } : m,
-                      ),
+                      members: block.members.map((m, i) => (i === idx ? { ...m, linkedin: v } : m)),
                     })
                   }
                 />
@@ -778,7 +812,11 @@ function BlockEditor({
             rows={2}
             className="sm:col-span-2"
           />
-          <TextInput label="Button-Label" value={block.label} onChange={(v) => onPatch({ label: v })} />
+          <TextInput
+            label="Button-Label"
+            value={block.label}
+            onChange={(v) => onPatch({ label: v })}
+          />
           <TextInput label="Link" value={block.href} onChange={(v) => onPatch({ href: v })} />
         </div>
       );
@@ -959,7 +997,10 @@ function PreviewBlock({ block }: { block: CompanyBlock }) {
           )}
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             {block.items.map((m, i) => (
-              <div key={i} className="rounded-2xl border border-[var(--ruled)] bg-[var(--surface)] p-5">
+              <div
+                key={i}
+                className="rounded-2xl border border-[var(--ruled)] bg-[var(--surface)] p-5"
+              >
                 <div className="text-3xl font-semibold tracking-tight text-[var(--ink)]">
                   {m.value || "—"}
                 </div>
@@ -979,7 +1020,10 @@ function PreviewBlock({ block }: { block: CompanyBlock }) {
           )}
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {block.items.filter(Boolean).map((it, i) => (
-              <div key={i} className="rounded-2xl border border-[var(--ruled)] bg-[var(--surface)] p-4">
+              <div
+                key={i}
+                className="rounded-2xl border border-[var(--ruled)] bg-[var(--surface)] p-4"
+              >
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--ember-tint)] text-[var(--ember-deep)]">
                   <Sparkles className="h-4 w-4" />
                 </div>
@@ -1000,7 +1044,11 @@ function PreviewBlock({ block }: { block: CompanyBlock }) {
                 className="overflow-hidden rounded-2xl border border-[var(--ruled)] bg-[var(--surface-soft)]"
                 style={{ aspectRatio: block.aspect.replace("/", " / ") }}
               >
-                <img src={block.url} alt={block.caption || ""} className="h-full w-full object-cover" />
+                <img
+                  src={block.url}
+                  alt={block.caption || ""}
+                  className="h-full w-full object-cover"
+                />
               </div>
               {block.caption && (
                 <figcaption className="mt-2 text-[12.5px] text-[var(--smoke)]">
@@ -1044,7 +1092,10 @@ function PreviewBlock({ block }: { block: CompanyBlock }) {
           )}
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {block.members.map((m, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-2xl border border-[var(--ruled)] bg-[var(--surface)] p-4">
+              <div
+                key={i}
+                className="flex items-center gap-3 rounded-2xl border border-[var(--ruled)] bg-[var(--surface)] p-4"
+              >
                 <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-[var(--ember-tint)] text-[15px] font-semibold text-[var(--ember-deep)]">
                   {m.avatarUrl ? (
                     <img src={m.avatarUrl} alt={m.name} className="h-full w-full object-cover" />
@@ -1079,7 +1130,9 @@ function PreviewBlock({ block }: { block: CompanyBlock }) {
           <div className="rounded-3xl border border-[var(--ruled)] bg-[var(--ink)] p-6 text-[var(--cream)] sm:p-10">
             <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">{block.headline}</h3>
             {block.body && (
-              <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-white/75">{block.body}</p>
+              <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-white/75">
+                {block.body}
+              </p>
             )}
             <Link
               to={(block.href || "/matches") as "/matches"}

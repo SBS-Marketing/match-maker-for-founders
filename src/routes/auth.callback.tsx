@@ -30,11 +30,11 @@ function AuthCallbackPage() {
           // Prüfe ob Profil vollständig ist, sonst zu Onboarding
           const { data: profile } = await supabase
             .from("profiles")
-            .select("is_onboarded")
+            .select("onboarded_at")
             .eq("id", data.session.user.id)
             .single();
 
-          if (profile?.is_onboarded) {
+          if (profile?.onboarded_at) {
             navigate({ to: "/heute" });
           } else {
             navigate({ to: "/onboarding" });

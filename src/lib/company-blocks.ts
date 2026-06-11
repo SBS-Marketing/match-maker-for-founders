@@ -260,7 +260,10 @@ export function writeComposition(composition: CompanyComposition): void {
   }
 }
 
-function migrateLegacy(legacy: Record<string, unknown>, planContext: PlanContext | null): CompanyComposition {
+function migrateLegacy(
+  legacy: Record<string, unknown>,
+  planContext: PlanContext | null,
+): CompanyComposition {
   const base = defaultComposition(planContext);
   const str = (k: string, fallback = "") =>
     typeof legacy[k] === "string" ? (legacy[k] as string) : fallback;

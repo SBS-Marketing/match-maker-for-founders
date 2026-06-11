@@ -515,13 +515,9 @@ export function printGrantForm(draft: GrantFormDraft): void {
   if (typeof window === "undefined") return;
   const win = window.open("", "_blank", "width=820,height=1000");
   if (!win) return;
-  const esc = (s: string) =>
-    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   const fieldRows = draft.fields
-    .map(
-      (f) =>
-        `<tr><th>${esc(f.label)}</th><td>${esc(f.value || "—")}</td></tr>`,
-    )
+    .map((f) => `<tr><th>${esc(f.label)}</th><td>${esc(f.value || "—")}</td></tr>`)
     .join("");
   const sectionBlocks = draft.sections
     .map(

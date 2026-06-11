@@ -53,7 +53,6 @@ export function GrantApplicationForm({
   // Wenn sich der Kontext (Onboarding) ändert, neue Felder übernehmen, Eingaben behalten.
   useEffect(() => {
     setDraft((current) => mergeGrantFormDraft(seedDraft, current));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seedDraft]);
 
   // Auto-Save in localStorage bei jeder Änderung (außer initialem Render).
@@ -215,7 +214,11 @@ export function GrantApplicationForm({
           disabled={filling}
           className="h-10 gap-2 rounded-lg bg-[var(--ember)] text-white hover:bg-[var(--ember-deep)]"
         >
-          {filling ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+          {filling ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Sparkles className="h-4 w-4" />
+          )}
           {filling ? "Co-Pilot füllt aus…" : "Mit Co-Pilot ausfüllen"}
         </Button>
         <Button
@@ -315,8 +318,8 @@ export function GrantApplicationForm({
           </ul>
         ) : (
           <div className="mt-2 flex items-center gap-2 text-[12.5px] text-[var(--ink-soft)]">
-            <Check className="h-3.5 w-3.5 text-[var(--ember-deep)]" /> Alle Pflichtfelder ausgefüllt.
-            Vor Einreichung gegen die offizielle Programmseite prüfen.
+            <Check className="h-3.5 w-3.5 text-[var(--ember-deep)]" /> Alle Pflichtfelder
+            ausgefüllt. Vor Einreichung gegen die offizielle Programmseite prüfen.
           </div>
         )}
       </div>

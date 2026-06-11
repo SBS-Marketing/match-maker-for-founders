@@ -40,6 +40,7 @@ function KanbanPage() {
   const [cards, setCards] = useState<KanbanCard[]>(() => readCards(defaults));
   const [title, setTitle] = useState("");
   const [owner, setOwner] = useState("Founder");
+  const [activeLane, setActiveLane] = useState<LaneId>("doing");
   const doingCount = cards.filter((card) => card.lane === "doing").length;
   const doneCount = cards.filter((card) => card.lane === "done").length;
 
@@ -69,14 +70,14 @@ function KanbanPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pt-5 pb-24 sm:px-6 sm:pt-8">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="mx-auto flex h-[calc(100svh-10rem)] max-w-7xl flex-col overflow-hidden px-3 pt-3 sm:h-auto sm:px-6 sm:pt-8">
+      <div className="flex shrink-0 flex-wrap items-end justify-between gap-3">
         <div>
           <div className="eyebrow">Execution Board</div>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h1 className="mt-1 text-[24px] font-semibold leading-tight tracking-tight sm:mt-2 sm:text-4xl">
             Kanban für Antrag, Produkt und Partner.
           </h1>
-          <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-[var(--smoke)]">
+          <p className="mt-2 hidden max-w-2xl text-[14px] leading-relaxed text-[var(--smoke)] sm:block">
             Angebote, Förderungen und Teamaufgaben werden zu Karten, die jeder sofort weiterschieben kann.
           </p>
         </div>
@@ -94,9 +95,9 @@ function KanbanPage() {
         </div>
       </div>
 
-      <section className="glass-pane-ink mt-5 grid gap-4 p-5 md:grid-cols-[1fr_auto] md:items-center">
+      <section className="glass-pane-ink mt-3 shrink-0 grid gap-3 p-3 sm:mt-5 sm:p-5 md:grid-cols-[1fr_auto] md:items-center">
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 sm:h-11 sm:w-11">
             <Kanban className="h-5 w-5" />
           </span>
           <div>
@@ -104,7 +105,7 @@ function KanbanPage() {
               {doingCount} aktiv · {doneCount} abgeschlossen
             </div>
             <div className="text-[12px] text-white/55">
-              Board bleibt lokal gespeichert und ist mobile scrollbar.
+              Board bleibt lokal gespeichert.
             </div>
           </div>
         </div>
@@ -132,12 +133,36 @@ function KanbanPage() {
         </div>
       </section>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-4">
+      <div className="mt-3 grid shrink-0 grid-cols-4 gap-1 rounded-[16px] border border-[var(--ruled)] bg-white/55 p-1 lg:hidden">
+        {LANES.map((lane) => (
+          <button
+            key={lane.id}
+            type="button"
+            onClick={() => setActiveLane(lane.id)}
+            className={[
+              "h-9 rounded-[12px] px-1 text-[10.5px] font-semibold transition",
+              activeLane === lane.id
+                ? "bg-[var(--ember)] text-white shadow-ember"
+                : "text-[var(--smoke)]",
+            ].join(" ")}
+          >
+            {lane.title}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-3 grid min-h-0 flex-1 gap-3 lg:mt-5 lg:grid-cols-4">
         {LANES.map((lane) => {
           const laneCards = cards.filter((card) => card.lane === lane.id);
           return (
-            <section key={lane.id} className="glass-pane min-h-[260px] p-4">
-              <div className="mb-4 flex items-start justify-between gap-3">
+            <section
+              key={lane.id}
+              className={[
+                "glass-pane min-h-0 flex-col p-3 sm:p-4 lg:flex",
+                activeLane === lane.id ? "flex" : "hidden lg:flex",
+              ].join(" ")}
+            >
+              <div className="mb-3 flex shrink-0 items-start justify-between gap-3 sm:mb-4">
                 <div>
                   <div className="text-[15px] font-semibold tracking-tight">{lane.title}</div>
                   <div className="text-[12px] text-[var(--smoke)]">{lane.hint}</div>
@@ -146,7 +171,7 @@ function KanbanPage() {
                   {laneCards.length}
                 </span>
               </div>
-              <div className="space-y-3">
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
                 {laneCards.map((card) => (
                   <KanbanCardView key={card.id} card={card} onUpdate={updateCard} />
                 ))}
@@ -163,7 +188,7 @@ function KanbanPage() {
 
       <Link
         to="/co-pilot"
-        className="glass-pane mt-5 flex items-center justify-between gap-3 p-4 transition hover:-translate-y-0.5"
+        className="glass-pane mt-5 hidden items-center justify-between gap-3 p-4 transition hover:-translate-y-0.5 lg:flex"
       >
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl text-white" style={{ background: "var(--indigo-grad)" }}>

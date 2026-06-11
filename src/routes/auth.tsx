@@ -43,6 +43,7 @@ function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
+        if (!pR.success) return;
         const { error } = await supabase.auth.signUp({
           email: eR.data,
           password: password,
@@ -51,6 +52,7 @@ function AuthPage() {
         if (error) throw error;
         toast.success("Konto erstellt. Bestätige deine E-Mail.");
       } else if (mode === "signin") {
+        if (!pR.success) return;
         const { error } = await supabase.auth.signInWithPassword({
           email: eR.data,
           password: password,
@@ -111,18 +113,15 @@ function AuthPage() {
           <h1 className="text-3xl font-semibold tracking-tight">
             {mode === "signup" ? (
               <>
-                Founder-Profil{" "}
-                <span className="text-[var(--ember)]">erstellen</span>
+                Founder-Profil <span className="text-[var(--ember)]">erstellen</span>
               </>
             ) : mode === "signin" ? (
               <>
-                Willkommen{" "}
-                <span className="text-[var(--ember)]">zurück</span>
+                Willkommen <span className="text-[var(--ember)]">zurück</span>
               </>
             ) : (
               <>
-                Magic{" "}
-                <span className="text-[var(--ember)]">Link</span>
+                Magic <span className="text-[var(--ember)]">Link</span>
               </>
             )}
           </h1>

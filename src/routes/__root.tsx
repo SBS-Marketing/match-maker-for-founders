@@ -78,7 +78,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "matchfoundr — Finde deinen Co-Founder" },
-      { name: "description", content: "Ein fokussiertes Netzwerk für Gründer:innen auf der Suche nach ihrem ersten Partner. Echte Profile, kein Lebenslauf-Theater." },
+      {
+        name: "description",
+        content:
+          "Ein fokussiertes Netzwerk für Gründer:innen auf der Suche nach ihrem ersten Partner. Echte Profile, kein Lebenslauf-Theater.",
+      },
       { name: "author", content: "matchfoundr" },
       { property: "og:title", content: "matchfoundr — Finde deinen Co-Founder" },
       {
