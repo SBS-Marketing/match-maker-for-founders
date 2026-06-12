@@ -1,11 +1,22 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthGate } from "@/components/AuthGate";
 import { CopilotMark, AITag, ThinkingTrace } from "@/components/Copilot";
-import { Send, Save, Pencil, FileText, Globe, Database } from "lucide-react";
+import { ArrowRight, Send, Save, Pencil, FileText, Globe, Database, X } from "lucide-react";
 import { toast } from "sonner";
+import { readPlanContext } from "@/lib/plan-draft";
+import {
+  askCopilot,
+  makeMsgId,
+  quickPromptsFor,
+  readCopilotMemory,
+  readSharedChat,
+  removeCopilotFact,
+  writeSharedChat,
+  type CopilotNav,
+} from "@/lib/copilot-client";
 
 export const Route = createFileRoute("/co-pilot")({
   head: () => ({
@@ -27,6 +38,7 @@ type Msg = {
   role: "user" | "assistant";
   content: string;
   sources?: Source[] | null;
+  navigation?: CopilotNav[];
   created_at: string;
 };
 type Ctx = {
@@ -39,14 +51,15 @@ type Ctx = {
 };
 
 const DEFAULT_QA = [
-  "Wer hilft mir mit dem ESOP-Pool?",
+  "Was ist mein wichtigster nächster Schritt?",
   "Welche Förderung passt für mich?",
   "Erstelle mir einen 3-Spur-Plan",
   "Mein Co-Founder springt ab — was jetzt?",
 ];
 
 function CoPilotPage() {
-  const { user, isDemo } = useAuth();
+  const { user, session, isDemo } = useAuth();
+  const router = useRouter();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionTitle, setSessionTitle] = useState("Neue Session");
   const [editingTitle, setEditingTitle] = useState(false);
@@ -57,6 +70,7 @@ function CoPilotPage() {
   const [quickActions, setQuickActions] = useState<string[]>(DEFAULT_QA);
   const [editingCtx, setEditingCtx] = useState(false);
   const [ctxDraft, setCtxDraft] = useState("");
+  const [memory, setMemory] = useState<string[]>(() => readCopilotMemory());
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // bootstrap: session + context + messages
@@ -65,23 +79,31 @@ function CoPilotPage() {
     if (isDemo) {
       setSessionId("demo-session");
       setSessionTitle("Demo Session");
+      const planCtx = readPlanContext();
       setCtx({
-        role: "Founder mit Idee",
-        idea: "Mobile-first Plattform fuer Co-Founder Matching und Startup-Ressourcen",
-        stage: "MVP",
+        role: planCtx?.context.role || "Founder mit Idee",
+        idea:
+          planCtx?.context.idea ||
+          "Mobile-first Plattform fuer Co-Founder Matching und Startup-Ressourcen",
+        stage: planCtx?.context.stage || "MVP",
         city: "Berlin",
-        goal: "Closed Beta mit 50 Gruendern starten",
-        risk: "Zu wenig aktive Profile auf beiden Seiten",
+        goal: planCtx?.context.goal || "Closed Beta mit 50 Gruendern starten",
+        risk: planCtx?.context.risk || "Zu wenig aktive Profile auf beiden Seiten",
       });
-      setMessages([
-        {
-          id: "demo-welcome",
-          role: "assistant",
-          content:
-            "Demo-Modus aktiv. Erzaehl mir kurz, was du als Naechstes bauen willst, und ich gebe dir einen konkreten 3-Schritte-Plan.",
-          created_at: new Date().toISOString(),
-        },
-      ]);
+      const shared = readSharedChat();
+      setMessages(
+        shared.length > 0
+          ? (shared as Msg[])
+          : [
+              {
+                id: "demo-welcome",
+                role: "assistant",
+                content:
+                  "Ich bin dein Co-Pilot — ich kenne deinen Plan, merke mir was wichtig ist und bringe dich zum passenden Bereich der Plattform. Womit fangen wir an?",
+                created_at: new Date().toISOString(),
+              },
+            ],
+      );
       return;
     }
     (async () => {
@@ -157,110 +179,110 @@ function CoPilotPage() {
     setSending(true);
     setInput("");
 
-    // Optimistic user msg + persist
-    const tempId = `tmp-${Date.now()}`;
     const userMsg: Msg = {
-      id: tempId,
+      id: makeMsgId(),
       role: "user",
       content: body,
       created_at: new Date().toISOString(),
     };
-    setMessages((m) => [...m, userMsg]);
+    const baseMessages = [...messages, userMsg];
+    setMessages(baseMessages);
 
-    if (isDemo) {
-      window.setTimeout(() => {
-        setMessages((m) => [
-          ...m,
-          {
-            id: `demo-a-${Date.now()}`,
-            role: "assistant",
-            content:
-              "Demo-Antwort: Fokus jetzt auf 1) kurze Profilstrecke unter 3 Minuten, 2) Swipe + Marktplatz mit klaren Filtern, 3) erster Partner-/Guide-Bereich fuer Vertrauen. Danach messen wir Aktivierung, Matches und erste Nachrichten.",
-            created_at: new Date().toISOString(),
-          },
-        ]);
-        setQuickActions([
-          "Welche Features zuerst?",
-          "Was fehlt fuer Beta?",
-          "Wie monetarisieren?",
-          "Mobile UX pruefen",
-        ]);
-        setSending(false);
-      }, 650);
-      return;
-    }
+    const canUseCloud = Boolean(session && !isDemo);
 
-    const { data: inserted } = await supabase
-      .from("copilot_messages")
-      .insert({ session_id: sessionId, user_id: user.id, role: "user", content: body })
-      .select()
-      .single();
-    if (inserted) {
-      setMessages((m) => m.map((x) => (x.id === tempId ? (inserted as Msg) : x)));
-    }
-
-    // If no context yet, parse it from the first user message in background
-    if (!ctx) {
-      supabase.functions
-        .invoke("copilot", {
-          body: { task: "context_parse", session_id: sessionId, message: body },
-        })
-        .then(async () => {
-          const { data: ctxRow } = await supabase
-            .from("copilot_context")
-            .select("*")
-            .eq("user_id", user.id)
-            .order("updated_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          if (ctxRow) setCtx(ctxRow);
-        })
-        .catch(() => {});
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke("copilot", {
-        body: { task: "chat", session_id: sessionId, message: body },
-      });
-      if (error) throw error;
-
-      const answer = (data?.answer as string) || "…";
-      const sources = (data?.sources as Source[]) || [];
-      const qa = (data?.quick_actions as string[]) || [];
-
-      // Edge function already inserts the assistant message — refetch to get the persisted row
-      const { data: msgs } = await supabase
+    if (canUseCloud) {
+      // User-Message persistieren (Assistant persistiert die Edge Function)
+      supabase
         .from("copilot_messages")
-        .select("*")
-        .eq("session_id", sessionId)
-        .order("created_at", { ascending: true });
-      if (msgs) setMessages(msgs as Msg[]);
-      else {
-        setMessages((m) => [
-          ...m,
-          {
-            id: `a-${Date.now()}`,
-            role: "assistant",
-            content: answer,
-            sources,
-            created_at: new Date().toISOString(),
-          },
-        ]);
-      }
-      if (qa.length) setQuickActions(qa);
+        .insert({ session_id: sessionId, user_id: user.id, role: "user", content: body })
+        .then(() => undefined);
 
-      await supabase
+      // Erste Nachricht ohne Kontext → Kontext im Hintergrund parsen
+      if (!ctx) {
+        supabase.functions
+          .invoke("copilot", {
+            body: { task: "context_parse", session_id: sessionId, message: body },
+          })
+          .then(async () => {
+            const { data: ctxRow } = await supabase
+              .from("copilot_context")
+              .select("*")
+              .eq("user_id", user.id)
+              .order("updated_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (ctxRow) setCtx(ctxRow);
+          })
+          .catch(() => {});
+      }
+    }
+
+    const result = await askCopilot({
+      message: body,
+      surface: "/co-pilot",
+      history: baseMessages.map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        created_at: m.created_at,
+      })),
+      sessionId: canUseCloud ? sessionId : undefined,
+      planContext: readPlanContext(),
+      auth: { session, user, isDemo },
+    });
+
+    const assistantMsg: Msg = {
+      id: makeMsgId(),
+      role: "assistant",
+      content: result.answer,
+      navigation: result.navigation,
+      created_at: new Date().toISOString(),
+    };
+    const next = [...baseMessages, assistantMsg];
+    setMessages(next);
+    if (result.quickActions.length) setQuickActions(result.quickActions.slice(0, 4));
+    setMemory(readCopilotMemory());
+
+    if (!canUseCloud) {
+      // Demo/offline: Verlauf teilen (Dock + Seite nutzen denselben Speicher)
+      writeSharedChat(
+        next.map((m) => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+          navigation: m.navigation,
+          created_at: m.created_at,
+        })),
+      );
+    } else {
+      if (result.source === "local") {
+        toast.error("Cloud nicht erreichbar — lokaler Modus aktiv.");
+      }
+      supabase
         .from("copilot_sessions")
         .update({ updated_at: new Date().toISOString() })
-        .eq("id", sessionId);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "";
-      if (msg.includes("429")) toast.error("Limit erreicht — bitte später erneut versuchen.");
-      else if (msg.includes("402")) toast.error("Credits aufgebraucht.");
-      else toast.error("Co-Pilot antwortet gerade nicht.");
-    } finally {
-      setSending(false);
+        .eq("id", sessionId)
+        .then(() => undefined);
+
+      // Kontext nach dem Memory-Merge der Edge Function aktualisieren
+      supabase
+        .from("copilot_context")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+        .then(({ data: ctxRow }) => {
+          if (ctxRow) setCtx(ctxRow);
+        });
     }
+
+    setSending(false);
+  }
+
+  function forgetFact(fact: string) {
+    setMemory(removeCopilotFact(fact));
+    toast.success("Fakt vergessen");
   }
 
   async function saveSessionTitle() {
@@ -377,6 +399,19 @@ function CoPilotPage() {
                     <div className="rounded-2xl rounded-bl-sm border border-white/10 bg-white/5 px-4 py-3.5 text-[15px] leading-snug text-[var(--cream)] whitespace-pre-wrap">
                       {m.content}
                     </div>
+                    {m.navigation && m.navigation.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {m.navigation.map((nav) => (
+                          <button
+                            key={nav.to + nav.label}
+                            onClick={() => router.navigate({ to: nav.to })}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-semibold text-[var(--indigo-deep)] hover:bg-white/90"
+                          >
+                            {nav.label} <ArrowRight className="h-3 w-3" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     {m.sources && m.sources.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {m.sources.map((s, i) => (
@@ -504,6 +539,39 @@ function CoPilotPage() {
                   <Field label="Ziel" value={ctx?.goal} />
                   <Field label="Risiko" value={ctx?.risk} />
                 </div>
+              )}
+            </div>
+
+            <div
+              className="rounded-2xl border border-white/10 p-5"
+              style={{ background: "rgba(255,255,255,0.03)" }}
+            >
+              <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/55">
+                Was ich mir gemerkt habe
+              </div>
+              {memory.length === 0 ? (
+                <p className="mt-3 text-[12px] leading-relaxed text-white/40">
+                  Noch nichts — erzähl mir Entscheidungen, Zahlen oder Deadlines, ich merke sie mir
+                  und nutze sie in jedem Gespräch.
+                </p>
+              ) : (
+                <ul className="mt-3 space-y-2">
+                  {memory.map((fact) => (
+                    <li
+                      key={fact}
+                      className="group flex items-start justify-between gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[12.5px] leading-snug text-white/80"
+                    >
+                      <span className="min-w-0">{fact}</span>
+                      <button
+                        onClick={() => forgetFact(fact)}
+                        aria-label="Fakt vergessen"
+                        className="mt-0.5 shrink-0 text-white/30 transition hover:text-white/80"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
 

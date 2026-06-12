@@ -5,7 +5,16 @@
 // ─────────────────────────────────────────────────────────────
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { KIMI_PROMPTS, SONNET_PROMPTS, type FounderContext, type TaskType } from "./prompts.ts";
+import {
+  KIMI_PROMPTS,
+  ROUTE_CATALOG,
+  SONNET_PROMPTS,
+  buildChatPolishPrompt,
+  buildChatPrompt,
+  type ChatTurn,
+  type FounderContext,
+  type TaskType,
+} from "./prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -212,20 +221,91 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Stage 1: Kimi analyzes + answers
-      const kimiPrompt = KIMI_PROMPTS.chat(ctx, message);
+      // Gesprächsverlauf der Session laden (Client kann ihn auch mitschicken)
+      let history: ChatTurn[] = Array.isArray(extra.history)
+        ? (extra.history as ChatTurn[]).filter(
+            (t) => (t?.role === "user" || t?.role === "assistant") && typeof t.content === "string",
+          )
+        : [];
+      if (history.length === 0 && session_id) {
+        const { data: prevMsgs } = await supabase
+          .from("copilot_messages")
+          .select("role, content")
+          .eq("session_id", session_id)
+          .order("created_at", { ascending: false })
+          .limit(12);
+        history = ((prevMsgs ?? []) as ChatTurn[]).reverse();
+      }
+
+      // Gemerkte Fakten: serverseitig (raw_context.facts) + clientseitig (extra.memory)
+      const serverFacts = Array.isArray(
+        (contextData?.raw_context as Record<string, unknown> | null)?.facts,
+      )
+        ? ((contextData!.raw_context as Record<string, unknown>).facts as string[])
+        : [];
+      const clientFacts = Array.isArray(extra.memory) ? (extra.memory as string[]) : [];
+      const memory = [...new Set([...serverFacts, ...clientFacts])].slice(0, 20);
+
+      const surface = typeof extra.surface === "string" ? extra.surface : undefined;
+
+      // Stage 1: Kimi — Analyse, Antwortentwurf, Memory-Extraktion, Nav-Vorschläge
+      const kimiPrompt = buildChatPrompt(ctx, { message, history, memory, surface });
       const kimiRaw = await callKimi(kimiPrompt);
       console.log("[KIMI chat raw]", kimiRaw.slice(0, 300));
       const kimiData = parseJSON(kimiRaw);
-      console.log("[KIMI chat parsed] antwort:", String(kimiData.antwort ?? "").slice(0, 200));
 
       // Extract draft — never pass empty string to Sonnet
       const draft = extractDraft(kimiData, kimiRaw);
-      console.log("[DRAFT to Sonnet]", draft.slice(0, 200));
 
-      // Stage 2: Sonnet polishes the answer text
-      const sonnetPrompt = SONNET_PROMPTS.chat(ctx, draft);
+      // Stage 2: Sonnet polishes the answer text (kennt den Verlauf)
+      const sonnetPrompt = buildChatPolishPrompt(ctx, draft, history);
       const polishedAnswer = await callSonnet(sonnetPrompt);
+
+      // Nav-Vorschläge gegen den Routen-Katalog validieren
+      const validRoutes = new Set(ROUTE_CATALOG.map((r) => r.to as string));
+      const navigation = (Array.isArray(kimiData.navigation) ? kimiData.navigation : [])
+        .filter(
+          (n: Record<string, unknown>) =>
+            typeof n?.to === "string" &&
+            typeof n?.label === "string" &&
+            validRoutes.has((n.to as string).split("?")[0].split("#")[0]),
+        )
+        .slice(0, 2);
+
+      const newFacts = (Array.isArray(kimiData.neue_fakten) ? kimiData.neue_fakten : [])
+        .filter((f: unknown): f is string => typeof f === "string" && f.trim().length > 3)
+        .slice(0, 3);
+
+      // Memory-Merge: neue Fakten + Kontext-Updates non-destruktiv persistieren
+      const ctxUpdates =
+        kimiData.kontext_updates && typeof kimiData.kontext_updates === "object"
+          ? (kimiData.kontext_updates as Record<string, unknown>)
+          : {};
+      const mergedFields: Record<string, string> = {};
+      for (const key of ["role", "idea", "stage", "city", "goal", "risk"] as const) {
+        const v = ctxUpdates[key];
+        if (typeof v === "string" && v.trim()) mergedFields[key] = v.trim();
+      }
+      if (newFacts.length > 0 || Object.keys(mergedFields).length > 0) {
+        const prevRaw =
+          contextData?.raw_context && typeof contextData.raw_context === "object"
+            ? (contextData.raw_context as Record<string, unknown>)
+            : {};
+        const mergedFacts = [...new Set([...serverFacts, ...newFacts])].slice(-30);
+        await supabase.from("copilot_context").upsert({
+          ...(contextData?.id ? { id: contextData.id } : {}),
+          user_id: user.id,
+          session_id: session_id || contextData?.session_id || null,
+          role: mergedFields.role ?? contextData?.role ?? null,
+          idea: mergedFields.idea ?? contextData?.idea ?? null,
+          stage: mergedFields.stage ?? contextData?.stage ?? null,
+          city: mergedFields.city ?? contextData?.city ?? null,
+          goal: mergedFields.goal ?? contextData?.goal ?? null,
+          risk: mergedFields.risk ?? contextData?.risk ?? null,
+          raw_context: { ...prevRaw, ...mergedFields, facts: mergedFacts },
+          updated_at: new Date().toISOString(),
+        });
+      }
 
       // Save assistant message to DB
       if (session_id) {
@@ -258,6 +338,8 @@ Deno.serve(async (req) => {
         quick_actions: Array.isArray(kimiData.follow_up_aktionen)
           ? kimiData.follow_up_aktionen
           : [],
+        navigation,
+        new_facts: newFacts,
       };
     } else if (task === "plan_generate") {
       // Load assessment + skills + industry for full context

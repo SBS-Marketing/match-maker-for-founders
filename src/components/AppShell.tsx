@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { CopilotDock } from "@/components/CopilotDock";
 import { PageOnboarding } from "@/components/onboarding/PageOnboarding";
 
 type NavItem = { to: string; label: string; short: string; icon: LucideIcon };
@@ -93,6 +94,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
       <MobileBottomNav pathname={pathname} />
       {user && <PageOnboarding pathname={pathname} />}
+      <CopilotDock />
     </div>
   );
 }

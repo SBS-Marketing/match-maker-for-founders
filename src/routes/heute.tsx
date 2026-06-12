@@ -27,6 +27,7 @@ import { ServiceIcon } from "@/components/ServiceIcon";
 import { CopilotMark } from "@/components/Copilot";
 import { DailyBrief } from "@/components/DailyBrief";
 import { Button } from "@/components/ui/button";
+import { askCopilot, type CopilotNav } from "@/lib/copilot-client";
 import {
   buildLocalPlanSlides,
   readPlanContext,
@@ -78,6 +79,7 @@ function CommandCenter() {
   const [remoteReady, setRemoteReady] = useState(false);
   const [copilotInput, setCopilotInput] = useState("");
   const [copilotAnswer, setCopilotAnswer] = useState<string | null>(null);
+  const [copilotNav, setCopilotNav] = useState<CopilotNav[]>([]);
   const [copilotSending, setCopilotSending] = useState(false);
 
   useEffect(() => {
@@ -218,31 +220,18 @@ function CommandCenter() {
       setCopilotInput("");
       setCopilotSending(true);
 
-      if (!session || isDemo) {
-        window.setTimeout(() => {
-          setCopilotAnswer(buildLocalDailyCopilotAnswer(body, nextFocus, topGrant, planContext));
-          setCopilotSending(false);
-        }, 450);
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase.functions.invoke("copilot", {
-          body: { task: "chat", message: body, extra: { onboarding: planContext } },
-        });
-        if (error) throw error;
-        setCopilotAnswer(
-          (data?.answer as string) ||
-            buildLocalDailyCopilotAnswer(body, nextFocus, topGrant, planContext),
-        );
-      } catch {
-        setCopilotAnswer(buildLocalDailyCopilotAnswer(body, nextFocus, topGrant, planContext));
-        toast.error("Co-Pilot nutzt gerade den lokalen Modus");
-      } finally {
-        setCopilotSending(false);
-      }
+      const result = await askCopilot({
+        message: body,
+        surface: "/heute",
+        history: [],
+        planContext,
+        auth: { session, user, isDemo },
+      });
+      setCopilotAnswer(result.answer);
+      setCopilotNav(result.navigation);
+      setCopilotSending(false);
     },
-    [copilotInput, copilotSending, isDemo, nextFocus, planContext, session, topGrant],
+    [copilotInput, copilotSending, isDemo, planContext, session, user],
   );
 
   return (
@@ -383,9 +372,24 @@ function CommandCenter() {
                 <Loader2 className="h-4 w-4 animate-spin" /> Co-Pilot denkt mit...
               </div>
             ) : copilotAnswer ? (
-              <p className="whitespace-pre-line text-[13.5px] leading-relaxed text-[var(--ink)]">
-                {copilotAnswer}
-              </p>
+              <div>
+                <p className="whitespace-pre-line text-[13.5px] leading-relaxed text-[var(--ink)]">
+                  {copilotAnswer}
+                </p>
+                {copilotNav.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {copilotNav.map((nav) => (
+                      <Link
+                        key={nav.to + nav.label}
+                        to={nav.to}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-[var(--indigo-tint)] px-3 py-1.5 text-[12px] font-semibold text-[var(--indigo-ink)] hover:brightness-95"
+                      >
+                        {nav.label} <ArrowRight className="h-3 w-3" />
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             ) : (
               <p className="text-[13.5px] leading-relaxed text-[var(--smoke)]">
                 Frage nach Priorität, Antrag, Nachricht oder nächstem Sprint.
@@ -772,26 +776,6 @@ function buildDailyTasks(
     );
   }
   return tasks;
-}
-
-function buildLocalDailyCopilotAnswer(
-  prompt: string,
-  nextFocus: DailyTask | undefined,
-  grant = GRANTS[0],
-  context: PlanContext | null,
-): string {
-  const idea = context?.context.idea || "dein Startup";
-  const focus = nextFocus?.title || "deinen nächsten belastbaren Schritt";
-  const grantLine = grant
-    ? `${grant.name} ist aktuell der stärkste Förder-Hebel.`
-    : "Prüfe zuerst den besten Förder-Hebel.";
-  return [
-    `Kurzantwort zu: "${prompt}"`,
-    "",
-    `1. Starte mit ${focus}. Das ist der kleinste Schritt, der heute Bewegung in ${idea} bringt.`,
-    `2. ${grantLine} Sammle nur die fehlenden Unterlagen, statt den Antrag komplett neu zu denken.`,
-    "3. Wenn du jemandem schreiben willst: ein Satz Kontext, ein konkreter Ask, ein Terminvorschlag. Ich kann dir daraus direkt eine Nachricht formulieren.",
-  ].join("\n");
 }
 
 function readDailyState(): DailyState {

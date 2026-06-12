@@ -31,12 +31,17 @@ Wichtige neue Migrationen:
 ## 3. Edge Functions
 
 ```bash
-supabase functions deploy copilot
+supabase functions deploy copilot        # Pflicht nach Co-Pilot-V2: Verlauf, Memory, Nav-Aktionen
 supabase functions deploy matching
 supabase functions deploy swipe
 supabase functions deploy resend-confirm
 supabase functions deploy daily-digest
 ```
+
+> Hinweis Co-Pilot V2: Der `chat`-Task nutzt jetzt Gesprächsverlauf, Seitenkontext
+> (`extra.surface`), Client-Memory (`extra.memory`) und liefert `navigation` +
+> `new_facts` zurück. Das Frontend funktioniert auch mit der alten Function
+> (Felder fehlen dann einfach), aber erst nach dem Redeploy ist der Co-Pilot komplett.
 
 ### Function-Secrets (Dashboard → Edge Functions → Secrets)
 | Secret | Genutzt von |

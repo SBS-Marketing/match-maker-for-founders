@@ -19,6 +19,57 @@ export type FounderContext = {
   copilot_context?: string; // injected industry context hint
 };
 
+export type ChatTurn = { role: "user" | "assistant"; content: string };
+
+// Plattform-Bereiche, auf die der Co-Pilot aktiv verweisen darf.
+export const ROUTE_CATALOG = [
+  { to: "/heute", label: "Heute (Tagesplan)" },
+  { to: "/plan", label: "Persönlicher Plan" },
+  { to: "/discover", label: "Co-Founder Swipe" },
+  { to: "/marketplace", label: "Marktplatz (alle Services)" },
+  { to: "/foerderung", label: "Förderprogramme" },
+  { to: "/kapital", label: "Kapital & Investoren" },
+  { to: "/recht", label: "Recht & Verträge" },
+  { to: "/steuer", label: "Steuer & Buchhaltung" },
+  { to: "/mentoren", label: "Mentoren & Advisor" },
+  { to: "/talent", label: "Talent & Hires" },
+  { to: "/growth", label: "Growth & GTM" },
+  { to: "/firma", label: "Firmenprofil (Startup-Landingpage)" },
+  { to: "/team", label: "Team-Workspace" },
+  { to: "/aufgaben", label: "Aufgaben" },
+  { to: "/kanban", label: "Kanban-Board" },
+  { to: "/kalender", label: "Kalender" },
+  { to: "/unterlagen", label: "Unterlagen & Dokumente" },
+  { to: "/matches", label: "Matches & Chats" },
+] as const;
+
+export function historyBlock(history: ChatTurn[]): string {
+  if (!history.length) return "(noch kein Verlauf — erste Nachricht)";
+  return history
+    .slice(-12)
+    .map((t) => `${t.role === "user" ? "FOUNDER" : "CO-PILOT"}: ${t.content.slice(0, 600)}`)
+    .join("\n");
+}
+
+export function memoryBlock(memory: string[]): string {
+  if (!memory.length) return "(noch keine gemerkten Fakten)";
+  return memory
+    .slice(0, 20)
+    .map((f) => `- ${f}`)
+    .join("\n");
+}
+
+export function routeBlock(): string {
+  return ROUTE_CATALOG.map((r) => `${r.to} = ${r.label}`).join("\n");
+}
+
+export type ChatPromptInput = {
+  message: string;
+  history: ChatTurn[];
+  memory: string[];
+  surface?: string; // aktuelle Seite, z.B. "/foerderung/exist-gruenderstipendium"
+};
+
 export type TaskType =
   | "chat"
   | "context_parse"
@@ -236,6 +287,102 @@ export const KIMI_PROMPTS: Record<string, (ctx: FounderContext, input: string) =
     }
   `,
 };
+
+// ─────────────────────────────────────────────────────────────
+// CHAT V2 — mit Gesprächsverlauf, Memory, Seitenkontext und
+// proaktiven Plattform-Aktionen. Wird von task "chat" genutzt.
+// ─────────────────────────────────────────────────────────────
+
+export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): string {
+  return `
+    Du bist der Co-Pilot von matchfoundr — ein direkter, erfahrener Begleiter für Menschen,
+    die ein Vorhaben aufbauen (Tech-Startup, Handwerksbetrieb, Restaurant, Studio — egal was).
+    Du bist KEIN Q&A-Bot: Du kennst den Founder, erinnerst dich an den Verlauf, denkst einen
+    Schritt voraus und verweist aktiv auf die passenden Bereiche der Plattform.
+
+    FOUNDER-PROFIL:
+    - Name: ${ctx.userName}
+    - Branche: ${ctx.industry || "allgemein"} ${ctx.copilot_context ? `— ${ctx.copilot_context}` : ""}
+    - ${ctx.venture_term || "Vorhaben"}: ${ctx.idea || "unbekannt"}
+    - Rolle: ${ctx.role || "unbekannt"}
+    - Stand: ${ctx.stage || "unbekannt"}
+    - Stadt: ${ctx.city || "unbekannt"}
+    - Ziel: ${ctx.goal || "unbekannt"}
+    - Risiko: ${ctx.risk || "unbekannt"}
+
+    GEMERKTE FAKTEN (aus früheren Gesprächen):
+    ${memoryBlock(input.memory)}
+
+    GESPRÄCHSVERLAUF (älteste zuerst):
+    ${historyBlock(input.history)}
+
+    AKTUELLE SEITE DES FOUNDERS: ${input.surface || "unbekannt"}
+    (Beziehe dich darauf, wenn es hilft — z.B. auf der Förderungs-Seite direkt zum Antrag raten.)
+
+    PLATTFORM-BEREICHE (nur diese Routen verwenden):
+    ${routeBlock()}
+
+    NEUE NACHRICHT: "${input.message}"
+
+    REGELN:
+    1. Antworte im Kontext des Verlaufs — wiederhole nichts, was schon gesagt wurde.
+    2. Stage-Intelligenz: Passt die Frage nicht zum Stand (z.B. ESOP in der Ideenphase),
+       sag das kurz, erkläre warum, und nenne die richtige Priorität JETZT. Dann "zu_frueh": true.
+    3. Proaktivität: Wenn ein Plattform-Bereich konkret weiterhilft, schlage ihn in "navigation"
+       vor (max 2, mit kurzem handlungsorientiertem Label). Nur wenn wirklich passend — nicht immer.
+    4. Memory: Extrahiere aus der Nachricht NEUE dauerhafte Fakten über den Founder
+       (Entscheidungen, Zahlen, Namen, Deadlines, Präferenzen) in "neue_fakten" —
+       als kurze eigenständige Sätze. Keine Wiederholungen von schon Gemerktem. Max 3.
+    5. Kontext-Updates: Hat sich role/idea/stage/city/goal/risk erkennbar geändert oder
+       konkretisiert, liefere NUR die geänderten Felder in "kontext_updates", sonst {}.
+    6. Follow-ups: 2 konkrete nächste Fragen/Aktionen, die LOGISCH aus dem Gespräch folgen.
+
+    Antworte NUR mit validem JSON:
+    {
+      "antwort": "Deine Antwort (Rohtext, wird noch poliert)",
+      "zu_frueh": false,
+      "quellen": [],
+      "follow_up_aktionen": ["Folgefrage 1", "Folgefrage 2"],
+      "navigation": [{"to": "/foerderung", "label": "EXIST-Antrag weiterführen"}],
+      "neue_fakten": ["Kurzer Fakt 1"],
+      "kontext_updates": {},
+      "neue_deadline_erkannt": null
+    }
+  `;
+}
+
+export function buildChatPolishPrompt(
+  ctx: FounderContext,
+  draft: string,
+  history: ChatTurn[],
+): string {
+  return `
+    Du bist der Co-Pilot von matchfoundr — ein direkter, hilfreicher Begleiter für Menschen die etwas aufbauen.
+    Formuliere die folgende Antwort für ${ctx.userName}.
+
+    Ton: Direkt, warm, wie ein erfahrener Mentor der ehrlich sagt wo man gerade steht.
+    Kein "Natürlich!", kein "Gerne!", kein "Als KI kann ich...".
+    Schreib auf Deutsch. Max 3 Absätze.
+    Benutze die Sprache der Branche — sag "${ctx.venture_term || "Vorhaben"}" statt immer "Startup",
+    sag "${ctx.partner_term || "Partner"}" statt immer "Co-Founder".
+    Knüpfe natürlich an den Verlauf an (nicht neu vorstellen, nichts wiederholen).
+
+    Wenn der Inhalt signalisiert dass das Thema für den aktuellen Stand zu früh ist:
+    → Kurz anerkennen, warum die Frage gut ist
+    → Klar sagen, warum es jetzt noch nicht dran ist
+    → Direkt sagen, was stattdessen jetzt zählt
+
+    Kontext: ${ctx.idea || "Vorhaben"} | ${ctx.stage || ""} | ${ctx.city || ""} | Branche: ${ctx.industry || "allgemein"}
+
+    LETZTE GESPRÄCHSZÜGE:
+    ${historyBlock(history.slice(-4))}
+
+    ZU FORMULIERENDER INHALT:
+    ${draft}
+
+    Antworte NUR mit dem fertigen Text — keine Erklärungen, keine Metakommentare.
+  `;
+}
 
 // ─────────────────────────────────────────────────────────────
 // SONNET PROMPTS — Polish, tone, user-facing text
