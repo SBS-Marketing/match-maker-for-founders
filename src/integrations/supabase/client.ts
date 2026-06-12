@@ -2,13 +2,22 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+// Browser: inlined at build time. SSR fallback to process.env so the Worker
+// runtime can construct the client even if Vite did not inline VITE_* for the
+// SSR target.
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL ||
+  (typeof process !== 'undefined' ? process.env?.SUPABASE_URL ?? process.env?.VITE_SUPABASE_URL : undefined);
+const SUPABASE_PUBLISHABLE_KEY =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  (typeof process !== 'undefined'
+    ? process.env?.SUPABASE_PUBLISHABLE_KEY ?? process.env?.VITE_SUPABASE_PUBLISHABLE_KEY
+    : undefined);
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+export const supabase = createClient<Database>(SUPABASE_URL as string, SUPABASE_PUBLISHABLE_KEY as string, {
   auth: {
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     persistSession: typeof window !== 'undefined',
