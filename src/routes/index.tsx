@@ -5,16 +5,20 @@ import type { CSSProperties, ReactNode } from "react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "matchfoundr — Alles, was ein Founder braucht. KI-vermittelt." },
+      { title: "matchfoundr — Dein Partner. Nicht beim Dating — im Business." },
       {
         name: "description",
         content:
-          "Co-Founder, Anwälte, Steuerberater, Förderprogramme, Mentoren, frühe Hires — ein KI-Co-Pilot, der versteht, wo du gerade stehst.",
+          "Die Community für alle, die gründen — vom Handwerksbetrieb bis zur Webdesign-Agentur. Finde Menschen, die mitbauen, und die nächsten Schritte, die wirklich dran sind.",
       },
-      { property: "og:title", content: "matchfoundr — Founder-Plattform mit KI-Co-Pilot" },
+      {
+        property: "og:title",
+        content: "matchfoundr — Dein Partner. Nicht beim Dating — im Business.",
+      },
       {
         property: "og:description",
-        content: "Acht Disziplinen. Ein Co-Pilot. Berlin · München · Wien · Zürich.",
+        content:
+          "Die Gründer-Community: Menschen, Mitgründer, nächste Schritte. Mit Co-Pilot an Bord.",
       },
     ],
   }),
@@ -912,8 +916,8 @@ function HeroCopilot() {
         >
           Du · 10:14
         </div>
-        „B2B-SaaS, zwei Monate Prototyp, ich bin Designer, suche technischen Co-Founder. Wir wollen
-        Q3 ausgründen — GmbH in Berlin. Was brauche ich jetzt?"
+        „Ich will eine Padelhalle eröffnen. Ich habe einen Standort im Blick, aber keine Ahnung, wo
+        ich anfangen soll — und allein trau ich mich nicht. Was brauche ich jetzt?"
       </div>
 
       <div
@@ -949,18 +953,18 @@ function HeroCopilot() {
             color: M.ink,
           }}
         >
-          „Drei Dinge parallel: einen technischen Co-Founder, einen Anwalt für den Gründervertrag,
-          und du solltest EXIST in den nächsten 6 Wochen anschauen — Q3 ist machbar, wenn ihr jetzt
-          startet."
+          „Drei Dinge zuerst: jemand mit Bau-/Hallenerfahrung an deiner Seite, ein Kostencheck für
+          Miete und Courts, und der Gründungszuschuss deiner Stadt. Hier sind Leute, die das schon
+          gemacht haben."
         </p>
         <div
           className="hero-copilot-recs"
           style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}
         >
           {[
-            { sId: "cofounder", n: "Anna W.", l: "Backend · Berlin", fit: 94 },
-            { sId: "legal", n: "Dr. Lena H.", l: "GmbH · ESOP", fit: 91 },
-            { sId: "funding", n: "EXIST", l: "€125k · 12 Mo", fit: 89 },
+            { sId: "cofounder", n: "Anna W.", l: "Hallenbau · Köln", fit: 94 },
+            { sId: "mentor", n: "Markus T.", l: "Eigene Sporthalle", fit: 91 },
+            { sId: "funding", n: "Gründungszuschuss", l: "Stadt · 6 Mo", fit: 89 },
           ].map((r) => {
             const s = SVC_BY_ID[r.sId];
             return (
@@ -1135,7 +1139,7 @@ function LHero() {
                 textTransform: "uppercase",
               }}
             >
-              1.847 Partner · 8 Disziplinen · 1 Co-Pilot
+              1.847 Gründer:innen · 8 Disziplinen · 1 Community
             </span>
           </div>
 
@@ -1150,23 +1154,23 @@ function LHero() {
               color: M.ink,
             }}
           >
-            Alles, was ein
-            <br />
+            Dein{" "}
             <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>
-              Founder
-            </span>{" "}
-            braucht
+              Partner
+            </span>
             <span style={{ color: M.ember }}>.</span>
             <br />
-            <span style={{ color: M.smoke }}>KI-vermittelt.</span>
+            <span style={{ color: M.smoke }}>Nicht beim Dating —</span>
+            <br />
+            im Business<span style={{ color: M.ember }}>.</span>
           </h1>
 
           <p
             style={{ fontSize: 19, lineHeight: 1.55, color: M.smoke, marginTop: 28, maxWidth: 520 }}
           >
-            Co-Founder, Anwälte, Steuerberater, Förderprogramme, Mentoren, frühe Hires — ein
-            Co-Pilot, der versteht, wo du gerade stehst und genau die richtigen Menschen und
-            Programme an einen Tisch holt.
+            Paddelhalle, Handwerksbetrieb, Webdesign-Agentur — egal, was du gründest: Hier findest
+            du Menschen, die mitbauen, und die nächsten Schritte, die wirklich dran sind. Eine
+            Community für alle, die anfangen.
           </p>
 
           <div
@@ -1175,7 +1179,7 @@ function LHero() {
           >
             <Link
               className="landing-hero-primary"
-              to="/co-pilot"
+              to="/auth"
               style={{
                 background: M.ember,
                 color: M.cream,
@@ -1191,7 +1195,7 @@ function LHero() {
                   "0 14px 32px -10px rgba(178,59,14,0.5), inset 0 1px 0 rgba(255,255,255,0.25)",
               }}
             >
-              Erzähl dem Co-Pilot von dir
+              Finde Menschen, die mitbauen
               <SvcIcon name="arrowR" size={15} color={M.cream} stroke={2.2} />
             </Link>
             <Link
@@ -1424,23 +1428,22 @@ function LProblem() {
               color: M.ink,
             }}
           >
-            Der Founder-Stack
+            Gründen ist
             <br />
-            ist{" "}
             <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>
-              kaputt
+              einsam
             </span>
             <span style={{ color: M.ember }}>.</span>
           </h2>
           <p
             style={{ marginTop: 24, fontSize: 18, lineHeight: 1.6, color: M.smoke, maxWidth: 480 }}
           >
-            Du brauchst sechs verschiedene Menschen, um eine GmbH durch ihr erstes Jahr zu bringen.
-            Sie sitzen in sechs verschiedenen Tabs, in sechs verschiedenen Tonalitäten, mit sechs
-            verschiedenen Preisen.
+            Du hast eine Idee — die Paddelhalle, der eigene Betrieb, die Agentur. Aber keiner in
+            deinem Umfeld baut gerade dasselbe. Wo anfangen? Wen fragen? Wer macht mit?
             <br />
             <br />
-            Niemand sortiert das für dich. Niemand außer einem Co-Pilot, der weiß, wo du stehst.
+            Genau dafür gibt es matchfoundr: eine Community aus Menschen, die gerade gründen — und
+            ein Co-Pilot, der dir die nächsten Schritte sortiert.
           </p>
           <div
             style={{
@@ -2141,8 +2144,8 @@ function LCoPilotMoment() {
                   color: M.cream,
                 }}
               >
-                „Ich bin Designer, B2B-SaaS-Prototyp für Friseur-Buchhaltung. Zwei Monate alt. Will
-                Q3 ausgründen, Berlin."
+                „Ich bin Elektriker und will mich selbständig machen. Erste Kunden hätte ich — aber
+                Angebot, Versicherung, Steuern? Keine Ahnung, wo ich anfange."
               </div>
             </div>
 
@@ -2837,28 +2840,28 @@ function LTestimonials() {
   const quotes: Quote[] = [
     {
       name: "Marie Lambert",
-      role: "Co-Founder · Cassia (B2B Vertical SaaS)",
-      city: "Berlin",
+      role: "Gründerin · Padelhalle Court 7",
+      city: "Köln",
       quote:
-        "Wir haben in zwei Wochen einen technischen Co-Founder, eine Anwältin und einen EXIST-Slot gefunden. Vorher: drei Monate Slack-Communities und €4.800 an Erstberatungen.",
-      stat: { k: "€4.800", v: "gespart in Erstberatungen" },
+        "Ich hatte nur die Idee und eine leere Halle im Blick. Über matchfoundr habe ich jemanden mit Bau-Erfahrung gefunden, einen Mentor mit eigener Sporthalle — und wusste nach einer Woche, was zuerst dran ist.",
+      stat: { k: "1 Woche", v: "von Idee zu Plan" },
       hero: true,
     },
     {
       name: "Jonas Kessler",
-      role: "Solo-Founder · ML-Agents",
+      role: "Elektromeister · selbständig",
       city: "München",
       quote:
-        '„Ich brauche jemand für Distribution" — drei Tage später hatte ich drei Telefonate. Mit Menschen, die meinen Prototyp gelesen hatten, bevor wir uns angerufen haben.',
+        '„Ich brauche jemanden, der das mit der Selbständigkeit schon durch hat" — drei Tage später hatte ich drei Telefonate. Mit Leuten, die genau meinen Weg gegangen sind.',
       stat: { k: "3 Tage", v: "bis erstes Match" },
     },
     {
       name: "Sofia Hellström",
-      role: "COO → Solo-Founder",
+      role: "Gründerin · Webdesign-Studio",
       city: "Wien",
       quote:
-        "Der Co-Pilot hat aus meinem 4-Minuten-Voice-Memo einen Plan gebaut, den ich sonst mit zwei Beratern für €6k erstellt hätte. Und er stimmte.",
-      stat: { k: "4 Minuten", v: "Voice-Memo · ganzer Plan" },
+        "Der Co-Pilot hat aus meinem Gedanken-Chaos einen Plan gemacht: erst zwei Referenzkunden, dann Gewerbe, dann Website. Klingt banal — aber genau das hat mir niemand vorher so gesagt.",
+      stat: { k: "3 Schritte", v: "statt Gedanken-Chaos" },
     },
   ];
   return (
@@ -3700,8 +3703,8 @@ function LFooter() {
                 maxWidth: 280,
               }}
             >
-              Eine Plattform für alles, was ein Founder im ersten Jahr braucht — vermittelt von
-              einem Co-Pilot, der zuhört.
+              Die Community für alle, die gründen — Menschen, die mitbauen, und die nächsten
+              Schritte, die wirklich dran sind.
             </p>
             <div
               style={{

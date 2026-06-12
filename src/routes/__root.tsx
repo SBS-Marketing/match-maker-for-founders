@@ -145,15 +145,15 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  // Landing = eigene Marketing-Seite. Auth/Onboarding = bildschirmfüllende Flows.
-  // Alles andere = native App-Shell mit Sidebar + Topbar.
-  const isLanding = pathname === "/";
+  // Landing + öffentliche Firmenprofile (/s/…) = eigene Seiten ohne App-Chrome.
+  // Auth/Onboarding = bildschirmfüllende Flows. Alles andere = App-Shell.
+  const isBare = pathname === "/" || pathname.startsWith("/s/");
   const isFlow = pathname.startsWith("/auth") || pathname.startsWith("/onboarding");
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        {isLanding ? (
+        {isBare ? (
           <Outlet />
         ) : isFlow ? (
           <>

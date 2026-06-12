@@ -85,8 +85,14 @@ export function buildLocalPlanSlides(context: PlanContext | null): PlanSlide[] {
           nummer: 1,
           label: "Spur 01",
           title: "Profil scharf stellen",
-          why: skills ? `Deine stärksten Signale sind ${skills}; daraus braucht es ein klares Match-Profil.` : "Die besten Matches kommen, wenn deine Stärken und Verfügbarkeit klar sind.",
-          steps: ["Top-3 Skills sichtbar machen", "Suchprofil mit Rollenwunsch ergänzen", "2 passende Founder aktiv anschreiben"],
+          why: skills
+            ? `Deine stärksten Signale sind ${skills}; daraus braucht es ein klares Match-Profil.`
+            : "Die besten Matches kommen, wenn deine Stärken und Verfügbarkeit klar sind.",
+          steps: [
+            "Top-3 Skills sichtbar machen",
+            "Suchprofil mit Rollenwunsch ergänzen",
+            "2 passende Founder aktiv anschreiben",
+          ],
           timeframe: "7 Tage",
           priority: "hoch",
         },
@@ -96,7 +102,11 @@ export function buildLocalPlanSlides(context: PlanContext | null): PlanSlide[] {
           label: "Spur 02",
           title: "Match-Gespräche qualifizieren",
           why: "Du brauchst schnell herausfinden, ob Rolle, Tempo und Risiko zueinander passen.",
-          steps: ["15-Minuten Erstgespräch führen", "Erwartungen zu Equity/Zeit klären", "Nächstes Experiment vereinbaren"],
+          steps: [
+            "15-Minuten Erstgespräch führen",
+            "Erwartungen zu Equity/Zeit klären",
+            "Nächstes Experiment vereinbaren",
+          ],
           timeframe: "2 Wochen",
           priority: "mittel",
         },
@@ -106,7 +116,11 @@ export function buildLocalPlanSlides(context: PlanContext | null): PlanSlide[] {
           label: "Spur 03",
           title: "Beitrag beweisen",
           why: "Ein kleines gemeinsames Ergebnis ist stärker als lange Kennenlern-Chats.",
-          steps: ["Mini-Aufgabe definieren", "Arbeitsstil testen", "Entscheidung nach 7 Tagen treffen"],
+          steps: [
+            "Mini-Aufgabe definieren",
+            "Arbeitsstil testen",
+            "Entscheidung nach 7 Tagen treffen",
+          ],
           timeframe: "2-3 Wochen",
           priority: "mittel",
         },
@@ -118,7 +132,11 @@ export function buildLocalPlanSlides(context: PlanContext | null): PlanSlide[] {
           label: "Spur 01",
           title: `${venture} validieren`,
           why: `${idea} braucht jetzt klare Belege, dass Problem, Zielgruppe und Zahlungsbereitschaft zusammenpassen.`,
-          steps: ["10 Zielkunden auswählen", "3 Problem-Interviews führen", "Eine scharfe Nutzenhypothese formulieren"],
+          steps: [
+            "10 Zielkunden auswählen",
+            "3 Problem-Interviews führen",
+            "Eine scharfe Nutzenhypothese formulieren",
+          ],
           timeframe: "7-10 Tage",
           priority: "hoch",
         },
@@ -128,7 +146,11 @@ export function buildLocalPlanSlides(context: PlanContext | null): PlanSlide[] {
           label: "Spur 02",
           title: `${partner} oder Kernteam klären`,
           why: `Wenn du nicht alles allein abdecken willst, muss die fehlende Rolle früh sichtbar werden.`,
-          steps: ["Fehlende Kernkompetenz benennen", "Match-Profil aktualisieren", "5 passende Gespräche starten"],
+          steps: [
+            "Fehlende Kernkompetenz benennen",
+            "Match-Profil aktualisieren",
+            "5 passende Gespräche starten",
+          ],
           timeframe: "2 Wochen",
           priority: "mittel",
         },
@@ -138,7 +160,11 @@ export function buildLocalPlanSlides(context: PlanContext | null): PlanSlide[] {
           label: "Spur 03",
           title: "Förderung und Ressourcen sichern",
           why: "Frühe Finanzierung nimmt Druck aus dem Aufbau und zwingt zu einem besseren Plan.",
-          steps: ["EXIST/KfW/regionale Programme prüfen", "Kurzskizze und Finanzplan anlegen", "Nächsten Antragspartner identifizieren"],
+          steps: [
+            "Gründungszuschuss und regionale Programme prüfen",
+            "Startkosten realistisch durchrechnen",
+            "Kostenlose IHK/HWK-Gründungsberatung buchen",
+          ],
           timeframe: "3 Wochen",
           priority: "mittel",
         },
@@ -168,7 +194,9 @@ export function buildLocalPlanSlides(context: PlanContext | null): PlanSlide[] {
     {
       type: "dealbreaker",
       label: "Im Blick behalten",
-      risk: risk || "Unklare Priorität: zu viele parallele Baustellen können die ersten echten Beweise verzögern.",
+      risk:
+        risk ||
+        "Unklare Priorität: zu viele parallele Baustellen können die ersten echten Beweise verzögern.",
       mitigation: risk
         ? "Übersetze das Risiko in eine Deadline, einen Owner und den kleinsten nächsten Nachweis."
         : "Lege für die nächsten 7 Tage genau eine Hauptspur fest und parke alles andere sichtbar.",

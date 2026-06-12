@@ -1,32 +1,29 @@
+// Heute — der ruhige Startpunkt des Tages.
+// Ein Fokus, eine kompakte Liste, ein kurzer Draht zum Co-Pilot. Mehr nicht.
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
   Building2,
-  CalendarDays,
   Check,
-  CheckCircle2,
-  Clock3,
-  Kanban,
   ListChecks,
   Loader2,
   RefreshCw,
   Send,
-  Sparkles,
+  Stamp,
+  Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { AuthGate } from "@/components/AuthGate";
 import { SERVICE_BY_ID, type ServiceId } from "@/data/services";
 import { GRANTS } from "@/data/grants";
-import { PARTNERS, partnersFor } from "@/data/partners";
+import { partnersFor } from "@/data/partners";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
-import { ServiceIcon } from "@/components/ServiceIcon";
 import { CopilotMark } from "@/components/Copilot";
-import { DailyBrief } from "@/components/DailyBrief";
-import { Button } from "@/components/ui/button";
 import { askCopilot, type CopilotNav } from "@/lib/copilot-client";
 import {
   buildLocalPlanSlides,
@@ -36,10 +33,10 @@ import {
 } from "@/lib/plan-draft";
 
 export const Route = createFileRoute("/heute")({
-  head: () => ({ meta: [{ title: "Heute · Command Center — matchfoundr" }] }),
+  head: () => ({ meta: [{ title: "Heute — matchfoundr" }] }),
   component: () => (
     <AuthGate>
-      <CommandCenter />
+      <TodayPage />
     </AuthGate>
   ),
 });
@@ -55,28 +52,16 @@ type DailyTask = {
   minutes: number;
 };
 
-type DailyState = {
-  completed: string[];
-  snoozed: string[];
-  refreshedAt?: string;
-};
-
+type DailyState = { completed: string[]; snoozed: string[]; refreshedAt?: string };
 type DailyTaskStatus = "open" | "done" | "snoozed";
 
 const DAILY_STATE_KEY = "mf_daily_state_v1";
 const EMPTY_DAILY_STATE: DailyState = { completed: [], snoozed: [] };
 
-const QUICK_PROMPTS = [
-  "Was ist heute der wichtigste nächste Schritt?",
-  "Hilf mir den EXIST-Antrag weiter auszufüllen.",
-  "Formuliere mir eine kurze Partner-Nachricht.",
-];
-
-function CommandCenter() {
+function TodayPage() {
   const { user, session, isDemo } = useAuth();
   const [planContext, setPlanContext] = useState<PlanContext | null>(() => readPlanContext());
   const [dailyState, setDailyState] = useState<DailyState>(() => readDailyState());
-  const [remoteReady, setRemoteReady] = useState(false);
   const [copilotInput, setCopilotInput] = useState("");
   const [copilotAnswer, setCopilotAnswer] = useState<string | null>(null);
   const [copilotNav, setCopilotNav] = useState<CopilotNav[]>([]);
@@ -91,94 +76,75 @@ function CommandCenter() {
       new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" }),
     [],
   );
-  const userName = planContext?.userName || "Founder";
-  const firstName = userName.split(" ")[0] || "Founder";
+  const firstName = (planContext?.userName || "Founder").split(" ")[0];
   const planSlides = useMemo(() => buildLocalPlanSlides(planContext), [planContext]);
   const firstStep = useMemo(() => planSlides.find(isFirstStep), [planSlides]);
   const topGrant = GRANTS[0];
-  const topPartners = useMemo(
-    () => [
-      ...partnersFor("mentor").slice(0, 1),
-      ...partnersFor("growth").slice(0, 1),
-      ...partnersFor("tax").slice(0, 1),
-    ],
-    [],
-  );
   const dailyTasks = useMemo(
-    () => buildDailyTasks(planContext, firstStep, topGrant, topPartners),
-    [planContext, firstStep, topGrant, topPartners],
+    () => buildDailyTasks(planContext, firstStep, topGrant),
+    [planContext, firstStep, topGrant],
   );
   const taskDate = useMemo(() => getLocalDateKey(), []);
-  const visibleTasks = dailyTasks.filter((task) => !dailyState.snoozed.includes(task.id));
-  const completedCount = dailyTasks.filter((task) => dailyState.completed.includes(task.id)).length;
-  const openTasks = visibleTasks.filter((task) => !dailyState.completed.includes(task.id));
+  const visibleTasks = dailyTasks.filter((t) => !dailyState.snoozed.includes(t.id));
+  const openTasks = visibleTasks.filter((t) => !dailyState.completed.includes(t.id));
   const nextFocus = openTasks[0];
-  const nextPartner = topPartners[0];
-  const progress = dailyTasks.length ? Math.round((completedCount / dailyTasks.length) * 100) : 0;
+  const doneCount = dailyTasks.filter((t) => dailyState.completed.includes(t.id)).length;
 
+  // Cloud-Sync der Tages-Tasks (eingeloggt).
   useEffect(() => {
-    if (!session || !user || isDemo || dailyTasks.length === 0) {
-      setRemoteReady(false);
-      return;
-    }
-    const currentUserId = user.id;
+    if (!session || !user || isDemo || dailyTasks.length === 0) return;
+    const uid = user.id;
     let cancelled = false;
-    async function syncDailyTasks() {
+    (async () => {
       const { data, error } = await supabase
         .from("daily_tasks")
         .select("task_key,status")
-        .eq("user_id", currentUserId)
+        .eq("user_id", uid)
         .eq("task_date", taskDate);
-
-      if (cancelled) return;
-      if (error) {
-        setRemoteReady(false);
-        return;
-      }
-
+      if (cancelled || error) return;
       const rows = data ?? [];
-      const knownKeys = new Set(rows.map((row) => row.task_key));
-      const missing = dailyTasks.filter((task) => !knownKeys.has(task.id));
+      const known = new Set(rows.map((r) => r.task_key));
+      const missing = dailyTasks.filter((t) => !known.has(t.id));
       if (missing.length > 0) {
         await supabase.from("daily_tasks").upsert(
-          missing.map((task) =>
-            toDailyTaskInsert(currentUserId, taskDate, task, remoteStatusFor(task.id, dailyState)),
+          missing.map((t) =>
+            toDailyTaskInsert(uid, taskDate, t, remoteStatusFor(t.id, dailyState)),
           ),
           { onConflict: "user_id,task_date,task_key" },
         );
       }
-
-      const completed = rows.filter((row) => row.status === "done").map((row) => row.task_key);
-      const snoozed = rows.filter((row) => row.status === "snoozed").map((row) => row.task_key);
-      setDailyState((current) => ({
-        ...current,
+      setDailyState((cur) => ({
+        ...cur,
         completed: Array.from(
-          new Set([...completed, ...current.completed.filter((id) => !knownKeys.has(id))]),
+          new Set([
+            ...rows.filter((r) => r.status === "done").map((r) => r.task_key),
+            ...cur.completed.filter((id) => !known.has(id)),
+          ]),
         ),
         snoozed: Array.from(
-          new Set([...snoozed, ...current.snoozed.filter((id) => !knownKeys.has(id))]),
+          new Set([
+            ...rows.filter((r) => r.status === "snoozed").map((r) => r.task_key),
+            ...cur.snoozed.filter((id) => !known.has(id)),
+          ]),
         ),
       }));
-      setRemoteReady(true);
-    }
-    syncDailyTasks();
+    })();
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, user?.id, isDemo, taskDate, dailyTasks.map((task) => task.id).join("|")]);
+  }, [session, user?.id, isDemo, taskDate, dailyTasks.map((t) => t.id).join("|")]);
 
-  const toggleComplete = useCallback(
+  const toggleDone = useCallback(
     (id: string) => {
-      const task = dailyTasks.find((item) => item.id === id);
+      const task = dailyTasks.find((t) => t.id === id);
       const willComplete = !dailyState.completed.includes(id);
-      setDailyState((current) => {
-        const done = current.completed.includes(id);
-        const completed = done
-          ? current.completed.filter((item) => item !== id)
-          : [...current.completed, id];
-        return { ...current, completed };
-      });
+      setDailyState((cur) => ({
+        ...cur,
+        completed: cur.completed.includes(id)
+          ? cur.completed.filter((x) => x !== id)
+          : [...cur.completed, id],
+      }));
       if (session && user && !isDemo && task) {
         persistDailyTask(user.id, taskDate, task, willComplete ? "done" : "open");
       }
@@ -186,32 +152,13 @@ function CommandCenter() {
     [dailyState.completed, dailyTasks, isDemo, session, taskDate, user],
   );
 
-  const snooze = useCallback(
-    (id: string) => {
-      const task = dailyTasks.find((item) => item.id === id);
-      setDailyState((current) => ({
-        ...current,
-        snoozed: current.snoozed.includes(id) ? current.snoozed : [...current.snoozed, id],
-      }));
-      if (session && user && !isDemo && task) {
-        persistDailyTask(user.id, taskDate, task, "snoozed");
-      }
-      toast.success("Für heute ausgeblendet");
-    },
-    [dailyTasks, isDemo, session, taskDate, user],
-  );
-
-  const refreshDaily = useCallback(() => {
+  const refresh = useCallback(() => {
     setPlanContext(readPlanContext());
     setDailyState({ completed: [], snoozed: [], refreshedAt: new Date().toISOString() });
     setCopilotAnswer(null);
-    if (session && user && !isDemo) {
-      Promise.all(
-        dailyTasks.map((task) => persistDailyTask(user.id, taskDate, task, "open")),
-      ).catch(() => undefined);
-    }
-    toast.success("Heute neu priorisiert");
-  }, [dailyTasks, isDemo, session, taskDate, user]);
+    setCopilotNav([]);
+    toast.success("Neu sortiert");
+  }, []);
 
   const sendToCopilot = useCallback(
     async (text?: string) => {
@@ -219,7 +166,6 @@ function CommandCenter() {
       if (!body || copilotSending) return;
       setCopilotInput("");
       setCopilotSending(true);
-
       const result = await askCopilot({
         message: body,
         surface: "/heute",
@@ -235,154 +181,153 @@ function CommandCenter() {
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pt-5 pb-24 sm:px-6 sm:pt-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="eyebrow">{today}</div>
-          <h1 className="mt-2 max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl">
-            Hi {firstName}, dein Tagesplan.
+    <div className="mx-auto max-w-4xl px-4 pt-6 pb-24 sm:px-6">
+      {/* Kopfzeile — klein und ruhig */}
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--ink)]">
+            Guten Morgen, {firstName}.
           </h1>
-          <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-[var(--smoke)]">
-            Erst Fokus klären, dann Co-Pilot nutzen, danach in den passenden Workspace springen.
-          </p>
+          <div className="mt-0.5 text-[12.5px] text-[var(--smoke)]">
+            {today} · {doneCount}/{dailyTasks.length} erledigt
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            onClick={refreshDaily}
-            className="glass-pill h-10 gap-2 rounded-full px-4 text-[13px]"
-          >
-            <RefreshCw className="h-3.5 w-3.5" /> Neu sortieren
-          </Button>
-          <Link to="/plan">
-            <Button className="h-10 gap-2 rounded-full bg-[var(--ember)] px-4 text-[13px] text-white shadow-ember hover:bg-[var(--ember-deep)]">
-              <CopilotMark size={14} color="white" /> Plan
-            </Button>
-          </Link>
-        </div>
+        <button
+          onClick={refresh}
+          aria-label="Neu sortieren"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--ruled)] bg-[var(--surface)] text-[var(--smoke)] hover:text-[var(--ink)]"
+        >
+          <RefreshCw className="h-4 w-4" />
+        </button>
       </div>
 
-      <section className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
-        <TodayStat label="Offen" value={String(openTasks.length)} note="Tasks heute" />
-        <TodayStat
-          label="Fortschritt"
-          value={`${progress}%`}
-          note={`${completedCount}/${dailyTasks.length} erledigt`}
-        />
-        <TodayStat label="Status" value={remoteReady ? "Cloud" : "Lokal"} note="Daily Sync" />
+      {/* DER eine Fokus */}
+      <section
+        className="mt-5 rounded-[20px] p-5 text-white shadow-[var(--ember-glow)] sm:p-6"
+        style={{ background: "var(--ember-grad)" }}
+      >
+        <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/75">
+          Dein nächster Schritt
+        </div>
+        <h2 className="mt-2 text-[21px] font-semibold leading-snug tracking-tight">
+          {nextFocus?.title || "Alles erledigt für heute."}
+        </h2>
+        {nextFocus?.desc && (
+          <p className="mt-1.5 max-w-xl text-[13.5px] leading-relaxed text-white/85">
+            {nextFocus.desc}
+          </p>
+        )}
+        <div className="mt-4 flex flex-wrap gap-2">
+          {nextFocus ? (
+            <>
+              <Link
+                to={nextFocus.href}
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-white px-4 text-[13px] font-semibold text-[var(--ember-deep)] hover:bg-[var(--cream)]"
+              >
+                Loslegen <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+              <button
+                onClick={() => toggleDone(nextFocus.id)}
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 text-[13px] font-semibold text-white hover:bg-white/20"
+              >
+                <Check className="h-3.5 w-3.5" /> Erledigt
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/plan"
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-white px-4 text-[13px] font-semibold text-[var(--ember-deep)] hover:bg-[var(--cream)]"
+            >
+              Plan ansehen <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          )}
+        </div>
       </section>
 
-      <DailyBrief
-        dateKey={taskDate}
-        input={{
-          firstName,
-          openCount: openTasks.length,
-          completedCount,
-          totalTasks: dailyTasks.length,
-          grantName: topGrant?.name,
-          grantDeadline: topGrant?.deadline,
-          idea: planContext?.context.idea,
-          goal: planContext?.context.goal,
-          risk: planContext?.context.risk,
-          nextFocus: nextFocus?.title,
-        }}
-      />
-
-      <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_0.92fr]">
-        <section
-          data-tour="focus"
-          className="glass-pane-ink grid gap-4 p-5 sm:grid-cols-[1fr_auto] sm:items-center"
-        >
-          <div>
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <StepBadge number="1" label="Fokus heute" dark />
-              <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-white/55">
-                {nextFocus ? `${nextFocus.minutes} Min · ${nextFocus.label}` : "Heute erledigt"}
-              </span>
-            </div>
-            <h2 className="text-[22px] font-semibold leading-tight tracking-tight text-[var(--cream)]">
-              {nextFocus?.title || "Alles erledigt"}
-            </h2>
-            <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-white/70">
-              {nextFocus?.desc ??
-                "Öffne den Plan oder frage den Co-Pilot nach dem nächsten sinnvollen Sprint."}
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2 text-[11px] text-white/55">
-              <span className="rounded-full bg-white/10 px-2.5 py-1">
-                {completedCount}/{dailyTasks.length} erledigt
-              </span>
-              {topGrant && (
-                <span className="rounded-full bg-white/10 px-2.5 py-1">
-                  {topGrant.name} · {topGrant.deadline}
-                </span>
-              )}
-            </div>
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        {/* Kompakte Tagesliste */}
+        <section className="rounded-[18px] border border-[var(--ruled)] bg-[var(--surface)] p-4">
+          <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--smoke)]">
+            Heute
           </div>
-          {nextFocus && (
-            <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={() => toggleComplete(nextFocus.id)}
-                className="h-10 gap-2 rounded-lg bg-[var(--cream)] px-4 text-[13px] font-semibold text-[var(--ink)] hover:bg-white"
-              >
-                <Check className="h-3.5 w-3.5" /> Fertig
-              </Button>
-              <Link to={nextFocus.href}>
-                <Button
-                  variant="ghost"
-                  className="h-10 rounded-lg border border-white/15 bg-white/5 px-4 text-[13px] text-[var(--cream)] hover:bg-white/10"
+          <ul className="mt-3 space-y-1">
+            {visibleTasks.map((task) => {
+              const done = dailyState.completed.includes(task.id);
+              return (
+                <li
+                  key={task.id}
+                  className="group flex items-center gap-2.5 rounded-xl px-2 py-2 hover:bg-[var(--surface-soft)]"
                 >
-                  Öffnen
-                </Button>
-              </Link>
-            </div>
-          )}
+                  <button
+                    onClick={() => toggleDone(task.id)}
+                    aria-label={done ? "Als offen markieren" : "Als erledigt markieren"}
+                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition"
+                    style={{
+                      background: done ? "var(--ember)" : "transparent",
+                      borderColor: done ? "var(--ember)" : "var(--ruled)",
+                    }}
+                  >
+                    {done && <Check className="h-3 w-3 text-white" />}
+                  </button>
+                  <span
+                    className={`min-w-0 flex-1 truncate text-[13.5px] ${
+                      done ? "text-[var(--faint)] line-through" : "text-[var(--ink)]"
+                    }`}
+                  >
+                    {task.title}
+                  </span>
+                  <span className="hidden shrink-0 font-mono text-[10px] uppercase tracking-wide text-[var(--faint)] sm:inline">
+                    {SERVICE_BY_ID[task.sId].short}
+                  </span>
+                  <Link
+                    to={task.href}
+                    aria-label={`${task.title} öffnen`}
+                    className="shrink-0 text-[var(--faint)] opacity-0 transition group-hover:opacity-100 hover:text-[var(--ink)]"
+                  >
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </li>
+              );
+            })}
+            {visibleTasks.length === 0 && (
+              <li className="rounded-xl bg-[var(--surface-soft)] px-3 py-3 text-[13px] text-[var(--smoke)]">
+                Nichts offen. Über ↻ holst du neue Vorschläge.
+              </li>
+            )}
+          </ul>
         </section>
 
-        <section className="glass-pane flex flex-col p-4 sm:p-5">
-          <div className="flex items-center gap-3">
+        {/* Mini Co-Pilot */}
+        <section className="flex flex-col rounded-[18px] border border-[var(--ruled)] bg-[var(--surface)] p-4">
+          <div className="flex items-center gap-2">
             <span
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-white"
               style={{ background: "var(--indigo-grad)" }}
             >
-              <CopilotMark size={18} color="white" />
+              <CopilotMark size={13} color="white" />
             </span>
-            <div>
-              <StepBadge number="2" label="Co-Pilot" />
-              <div className="mt-1 text-[12px] text-[var(--smoke)]">
-                Schreib direkt aus dem Tageskontext.
-              </div>
-            </div>
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--smoke)]">
+              Frag den Co-Pilot
+            </span>
           </div>
 
-          <div className="mt-4 grid gap-2">
-            {QUICK_PROMPTS.map((prompt) => (
-              <button
-                key={prompt}
-                onClick={() => sendToCopilot(prompt)}
-                className="rounded-2xl border border-[var(--ruled)] bg-white/55 px-3 py-2 text-left text-[12.5px] font-medium text-[var(--ink)] transition hover:bg-white"
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-4 min-h-[112px] rounded-2xl border border-[var(--ruled)] bg-white/45 p-4">
+          <div className="mt-3 min-h-[72px] flex-1 rounded-xl bg-[var(--surface-soft)] p-3">
             {copilotSending ? (
-              <div className="flex h-full min-h-[80px] items-center justify-center gap-2 text-[13px] text-[var(--smoke)]">
-                <Loader2 className="h-4 w-4 animate-spin" /> Co-Pilot denkt mit...
+              <div className="flex h-full min-h-[48px] items-center gap-2 text-[12.5px] text-[var(--smoke)]">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> denkt nach…
               </div>
             ) : copilotAnswer ? (
               <div>
-                <p className="whitespace-pre-line text-[13.5px] leading-relaxed text-[var(--ink)]">
+                <p className="whitespace-pre-line text-[13px] leading-relaxed text-[var(--ink)]">
                   {copilotAnswer}
                 </p>
                 {copilotNav.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
+                  <div className="mt-2.5 flex flex-wrap gap-1.5">
                     {copilotNav.map((nav) => (
                       <Link
                         key={nav.to + nav.label}
                         to={nav.to}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-[var(--indigo-tint)] px-3 py-1.5 text-[12px] font-semibold text-[var(--indigo-ink)] hover:brightness-95"
+                        className="inline-flex items-center gap-1 rounded-full bg-[var(--indigo-tint)] px-2.5 py-1 text-[11.5px] font-semibold text-[var(--indigo-ink)]"
                       >
                         {nav.label} <ArrowRight className="h-3 w-3" />
                       </Link>
@@ -391,336 +336,78 @@ function CommandCenter() {
                 )}
               </div>
             ) : (
-              <p className="text-[13.5px] leading-relaxed text-[var(--smoke)]">
-                Frage nach Priorität, Antrag, Nachricht oder nächstem Sprint.
+              <p className="text-[12.5px] leading-relaxed text-[var(--faint)]">
+                „Wo fange ich an?" · „Was kostet die Gründung?" · „Wer kann mir helfen?"
               </p>
             )}
           </div>
 
-          <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
-            <textarea
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              sendToCopilot();
+            }}
+            className="mt-3 flex gap-2"
+          >
+            <input
               value={copilotInput}
               onChange={(e) => setCopilotInput(e.target.value)}
-              onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                  e.preventDefault();
-                  sendToCopilot();
-                }
-              }}
-              rows={2}
-              placeholder="Co-Pilot fragen..."
-              className="min-h-[48px] resize-none rounded-2xl border border-[var(--ruled)] bg-white/70 px-3 py-2 text-[13px] outline-none transition focus:border-[var(--ember)] focus:bg-white"
+              placeholder="Frag mich was…"
+              className="h-10 min-w-0 flex-1 rounded-xl border border-[var(--ruled)] bg-[var(--surface)] px-3 text-[13px] text-[var(--ink)] outline-none placeholder:text-[var(--faint)] focus:border-[var(--indigo)]"
             />
-            <Button
-              onClick={() => sendToCopilot()}
-              disabled={!copilotInput.trim() || copilotSending}
-              className="h-full min-h-[48px] rounded-2xl bg-[var(--ember)] px-4 text-white hover:bg-[var(--ember-deep)]"
-              aria-label="An Co-Pilot senden"
+            <button
+              type="submit"
+              disabled={copilotSending || !copilotInput.trim()}
+              aria-label="Senden"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white disabled:opacity-50"
+              style={{ background: "var(--indigo-grad)" }}
             >
-              {copilotSending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
+              <Send className="h-4 w-4" />
+            </button>
+          </form>
         </section>
       </div>
 
-      <section className="glass-pane mt-5 p-4 sm:p-5">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <StepBadge number="3" label="Weiterarbeiten" />
-            <p className="mt-1 text-[12.5px] text-[var(--smoke)]">
-              Öffne genau den Bereich, den du jetzt brauchst.
-            </p>
-          </div>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <WorkspaceCard
-            icon={Kanban}
-            label="Board"
-            title="Kanban"
-            desc="Status und Owner prüfen"
-            href="/kanban"
-          />
-          <WorkspaceCard
-            icon={ListChecks}
-            label="Tasks"
-            title="Aufgaben"
-            desc={`${openTasks.length} offene Punkte`}
-            href="/aufgaben"
-          />
-          <WorkspaceCard
-            icon={CalendarDays}
-            label="Termine"
-            title="Kalender"
-            desc="Deadlines und Calls"
-            href="/kalender"
-          />
-          <WorkspaceCard
-            icon={Building2}
-            label="Profil"
-            title="Firma"
-            desc="Landingpage pflegen"
-            href="/firma"
-          />
-        </div>
+      {/* Shortcuts — eine ruhige Zeile */}
+      <section className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <Shortcut to="/foerderung" icon={Stamp} label="Förderung" />
+        <Shortcut to="/firma" icon={Building2} label="Firmenprofil" />
+        <Shortcut to="/aufgaben" icon={ListChecks} label="Aufgaben" />
+        <Shortcut to="/discover" icon={Users} label="Mitgründer" />
       </section>
-
-      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_0.7fr]">
-        <section data-tour="conversations" className="glass-pane p-4 sm:p-5">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div>
-              <div className="eyebrow">Tagesliste</div>
-              <p className="mt-1 text-[12.5px] text-[var(--smoke)]">
-                {completedCount}/{dailyTasks.length} erledigt ·{" "}
-                {remoteReady ? "gespeichert" : "lokal"}
-              </p>
-            </div>
-            <Link
-              to="/aufgaben"
-              className="inline-flex items-center gap-1.5 text-[13px] font-semibold"
-            >
-              Alle <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-          <div className="grid gap-2">
-            {visibleTasks.slice(0, 4).map((task) => (
-              <DailyActionCard
-                key={task.id}
-                task={task}
-                done={dailyState.completed.includes(task.id)}
-                onDone={() => toggleComplete(task.id)}
-                onSnooze={() => snooze(task.id)}
-              />
-            ))}
-            {visibleTasks.length === 0 && (
-              <div className="rounded-2xl border border-[var(--ruled)] bg-white/45 p-5 text-[13px] text-[var(--smoke)]">
-                Alles für heute ausgeblendet. Über „Neu sortieren” holst du die Tasks zurück.
-              </div>
-            )}
-          </div>
-        </section>
-
-        <aside className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-          {topGrant && (
-            <Link
-              to="/foerderung/$slug"
-              params={{ slug: topGrant.slug }}
-              className="glass-pane-soft block p-4 transition hover:-translate-y-0.5"
-            >
-              <div className="eyebrow">Nächste Förderung</div>
-              <div className="mt-2 text-[15px] font-semibold tracking-tight">{topGrant.name}</div>
-              <div className="mt-1 text-[12px] text-[var(--smoke)]">
-                {topGrant.prefilled}% fertig · {topGrant.deadline}
-              </div>
-            </Link>
-          )}
-          {nextPartner && (
-            <Link
-              to={SERVICE_BY_ID[nextPartner.service as ServiceId]?.route ?? "/marketplace"}
-              className="glass-pane-soft block p-4 transition hover:-translate-y-0.5"
-            >
-              <div className="eyebrow">Nächster Partner</div>
-              <div className="mt-2 text-[15px] font-semibold tracking-tight">
-                {nextPartner.name}
-              </div>
-              <div className="mt-1 text-[12px] text-[var(--smoke)]">{nextPartner.firm}</div>
-            </Link>
-          )}
-          <Link
-            to="/unterlagen"
-            className="glass-pane-soft block p-4 transition hover:-translate-y-0.5"
-          >
-            <div className="eyebrow">Unterlagen</div>
-            <div className="mt-2 text-[15px] font-semibold tracking-tight">Antragspaket</div>
-            <div className="mt-1 text-[12px] text-[var(--smoke)]">Materialien und Entwürfe</div>
-          </Link>
-        </aside>
-      </div>
     </div>
   );
 }
 
-function TodayStat({ label, value, note }: { label: string; value: string; note: string }) {
-  return (
-    <div className="glass-pane-soft min-w-0 p-3 sm:p-4">
-      <div className="truncate font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--smoke)] sm:text-[10px]">
-        {label}
-      </div>
-      <div className="mt-1 truncate text-xl font-semibold tracking-tight sm:text-2xl">{value}</div>
-      <div className="mt-0.5 truncate text-[10.5px] text-[var(--smoke)] sm:text-[12px]">{note}</div>
-    </div>
-  );
-}
-
-function StepBadge({
-  number,
-  label,
-  dark = false,
-}: {
-  number: string;
-  label: string;
-  dark?: boolean;
-}) {
-  return (
-    <div
-      className={[
-        "inline-flex items-center gap-2 font-mono text-[10.5px] uppercase tracking-[0.14em]",
-        dark ? "text-white/65" : "text-[var(--smoke)]",
-      ].join(" ")}
-    >
-      <span
-        className={[
-          "flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold",
-          dark
-            ? "bg-white/12 text-[var(--cream)]"
-            : "bg-[var(--ember-tint)] text-[var(--ember-deep)]",
-        ].join(" ")}
-      >
-        {number}
-      </span>
-      {label}
-    </div>
-  );
-}
-
-function WorkspaceCard({
-  icon: Icon,
-  label,
-  title,
-  desc,
-  href,
-}: {
-  icon: LucideIcon;
-  label: string;
-  title: string;
-  desc: string;
-  href: string;
-}) {
+function Shortcut({ to, icon: Icon, label }: { to: string; icon: LucideIcon; label: string }) {
   return (
     <Link
-      to={href}
-      className="rounded-2xl border border-[var(--ruled)] bg-white/55 p-4 transition hover:-translate-y-0.5 hover:bg-white/75"
+      to={to}
+      className="flex items-center gap-2.5 rounded-2xl border border-[var(--ruled)] bg-[var(--surface)] px-3.5 py-3 text-[13px] font-semibold text-[var(--ink)] transition hover:-translate-y-0.5 hover:bg-[var(--ember-tint)] hover:text-[var(--ember-deep)]"
     >
-      <div className="flex items-center justify-between gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--ember-tint)] text-[var(--ember-deep)]">
-          <Icon className="h-4 w-4" />
-        </span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--smoke)]">
-          {label}
-        </span>
-      </div>
-      <div className="mt-3 text-[15px] font-semibold tracking-tight">{title}</div>
-      <div className="mt-1 text-[12px] text-[var(--smoke)]">{desc}</div>
+      <Icon className="h-4 w-4 shrink-0 text-[var(--ember)]" />
+      {label}
     </Link>
   );
 }
 
-function DailyActionCard({
-  task,
-  done,
-  onDone,
-  onSnooze,
-}: {
-  task: DailyTask;
-  done: boolean;
-  onDone: () => void;
-  onSnooze: () => void;
-}) {
-  const s = SERVICE_BY_ID[task.sId];
-  return (
-    <div
-      className="grid gap-3 rounded-2xl border p-3 sm:grid-cols-[40px_1fr_auto] sm:items-center"
-      style={{
-        background: done
-          ? "rgba(21,20,15,0.03)"
-          : task.urgency === "hoch"
-            ? "rgba(226,81,28,0.06)"
-            : "rgba(251,250,247,0.55)",
-        borderColor: done
-          ? "rgba(21,20,15,0.06)"
-          : task.urgency === "hoch"
-            ? "rgba(226,81,28,0.18)"
-            : "rgba(21,20,15,0.06)",
-      }}
-    >
-      <ServiceBadge id={task.sId} />
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={
-              done
-                ? "text-[14px] font-semibold tracking-tight text-[var(--smoke)] line-through"
-                : "text-[14px] font-semibold tracking-tight"
-            }
-          >
-            {task.title}
-          </span>
-          <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--smoke)]">
-            · {s.short}
-          </span>
-        </div>
-        <div className="mt-0.5 text-[12px] leading-relaxed text-[var(--smoke)]">{task.desc}</div>
-        <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-[var(--ink-soft)]">
-          <span className="inline-flex items-center gap-1">
-            <Clock3 className="h-3 w-3" /> {task.minutes} Min
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <Sparkles className="h-3 w-3" /> {task.label}
-          </span>
-        </div>
-      </div>
-      <div className="flex gap-2 sm:justify-end">
-        <Button variant="ghost" size="sm" onClick={onDone} className="glass-pill rounded-full">
-          {done ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" />}
-        </Button>
-        <Button variant="ghost" size="sm" onClick={onSnooze} className="glass-pill rounded-full">
-          Später
-        </Button>
-        <Link to={task.href}>
-          <Button
-            size="sm"
-            className="rounded-full bg-[var(--ember)] text-white hover:bg-[var(--ember-deep)]"
-          >
-            Öffnen
-          </Button>
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-function ServiceBadge({ id }: { id: ServiceId }) {
-  const s = SERVICE_BY_ID[id];
-  return (
-    <span
-      className="flex h-10 w-10 items-center justify-center rounded-[10px] text-[var(--cream)]"
-      style={{ background: s.hue, boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18)" }}
-    >
-      <ServiceIcon name={s.icon} size={18} stroke={2} />
-    </span>
-  );
-}
+// ─── Tages-Tasks: praktisch und klein gedacht ─────────────────
 
 function buildDailyTasks(
   context: PlanContext | null,
   firstStep: Extract<PlanSlide, { type: "first_step" }> | undefined,
   grant = GRANTS[0],
-  partners = PARTNERS,
 ): DailyTask[] {
-  const partner =
-    context?.path === "talent" ? partnersFor("talent")[0] : partnersFor("mentor")[0] || partners[0];
-  const growth = partnersFor("growth")[0] || partner;
-  const tasks: DailyTask[] = [
+  const mentor = partnersFor("mentor")[0];
+  const idea = context?.context.idea;
+  return [
     {
       id: "plan-first-step",
       sId: "cofounder",
-      title: "Ersten Plan-Schritt festziehen",
+      title: "Deinen ersten Schritt machen",
       desc:
         firstStep?.action ||
-        "Öffne deinen Plan und entscheide, welche Aktion heute wirklich zählt.",
+        "Öffne deinen Plan und entscheide, welcher kleine Schritt heute wirklich zählt.",
       href: "/plan",
       label: "Plan",
       urgency: "hoch",
@@ -729,54 +416,39 @@ function buildDailyTasks(
     {
       id: "funding-fit",
       sId: "funding",
-      title: `${grant?.name || "Förderprogramm"} prüfen`,
+      title: "Förderung für deinen Start prüfen",
       desc: grant
-        ? `${grant.amount}, ${grant.duration}. Prüfe Materialien und nächsten Antragsschritt.`
-        : "Prüfe die Top-Förderung für deine aktuelle Phase.",
-      href: grant ? `/foerderung/${grant.slug}` : "/foerderung",
-      label: "Funding",
-      urgency: "hoch",
-      minutes: 25,
-    },
-    {
-      id: "mentor-match",
-      sId: (partner?.service as ServiceId) || "mentor",
-      title: `${partner?.name || "Mentor"} anstoßen`,
-      desc: partner?.blurb || "Wähle einen Partner und lass den Co-Pilot den Fit prüfen.",
-      href: partner ? `/${partner.service}` : "/marketplace",
-      label: "Partner",
+        ? `Schau, ob ${grant.name} oder ein kleines regionales Programm zu ${idea || "deinem Vorhaben"} passt.`
+        : "Prüfe, welche Unterstützung es für deinen Start gibt — oft reichen die kleinen Programme.",
+      href: "/foerderung",
+      label: "Förderung",
       urgency: "mittel",
       minutes: 15,
     },
     {
-      id: "growth-signal",
-      sId: "growth",
-      title: "Ein Marktsignal erzeugen",
-      desc:
-        growth?.blurb ||
-        "Starte eine kleine Outreach- oder Landingpage-Aktion, die echte Rückmeldung bringt.",
-      href: "/growth",
-      label: "GTM",
+      id: "community-signal",
+      sId: "cofounder",
+      title: "Eine Person kennenlernen, die mitbauen könnte",
+      desc: "Wische durch die Profile und schick eine ehrliche erste Nachricht.",
+      href: "/discover",
+      label: "Community",
       urgency: "mittel",
-      minutes: 30,
+      minutes: 10,
+    },
+    {
+      id: "mentor-match",
+      sId: "mentor",
+      title: mentor ? `${mentor.name} um Rat fragen` : "Jemanden fragen, der es schon gemacht hat",
+      desc: "Eine konkrete Frage an jemanden, der deinen Weg schon gegangen ist.",
+      href: "/mentoren",
+      label: "Mentor",
+      urgency: "niedrig",
+      minutes: 15,
     },
   ];
-
-  if (context?.path === "talent") {
-    return tasks.map((task) =>
-      task.id === "plan-first-step"
-        ? {
-            ...task,
-            sId: "talent",
-            title: "Match-Profil schärfen",
-            desc: "Mach deine Skills, Rolle und Verfügbarkeit sichtbar, damit Founder dich sauber einschätzen können.",
-            href: "/profile",
-          }
-        : task,
-    );
-  }
-  return tasks;
 }
+
+// ─── Persistenz-Helfer ────────────────────────────────────────
 
 function readDailyState(): DailyState {
   if (typeof window === "undefined") return EMPTY_DAILY_STATE;
@@ -793,16 +465,13 @@ function writeDailyState(state: DailyState): void {
   try {
     localStorage.setItem(DAILY_STATE_KEY, JSON.stringify(state));
   } catch {
-    // Ignore restricted storage.
+    /* */
   }
 }
 
 function getLocalDateKey(): string {
   const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function remoteStatusFor(id: string, state: DailyState): DailyTaskStatus {
@@ -822,8 +491,7 @@ async function persistDailyTask(
     .upsert(toDailyTaskInsert(userId, taskDate, task, status), {
       onConflict: "user_id,task_date,task_key",
     });
-
-  if (error) toast.error("Daily konnte nicht gespeichert werden");
+  if (error) toast.error("Konnte nicht speichern");
 }
 
 function toDailyTaskInsert(
@@ -844,10 +512,7 @@ function toDailyTaskInsert(
     urgency: urgencyToRemote(task.urgency),
     minutes: task.minutes,
     status,
-    metadata: {
-      local_id: task.id,
-      generated_by: "matchfoundr_daily",
-    } satisfies Json,
+    metadata: { local_id: task.id, generated_by: "matchfoundr_daily" } satisfies Json,
   };
 }
 

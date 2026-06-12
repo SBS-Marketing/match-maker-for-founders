@@ -68,13 +68,7 @@ function TasksPage() {
     <div className="mx-auto flex h-[calc(100svh-10rem)] max-w-7xl flex-col overflow-hidden px-3 pt-3 sm:h-auto sm:px-6 sm:pt-8">
       <div className="flex shrink-0 flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="eyebrow">Operative Liste</div>
-          <h1 className="mt-1 text-[24px] font-semibold leading-tight tracking-tight sm:mt-2 sm:text-4xl">
-            Aufgaben, ohne den Heute-Tab zu überladen.
-          </h1>
-          <p className="mt-2 hidden max-w-2xl text-[14px] leading-relaxed text-[var(--smoke)] sm:block">
-            Alles Operative ist vorsortiert: jetzt erledigen, als nächstes planen oder sauber parken.
-          </p>
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--ink)]">Aufgaben</h1>
         </div>
         <Link to="/heute">
           <Button variant="ghost" className="glass-pill rounded-full px-4 text-[13px]">
@@ -213,7 +207,10 @@ function TasksPage() {
         className="glass-pane mt-5 hidden items-center justify-between gap-3 p-4 transition hover:-translate-y-0.5 md:flex"
       >
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl text-white" style={{ background: "var(--indigo-grad)" }}>
+          <span
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
+            style={{ background: "var(--indigo-grad)" }}
+          >
             <Sparkles className="h-4 w-4" />
           </span>
           <div>

@@ -46,13 +46,7 @@ function DocumentsPage() {
     <div className="mx-auto flex h-[calc(100svh-10rem)] max-w-6xl flex-col overflow-hidden px-3 pt-3 sm:h-auto sm:px-6 sm:pt-8">
       <div className="flex shrink-0 flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="eyebrow">Antragspaket</div>
-          <h1 className="mt-1 text-[24px] font-semibold leading-tight tracking-tight sm:mt-2 sm:text-4xl">
-            Unterlagen, die wirklich noch offen sind.
-          </h1>
-          <p className="mt-2 hidden max-w-2xl text-[14px] leading-relaxed text-[var(--smoke)] sm:block">
-            Ein kompakter Paketstatus für Anträge: fehlende Bausteine abhaken und Co-Pilot direkt Entwürfe erzeugen lassen.
-          </p>
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--ink)]">Unterlagen</h1>
         </div>
         <Link to="/foerderung/$slug" params={{ slug: grant?.slug || "exist" }}>
           <Button variant="ghost" className="glass-pill rounded-full px-4 text-[13px]">
@@ -69,7 +63,9 @@ function DocumentsPage() {
             </span>
             <div className="min-w-0">
               <div className="text-[15px] font-semibold text-[var(--cream)]">Paketstatus</div>
-              <div className="truncate text-[12px] text-white/55">{grant?.name || "Förderprogramm"}</div>
+              <div className="truncate text-[12px] text-white/55">
+                {grant?.name || "Förderprogramm"}
+              </div>
             </div>
           </div>
           <div className="shrink-0 text-right">
@@ -99,7 +95,9 @@ function DocumentsPage() {
           onClick={() => setActivePanel("checklist")}
           className={[
             "h-9 rounded-[12px] text-[12px] font-semibold transition",
-            activePanel === "checklist" ? "bg-[var(--ember)] text-white shadow-ember" : "text-[var(--smoke)]",
+            activePanel === "checklist"
+              ? "bg-[var(--ember)] text-white shadow-ember"
+              : "text-[var(--smoke)]",
           ].join(" ")}
         >
           Checkliste
@@ -109,7 +107,9 @@ function DocumentsPage() {
           onClick={() => setActivePanel("draft")}
           className={[
             "h-9 rounded-[12px] text-[12px] font-semibold transition",
-            activePanel === "draft" ? "bg-[var(--ember)] text-white shadow-ember" : "text-[var(--smoke)]",
+            activePanel === "draft"
+              ? "bg-[var(--ember)] text-white shadow-ember"
+              : "text-[var(--smoke)]",
           ].join(" ")}
         >
           Entwurf

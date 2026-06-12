@@ -73,13 +73,7 @@ function KanbanPage() {
     <div className="mx-auto flex h-[calc(100svh-10rem)] max-w-7xl flex-col overflow-hidden px-3 pt-3 sm:h-auto sm:px-6 sm:pt-8">
       <div className="flex shrink-0 flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="eyebrow">Execution Board</div>
-          <h1 className="mt-1 text-[24px] font-semibold leading-tight tracking-tight sm:mt-2 sm:text-4xl">
-            Kanban für Antrag, Produkt und Partner.
-          </h1>
-          <p className="mt-2 hidden max-w-2xl text-[14px] leading-relaxed text-[var(--smoke)] sm:block">
-            Angebote, Förderungen und Teamaufgaben werden zu Karten, die jeder sofort weiterschieben kann.
-          </p>
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--ink)]">Board</h1>
         </div>
         <div className="flex gap-2">
           <Link to="/aufgaben">
@@ -104,9 +98,7 @@ function KanbanPage() {
             <div className="text-[15px] font-semibold text-[var(--cream)]">
               {doingCount} aktiv · {doneCount} abgeschlossen
             </div>
-            <div className="text-[12px] text-white/55">
-              Board bleibt lokal gespeichert.
-            </div>
+            <div className="text-[12px] text-white/55">Board bleibt lokal gespeichert.</div>
           </div>
         </div>
         <div className="grid gap-2 sm:grid-cols-[260px_130px_auto]">
@@ -191,7 +183,10 @@ function KanbanPage() {
         className="glass-pane mt-5 hidden items-center justify-between gap-3 p-4 transition hover:-translate-y-0.5 lg:flex"
       >
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl text-white" style={{ background: "var(--indigo-grad)" }}>
+          <span
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
+            style={{ background: "var(--indigo-grad)" }}
+          >
             <Sparkles className="h-4 w-4" />
           </span>
           <div>

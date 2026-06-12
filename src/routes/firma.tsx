@@ -35,6 +35,8 @@ import { toast } from "sonner";
 import { AuthGate } from "@/components/AuthGate";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/lib/activity";
+import { uploadImage } from "@/lib/upload";
 import { readPlanContext, type PlanContext } from "@/lib/plan-draft";
 import {
   blockLabel,
@@ -46,6 +48,7 @@ import {
   type CompanyBlock,
   type CompanyComposition,
 } from "@/lib/company-blocks";
+import { CompanyBlocksView, VideoFrame } from "@/components/CompanyBlocksView";
 
 export const Route = createFileRoute("/firma")({
   head: () => ({ meta: [{ title: "Firmenprofil — matchfoundr" }] }),
@@ -68,16 +71,140 @@ const BLOCK_TYPES: BlockType[] = [
   "cta",
 ];
 
+function companySlug(name: string): string {
+  return (
+    name
+      .toLowerCase()
+      .replace(/ä/g, "ae")
+      .replace(/ö/g, "oe")
+      .replace(/ü/g, "ue")
+      .replace(/ß/g, "ss")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 48) || "startup"
+  );
+}
+
 function CompanyPage() {
+  const { user, session, isDemo } = useAuth();
   const planContext = useMemo(() => readPlanContext(), []);
   const [composition, setComposition] = useState<CompanyComposition>(() =>
     readComposition(planContext),
   );
   const [mode, setMode] = useState<"preview" | "edit">("edit");
+  const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState(false);
+  const [cloudLoaded, setCloudLoaded] = useState(false);
+  const canUseCloud = Boolean(session && user && !isDemo);
 
   useEffect(() => {
     writeComposition(composition);
   }, [composition]);
+
+  // Cloud-Load: gespeicherte Komposition des Nutzers übernehmen.
+  useEffect(() => {
+    if (!canUseCloud || !user) return;
+    let cancelled = false;
+    supabase
+      .from("company_profiles")
+      .select("slug, composition, published")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        if (data?.composition && typeof data.composition === "object") {
+          const remote = data.composition as unknown as CompanyComposition;
+          if (Array.isArray(remote.blocks) && remote.blocks.length > 0) {
+            setComposition(remote);
+          }
+        }
+        if (data?.published) setPublishedSlug(data.slug);
+        setCloudLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [canUseCloud, user]);
+
+  // Cloud-Save: debounced nach jeder Änderung (erst nach dem Initial-Load).
+  useEffect(() => {
+    if (!canUseCloud || !user || !cloudLoaded) return;
+    const timer = window.setTimeout(() => {
+      supabase
+        .from("company_profiles")
+        .upsert(
+          {
+            user_id: user.id,
+            slug: publishedSlug ?? companySlug(composition.name),
+            name: composition.name,
+            composition: JSON.parse(JSON.stringify(composition)),
+          },
+          { onConflict: "user_id" },
+        )
+        .then(({ error }) => {
+          if (error) console.error("company save failed", error);
+        });
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, [canUseCloud, user, cloudLoaded, composition, publishedSlug]);
+
+  async function publish() {
+    setPublishing(true);
+    try {
+      if (!canUseCloud || !user) {
+        // Demo: lokale Vorschau-URL teilen.
+        await navigator.clipboard.writeText(`${window.location.origin}/s/preview`);
+        await logActivity(
+          { session, user, isDemo },
+          "profile_published",
+          `Firmenprofil von „${composition.name}" veröffentlicht`,
+        );
+        toast.success("Vorschau-Link kopiert — melde dich an, um echt zu veröffentlichen.");
+        setPublishedSlug("preview");
+        return;
+      }
+      let slug = publishedSlug ?? companySlug(composition.name);
+      let { error } = await supabase.from("company_profiles").upsert(
+        {
+          user_id: user.id,
+          slug,
+          name: composition.name,
+          composition: JSON.parse(JSON.stringify(composition)),
+          published: true,
+        },
+        { onConflict: "user_id" },
+      );
+      if (error && error.code === "23505") {
+        // Slug bereits vergeben → Suffix anhängen und erneut versuchen.
+        slug = `${slug}-${Math.random().toString(36).slice(2, 6)}`;
+        ({ error } = await supabase.from("company_profiles").upsert(
+          {
+            user_id: user.id,
+            slug,
+            name: composition.name,
+            composition: JSON.parse(JSON.stringify(composition)),
+            published: true,
+          },
+          { onConflict: "user_id" },
+        ));
+      }
+      if (error) throw error;
+      setPublishedSlug(slug);
+      await navigator.clipboard.writeText(`${window.location.origin}/s/${slug}`);
+      await logActivity(
+        { session, user, isDemo },
+        "profile_published",
+        `Firmenprofil von „${composition.name}" veröffentlicht`,
+        { slug },
+      );
+      toast.success("Veröffentlicht — öffentlicher Link kopiert!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Veröffentlichen fehlgeschlagen");
+    } finally {
+      setPublishing(false);
+    }
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -125,9 +252,12 @@ function CompanyPage() {
   }
 
   async function copyLink() {
+    const url = publishedSlug
+      ? `${window.location.origin}/s/${publishedSlug}`
+      : `${window.location.origin}/firma`;
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/firma`);
-      toast.success("Profil-Link kopiert");
+      await navigator.clipboard.writeText(url);
+      toast.success(publishedSlug ? "Öffentlicher Link kopiert" : "Profil-Link kopiert");
     } catch {
       toast.error("Link konnte nicht kopiert werden");
     }
@@ -138,6 +268,9 @@ function CompanyPage() {
       <Header
         composition={composition}
         mode={mode}
+        publishedSlug={publishedSlug}
+        publishing={publishing}
+        onPublish={publish}
         onModeChange={setMode}
         onCopyLink={copyLink}
         onPatchMeta={(patch) =>
@@ -204,12 +337,18 @@ function CompanyPage() {
 function Header({
   composition,
   mode,
+  publishedSlug,
+  publishing,
+  onPublish,
   onModeChange,
   onCopyLink,
   onPatchMeta,
 }: {
   composition: CompanyComposition;
   mode: "preview" | "edit";
+  publishedSlug: string | null;
+  publishing: boolean;
+  onPublish: () => void;
   onModeChange: (mode: "preview" | "edit") => void;
   onCopyLink: () => void;
   onPatchMeta: (patch: Partial<CompanyComposition>) => void;
@@ -217,14 +356,7 @@ function Header({
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div className="min-w-0">
-        <div className="eyebrow">Firmenprofil</div>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--ink)] sm:text-4xl">
-          Deine Startup-Landingpage.
-        </h1>
-        <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-[var(--smoke)]">
-          Bau dein Profil als modulare Landingpage — Blöcke per Drag&Drop sortieren, Co-Pilot füllt
-          vor. Teilbar als Profil-Link.
-        </p>
+        <h1 className="text-xl font-semibold tracking-tight text-[var(--ink)]">Deine Seite</h1>
         {mode === "edit" && (
           <div className="mt-3 flex flex-wrap gap-2">
             <MetaField
@@ -251,6 +383,28 @@ function Header({
         )}
       </div>
       <div className="flex flex-wrap gap-2">
+        <button
+          onClick={onPublish}
+          disabled={publishing}
+          className="inline-flex h-10 items-center gap-2 rounded-xl bg-[var(--ember)] px-4 text-[13px] font-semibold text-white shadow-ember hover:bg-[var(--ember-deep)] disabled:opacity-60"
+        >
+          {publishing ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <ExternalLink className="h-3.5 w-3.5" />
+          )}
+          {publishedSlug ? "Update veröffentlichen" : "Veröffentlichen"}
+        </button>
+        {publishedSlug && (
+          <a
+            href={`/s/${publishedSlug}`}
+            target="_blank"
+            rel="noopener"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--ruled)] bg-[var(--surface)] px-3.5 text-[13px] font-semibold text-[var(--ember-deep)] hover:bg-[var(--ember-tint)]"
+          >
+            <Eye className="h-3.5 w-3.5" /> Öffentlich ansehen
+          </a>
+        )}
         <button
           onClick={onCopyLink}
           className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--ruled)] bg-[var(--surface)] px-3.5 text-[13px] font-semibold text-[var(--ink)] hover:bg-[var(--surface-soft)]"
@@ -561,8 +715,8 @@ function BlockEditor({
             value={block.subtitle}
             onChange={(v) => onPatch({ subtitle: v })}
           />
-          <TextInput
-            label="Bild-URL (optional)"
+          <ImageUploadInput
+            label="Bild (optional)"
             value={block.imageUrl || ""}
             onChange={(v) => onPatch({ imageUrl: v })}
             className="sm:col-span-2"
@@ -683,7 +837,7 @@ function BlockEditor({
     case "image":
       return (
         <div className="space-y-3">
-          <TextInput label="Bild-URL" value={block.url} onChange={(v) => onPatch({ url: v })} />
+          <ImageUploadInput label="Bild" value={block.url} onChange={(v) => onPatch({ url: v })} />
           <TextInput
             label="Bildunterschrift (optional)"
             value={block.caption || ""}
@@ -763,8 +917,8 @@ function BlockEditor({
                     })
                   }
                 />
-                <TextInput
-                  label="Avatar-URL (optional)"
+                <ImageUploadInput
+                  label="Avatar (optional)"
                   value={member.avatarUrl || ""}
                   onChange={(v) =>
                     onPatch({
@@ -840,6 +994,66 @@ function ListAddRemove({ onAdd, onRemove }: { onAdd: () => void; onRemove?: () =
           <Trash2 className="h-3 w-3" /> Letzten entfernen
         </button>
       )}
+    </div>
+  );
+}
+
+// URL-Feld mit Datei-Upload (Storage bzw. DataURL im Demo).
+function ImageUploadInput({
+  label,
+  value,
+  onChange,
+  className,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+}) {
+  const { user, session, isDemo } = useAuth();
+  const [uploading, setUploading] = useState(false);
+
+  async function onFile(file: File | undefined) {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadImage(file, { session, user, isDemo });
+      onChange(url);
+      toast.success("Bild hochgeladen");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload fehlgeschlagen");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className={`block ${className || ""}`}>
+      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--smoke)]">
+        {label}
+      </span>
+      <div className="mt-1.5 flex gap-2">
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="https://… oder hochladen →"
+          className="min-w-0 flex-1 rounded-xl border border-[var(--ruled)] bg-[var(--surface)] px-3 py-2 text-[13px] text-[var(--ink)] outline-none focus:border-[var(--ember)]"
+        />
+        <label className="inline-flex h-[38px] shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border border-[var(--ruled)] bg-[var(--surface-soft)] px-3 text-[12px] font-semibold text-[var(--ink)] hover:bg-[var(--ember-tint)] hover:text-[var(--ember-deep)]">
+          {uploading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <ImageIcon className="h-3.5 w-3.5" />
+          )}
+          Upload
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => onFile(e.target.files?.[0])}
+          />
+        </label>
+      </div>
     </div>
   );
 }
@@ -921,248 +1135,7 @@ function CompanyPreview({
         </button>
       </div>
 
-      <div>
-        {composition.blocks.map((block) => (
-          <PreviewBlock key={block.id} block={block} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function PreviewBlock({ block }: { block: CompanyBlock }) {
-  switch (block.type) {
-    case "hero":
-      return (
-        <section
-          className="px-6 py-12 text-white sm:px-10 sm:py-16"
-          style={{ background: "var(--ember-grad)" }}
-        >
-          <div className="grid items-center gap-8 lg:grid-cols-[1.2fr_1fr]">
-            <div>
-              <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-white/70">
-                {block.eyebrow}
-              </div>
-              <h2 className="mt-3 text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
-                {block.title}
-              </h2>
-              <div className="mt-2 text-[14px] font-medium text-white/80">{block.subtitle}</div>
-              {block.body && (
-                <p className="mt-5 max-w-xl text-[16px] leading-relaxed text-white/85 sm:text-[18px]">
-                  {block.body}
-                </p>
-              )}
-              {block.ctaLabel && (
-                <a
-                  href={block.ctaHref || "#"}
-                  className="mt-7 inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[13px] font-semibold text-[var(--ember-deep)] hover:bg-[var(--cream)]"
-                >
-                  {block.ctaLabel} <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-              )}
-            </div>
-            {block.imageUrl ? (
-              <div className="overflow-hidden rounded-2xl border border-white/15 bg-white/5">
-                <img src={block.imageUrl} alt="" className="aspect-[4/3] w-full object-cover" />
-              </div>
-            ) : (
-              <div className="flex aspect-[4/3] items-center justify-center rounded-2xl border border-white/15 bg-white/5">
-                <ImageIcon className="h-8 w-8 text-white/40" />
-              </div>
-            )}
-          </div>
-        </section>
-      );
-    case "about":
-    case "text":
-      return (
-        <section className="border-b border-[var(--ruled)] px-6 py-10 sm:px-10">
-          {block.title && (
-            <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--ember-deep)]">
-              {block.title}
-            </div>
-          )}
-          <p className="mt-3 max-w-3xl whitespace-pre-line text-[15.5px] leading-relaxed text-[var(--ink)]">
-            {block.body}
-          </p>
-        </section>
-      );
-    case "metrics":
-      return (
-        <section className="border-b border-[var(--ruled)] bg-[var(--surface-soft)] px-6 py-8 sm:px-10">
-          {block.title && (
-            <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--smoke)]">
-              {block.title}
-            </div>
-          )}
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            {block.items.map((m, i) => (
-              <div
-                key={i}
-                className="rounded-2xl border border-[var(--ruled)] bg-[var(--surface)] p-5"
-              >
-                <div className="text-3xl font-semibold tracking-tight text-[var(--ink)]">
-                  {m.value || "—"}
-                </div>
-                <div className="mt-1 text-[12.5px] text-[var(--smoke)]">{m.label}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-      );
-    case "highlights":
-      return (
-        <section className="border-b border-[var(--ruled)] px-6 py-10 sm:px-10">
-          {block.title && (
-            <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--ember-deep)]">
-              {block.title}
-            </div>
-          )}
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {block.items.filter(Boolean).map((it, i) => (
-              <div
-                key={i}
-                className="rounded-2xl border border-[var(--ruled)] bg-[var(--surface)] p-4"
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--ember-tint)] text-[var(--ember-deep)]">
-                  <Sparkles className="h-4 w-4" />
-                </div>
-                <div className="mt-3 text-[14px] font-semibold leading-snug text-[var(--ink)]">
-                  {it}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      );
-    case "image":
-      return (
-        <section className="border-b border-[var(--ruled)] px-6 py-10 sm:px-10">
-          {block.url ? (
-            <figure>
-              <div
-                className="overflow-hidden rounded-2xl border border-[var(--ruled)] bg-[var(--surface-soft)]"
-                style={{ aspectRatio: block.aspect.replace("/", " / ") }}
-              >
-                <img
-                  src={block.url}
-                  alt={block.caption || ""}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              {block.caption && (
-                <figcaption className="mt-2 text-[12.5px] text-[var(--smoke)]">
-                  {block.caption}
-                </figcaption>
-              )}
-            </figure>
-          ) : (
-            <div className="flex aspect-video items-center justify-center rounded-2xl border border-dashed border-[var(--ruled)] bg-[var(--surface-soft)] text-[var(--faint)]">
-              <ImageIcon className="h-6 w-6" />
-            </div>
-          )}
-        </section>
-      );
-    case "video":
-      return (
-        <section className="border-b border-[var(--ruled)] px-6 py-10 sm:px-10">
-          {block.url ? (
-            <figure>
-              <VideoFrame url={block.url} />
-              {block.caption && (
-                <figcaption className="mt-2 text-[12.5px] text-[var(--smoke)]">
-                  {block.caption}
-                </figcaption>
-              )}
-            </figure>
-          ) : (
-            <div className="flex aspect-video items-center justify-center rounded-2xl border border-dashed border-[var(--ruled)] bg-[var(--surface-soft)] text-[var(--faint)]">
-              <Video className="h-6 w-6" />
-            </div>
-          )}
-        </section>
-      );
-    case "team":
-      return (
-        <section className="border-b border-[var(--ruled)] bg-[var(--surface-soft)] px-6 py-10 sm:px-10">
-          {block.title && (
-            <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--ember-deep)]">
-              {block.title}
-            </div>
-          )}
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {block.members.map((m, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 rounded-2xl border border-[var(--ruled)] bg-[var(--surface)] p-4"
-              >
-                <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-[var(--ember-tint)] text-[15px] font-semibold text-[var(--ember-deep)]">
-                  {m.avatarUrl ? (
-                    <img src={m.avatarUrl} alt={m.name} className="h-full w-full object-cover" />
-                  ) : (
-                    (m.name || "?").slice(0, 2).toUpperCase()
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate text-[14px] font-semibold text-[var(--ink)]">
-                    {m.name || "—"}
-                  </div>
-                  <div className="truncate text-[12.5px] text-[var(--smoke)]">{m.role}</div>
-                  {m.linkedin && (
-                    <a
-                      href={m.linkedin}
-                      target="_blank"
-                      rel="noopener"
-                      className="mt-0.5 inline-flex items-center gap-1 text-[11.5px] font-semibold text-[var(--ember-deep)]"
-                    >
-                      LinkedIn <ExternalLink className="h-3 w-3" />
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      );
-    case "cta":
-      return (
-        <section className="px-6 py-12 sm:px-10">
-          <div className="rounded-3xl border border-[var(--ruled)] bg-[var(--ink)] p-6 text-[var(--cream)] sm:p-10">
-            <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">{block.headline}</h3>
-            {block.body && (
-              <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-white/75">
-                {block.body}
-              </p>
-            )}
-            <Link
-              to={(block.href || "/matches") as "/matches"}
-              className="mt-5 inline-flex h-11 items-center gap-2 rounded-full bg-[var(--ember)] px-5 text-[13px] font-semibold text-white hover:bg-[var(--ember-deep)]"
-            >
-              {block.label} <ExternalLink className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </section>
-      );
-  }
-}
-
-function VideoFrame({ url }: { url: string }) {
-  const src = videoEmbedSrc(url);
-  if (!src) return null;
-  const isFile = /\.(mp4|webm|ogg)(\?|$)/i.test(src);
-  return (
-    <div className="overflow-hidden rounded-2xl border border-[var(--ruled)] bg-black">
-      {isFile ? (
-        <video src={src} controls className="aspect-video w-full" />
-      ) : (
-        <iframe
-          src={src}
-          className="aspect-video w-full"
-          frameBorder={0}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      )}
+      <CompanyBlocksView composition={composition} />
     </div>
   );
 }

@@ -156,7 +156,6 @@ function TeamPage() {
 
     joinAsDummyMember();
     window.history.replaceState(null, "", "/team?view=member");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function addMember() {
@@ -279,13 +278,7 @@ function TeamPage() {
     <div className="mx-auto flex h-[calc(100svh-10rem)] max-w-7xl flex-col overflow-hidden px-3 pt-3 sm:h-auto sm:px-6 sm:pt-8">
       <div className="flex shrink-0 flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="eyebrow">Team Workspace</div>
-          <h1 className="mt-1 max-w-3xl text-[24px] font-semibold leading-tight tracking-tight sm:mt-2 sm:text-4xl">
-            Team-Lage, Blackboard und laufende Arbeit.
-          </h1>
-          <p className="mt-2 hidden max-w-2xl text-[13.5px] leading-relaxed text-[var(--smoke)] sm:block">
-            Ein Ort für Status, Owner, Invite-Links, offene Punkte und schnelle Abstimmung.
-          </p>
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--ink)]">Team</h1>
           <div className="mt-2 inline-flex max-w-full items-center gap-2 rounded-full border border-[var(--ruled)] bg-white/70 px-3 py-1.5 text-[12px] font-semibold text-[var(--smoke)] sm:mt-3">
             <ShieldCheck className="h-3.5 w-3.5 text-[var(--ember)]" />
             <span className="truncate">
@@ -353,7 +346,8 @@ function TeamPage() {
           <div className="min-w-0">
             <div className="text-[15px] font-semibold tracking-tight">Team per Link einladen</div>
             <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--smoke)]">
-              Der Link öffnet die App direkt als Teammitglied. Für den lokalen Test wird automatisch ein Dummy-Account genutzt.
+              Der Link öffnet die App direkt als Teammitglied. Für den lokalen Test wird automatisch
+              ein Dummy-Account genutzt.
             </p>
             <div className="mt-3 truncate rounded-xl border border-[var(--ruled)] bg-[var(--surface-soft)] px-3 py-2 font-mono text-[11px] text-[var(--smoke)]">
               {inviteUrl}
@@ -443,22 +437,22 @@ function TeamPage() {
           </div>
 
           {isOwner && (
-          <div className="mb-3 grid grid-cols-[1fr_auto] gap-2">
-            <input
-              value={workTitle}
-              onChange={(e) => setWorkTitle(e.target.value)}
-              placeholder="Neuer Workstream..."
-              className="rounded-2xl border border-[var(--ruled)] bg-white/70 px-3 py-2 text-[13px] outline-none focus:border-[var(--ember)]"
-            />
-            <Button
-              onClick={addWorkItem}
-              disabled={!workTitle.trim()}
-              className="rounded-2xl bg-[var(--ember)] px-4 text-white hover:bg-[var(--ember-deep)]"
-              aria-label="Workstream hinzufügen"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
+            <div className="mb-3 grid grid-cols-[1fr_auto] gap-2">
+              <input
+                value={workTitle}
+                onChange={(e) => setWorkTitle(e.target.value)}
+                placeholder="Neuer Workstream..."
+                className="rounded-2xl border border-[var(--ruled)] bg-white/70 px-3 py-2 text-[13px] outline-none focus:border-[var(--ember)]"
+              />
+              <Button
+                onClick={addWorkItem}
+                disabled={!workTitle.trim()}
+                className="rounded-2xl bg-[var(--ember)] px-4 text-white hover:bg-[var(--ember-deep)]"
+                aria-label="Workstream hinzufügen"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           )}
 
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
@@ -502,27 +496,27 @@ function TeamPage() {
           </div>
 
           {isOwner && (
-          <div className="mb-3 grid gap-2 sm:grid-cols-[1fr_160px_auto]">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Name"
-              className="rounded-2xl border border-[var(--ruled)] bg-white/70 px-3 py-2 text-[13px] outline-none focus:border-[var(--ember)]"
-            />
-            <input
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              placeholder="Rolle"
-              className="rounded-2xl border border-[var(--ruled)] bg-white/70 px-3 py-2 text-[13px] outline-none focus:border-[var(--ember)]"
-            />
-            <Button
-              onClick={addMember}
-              disabled={!name.trim()}
-              className="rounded-2xl bg-[var(--ember)] px-4 text-white hover:bg-[var(--ember-deep)]"
-            >
-              <Plus className="h-4 w-4" /> Hinzufügen
-            </Button>
-          </div>
+            <div className="mb-3 grid gap-2 sm:grid-cols-[1fr_160px_auto]">
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Name"
+                className="rounded-2xl border border-[var(--ruled)] bg-white/70 px-3 py-2 text-[13px] outline-none focus:border-[var(--ember)]"
+              />
+              <input
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                placeholder="Rolle"
+                className="rounded-2xl border border-[var(--ruled)] bg-white/70 px-3 py-2 text-[13px] outline-none focus:border-[var(--ember)]"
+              />
+              <Button
+                onClick={addMember}
+                disabled={!name.trim()}
+                className="rounded-2xl bg-[var(--ember)] px-4 text-white hover:bg-[var(--ember-deep)]"
+              >
+                <Plus className="h-4 w-4" /> Hinzufügen
+              </Button>
+            </div>
           )}
 
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
@@ -545,7 +539,10 @@ function TeamPage() {
           ].join(" ")}
         >
           <div className="mb-4 flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl text-white" style={{ background: "var(--indigo-grad)" }}>
+            <span
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
+              style={{ background: "var(--indigo-grad)" }}
+            >
               <MessageCircle className="h-4 w-4" />
             </span>
             <div>
@@ -706,7 +703,12 @@ function WorkCard({
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-2">
-          <QuickStatusButton status="in_progress" item={item} disabled={!canEdit} onUpdate={onUpdate} />
+          <QuickStatusButton
+            status="in_progress"
+            item={item}
+            disabled={!canEdit}
+            onUpdate={onUpdate}
+          />
           <QuickStatusButton status="review" item={item} disabled={!canEdit} onUpdate={onUpdate} />
           <QuickStatusButton status="done" item={item} disabled={!canEdit} onUpdate={onUpdate} />
         </div>

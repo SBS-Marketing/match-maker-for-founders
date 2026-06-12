@@ -41,6 +41,7 @@ import { Route as GrowthIndexRouteImport } from './routes/growth.index'
 import { Route as FoerderungIndexRouteImport } from './routes/foerderung.index'
 import { Route as TalentSlugRouteImport } from './routes/talent.$slug'
 import { Route as SteuerSlugRouteImport } from './routes/steuer.$slug'
+import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as RechtSlugRouteImport } from './routes/recht.$slug'
 import { Route as MentorenSlugRouteImport } from './routes/mentoren.$slug'
 import { Route as MatchesIdRouteImport } from './routes/matches.$id'
@@ -212,6 +213,11 @@ const SteuerSlugRoute = SteuerSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => SteuerRoute,
 } as any)
+const SSlugRoute = SSlugRouteImport.update({
+  id: '/s/$slug',
+  path: '/s/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RechtSlugRoute = RechtSlugRouteImport.update({
   id: '/recht/$slug',
   path: '/recht/$slug',
@@ -296,6 +302,7 @@ export interface FileRoutesByFullPath {
   '/matches/$id': typeof MatchesIdRoute
   '/mentoren/$slug': typeof MentorenSlugRoute
   '/recht/$slug': typeof RechtSlugRoute
+  '/s/$slug': typeof SSlugRoute
   '/steuer/$slug': typeof SteuerSlugRoute
   '/talent/$slug': typeof TalentSlugRoute
   '/foerderung/': typeof FoerderungIndexRoute
@@ -335,6 +342,7 @@ export interface FileRoutesByTo {
   '/matches/$id': typeof MatchesIdRoute
   '/mentoren/$slug': typeof MentorenSlugRoute
   '/recht/$slug': typeof RechtSlugRoute
+  '/s/$slug': typeof SSlugRoute
   '/steuer/$slug': typeof SteuerSlugRoute
   '/talent/$slug': typeof TalentSlugRoute
   '/foerderung': typeof FoerderungIndexRoute
@@ -380,6 +388,7 @@ export interface FileRoutesById {
   '/matches/$id': typeof MatchesIdRoute
   '/mentoren/$slug': typeof MentorenSlugRoute
   '/recht/$slug': typeof RechtSlugRoute
+  '/s/$slug': typeof SSlugRoute
   '/steuer/$slug': typeof SteuerSlugRoute
   '/talent/$slug': typeof TalentSlugRoute
   '/foerderung/': typeof FoerderungIndexRoute
@@ -426,6 +435,7 @@ export interface FileRouteTypes {
     | '/matches/$id'
     | '/mentoren/$slug'
     | '/recht/$slug'
+    | '/s/$slug'
     | '/steuer/$slug'
     | '/talent/$slug'
     | '/foerderung/'
@@ -465,6 +475,7 @@ export interface FileRouteTypes {
     | '/matches/$id'
     | '/mentoren/$slug'
     | '/recht/$slug'
+    | '/s/$slug'
     | '/steuer/$slug'
     | '/talent/$slug'
     | '/foerderung'
@@ -509,6 +520,7 @@ export interface FileRouteTypes {
     | '/matches/$id'
     | '/mentoren/$slug'
     | '/recht/$slug'
+    | '/s/$slug'
     | '/steuer/$slug'
     | '/talent/$slug'
     | '/foerderung/'
@@ -548,6 +560,7 @@ export interface RootRouteChildren {
   FoerderungSlugRoute: typeof FoerderungSlugRoute
   MatchesIdRoute: typeof MatchesIdRoute
   RechtSlugRoute: typeof RechtSlugRoute
+  SSlugRoute: typeof SSlugRoute
   FoerderungIndexRoute: typeof FoerderungIndexRoute
   MatchesIndexRoute: typeof MatchesIndexRoute
   RechtIndexRoute: typeof RechtIndexRoute
@@ -779,6 +792,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SteuerSlugRouteImport
       parentRoute: typeof SteuerRoute
     }
+    '/s/$slug': {
+      id: '/s/$slug'
+      path: '/s/$slug'
+      fullPath: '/s/$slug'
+      preLoaderRoute: typeof SSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/recht/$slug': {
       id: '/recht/$slug'
       path: '/recht/$slug'
@@ -959,6 +979,7 @@ const rootRouteChildren: RootRouteChildren = {
   FoerderungSlugRoute: FoerderungSlugRoute,
   MatchesIdRoute: MatchesIdRoute,
   RechtSlugRoute: RechtSlugRoute,
+  SSlugRoute: SSlugRoute,
   FoerderungIndexRoute: FoerderungIndexRoute,
   MatchesIndexRoute: MatchesIndexRoute,
   RechtIndexRoute: RechtIndexRoute,

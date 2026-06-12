@@ -116,9 +116,9 @@ export function onSharedChatChange(handler: () => void): () => void {
 export function quickPromptsFor(pathname: string): string[] {
   if (pathname.startsWith("/foerderung")) {
     return [
-      "Welche Förderung passt zu meinem Stand?",
-      "Hilf mir beim EXIST-Antrag weiter",
-      "Was fehlt noch in meinem Antragspaket?",
+      "Welche Förderung gibt es für kleine Gründungen?",
+      "Was ist der Gründungszuschuss?",
+      "Hilf mir bei meinem Antrag weiter",
     ];
   }
   if (pathname.startsWith("/firma")) {
@@ -137,16 +137,16 @@ export function quickPromptsFor(pathname: string): string[] {
   }
   if (pathname.startsWith("/kapital")) {
     return [
-      "Bin ich ready für Pre-Seed?",
-      "Wie baue ich eine Investoren-Pipeline?",
-      "Was gehört in meinen Teaser?",
+      "Brauche ich überhaupt einen Investor?",
+      "Wie viel Startkapital brauche ich realistisch?",
+      "Kredit, Förderung oder Erspartes — was zuerst?",
     ];
   }
   if (pathname.startsWith("/recht")) {
     return [
-      "Was muss in den Gründervertrag?",
-      "Wann lohnt sich die GmbH-Gründung?",
-      "Brauche ich jetzt schon ein Vesting?",
+      "Gewerbe, GbR oder GmbH — was passt zu mir?",
+      "Was muss in den Vertrag mit meinem Partner?",
+      "Welche Versicherungen brauche ich?",
     ];
   }
   if (pathname.startsWith("/steuer")) {
@@ -170,14 +170,14 @@ export function quickPromptsFor(pathname: string): string[] {
   if (pathname.startsWith("/heute") || pathname.startsWith("/plan")) {
     return [
       "Was ist heute der wichtigste nächste Schritt?",
-      "Hilf mir den EXIST-Antrag weiter auszufüllen",
+      "Wo fange ich mit meiner Gründung an?",
       "Fass meinen Stand in 3 Sätzen zusammen",
     ];
   }
   return [
-    "Was ist mein wichtigster nächster Schritt?",
-    "Welche Förderung passt für mich?",
-    "Wo finde ich den passenden Co-Founder?",
+    "Wo fange ich mit meiner Gründung an?",
+    "Welche Unterstützung gibt es für meinen Start?",
+    "Wer kann mir beim Aufbau helfen?",
   ];
 }
 
@@ -263,22 +263,14 @@ export function localCopilotEngine(message: string, input: LocalInput): CopilotR
 
   // Förderung / EXIST / Zuschuss
   if (/(förder|foerder|exist|zuschuss|stipendium|grant|profit\b)/.test(m)) {
-    const grantLine = topGrant
-      ? `${topGrant.name} (${topGrant.amount}, ${topGrant.duration}) ist aktuell dein stärkster Kandidat — Fit ${topGrant.fit}, ${topGrant.prefilled}% deines Antragspakets sind schon vorbereitet.`
-      : "Im Förderbereich findest du kuratierte Programme mit Fit-Score zu deinem Stand.";
     return {
-      answer: `Für "${idea}" in der Phase "${stage}" lohnt sich der Blick auf Förderung jetzt wirklich.\n\n${grantLine}\n\nMein Vorschlag: Öffne den Antrag und lass mich die Felder vorausfüllen — die Lücken schließen wir dann gemeinsam, Frage für Frage.`,
+      answer: `Gute Nachricht: Für "${idea}" brauchst du kein Millionen-Programm. Die meisten Gründungen starten mit den kleinen Hebeln:\n\n1. Gründungszuschuss der Agentur für Arbeit (wenn du aus der Anstellung kommst), 2. Mikrokredite und regionale Gründungsprämien deiner Stadt, 3. kostenlose Gründungsberatung von IHK/HWK.\n\nIm Förderbereich habe ich Programme nach deinem Stand sortiert — und beim Antrag fülle ich die Felder mit dir gemeinsam aus, Frage für Frage.`,
       quickActions: [
-        "Was fehlt noch in meinem Antrag?",
-        "Welche Deadline hat das Programm?",
-        "Gibt es Alternativen zu EXIST?",
+        "Was ist der Gründungszuschuss genau?",
+        "Was bietet meine Stadt an?",
+        "Hilf mir beim Antrag",
       ],
-      navigation: topGrant
-        ? [
-            { to: `/foerderung/${topGrant.slug}`, label: `${topGrant.name} öffnen` },
-            { to: "/foerderung", label: "Alle Programme ansehen" },
-          ]
-        : [{ to: "/foerderung", label: "Förderprogramme ansehen" }],
+      navigation: [{ to: "/foerderung", label: "Programme für deinen Start ansehen" }],
       newFacts,
       source: "local",
     };
@@ -304,11 +296,11 @@ export function localCopilotEngine(message: string, input: LocalInput): CopilotR
   // Kapital / Investoren
   if (/(investor|kapital|angel|vc\b|pre.?seed|seed|funding\b|finanzierung)/.test(m)) {
     const earlyNote = earlyStage
-      ? `Ehrlich: In der Phase "${stage}" ist institutionelles Kapital meist noch zu früh — Förderung und erste Pilotkunden bringen dich weiter und verwässern nicht.`
-      : `Mit deinem Stand kannst du eine echte Pipeline aufbauen: 20 passende Angels/Frühphasen-Fonds, wöchentlich 5 Erstkontakte, Teaser mit 3 Kernmetriken.`;
+      ? `Ehrlich: Die meisten Gründungen brauchen keinen Investor. Rechne erst aus, was du wirklich brauchst — oft sind es 10–50k für Ausstattung, Miete und die ersten Monate. Das deckst du mit Erspartem, einem KfW-Mikrokredit oder dem Gründungszuschuss, ohne Anteile abzugeben.`
+      : `Wenn du wirklich externes Geld brauchst: Erst die Hausbank/KfW prüfen, dann regionale Förderbanken — Investoren sind die teuerste Option und nur für stark wachsende Modelle sinnvoll.`;
     return {
-      answer: `${earlyNote}\n\nIm Kapital-Bereich findest du kuratierte Investoren mit Fit zu deiner Branche. Parallel lohnt der Blick auf Förderung als nicht-verwässernde Alternative.`,
-      quickActions: ["Was gehört in meinen Teaser?", "Welche Förderung statt Investor?"],
+      answer: `${earlyNote}\n\nIm Kapital-Bereich findest du die Optionen sortiert — und im Förderbereich das, was dich nichts kostet.`,
+      quickActions: ["Wie viel brauche ich realistisch?", "Welche Förderung statt Kredit?"],
       navigation: [
         { to: "/kapital", label: "Kapital & Investoren" },
         { to: "/foerderung", label: "Nicht-verwässernde Förderung" },
@@ -323,8 +315,8 @@ export function localCopilotEngine(message: string, input: LocalInput): CopilotR
     const early = earlyStage && /(esop|vesting|cap table|term sheet)/.test(m);
     return {
       answer: early
-        ? `Gute Frage — aber noch nicht dran. In der Phase "${stage}" bindet ein ESOP/Cap-Table-Setup Zeit und Geld, ohne dass es jemand braucht.\n\nWas jetzt zählt: ein sauberer Gründervertrag mit deinem ${input.planContext?.partnerTerm || "Co-Founder"} (Rollen, Anteile, Exit-Szenario auf 2 Seiten) — den Rest machst du, wenn der erste Mitarbeiter oder Investor real wird.\n\nIm Recht-Bereich findest du Anwälte, die genau solche Frühphasen-Pakete anbieten.`
-        : `Für Vertrags- und Gesellschaftsfragen findest du im Recht-Bereich geprüfte Anwälte mit Startup-Fokus und Festpreis-Paketen. Beschreib dein Anliegen kurz — ich sage dir, welches Paket passt.`,
+        ? `Gute Frage — aber halt es einfach. Für die meisten Starts reicht: Gewerbe anmelden (oder Freiberufler-Status klären), eine GbR-Vereinbarung, wenn ihr zu zweit seid, und eine Betriebshaftpflicht.\n\nDie GmbH lohnt sich erst, wenn echtes Haftungsrisiko oder größere Verträge kommen — vorher kostet sie nur Geld und Papierkram.\n\nIm Recht-Bereich findest du Anwälte mit Festpreis-Paketen genau für diese Anfangsfragen.`
+        : `Für Vertrags- und Gesellschaftsfragen findest du im Recht-Bereich geprüfte Anwälte mit Gründer-Fokus und Festpreis-Paketen. Beschreib dein Anliegen kurz — ich sage dir, welches Paket passt.`,
       quickActions: ["Was muss in den Gründervertrag?", "Wann lohnt sich die GmbH?"],
       navigation: [{ to: "/recht", label: "Recht & Verträge öffnen" }],
       newFacts,
@@ -397,7 +389,7 @@ export function localCopilotEngine(message: string, input: LocalInput): CopilotR
 
   // Default — strukturierter Mentor-Modus
   return {
-    answer: `Verstanden. Damit ich dir konkret helfe, denk ich von deinem Stand aus: "${idea}", Phase "${stage}", Ziel: ${goal}.\n\nDrei Wege, wie ich sofort unterstützen kann: 1) Förderantrag vorausfüllen, 2) dein Firmenprofil schärfen, 3) den nächsten Schritt aus deinem Plan in Aufgaben übersetzen.\n\nSag mir, was davon am meisten Druck rausnimmt — oder beschreib dein Problem genauer, dann gehe ich tiefer rein.`,
+    answer: `Verstanden. Ich denke von deinem Stand aus: "${idea}", Phase "${stage}", Ziel: ${goal}.\n\nEgal ob Halle, Handwerk oder Agentur — der Anfang ist immer gleich: 1) den nächsten kleinen Schritt festlegen, 2) eine Person finden, die mitzieht oder es schon gemacht hat, 3) klären, was der Start wirklich kostet.\n\nSag mir, wo es bei dir hakt — oder beschreib dein Vorhaben genauer, dann gehe ich tiefer rein.`,
     quickActions: quickPromptsFor(input.surface),
     navigation: [{ to: "/plan", label: "Meinen Plan ansehen" }],
     newFacts,
