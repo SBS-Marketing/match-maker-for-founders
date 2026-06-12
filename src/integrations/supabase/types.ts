@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_events: {
+        Row: {
+          created_at: string
+          id: string
+          meta: Json
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meta?: Json
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meta?: Json
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       advisor_recommendations: {
         Row: {
           advisor_id: string | null
@@ -65,6 +92,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      company_profiles: {
+        Row: {
+          composition: Json
+          created_at: string
+          id: string
+          name: string
+          published: boolean
+          slug: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          composition?: Json
+          created_at?: string
+          id?: string
+          name: string
+          published?: boolean
+          slug: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          composition?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          published?: boolean
+          slug?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       copilot_context: {
         Row: {
