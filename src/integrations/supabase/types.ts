@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_events: {
+        Row: {
+          created_at: string
+          id: string
+          meta: Json
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meta?: Json
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meta?: Json
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       advisor_recommendations: {
         Row: {
           advisor_id: string | null
@@ -65,6 +92,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      company_profiles: {
+        Row: {
+          composition: Json
+          created_at: string
+          id: string
+          name: string
+          published: boolean
+          slug: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          composition?: Json
+          created_at?: string
+          id?: string
+          name: string
+          published?: boolean
+          slug: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          composition?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          published?: boolean
+          slug?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       copilot_context: {
         Row: {
@@ -511,189 +571,6 @@ export type Database = {
           },
         ]
       }
-      company_profiles: {
-        Row: {
-          id: string
-          user_id: string
-          slug: string
-          name: string
-          composition: Json
-          published: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          slug: string
-          name: string
-          composition?: Json
-          published?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          slug?: string
-          name?: string
-          composition?: Json
-          published?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "company_profiles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      activity_events: {
-        Row: {
-          id: string
-          user_id: string
-          type: string
-          title: string
-          meta: Json
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          type: string
-          title: string
-          meta?: Json
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          type?: string
-          title?: string
-          meta?: Json
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "activity_events_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      community_questions: {
-        Row: {
-          id: string
-          user_id: string
-          title: string
-          body: string | null
-          copilot_answer: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          title: string
-          body?: string | null
-          copilot_answer?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          title?: string
-          body?: string | null
-          copilot_answer?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "community_questions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      community_answers: {
-        Row: {
-          id: string
-          question_id: string
-          user_id: string
-          body: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          question_id: string
-          user_id: string
-          body: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          question_id?: string
-          user_id?: string
-          body?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "community_answers_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "community_questions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "community_answers_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      partner_applications: {
-        Row: {
-          id: string
-          name: string
-          email: string
-          service: string
-          firm: string | null
-          message: string | null
-          status: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          email: string
-          service: string
-          firm?: string | null
-          message?: string | null
-          status?: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          email?: string
-          service?: string
-          firm?: string | null
-          message?: string | null
-          status?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
       notification_prefs: {
         Row: {
           created_at: string
@@ -728,9 +605,6 @@ export type Database = {
           looking_for: string | null
           onboarded_at: string | null
           partner_term: string | null
-          headline: string | null
-          banner_url: string | null
-          socials: Json
           path: Database["public"]["Enums"]["profile_path"] | null
           photo_url: string | null
           role: Database["public"]["Enums"]["founder_role"] | null
@@ -752,9 +626,6 @@ export type Database = {
           looking_for?: string | null
           onboarded_at?: string | null
           partner_term?: string | null
-          headline?: string | null
-          banner_url?: string | null
-          socials?: Json
           path?: Database["public"]["Enums"]["profile_path"] | null
           photo_url?: string | null
           role?: Database["public"]["Enums"]["founder_role"] | null
@@ -776,9 +647,6 @@ export type Database = {
           looking_for?: string | null
           onboarded_at?: string | null
           partner_term?: string | null
-          headline?: string | null
-          banner_url?: string | null
-          socials?: Json
           path?: Database["public"]["Enums"]["profile_path"] | null
           photo_url?: string | null
           role?: Database["public"]["Enums"]["founder_role"] | null
