@@ -34,3 +34,8 @@ dist-ssr
 # Lokale Env — nie committen (anon key ist public, aber Service-Keys gehören hier NIE rein)
 .env
 .env.local
+
+# iOS (generiert via xcodegen — nur project.yml + Sources einchecken)
+ios/Matchfoundr.xcodeproj/
+ios/build/
+*.xcuserstate
