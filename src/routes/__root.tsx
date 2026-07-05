@@ -148,7 +148,8 @@ function RootComponent() {
   // Landing + öffentliche Firmenprofile (/s/…) = eigene Seiten ohne App-Chrome.
   // Auth/Onboarding = bildschirmfüllende Flows. Alles andere = App-Shell.
   const isBare = pathname === "/" || pathname.startsWith("/s/");
-  const isFlow = pathname.startsWith("/auth") || pathname.startsWith("/onboarding");
+  const isOnboarding = pathname.startsWith("/onboarding");
+  const isFlow = pathname.startsWith("/auth") || isOnboarding;
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -157,8 +158,11 @@ function RootComponent() {
           <Outlet />
         ) : isFlow ? (
           <>
-            <PageBackdrop variant={pathname.startsWith("/onboarding") ? "dusk" : "sunrise"} />
-            <main className="relative z-10 min-h-screen">
+            <PageBackdrop variant={isOnboarding ? "dusk" : "sunrise"} />
+            <main
+              className="relative z-10 min-h-screen"
+              style={{ background: isOnboarding ? "var(--ink)" : undefined }}
+            >
               <Outlet />
             </main>
           </>
