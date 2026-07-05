@@ -54,7 +54,7 @@ function GuideArticle() {
 
       {/* Abschnitte */}
       <article className="mt-6 space-y-6">
-        {guide.sections.map((section, idx) => (
+        {guide.sections.map((section: GuideSection, idx: number) => (
           <section key={section.h}>
             <h2 className="flex items-baseline gap-2.5 text-[17px] font-semibold tracking-tight text-[var(--ink)]">
               <span className="font-mono text-[11px] font-semibold text-[var(--ember)]">
