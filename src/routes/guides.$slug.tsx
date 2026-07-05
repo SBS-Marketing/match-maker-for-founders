@@ -4,7 +4,7 @@ import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Clock3 } from "lucide-react";
 import { AuthGate } from "@/components/AuthGate";
 import { CopilotMark } from "@/components/Copilot";
-import { GUIDES, GUIDE_CATEGORIES, getGuide } from "@/data/guides";
+import { GUIDES, GUIDE_CATEGORIES, getGuide, type GuideSection } from "@/data/guides";
 
 export const Route = createFileRoute("/guides/$slug")({
   loader: ({ params }) => {
