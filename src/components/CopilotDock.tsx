@@ -17,6 +17,7 @@ import {
 
 // Seitentitel für den Kontext-Chip im Drawer.
 function surfaceLabel(pathname: string): string {
+  if (pathname.startsWith("/guides")) return "Guides";
   if (pathname.startsWith("/foerderung")) return "Förderung";
   if (pathname.startsWith("/firma")) return "Firmenprofil";
   if (pathname.startsWith("/discover")) return "Swipe";

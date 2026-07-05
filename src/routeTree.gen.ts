@@ -37,6 +37,7 @@ import { Route as RechtIndexRouteImport } from './routes/recht.index'
 import { Route as MentorenIndexRouteImport } from './routes/mentoren.index'
 import { Route as MatchesIndexRouteImport } from './routes/matches.index'
 import { Route as KapitalIndexRouteImport } from './routes/kapital.index'
+import { Route as GuidesIndexRouteImport } from './routes/guides.index'
 import { Route as GrowthIndexRouteImport } from './routes/growth.index'
 import { Route as FoerderungIndexRouteImport } from './routes/foerderung.index'
 import { Route as TalentSlugRouteImport } from './routes/talent.$slug'
@@ -46,6 +47,7 @@ import { Route as RechtSlugRouteImport } from './routes/recht.$slug'
 import { Route as MentorenSlugRouteImport } from './routes/mentoren.$slug'
 import { Route as MatchesIdRouteImport } from './routes/matches.$id'
 import { Route as KapitalSlugRouteImport } from './routes/kapital.$slug'
+import { Route as GuidesSlugRouteImport } from './routes/guides.$slug'
 import { Route as GrowthSlugRouteImport } from './routes/growth.$slug'
 import { Route as FoerderungSlugRouteImport } from './routes/foerderung.$slug'
 import { Route as AuthWaitlistConfirmRouteImport } from './routes/auth.waitlist-confirm'
@@ -193,6 +195,11 @@ const KapitalIndexRoute = KapitalIndexRouteImport.update({
   path: '/',
   getParentRoute: () => KapitalRoute,
 } as any)
+const GuidesIndexRoute = GuidesIndexRouteImport.update({
+  id: '/guides/',
+  path: '/guides/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GrowthIndexRoute = GrowthIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -237,6 +244,11 @@ const KapitalSlugRoute = KapitalSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => KapitalRoute,
+} as any)
+const GuidesSlugRoute = GuidesSlugRouteImport.update({
+  id: '/guides/$slug',
+  path: '/guides/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const GrowthSlugRoute = GrowthSlugRouteImport.update({
   id: '/$slug',
@@ -298,6 +310,7 @@ export interface FileRoutesByFullPath {
   '/auth/waitlist-confirm': typeof AuthWaitlistConfirmRoute
   '/foerderung/$slug': typeof FoerderungSlugRoute
   '/growth/$slug': typeof GrowthSlugRoute
+  '/guides/$slug': typeof GuidesSlugRoute
   '/kapital/$slug': typeof KapitalSlugRoute
   '/matches/$id': typeof MatchesIdRoute
   '/mentoren/$slug': typeof MentorenSlugRoute
@@ -307,6 +320,7 @@ export interface FileRoutesByFullPath {
   '/talent/$slug': typeof TalentSlugRoute
   '/foerderung/': typeof FoerderungIndexRoute
   '/growth/': typeof GrowthIndexRoute
+  '/guides/': typeof GuidesIndexRoute
   '/kapital/': typeof KapitalIndexRoute
   '/matches/': typeof MatchesIndexRoute
   '/mentoren/': typeof MentorenIndexRoute
@@ -338,6 +352,7 @@ export interface FileRoutesByTo {
   '/auth/waitlist-confirm': typeof AuthWaitlistConfirmRoute
   '/foerderung/$slug': typeof FoerderungSlugRoute
   '/growth/$slug': typeof GrowthSlugRoute
+  '/guides/$slug': typeof GuidesSlugRoute
   '/kapital/$slug': typeof KapitalSlugRoute
   '/matches/$id': typeof MatchesIdRoute
   '/mentoren/$slug': typeof MentorenSlugRoute
@@ -347,6 +362,7 @@ export interface FileRoutesByTo {
   '/talent/$slug': typeof TalentSlugRoute
   '/foerderung': typeof FoerderungIndexRoute
   '/growth': typeof GrowthIndexRoute
+  '/guides': typeof GuidesIndexRoute
   '/kapital': typeof KapitalIndexRoute
   '/matches': typeof MatchesIndexRoute
   '/mentoren': typeof MentorenIndexRoute
@@ -384,6 +400,7 @@ export interface FileRoutesById {
   '/auth/waitlist-confirm': typeof AuthWaitlistConfirmRoute
   '/foerderung/$slug': typeof FoerderungSlugRoute
   '/growth/$slug': typeof GrowthSlugRoute
+  '/guides/$slug': typeof GuidesSlugRoute
   '/kapital/$slug': typeof KapitalSlugRoute
   '/matches/$id': typeof MatchesIdRoute
   '/mentoren/$slug': typeof MentorenSlugRoute
@@ -393,6 +410,7 @@ export interface FileRoutesById {
   '/talent/$slug': typeof TalentSlugRoute
   '/foerderung/': typeof FoerderungIndexRoute
   '/growth/': typeof GrowthIndexRoute
+  '/guides/': typeof GuidesIndexRoute
   '/kapital/': typeof KapitalIndexRoute
   '/matches/': typeof MatchesIndexRoute
   '/mentoren/': typeof MentorenIndexRoute
@@ -431,6 +449,7 @@ export interface FileRouteTypes {
     | '/auth/waitlist-confirm'
     | '/foerderung/$slug'
     | '/growth/$slug'
+    | '/guides/$slug'
     | '/kapital/$slug'
     | '/matches/$id'
     | '/mentoren/$slug'
@@ -440,6 +459,7 @@ export interface FileRouteTypes {
     | '/talent/$slug'
     | '/foerderung/'
     | '/growth/'
+    | '/guides/'
     | '/kapital/'
     | '/matches/'
     | '/mentoren/'
@@ -471,6 +491,7 @@ export interface FileRouteTypes {
     | '/auth/waitlist-confirm'
     | '/foerderung/$slug'
     | '/growth/$slug'
+    | '/guides/$slug'
     | '/kapital/$slug'
     | '/matches/$id'
     | '/mentoren/$slug'
@@ -480,6 +501,7 @@ export interface FileRouteTypes {
     | '/talent/$slug'
     | '/foerderung'
     | '/growth'
+    | '/guides'
     | '/kapital'
     | '/matches'
     | '/mentoren'
@@ -516,6 +538,7 @@ export interface FileRouteTypes {
     | '/auth/waitlist-confirm'
     | '/foerderung/$slug'
     | '/growth/$slug'
+    | '/guides/$slug'
     | '/kapital/$slug'
     | '/matches/$id'
     | '/mentoren/$slug'
@@ -525,6 +548,7 @@ export interface FileRouteTypes {
     | '/talent/$slug'
     | '/foerderung/'
     | '/growth/'
+    | '/guides/'
     | '/kapital/'
     | '/matches/'
     | '/mentoren/'
@@ -558,10 +582,12 @@ export interface RootRouteChildren {
   UnterlagenRoute: typeof UnterlagenRoute
   ApiSttRoute: typeof ApiSttRoute
   FoerderungSlugRoute: typeof FoerderungSlugRoute
+  GuidesSlugRoute: typeof GuidesSlugRoute
   MatchesIdRoute: typeof MatchesIdRoute
   RechtSlugRoute: typeof RechtSlugRoute
   SSlugRoute: typeof SSlugRoute
   FoerderungIndexRoute: typeof FoerderungIndexRoute
+  GuidesIndexRoute: typeof GuidesIndexRoute
   MatchesIndexRoute: typeof MatchesIndexRoute
   RechtIndexRoute: typeof RechtIndexRoute
 }
@@ -764,6 +790,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KapitalIndexRouteImport
       parentRoute: typeof KapitalRoute
     }
+    '/guides/': {
+      id: '/guides/'
+      path: '/guides'
+      fullPath: '/guides/'
+      preLoaderRoute: typeof GuidesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/growth/': {
       id: '/growth/'
       path: '/'
@@ -826,6 +859,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/kapital/$slug'
       preLoaderRoute: typeof KapitalSlugRouteImport
       parentRoute: typeof KapitalRoute
+    }
+    '/guides/$slug': {
+      id: '/guides/$slug'
+      path: '/guides/$slug'
+      fullPath: '/guides/$slug'
+      preLoaderRoute: typeof GuidesSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/growth/$slug': {
       id: '/growth/$slug'
@@ -977,10 +1017,12 @@ const rootRouteChildren: RootRouteChildren = {
   UnterlagenRoute: UnterlagenRoute,
   ApiSttRoute: ApiSttRoute,
   FoerderungSlugRoute: FoerderungSlugRoute,
+  GuidesSlugRoute: GuidesSlugRoute,
   MatchesIdRoute: MatchesIdRoute,
   RechtSlugRoute: RechtSlugRoute,
   SSlugRoute: SSlugRoute,
   FoerderungIndexRoute: FoerderungIndexRoute,
+  GuidesIndexRoute: GuidesIndexRoute,
   MatchesIndexRoute: MatchesIndexRoute,
   RechtIndexRoute: RechtIndexRoute,
 }

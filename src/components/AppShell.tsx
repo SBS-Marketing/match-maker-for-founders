@@ -2,12 +2,14 @@ import { type ReactNode, useState } from "react";
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import {
   Bell,
+  BookOpen,
   Building2,
   CalendarDays,
   Compass,
   FolderOpen,
   Home,
   Kanban,
+  Landmark,
   ListChecks,
   LogOut,
   MessageCircle,
@@ -22,28 +24,35 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { CopilotDock } from "@/components/CopilotDock";
-import { PageOnboarding } from "@/components/onboarding/PageOnboarding";
 
 type NavItem = { to: string; label: string; short: string; icon: LucideIcon };
 
-const NAV: NavItem[] = [
+// Kern = tägliche Wege. Werkzeuge = alles fürs Arbeiten am Vorhaben.
+const NAV_CORE: NavItem[] = [
   { to: "/heute", label: "Heute", short: "Heute", icon: Home },
   { to: "/discover", label: "Swipe", short: "Swipe", icon: Compass },
   { to: "/marketplace", label: "Marktplatz", short: "Markt", icon: Store },
+  { to: "/matches", label: "Chats", short: "Chats", icon: MessageCircle },
+  { to: "/guides", label: "Guides", short: "Guides", icon: BookOpen },
   { to: "/co-pilot", label: "Co-Pilot", short: "Pilot", icon: Sparkles },
-  { to: "/matches", label: "Matches", short: "Chats", icon: MessageCircle },
+];
+
+const NAV_TOOLS: NavItem[] = [
   { to: "/firma", label: "Firmenprofil", short: "Firma", icon: Building2 },
+  { to: "/foerderung", label: "Förderung", short: "Förder", icon: Landmark },
+  { to: "/aufgaben", label: "Aufgaben", short: "Tasks", icon: ListChecks },
+  { to: "/kanban", label: "Board", short: "Board", icon: Kanban },
   { to: "/kalender", label: "Kalender", short: "Kal", icon: CalendarDays },
   { to: "/unterlagen", label: "Unterlagen", short: "Docs", icon: FolderOpen },
-  { to: "/aufgaben", label: "Aufgaben", short: "Tasks", icon: ListChecks },
-  { to: "/kanban", label: "Kanban", short: "Board", icon: Kanban },
   { to: "/team", label: "Team", short: "Team", icon: UsersRound },
 ];
 
+const NAV: NavItem[] = [...NAV_CORE, ...NAV_TOOLS];
+
 const MOBILE_PRIMARY: NavItem[] = [
   { to: "/heute", label: "Heute", short: "Heute", icon: Home },
+  { to: "/discover", label: "Swipe", short: "Swipe", icon: Compass },
   { to: "/matches", label: "Chats", short: "Chats", icon: MessageCircle },
-  { to: "/kalender", label: "Kalender", short: "Kal", icon: CalendarDays },
   { to: "/co-pilot", label: "Co-Pilot", short: "Pilot", icon: Sparkles },
 ];
 
@@ -54,6 +63,7 @@ const MOBILE_MORE: NavItem[] = NAV.filter(
 // Seitentitel für die Topbar aus dem Pfad ableiten.
 const TITLES: { match: (p: string) => boolean; title: string }[] = [
   { match: (p) => p.startsWith("/heute"), title: "Heute" },
+  { match: (p) => p.startsWith("/guides"), title: "Guides" },
   { match: (p) => p.startsWith("/discover"), title: "Swipe" },
   { match: (p) => p.startsWith("/marketplace"), title: "Marktplatz" },
   { match: (p) => p.startsWith("/co-pilot"), title: "Co-Pilot" },
@@ -93,7 +103,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main className="relative z-10 flex-1 pb-24 lg:pb-10">{children}</main>
       </div>
       <MobileBottomNav pathname={pathname} />
-      {user && <PageOnboarding pathname={pathname} />}
       <CopilotDock />
     </div>
   );
@@ -135,9 +144,16 @@ function Sidebar({ pathname }: { pathname: string }) {
         </span>
       </Link>
 
-      {/* Primary nav */}
-      <nav className="mt-2 flex flex-1 flex-col gap-1 px-2 xl:px-3">
-        {NAV.map((item) => (
+      {/* Primary nav — Kern + Werkzeuge */}
+      <nav className="mt-2 flex flex-1 flex-col gap-1 overflow-y-auto px-2 xl:px-3">
+        {NAV_CORE.map((item) => (
+          <SidebarLink key={item.to} item={item} active={pathname.startsWith(item.to)} />
+        ))}
+        <div className="mt-4 mb-1 hidden px-3 font-mono text-[9.5px] uppercase tracking-[0.16em] text-[var(--faint)] xl:block">
+          Werkzeuge
+        </div>
+        <div className="mt-3 border-t border-[var(--ruled-soft)] pt-3 xl:mt-0 xl:border-0 xl:pt-0" />
+        {NAV_TOOLS.map((item) => (
           <SidebarLink key={item.to} item={item} active={pathname.startsWith(item.to)} />
         ))}
       </nav>

@@ -1,5 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
+import { PremiumSheet } from "@/components/PremiumSheet";
+import { isPremium, registerChatContact, registerSwipe, swipesLeftToday } from "@/lib/premium";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthGate } from "@/components/AuthGate";
@@ -176,6 +178,7 @@ function Discover() {
   const [fStage, setFStage] = useState<FilterValue>("all");
   const [fCommit, setFCommit] = useState<FilterValue>("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [paywall, setPaywall] = useState<null | "swipes" | "chat">(null);
 
   // Spark view hook
   const {
@@ -250,6 +253,10 @@ function Discover() {
 
   const swipe = async (targetId: string, direction: "like" | "pass") => {
     if (!user) return;
+    if (!registerSwipe()) {
+      setPaywall("swipes");
+      return;
+    }
     if (isDemo) {
       setQueue((q) => q.filter((x) => x.id !== targetId));
       removeSparkProfile(targetId);
@@ -278,6 +285,10 @@ function Discover() {
 
   const message = async (targetId: string) => {
     if (!user) return;
+    if (!registerChatContact(targetId)) {
+      setPaywall("chat");
+      return;
+    }
     if (isDemo) {
       setQueue((q) => q.filter((x) => x.id !== targetId));
       toast.info("Demo: Chat wird nach echtem Match freigeschaltet.");
@@ -319,8 +330,7 @@ function Discover() {
         <div className="glass-pane p-10 text-center">
           <div className="eyebrow">Profil unvollständig</div>
           <h2 className="mt-4 text-balance text-3xl font-semibold tracking-tight">
-            Erst dein{" "}
-            <span className="text-[var(--ember)]">Profil</span>
+            Erst dein <span className="text-[var(--ember)]">Profil</span>
           </h2>
           <p className="mt-4 text-[14px] text-[var(--smoke)]">
             Vervollständige dein Founder-Profil, bevor du andere Founder triffst.
@@ -337,6 +347,10 @@ function Discover() {
   }
 
   const handleSyncedSparkSwipe = async (profileId: string, direction: "like" | "pass" | "save") => {
+    if (!registerSwipe()) {
+      setPaywall("swipes");
+      return false;
+    }
     const ok = await handleSparkSwipe(profileId, direction);
     if (ok) setQueue((q) => q.filter((x) => x.id !== profileId));
     return ok;
@@ -430,6 +444,16 @@ function Discover() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 pt-10 pb-24 sm:px-6">
+      <PremiumSheet
+        open={paywall !== null}
+        reason={paywall ?? "swipes"}
+        onClose={() => setPaywall(null)}
+      />
+      {!isPremium() && Number.isFinite(swipesLeftToday()) && (
+        <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[var(--ember-tint)] px-3 py-1.5 text-[11.5px] font-semibold text-[var(--ember-deep)]">
+          {swipesLeftToday()} von 5 Swipes übrig heute
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <div className="eyebrow">

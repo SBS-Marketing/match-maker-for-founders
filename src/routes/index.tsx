@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
@@ -1083,6 +1084,8 @@ function HeroCopilot() {
 }
 
 function LHero() {
+  const navigate = useNavigate();
+  const { enterDemo } = useAuth();
   return (
     <div
       className="landing-hero"
@@ -1198,25 +1201,28 @@ function LHero() {
               Finde Menschen, die mitbauen
               <SvcIcon name="arrowR" size={15} color={M.cream} stroke={2.2} />
             </Link>
-            <Link
+            <button
               className="landing-hero-secondary"
-              to="/marketplace"
+              onClick={() => {
+                enterDemo();
+                navigate({ to: "/heute" });
+              }}
               style={{
                 ...GLASS.pill,
                 borderRadius: 12,
                 padding: "16px 22px",
-                textDecoration: "none",
                 fontWeight: 500,
                 fontSize: 15.5,
                 color: M.ink,
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 10,
+                cursor: "pointer",
               }}
             >
               <SvcIcon name="layers" size={16} stroke={2} color={M.ink} />
-              Marketplace ansehen
-            </Link>
+              Demo ausprobieren
+            </button>
           </div>
 
           <div

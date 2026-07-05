@@ -24,6 +24,7 @@ export type ChatTurn = { role: "user" | "assistant"; content: string };
 // Plattform-Bereiche, auf die der Co-Pilot aktiv verweisen darf.
 export const ROUTE_CATALOG = [
   { to: "/heute", label: "Heute (Tagesplan)" },
+  { to: "/guides", label: "Guides (Schritt-für-Schritt-Anleitungen für Gründer)" },
   { to: "/plan", label: "Persönlicher Plan" },
   { to: "/discover", label: "Co-Founder Swipe" },
   { to: "/marketplace", label: "Marktplatz (alle Services)" },

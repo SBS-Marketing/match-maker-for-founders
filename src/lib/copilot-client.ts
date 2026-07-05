@@ -167,6 +167,13 @@ export function quickPromptsFor(pathname: string): string[] {
       "Wie verteilen wir Rollen im Team?",
     ];
   }
+  if (pathname.startsWith("/guides")) {
+    return [
+      "Welcher Guide passt zu meinem nächsten Schritt?",
+      "Wende den Guide auf mein Vorhaben an",
+      "Was sollte ich als Erstes lesen?",
+    ];
+  }
   if (pathname.startsWith("/heute") || pathname.startsWith("/plan")) {
     return [
       "Was ist heute der wichtigste nächste Schritt?",
@@ -261,6 +268,105 @@ export function localCopilotEngine(message: string, input: LocalInput): CopilotR
 
   const newFacts = extractLocalFacts(message);
 
+  // Erste Nachricht an ein Match formulieren (vor Co-Founder-Intent prüfen!)
+  if (/(formulier|nachricht|anschreiben|schreib.*match|erste nachricht)/.test(m)) {
+    const who = input.planContext?.partnerTerm || "Mitgründer";
+    return {
+      answer: `Hier ist ein Entwurf — kurz, ehrlich, ohne Floskeln:\n\n„Hi! Ich baue gerade ${idea} (Stand: ${stage}). Dein Profil ist mir aufgefallen, weil du genau das mitbringst, was mir fehlt. Hast du diese Woche 15 Minuten für ein kurzes Telefonat? Ich erzähl dir in 3 Sätzen, wo ich stehe — und du sagst mir ehrlich, ob es dich reizt.“\n\nPass die Klammer an und schick sie ab — Perfektion ist hier der Feind. Antworten kommen auf Ehrlichkeit, nicht auf Marketing.`,
+      quickActions: [
+        "Mach sie lockerer",
+        "Mach sie förmlicher",
+        "Welche Fragen stelle ich im Gespräch?",
+      ],
+      navigation: [
+        { to: "/matches", label: "Zu deinen Chats" },
+        { to: "/guides/cofounder-finden", label: `Guide: Den richtigen ${who} finden` },
+      ],
+      newFacts,
+      source: "local",
+    };
+  }
+
+  // Gewerbe / Anmeldung / offiziell starten
+  if (
+    /(gewerbe|anmeld|selbständig machen|selbststaendig machen|offiziell starten|freiberufl)/.test(m)
+  ) {
+    return {
+      answer: `Der offizielle Start ist unspektakulärer als sein Ruf: Gewerbeamt (20–60 €, online), dann kommt automatisch der Finanzamt-Fragebogen, dann melden sich IHK/HWK von selbst.\n\nWichtigste Entscheidung dabei: die Kleinunternehmerregelung (unter 25.000 € Umsatz meist sinnvoll).\n\nIm Guide steht der komplette Ablauf in 5 Schritten — 4 Minuten Lesezeit, danach kannst du es einfach machen.`,
+      quickActions: ["Bin ich Freiberufler oder Gewerbe?", "Was ist die Kleinunternehmerregelung?"],
+      navigation: [{ to: "/guides/gewerbe-anmelden", label: "Guide: Gewerbe anmelden" }],
+      newFacts,
+      source: "local",
+    };
+  }
+
+  // Versicherungen
+  if (/(versicherung|haftpflicht|absicher)/.test(m)) {
+    return {
+      answer: `Zwei Versicherungen brauchst du wirklich: die Betriebshaftpflicht (ab ~80 €/Jahr — bei Publikumsverkehr nicht verhandelbar) und deine Krankenversicherung, um die du dich als Selbständige:r selbst kümmern musst.\n\nAlles andere — Rechtsschutz, Cyber, Vorsorge-Konstrukte — kann warten, bis Umsatz da ist. Lass dich nicht vollpacken.`,
+      quickActions: ["Was kostet die Krankenversicherung?", "Brauche ich Berufsunfähigkeit?"],
+      navigation: [{ to: "/guides/versicherungen-gruender", label: "Guide: Versicherungen" }],
+      newFacts,
+      source: "local",
+    };
+  }
+
+  // Businessplan
+  if (/(businessplan|geschäftsplan|geschaeftsplan|tragfähigkeit|tragfaehigkeit)/.test(m)) {
+    return {
+      answer: `Für Gründungszuschuss, Mikrokredit oder Bank brauchst du keine 40 Seiten — fünf reichen: 1) Was & für wen, 2) Markt vor Ort, 3) Warum du, 4–5) ehrliche Zahlen über 24 Monate.\n\nMein Angebot: Wir gehen die Abschnitte zusammen durch — du erzählst, ich formuliere. Und bevor du einreichst, liest die IHK kostenlos gegen.`,
+      quickActions: ["Lass uns mit Abschnitt 1 anfangen", "Was prüft die Bank am genauesten?"],
+      navigation: [{ to: "/guides/businessplan-light", label: "Guide: 5-Seiten-Businessplan" }],
+      newFacts,
+      source: "local",
+    };
+  }
+
+  // Erste Kunden / Reichweite / Marketing
+  if (/(kunden|akquise|auftrag|auftraege|aufträge|reichweite|marketing|sichtbar)/.test(m)) {
+    return {
+      answer: `Die ersten 10 Kunden kommen nicht über Ads — sie kommen über die 30 Menschen, die dich schon kennen, und über die Frage nach der Empfehlung statt nach dem Auftrag.\n\nDazu: Google-Unternehmensprofil anlegen (20 Minuten, kostenlos, wirkt sofort lokal) und die ersten 2–3 Aufträge günstiger gegen Referenz + Bewertung.\n\nZähl Gespräche, nicht Follower: 5 echte Kundengespräche pro Woche schlagen jede Kampagne.`,
+      quickActions: [
+        "Formuliere die Nachricht an meine 30 Kontakte",
+        "Was gehört ins Google-Profil?",
+      ],
+      navigation: [
+        { to: "/guides/erste-kunden", label: "Guide: Die ersten 10 Kunden" },
+        { to: "/growth", label: "Growth-Partner ansehen" },
+      ],
+      newFacts,
+      source: "local",
+    };
+  }
+
+  // Preise / Kalkulation
+  if (/(preis|kalkul|stundensatz|angebot schreiben|was verlangen|honorar)/.test(m)) {
+    return {
+      answer: `Rechne rückwärts: Wunsch-Netto (z.B. 3.000 €) + ~40 % Abgaben + Betriebskosten = nötiger Umsatz. Geteilt durch realistische 100 verrechenbare Stunden im Monat — nicht 160! — ergibt das deinen Mindest-Stundensatz. Meist 55–70 €, nicht 25.\n\nUnd: Verkauf Pakete statt Stunden („Website Basis 1.900 €“) — Kunden mögen Klarheit, du wirst fürs Ergebnis bezahlt statt für Zeit.`,
+      quickActions: [
+        "Rechne meinen Stundensatz mit mir durch",
+        "Wie erhöhe ich Preise bei Bestandskunden?",
+      ],
+      navigation: [{ to: "/guides/preise-kalkulieren", label: "Guide: Preise kalkulieren" }],
+      newFacts,
+      source: "local",
+    };
+  }
+
+  // Startkosten / Budget
+  if (/(startkosten|was kostet|kapitalbedarf|budget|runway|erspartes)/.test(m)) {
+    return {
+      answer: `Die ehrliche Rechnung hat drei Töpfe: Einmalkosten (Ausstattung, Kaution), Monatskosten (Miete, Versicherung, Software) — und deine privaten Lebenskosten inklusive Krankenkasse. Topf 3 vergessen die meisten.\n\nFormel: Einmalkosten + 6 × (Monatskosten + Leben) − halbierte Umsatzschätzung = dein Kapitalbedarf. Unter 10k: Erspartes + Zuschuss. 10–50k: Mikrokredit/KfW. Darüber: Bank + Partner.`,
+      quickActions: ["Rechne meine Gründung mit mir durch", "Welche Förderung deckt die Lücke?"],
+      navigation: [
+        { to: "/guides/startkosten-rechnen", label: "Guide: Startkosten rechnen" },
+        { to: "/guides/foerderung-kleine-gruendungen", label: "Guide: Förder-Landkarte" },
+      ],
+      newFacts,
+      source: "local",
+    };
+  }
+
   // Förderung / EXIST / Zuschuss
   if (/(förder|foerder|exist|zuschuss|stipendium|grant|profit\b)/.test(m)) {
     return {
@@ -270,7 +376,10 @@ export function localCopilotEngine(message: string, input: LocalInput): CopilotR
         "Was bietet meine Stadt an?",
         "Hilf mir beim Antrag",
       ],
-      navigation: [{ to: "/foerderung", label: "Programme für deinen Start ansehen" }],
+      navigation: [
+        { to: "/foerderung", label: "Programme für deinen Start ansehen" },
+        { to: "/guides/gruendungszuschuss", label: "Guide: Gründungszuschuss" },
+      ],
       newFacts,
       source: "local",
     };
@@ -286,7 +395,7 @@ export function localCopilotEngine(message: string, input: LocalInput): CopilotR
       ],
       navigation: [
         { to: "/discover", label: "Swipe-Deck öffnen" },
-        { to: "/matches", label: "Meine Matches" },
+        { to: "/guides/cofounder-finden", label: "Guide: Mitgründer prüfen" },
       ],
       newFacts,
       source: "local",
@@ -318,7 +427,10 @@ export function localCopilotEngine(message: string, input: LocalInput): CopilotR
         ? `Gute Frage — aber halt es einfach. Für die meisten Starts reicht: Gewerbe anmelden (oder Freiberufler-Status klären), eine GbR-Vereinbarung, wenn ihr zu zweit seid, und eine Betriebshaftpflicht.\n\nDie GmbH lohnt sich erst, wenn echtes Haftungsrisiko oder größere Verträge kommen — vorher kostet sie nur Geld und Papierkram.\n\nIm Recht-Bereich findest du Anwälte mit Festpreis-Paketen genau für diese Anfangsfragen.`
         : `Für Vertrags- und Gesellschaftsfragen findest du im Recht-Bereich geprüfte Anwälte mit Gründer-Fokus und Festpreis-Paketen. Beschreib dein Anliegen kurz — ich sage dir, welches Paket passt.`,
       quickActions: ["Was muss in den Gründervertrag?", "Wann lohnt sich die GmbH?"],
-      navigation: [{ to: "/recht", label: "Recht & Verträge öffnen" }],
+      navigation: [
+        { to: "/guides/rechtsform-waehlen", label: "Guide: Rechtsform wählen" },
+        { to: "/recht", label: "Anwälte mit Festpreisen" },
+      ],
       newFacts,
       source: "local",
     };
@@ -329,7 +441,10 @@ export function localCopilotEngine(message: string, input: LocalInput): CopilotR
     return {
       answer: `Steuer früh sauber aufsetzen spart später richtig Geld. Für "${stage}" reicht meist: Rechtsform-Entscheidung mit Blick auf die nächsten 18 Monate, Belege digital sammeln, und ein Erstcheck mit einem Startup-erfahrenen Steuerberater.\n\nIm Steuer-Bereich findest du passende Kanzleien mit Gründer-Paketen.`,
       quickActions: ["Welche Rechtsform passt zu mir?", "Was kann ich absetzen?"],
-      navigation: [{ to: "/steuer", label: "Steuer & Buchhaltung öffnen" }],
+      navigation: [
+        { to: "/guides/steuern-basics", label: "Guide: Steuern für Gründer" },
+        { to: "/steuer", label: "Steuerberater finden" },
+      ],
       newFacts,
       source: "local",
     };
