@@ -1,21 +1,6 @@
 {
-  "generated_at": "2026-07-14T08:59:50.723159",
-  "source_file": "deals_2026-07-14.json",
-  "stats": {
-    "total_deals": 69,
-    "total_value_approx": "$6623K+",
-    "categories": 7,
-    "by_category": {
-      "cloud": 13,
-      "saas": 11,
-      "legal": 8,
-      "ai": 13,
-      "marketing": 6,
-      "hr": 12,
-      "community": 6
-    },
-    "last_updated": "2026-07-14"
-  },
+  "generated_at": "2026-07-14T08:59:50.558927",
+  "count": 69,
   "deals": [
     {
       "id": "aws-activate",
@@ -38,409 +23,7 @@
       ],
       "tier": "epic",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.486760",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
-    },
-    {
-      "id": "azure-startup",
-      "company": "Microsoft Azure",
-      "product": "Founders Hub",
-      "cat": "cloud",
-      "logo": "🔷",
-      "value": "bis $150,000 Credits",
-      "badge": "EPIC",
-      "badge_class": "epic",
-      "desc": "Cloud- oder Infrastruktur-Angebot für Startups. Nützlich für Hosting, Datenbanken, Deployments und technische Skalierung.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.microsoft.com/en-us/startups",
-      "claim_url": "https://www.microsoft.com/en-us/startups",
-      "tags": [
-        "Cloud",
-        "Credits",
-        "Infra"
-      ],
-      "tier": "epic",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.489373",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
-    },
-    {
-      "id": "render",
-      "company": "Render",
-      "product": "Free Tier",
-      "cat": "cloud",
-      "logo": "🎁",
-      "value": "bis $10K Credits",
-      "badge": "EPIC",
-      "badge_class": "epic",
-      "desc": "Cloud- oder Infrastruktur-Angebot für Startups. Nützlich für Hosting, Datenbanken, Deployments und technische Skalierung.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://render.com/pricing",
-      "claim_url": "https://render.com/pricing",
-      "tags": [
-        "Cloud",
-        "Credits",
-        "Infra"
-      ],
-      "tier": "epic",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.493640",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
-    },
-    {
-      "id": "neon-startup",
-      "company": "Neon",
-      "product": "Startup Program",
-      "cat": "cloud",
-      "logo": "🟩",
-      "value": "bis $200K Credits",
-      "badge": "EPIC",
-      "badge_class": "epic",
-      "desc": "Cloud- oder Infrastruktur-Angebot für Startups. Nützlich für Hosting, Datenbanken, Deployments und technische Skalierung.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://neon.com/startups",
-      "claim_url": "https://neon.com/startups",
-      "tags": [
-        "Cloud",
-        "Credits",
-        "Infra"
-      ],
-      "tier": "epic",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.496799",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
-    },
-    {
-      "id": "retool-startup",
-      "company": "Retool",
-      "product": "Startup Plan",
-      "cat": "saas",
-      "logo": "🛠",
-      "value": "bis $60K",
-      "badge": "EPIC",
-      "badge_class": "epic",
-      "desc": "SaaS-Tool für frühe Teams. Nützlich für Produktivität, Kollaboration, Analytics oder interne Workflows.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://retool.com/startups",
-      "claim_url": "https://retool.com/startups",
-      "tags": [
-        "SaaS",
-        "Produktivität",
-        "Tools"
-      ],
-      "tier": "epic",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.502838",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
-    },
-    {
-      "id": "brex",
-      "company": "Brex",
-      "product": "Startup Card",
-      "cat": "legal",
-      "logo": "💰",
-      "value": "bis $6M Credits",
-      "badge": "EPIC",
-      "badge_class": "epic",
-      "desc": "Legal-/Finance-Angebot für Gründer. Nützlich für Banking, Buchhaltung, Gesellschaftsstruktur oder Finanzprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.brex.com/startups",
-      "claim_url": "https://www.brex.com/startups",
-      "tags": [
-        "Finance",
-        "Legal",
-        "Banking"
-      ],
-      "tier": "epic",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.526419",
-      "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
-    },
-    {
-      "id": "digitalocean",
-      "company": "DigitalOcean",
-      "product": "Hatch",
-      "cat": "cloud",
-      "logo": "🌊",
-      "value": "bis $5k Credits",
-      "badge": "$5k",
-      "badge_class": "big",
-      "desc": "Cloud- oder Infrastruktur-Angebot für Startups. Nützlich für Hosting, Datenbanken, Deployments und technische Skalierung.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.digitalocean.com/hatch",
-      "claim_url": "https://www.digitalocean.com/hatch",
-      "tags": [
-        "Cloud",
-        "Credits",
-        "Infra"
-      ],
-      "tier": "big",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.490342",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
-    },
-    {
-      "id": "notion-startup",
-      "company": "Notion",
-      "product": "Notion for Startups",
-      "cat": "saas",
-      "logo": "📓",
-      "value": "6 Monate kostenlos",
-      "badge": "6 Mo",
-      "badge_class": "big",
-      "desc": "SaaS-Tool für frühe Teams. Nützlich für Produktivität, Kollaboration, Analytics oder interne Workflows.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.notion.so/startups",
-      "claim_url": "https://www.notion.so/startups",
-      "tags": [
-        "SaaS",
-        "Produktivität",
-        "Tools"
-      ],
-      "tier": "big",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.499850",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
-    },
-    {
-      "id": "hubspot-startup",
-      "company": "HubSpot",
-      "product": "HubSpot for Startups",
-      "cat": "saas",
-      "logo": "🟠",
-      "value": "90% Rabatt",
-      "badge": "90% off",
-      "badge_class": "big",
-      "desc": "SaaS-Tool für frühe Teams. Nützlich für Produktivität, Kollaboration, Analytics oder interne Workflows.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.hubspot.com/startups",
-      "claim_url": "https://www.hubspot.com/startups",
-      "tags": [
-        "SaaS",
-        "Produktivität",
-        "Tools"
-      ],
-      "tier": "big",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.501023",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
-    },
-    {
-      "id": "intercom",
-      "company": "Intercom",
-      "product": "Early Stage Program",
-      "cat": "saas",
-      "logo": "💬",
-      "value": "93% Rabatt",
-      "badge": "93% off",
-      "badge_class": "big",
-      "desc": "SaaS-Tool für frühe Teams. Nützlich für Produktivität, Kollaboration, Analytics oder interne Workflows.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.intercom.com/early-stage",
-      "claim_url": "https://www.intercom.com/early-stage",
-      "tags": [
-        "SaaS",
-        "Produktivität",
-        "Tools"
-      ],
-      "tier": "big",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.501857",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
-    },
-    {
-      "id": "linear-startup",
-      "company": "Linear",
-      "product": "Startup Plan",
-      "cat": "saas",
-      "logo": "🔷",
-      "value": "6 Monate kostenlos",
-      "badge": "6 Mo",
-      "badge_class": "big",
-      "desc": "SaaS-Tool für frühe Teams. Nützlich für Produktivität, Kollaboration, Analytics oder interne Workflows.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://linear.app/startups",
-      "claim_url": "https://linear.app/startups",
-      "tags": [
-        "SaaS",
-        "Produktivität",
-        "Tools"
-      ],
-      "tier": "big",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.502637",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
-    },
-    {
-      "id": "elevenlabs",
-      "company": "ElevenLabs",
-      "product": "AI Voice Plans",
-      "cat": "ai",
-      "logo": "🎙",
-      "value": "50% Rabatt",
-      "badge": "50% off",
-      "badge_class": "big",
-      "desc": "AI-/ML-Angebot für Startups. Nützlich für Prototyping, Inferenz, Datenpipelines oder KI-Features im Produkt.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://elevenlabs.io/pricing",
-      "claim_url": "https://elevenlabs.io/pricing",
-      "tags": [
-        "AI",
-        "API",
-        "Credits"
-      ],
-      "tier": "big",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.514004",
-      "cat_icon": "🤖",
-      "cat_label": "AI & ML"
-    },
-    {
-      "id": "lexoffice",
-      "company": "Lexoffice",
-      "product": "Gründer-Tarif",
-      "cat": "legal",
-      "logo": "🎁",
-      "value": "6 Monate kostenlos",
-      "badge": "6 Mo",
-      "badge_class": "big",
-      "desc": "Legal-/Finance-Angebot für Gründer. Nützlich für Banking, Buchhaltung, Gesellschaftsstruktur oder Finanzprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.lexoffice.de/gruender/",
-      "claim_url": "https://www.lexoffice.de/gruender/",
-      "tags": [
-        "Finance",
-        "Legal",
-        "Banking"
-      ],
-      "tier": "big",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.527463",
-      "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
-    },
-    {
-      "id": "sevdesk",
-      "company": "sevDesk",
-      "product": "Startup-Tarif",
-      "cat": "legal",
-      "logo": "🎁",
-      "value": "50% Rabatt",
-      "badge": "50% off",
-      "badge_class": "big",
-      "desc": "Legal-/Finance-Angebot für Gründer. Nützlich für Banking, Buchhaltung, Gesellschaftsstruktur oder Finanzprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://sevdesk.de/",
-      "claim_url": "https://sevdesk.de/gruender/",
-      "tags": [
-        "Finance",
-        "Legal",
-        "Banking"
-      ],
-      "tier": "big",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.528687",
-      "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
-    },
-    {
-      "id": "apollo-startup",
-      "company": "Apollo.io",
-      "product": "Startup Program",
-      "cat": "marketing",
-      "logo": "🎁",
-      "value": "50% Rabatt",
-      "badge": "50% off",
-      "badge_class": "big",
-      "desc": "Marketing-/Growth-Angebot für frühe Teams. Nützlich für Launch, CRM, Analytics, Outreach oder SEO.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.apollo.io/startups",
-      "claim_url": "https://www.apollo.io/startups",
-      "tags": [
-        "Marketing",
-        "Growth",
-        "Tools"
-      ],
-      "tier": "big",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.543907",
-      "cat_icon": "📣",
-      "cat_label": "Marketing"
-    },
-    {
-      "id": "oyster-startup",
-      "company": "Oyster",
-      "product": "Startup Program",
-      "cat": "hr",
-      "logo": "🌍",
-      "value": "bis $1,200",
-      "badge": "$1,200",
-      "badge_class": "big",
-      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.oysterhr.com/startups",
-      "claim_url": "https://www.oysterhr.com/startups",
-      "tags": [
-        "HR",
-        "Recruiting",
-        "Talent"
-      ],
-      "tier": "big",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.547963",
-      "cat_icon": "👥",
-      "cat_label": "HR & Talent"
-    },
-    {
-      "id": "oyster-pricing",
-      "company": "Oyster",
-      "product": "Global Hiring",
-      "cat": "hr",
-      "logo": "🌍",
-      "value": "bis $1,200",
-      "badge": "$1,200",
-      "badge_class": "big",
-      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.oysterhr.com/pricing",
-      "claim_url": "https://www.oysterhr.com/pricing",
-      "tags": [
-        "HR",
-        "Recruiting",
-        "Talent"
-      ],
-      "tier": "big",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.557162",
-      "cat_icon": "👥",
-      "cat_label": "HR & Talent"
+      "normalized_at": "2026-07-14T08:59:50.486760"
     },
     {
       "id": "gcp-startup",
@@ -463,9 +46,30 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.488945",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "normalized_at": "2026-07-14T08:59:50.488945"
+    },
+    {
+      "id": "azure-startup",
+      "company": "Microsoft Azure",
+      "product": "Founders Hub",
+      "cat": "cloud",
+      "logo": "🔷",
+      "value": "bis $150,000 Credits",
+      "badge": "EPIC",
+      "badge_class": "epic",
+      "desc": "Cloud- oder Infrastruktur-Angebot für Startups. Nützlich für Hosting, Datenbanken, Deployments und technische Skalierung.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.microsoft.com/en-us/startups",
+      "claim_url": "https://www.microsoft.com/en-us/startups",
+      "tags": [
+        "Cloud",
+        "Credits",
+        "Infra"
+      ],
+      "tier": "epic",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.489373"
     },
     {
       "id": "vercel-startup",
@@ -488,9 +92,30 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.489774",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "normalized_at": "2026-07-14T08:59:50.489774"
+    },
+    {
+      "id": "digitalocean",
+      "company": "DigitalOcean",
+      "product": "Hatch",
+      "cat": "cloud",
+      "logo": "🌊",
+      "value": "bis $5k Credits",
+      "badge": "$5k",
+      "badge_class": "big",
+      "desc": "Cloud- oder Infrastruktur-Angebot für Startups. Nützlich für Hosting, Datenbanken, Deployments und technische Skalierung.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.digitalocean.com/hatch",
+      "claim_url": "https://www.digitalocean.com/hatch",
+      "tags": [
+        "Cloud",
+        "Credits",
+        "Infra"
+      ],
+      "tier": "big",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.490342"
     },
     {
       "id": "cloudflare",
@@ -513,9 +138,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.491978",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "normalized_at": "2026-07-14T08:59:50.491978"
     },
     {
       "id": "railway",
@@ -538,9 +161,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.492802",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "normalized_at": "2026-07-14T08:59:50.492802"
     },
     {
       "id": "fly-io",
@@ -563,9 +184,30 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.493288",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "normalized_at": "2026-07-14T08:59:50.493288"
+    },
+    {
+      "id": "render",
+      "company": "Render",
+      "product": "Free Tier",
+      "cat": "cloud",
+      "logo": "🎁",
+      "value": "bis $10K Credits",
+      "badge": "EPIC",
+      "badge_class": "epic",
+      "desc": "Cloud- oder Infrastruktur-Angebot für Startups. Nützlich für Hosting, Datenbanken, Deployments und technische Skalierung.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://render.com/pricing",
+      "claim_url": "https://render.com/pricing",
+      "tags": [
+        "Cloud",
+        "Credits",
+        "Infra"
+      ],
+      "tier": "epic",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.493640"
     },
     {
       "id": "planetscale",
@@ -588,9 +230,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.494912",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "normalized_at": "2026-07-14T08:59:50.494912"
     },
     {
       "id": "mongodb-startup",
@@ -613,9 +253,30 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.496450",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "normalized_at": "2026-07-14T08:59:50.496450"
+    },
+    {
+      "id": "neon-startup",
+      "company": "Neon",
+      "product": "Startup Program",
+      "cat": "cloud",
+      "logo": "🟩",
+      "value": "bis $200K Credits",
+      "badge": "EPIC",
+      "badge_class": "epic",
+      "desc": "Cloud- oder Infrastruktur-Angebot für Startups. Nützlich für Hosting, Datenbanken, Deployments und technische Skalierung.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://neon.com/startups",
+      "claim_url": "https://neon.com/startups",
+      "tags": [
+        "Cloud",
+        "Credits",
+        "Infra"
+      ],
+      "tier": "epic",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.496799"
     },
     {
       "id": "heroku-startup",
@@ -638,9 +299,122 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.498467",
-      "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "normalized_at": "2026-07-14T08:59:50.498467"
+    },
+    {
+      "id": "notion-startup",
+      "company": "Notion",
+      "product": "Notion for Startups",
+      "cat": "saas",
+      "logo": "📓",
+      "value": "6 Monate kostenlos",
+      "badge": "6 Mo",
+      "badge_class": "big",
+      "desc": "SaaS-Tool für frühe Teams. Nützlich für Produktivität, Kollaboration, Analytics oder interne Workflows.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.notion.so/startups",
+      "claim_url": "https://www.notion.so/startups",
+      "tags": [
+        "SaaS",
+        "Produktivität",
+        "Tools"
+      ],
+      "tier": "big",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.499850"
+    },
+    {
+      "id": "hubspot-startup",
+      "company": "HubSpot",
+      "product": "HubSpot for Startups",
+      "cat": "saas",
+      "logo": "🟠",
+      "value": "90% Rabatt",
+      "badge": "90% off",
+      "badge_class": "big",
+      "desc": "SaaS-Tool für frühe Teams. Nützlich für Produktivität, Kollaboration, Analytics oder interne Workflows.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.hubspot.com/startups",
+      "claim_url": "https://www.hubspot.com/startups",
+      "tags": [
+        "SaaS",
+        "Produktivität",
+        "Tools"
+      ],
+      "tier": "big",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.501023"
+    },
+    {
+      "id": "intercom",
+      "company": "Intercom",
+      "product": "Early Stage Program",
+      "cat": "saas",
+      "logo": "💬",
+      "value": "93% Rabatt",
+      "badge": "93% off",
+      "badge_class": "big",
+      "desc": "SaaS-Tool für frühe Teams. Nützlich für Produktivität, Kollaboration, Analytics oder interne Workflows.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.intercom.com/early-stage",
+      "claim_url": "https://www.intercom.com/early-stage",
+      "tags": [
+        "SaaS",
+        "Produktivität",
+        "Tools"
+      ],
+      "tier": "big",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.501857"
+    },
+    {
+      "id": "linear-startup",
+      "company": "Linear",
+      "product": "Startup Plan",
+      "cat": "saas",
+      "logo": "🔷",
+      "value": "6 Monate kostenlos",
+      "badge": "6 Mo",
+      "badge_class": "big",
+      "desc": "SaaS-Tool für frühe Teams. Nützlich für Produktivität, Kollaboration, Analytics oder interne Workflows.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://linear.app/startups",
+      "claim_url": "https://linear.app/startups",
+      "tags": [
+        "SaaS",
+        "Produktivität",
+        "Tools"
+      ],
+      "tier": "big",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.502637"
+    },
+    {
+      "id": "retool-startup",
+      "company": "Retool",
+      "product": "Startup Plan",
+      "cat": "saas",
+      "logo": "🛠",
+      "value": "bis $60K",
+      "badge": "EPIC",
+      "badge_class": "epic",
+      "desc": "SaaS-Tool für frühe Teams. Nützlich für Produktivität, Kollaboration, Analytics oder interne Workflows.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://retool.com/startups",
+      "claim_url": "https://retool.com/startups",
+      "tags": [
+        "SaaS",
+        "Produktivität",
+        "Tools"
+      ],
+      "tier": "epic",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.502838"
     },
     {
       "id": "1password",
@@ -663,9 +437,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.502952",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "normalized_at": "2026-07-14T08:59:50.502952"
     },
     {
       "id": "miro",
@@ -688,9 +460,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.504348",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "normalized_at": "2026-07-14T08:59:50.504348"
     },
     {
       "id": "postman",
@@ -713,9 +483,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.504367",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "normalized_at": "2026-07-14T08:59:50.504367"
     },
     {
       "id": "segment-startup",
@@ -738,9 +506,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.506061",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "normalized_at": "2026-07-14T08:59:50.506061"
     },
     {
       "id": "mixpanel",
@@ -763,9 +529,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.507711",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "normalized_at": "2026-07-14T08:59:50.507711"
     },
     {
       "id": "atlassian-startup",
@@ -788,9 +552,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.509388",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "normalized_at": "2026-07-14T08:59:50.509388"
     },
     {
       "id": "anthropic-startup",
@@ -813,9 +575,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.511060",
-      "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "normalized_at": "2026-07-14T08:59:50.511060"
     },
     {
       "id": "huggingface",
@@ -838,9 +598,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.511169",
-      "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "normalized_at": "2026-07-14T08:59:50.511169"
     },
     {
       "id": "replicate",
@@ -863,9 +621,30 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.512701",
-      "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "normalized_at": "2026-07-14T08:59:50.512701"
+    },
+    {
+      "id": "elevenlabs",
+      "company": "ElevenLabs",
+      "product": "AI Voice Plans",
+      "cat": "ai",
+      "logo": "🎙",
+      "value": "50% Rabatt",
+      "badge": "50% off",
+      "badge_class": "big",
+      "desc": "AI-/ML-Angebot für Startups. Nützlich für Prototyping, Inferenz, Datenpipelines oder KI-Features im Produkt.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://elevenlabs.io/pricing",
+      "claim_url": "https://elevenlabs.io/pricing",
+      "tags": [
+        "AI",
+        "API",
+        "Credits"
+      ],
+      "tier": "big",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.514004"
     },
     {
       "id": "deepgram",
@@ -888,9 +667,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.514595",
-      "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "normalized_at": "2026-07-14T08:59:50.514595"
     },
     {
       "id": "fireworks-ai",
@@ -913,9 +690,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.515406",
-      "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "normalized_at": "2026-07-14T08:59:50.515406"
     },
     {
       "id": "baseten",
@@ -938,9 +713,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.516898",
-      "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "normalized_at": "2026-07-14T08:59:50.516898"
     },
     {
       "id": "langchain",
@@ -963,9 +736,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.518457",
-      "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "normalized_at": "2026-07-14T08:59:50.518457"
     },
     {
       "id": "llamaindex",
@@ -988,9 +759,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.519000",
-      "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "normalized_at": "2026-07-14T08:59:50.519000"
     },
     {
       "id": "pinecone-pricing",
@@ -1013,9 +782,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.519815",
-      "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "normalized_at": "2026-07-14T08:59:50.519815"
     },
     {
       "id": "assemblyai-pricing",
@@ -1038,9 +805,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.521369",
-      "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "normalized_at": "2026-07-14T08:59:50.521369"
     },
     {
       "id": "cohere-pricing",
@@ -1063,534 +828,7 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.522923",
-      "cat_icon": "🤖",
-      "cat_label": "AI & ML"
-    },
-    {
-      "id": "stripe-atlas",
-      "company": "Stripe",
-      "product": "Atlas + Startup Deal",
-      "cat": "legal",
-      "logo": "💳",
-      "value": "Startup-Programm",
-      "badge": "Startup",
-      "badge_class": "good",
-      "desc": "Legal-/Finance-Angebot für Gründer. Nützlich für Banking, Buchhaltung, Gesellschaftsstruktur oder Finanzprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://stripe.com/de/atlas",
-      "claim_url": "https://stripe.com/de/atlas",
-      "tags": [
-        "Finance",
-        "Legal",
-        "Banking"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.525987",
-      "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
-    },
-    {
-      "id": "wise-business",
-      "company": "Wise Business",
-      "product": "Business Account",
-      "cat": "legal",
-      "logo": "🎁",
-      "value": "Startup-Programm",
-      "badge": "Startup",
-      "badge_class": "good",
-      "desc": "Legal-/Finance-Angebot für Gründer. Nützlich für Banking, Buchhaltung, Gesellschaftsstruktur oder Finanzprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://wise.com/de/business/",
-      "claim_url": "https://wise.com/de/business/",
-      "tags": [
-        "Finance",
-        "Legal",
-        "Banking"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.530245",
-      "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
-    },
-    {
-      "id": "qonto-pricing",
-      "company": "Qonto",
-      "product": "Business Konto",
-      "cat": "legal",
-      "logo": "🏦",
-      "value": "Startup-Programm",
-      "badge": "Startup",
-      "badge_class": "good",
-      "desc": "Legal-/Finance-Angebot für Gründer. Nützlich für Banking, Buchhaltung, Gesellschaftsstruktur oder Finanzprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://qonto.com/de/pricing",
-      "claim_url": "https://qonto.com/de/pricing",
-      "tags": [
-        "Finance",
-        "Legal",
-        "Banking"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.531813",
-      "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
-    },
-    {
-      "id": "penta-qonto",
-      "company": "Penta/Qonto",
-      "product": "Business Banking",
-      "cat": "legal",
-      "logo": "🏦",
-      "value": "Startup-Programm",
-      "badge": "Startup",
-      "badge_class": "good",
-      "desc": "Legal-/Finance-Angebot für Gründer. Nützlich für Banking, Buchhaltung, Gesellschaftsstruktur oder Finanzprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.getpenta.com/de/pricing/",
-      "claim_url": "https://www.getpenta.com/de/pricing/",
-      "tags": [
-        "Finance",
-        "Legal",
-        "Banking"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.535036",
-      "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
-    },
-    {
-      "id": "mailchimp",
-      "company": "Mailchimp",
-      "product": "Free Plan",
-      "cat": "marketing",
-      "logo": "🐵",
-      "value": "15% Rabatt",
-      "badge": "15% off",
-      "badge_class": "good",
-      "desc": "Marketing-/Growth-Angebot für frühe Teams. Nützlich für Launch, CRM, Analytics, Outreach oder SEO.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://mailchimp.com/pricing/",
-      "claim_url": "https://mailchimp.com/pricing/",
-      "tags": [
-        "Marketing",
-        "Growth",
-        "Tools"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.536352",
-      "cat_icon": "📣",
-      "cat_label": "Marketing"
-    },
-    {
-      "id": "brevo",
-      "company": "Brevo (Sendinblue)",
-      "product": "Free Plan",
-      "cat": "marketing",
-      "logo": "🎁",
-      "value": "Startup-Programm",
-      "badge": "Startup",
-      "badge_class": "good",
-      "desc": "Marketing-/Growth-Angebot für frühe Teams. Nützlich für Launch, CRM, Analytics, Outreach oder SEO.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.brevo.com/pricing/",
-      "claim_url": "https://www.brevo.com/pricing/",
-      "tags": [
-        "Marketing",
-        "Growth",
-        "Tools"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.537897",
-      "cat_icon": "📣",
-      "cat_label": "Marketing"
-    },
-    {
-      "id": "hunter",
-      "company": "Hunter.io",
-      "product": "Startup Plan",
-      "cat": "marketing",
-      "logo": "🎁",
-      "value": "Siehe Website",
-      "badge": "Deal",
-      "badge_class": "good",
-      "desc": "Marketing-/Growth-Angebot für frühe Teams. Nützlich für Launch, CRM, Analytics, Outreach oder SEO.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://hunter.io/pricing",
-      "claim_url": "https://hunter.io/pricing",
-      "tags": [
-        "Marketing",
-        "Growth",
-        "Tools"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.539510",
-      "cat_icon": "📣",
-      "cat_label": "Marketing"
-    },
-    {
-      "id": "phantombuster",
-      "company": "Phantombuster",
-      "product": "Startup Plan",
-      "cat": "marketing",
-      "logo": "🎁",
-      "value": "Siehe Website",
-      "badge": "Deal",
-      "badge_class": "good",
-      "desc": "Marketing-/Growth-Angebot für frühe Teams. Nützlich für Launch, CRM, Analytics, Outreach oder SEO.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://phantombuster.com/pricing",
-      "claim_url": "https://phantombuster.com/pricing",
-      "tags": [
-        "Marketing",
-        "Growth",
-        "Tools"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.539540",
-      "cat_icon": "📣",
-      "cat_label": "Marketing"
-    },
-    {
-      "id": "amplitude-startup",
-      "company": "Amplitude",
-      "product": "Startup Program",
-      "cat": "marketing",
-      "logo": "🎁",
-      "value": "Startup-Programm",
-      "badge": "Startup",
-      "badge_class": "good",
-      "desc": "Marketing-/Growth-Angebot für frühe Teams. Nützlich für Launch, CRM, Analytics, Outreach oder SEO.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://amplitude.com/startups",
-      "claim_url": "https://amplitude.com/startups",
-      "tags": [
-        "Marketing",
-        "Growth",
-        "Tools"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.542515",
-      "cat_icon": "📣",
-      "cat_label": "Marketing"
-    },
-    {
-      "id": "deel",
-      "company": "Deel",
-      "product": "Startup Program",
-      "cat": "hr",
-      "logo": "🌍",
-      "value": "Startup-Programm",
-      "badge": "Startup",
-      "badge_class": "good",
-      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.deel.com/startups",
-      "claim_url": "https://www.deel.com/startups",
-      "tags": [
-        "HR",
-        "Recruiting",
-        "Talent"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.545253",
-      "cat_icon": "👥",
-      "cat_label": "HR & Talent"
-    },
-    {
-      "id": "remote-com",
-      "company": "Remote",
-      "product": "Startup Deal",
-      "cat": "hr",
-      "logo": "💻",
-      "value": "Startup-Programm",
-      "badge": "Startup",
-      "badge_class": "good",
-      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://remote.com/startups",
-      "claim_url": "https://remote.com/startups",
-      "tags": [
-        "HR",
-        "Recruiting",
-        "Talent"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.546886",
-      "cat_icon": "👥",
-      "cat_label": "HR & Talent"
-    },
-    {
-      "id": "ashby-startup",
-      "company": "Ashby",
-      "product": "Startup Program",
-      "cat": "hr",
-      "logo": "👥",
-      "value": "Startup-Programm",
-      "badge": "Startup",
-      "badge_class": "good",
-      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.ashbyhq.com/startups",
-      "claim_url": "https://www.ashbyhq.com/startups",
-      "tags": [
-        "HR",
-        "Recruiting",
-        "Talent"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.547431",
-      "cat_icon": "👥",
-      "cat_label": "HR & Talent"
-    },
-    {
-      "id": "greenhouse-pricing",
-      "company": "Greenhouse",
-      "product": "Hiring Platform",
-      "cat": "hr",
-      "logo": "🌱",
-      "value": "Siehe Website",
-      "badge": "Deal",
-      "badge_class": "good",
-      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.greenhouse.com/pricing",
-      "claim_url": "https://www.greenhouse.com/pricing",
-      "tags": [
-        "HR",
-        "Recruiting",
-        "Talent"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.549616",
-      "cat_icon": "👥",
-      "cat_label": "HR & Talent"
-    },
-    {
-      "id": "workable-pricing",
-      "company": "Workable",
-      "product": "Recruiting Software",
-      "cat": "hr",
-      "logo": "👥",
-      "value": "bis $0.12 Credits",
-      "badge": "Deal",
-      "badge_class": "good",
-      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.workable.com/pricing",
-      "claim_url": "https://www.workable.com/pricing",
-      "tags": [
-        "HR",
-        "Recruiting",
-        "Talent"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.550466",
-      "cat_icon": "👥",
-      "cat_label": "HR & Talent"
-    },
-    {
-      "id": "recruitee-pricing",
-      "company": "Recruitee",
-      "product": "Recruiting Software",
-      "cat": "hr",
-      "logo": "👥",
-      "value": "Siehe Website",
-      "badge": "Deal",
-      "badge_class": "good",
-      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://recruitee.com/pricing",
-      "claim_url": "https://recruitee.com/pricing",
-      "tags": [
-        "HR",
-        "Recruiting",
-        "Talent"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.552114",
-      "cat_icon": "👥",
-      "cat_label": "HR & Talent"
-    },
-    {
-      "id": "factorial-pricing",
-      "company": "Factorial",
-      "product": "HR Software",
-      "cat": "hr",
-      "logo": "👔",
-      "value": "Siehe Website",
-      "badge": "Deal",
-      "badge_class": "good",
-      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://factorialhr.de/preise",
-      "claim_url": "https://factorialhr.de/preise",
-      "tags": [
-        "HR",
-        "Recruiting",
-        "Talent"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.553750",
-      "cat_icon": "👥",
-      "cat_label": "HR & Talent"
-    },
-    {
-      "id": "kenjo-pricing",
-      "company": "Kenjo",
-      "product": "HR Software",
-      "cat": "hr",
-      "logo": "👔",
-      "value": "Siehe Website",
-      "badge": "Deal",
-      "badge_class": "good",
-      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://kenjo.io/de/preise",
-      "claim_url": "https://kenjo.io/de/preise",
-      "tags": [
-        "HR",
-        "Recruiting",
-        "Talent"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.554904",
-      "cat_icon": "👥",
-      "cat_label": "HR & Talent"
-    },
-    {
-      "id": "homerun-pricing",
-      "company": "Homerun",
-      "product": "Hiring Software",
-      "cat": "hr",
-      "logo": "🏁",
-      "value": "20% Rabatt",
-      "badge": "20% off",
-      "badge_class": "good",
-      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.homerun.co/pricing",
-      "claim_url": "https://www.homerun.co/pricing",
-      "tags": [
-        "HR",
-        "Recruiting",
-        "Talent"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.555788",
-      "cat_icon": "👥",
-      "cat_label": "HR & Talent"
-    },
-    {
-      "id": "ashby-pricing",
-      "company": "Ashby",
-      "product": "Talent Platform",
-      "cat": "hr",
-      "logo": "👥",
-      "value": "10% Rabatt",
-      "badge": "10% off",
-      "badge_class": "good",
-      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.ashbyhq.com/pricing",
-      "claim_url": "https://www.ashbyhq.com/pricing",
-      "tags": [
-        "HR",
-        "Recruiting",
-        "Talent"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.556369",
-      "cat_icon": "👥",
-      "cat_label": "HR & Talent"
-    },
-    {
-      "id": "german-accelerator",
-      "company": "German Accelerator",
-      "product": "Accelerator Program",
-      "cat": "community",
-      "logo": "🇩🇪",
-      "value": "Founder-Ressource",
-      "badge": "Startup",
-      "badge_class": "good",
-      "desc": "Founder-Community oder Accelerator-Ressource. Nützlich für Netzwerk, Feedback, Mentoren und erste Reichweite.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.germanaccelerator.com/",
-      "claim_url": "https://www.germanaccelerator.com/our-programs",
-      "tags": [
-        "Community",
-        "Netzwerk",
-        "Founder"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.558018",
-      "cat_icon": "🤝",
-      "cat_label": "Community"
-    },
-    {
-      "id": "techstars",
-      "company": "Techstars",
-      "product": "Accelerator Network",
-      "cat": "community",
-      "logo": "⭐",
-      "value": "Founder-Ressource",
-      "badge": "Startup",
-      "badge_class": "good",
-      "desc": "Founder-Community oder Accelerator-Ressource. Nützlich für Netzwerk, Feedback, Mentoren und erste Reichweite.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.techstars.com/accelerators",
-      "claim_url": "https://www.techstars.com/accelerators",
-      "tags": [
-        "Community",
-        "Netzwerk",
-        "Founder"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-07-14T08:59:50.558132",
-      "cat_icon": "🤝",
-      "cat_label": "Community"
+      "normalized_at": "2026-07-14T08:59:50.522923"
     },
     {
       "id": "mistral-pricing",
@@ -1613,9 +851,145 @@
       ],
       "tier": "free",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.524472",
-      "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "normalized_at": "2026-07-14T08:59:50.524472"
+    },
+    {
+      "id": "stripe-atlas",
+      "company": "Stripe",
+      "product": "Atlas + Startup Deal",
+      "cat": "legal",
+      "logo": "💳",
+      "value": "Startup-Programm",
+      "badge": "Startup",
+      "badge_class": "good",
+      "desc": "Legal-/Finance-Angebot für Gründer. Nützlich für Banking, Buchhaltung, Gesellschaftsstruktur oder Finanzprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://stripe.com/de/atlas",
+      "claim_url": "https://stripe.com/de/atlas",
+      "tags": [
+        "Finance",
+        "Legal",
+        "Banking"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.525987"
+    },
+    {
+      "id": "brex",
+      "company": "Brex",
+      "product": "Startup Card",
+      "cat": "legal",
+      "logo": "💰",
+      "value": "bis $6M Credits",
+      "badge": "EPIC",
+      "badge_class": "epic",
+      "desc": "Legal-/Finance-Angebot für Gründer. Nützlich für Banking, Buchhaltung, Gesellschaftsstruktur oder Finanzprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.brex.com/startups",
+      "claim_url": "https://www.brex.com/startups",
+      "tags": [
+        "Finance",
+        "Legal",
+        "Banking"
+      ],
+      "tier": "epic",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.526419"
+    },
+    {
+      "id": "lexoffice",
+      "company": "Lexoffice",
+      "product": "Gründer-Tarif",
+      "cat": "legal",
+      "logo": "🎁",
+      "value": "6 Monate kostenlos",
+      "badge": "6 Mo",
+      "badge_class": "big",
+      "desc": "Legal-/Finance-Angebot für Gründer. Nützlich für Banking, Buchhaltung, Gesellschaftsstruktur oder Finanzprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.lexoffice.de/gruender/",
+      "claim_url": "https://www.lexoffice.de/gruender/",
+      "tags": [
+        "Finance",
+        "Legal",
+        "Banking"
+      ],
+      "tier": "big",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.527463"
+    },
+    {
+      "id": "sevdesk",
+      "company": "sevDesk",
+      "product": "Startup-Tarif",
+      "cat": "legal",
+      "logo": "🎁",
+      "value": "50% Rabatt",
+      "badge": "50% off",
+      "badge_class": "big",
+      "desc": "Legal-/Finance-Angebot für Gründer. Nützlich für Banking, Buchhaltung, Gesellschaftsstruktur oder Finanzprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://sevdesk.de/",
+      "claim_url": "https://sevdesk.de/gruender/",
+      "tags": [
+        "Finance",
+        "Legal",
+        "Banking"
+      ],
+      "tier": "big",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.528687"
+    },
+    {
+      "id": "wise-business",
+      "company": "Wise Business",
+      "product": "Business Account",
+      "cat": "legal",
+      "logo": "🎁",
+      "value": "Startup-Programm",
+      "badge": "Startup",
+      "badge_class": "good",
+      "desc": "Legal-/Finance-Angebot für Gründer. Nützlich für Banking, Buchhaltung, Gesellschaftsstruktur oder Finanzprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://wise.com/de/business/",
+      "claim_url": "https://wise.com/de/business/",
+      "tags": [
+        "Finance",
+        "Legal",
+        "Banking"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.530245"
+    },
+    {
+      "id": "qonto-pricing",
+      "company": "Qonto",
+      "product": "Business Konto",
+      "cat": "legal",
+      "logo": "🏦",
+      "value": "Startup-Programm",
+      "badge": "Startup",
+      "badge_class": "good",
+      "desc": "Legal-/Finance-Angebot für Gründer. Nützlich für Banking, Buchhaltung, Gesellschaftsstruktur oder Finanzprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://qonto.com/de/pricing",
+      "claim_url": "https://qonto.com/de/pricing",
+      "tags": [
+        "Finance",
+        "Legal",
+        "Banking"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.531813"
     },
     {
       "id": "kontist",
@@ -1638,9 +1012,444 @@
       ],
       "tier": "free",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.533356",
-      "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
+      "normalized_at": "2026-07-14T08:59:50.533356"
+    },
+    {
+      "id": "penta-qonto",
+      "company": "Penta/Qonto",
+      "product": "Business Banking",
+      "cat": "legal",
+      "logo": "🏦",
+      "value": "Startup-Programm",
+      "badge": "Startup",
+      "badge_class": "good",
+      "desc": "Legal-/Finance-Angebot für Gründer. Nützlich für Banking, Buchhaltung, Gesellschaftsstruktur oder Finanzprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.getpenta.com/de/pricing/",
+      "claim_url": "https://www.getpenta.com/de/pricing/",
+      "tags": [
+        "Finance",
+        "Legal",
+        "Banking"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.535036"
+    },
+    {
+      "id": "mailchimp",
+      "company": "Mailchimp",
+      "product": "Free Plan",
+      "cat": "marketing",
+      "logo": "🐵",
+      "value": "15% Rabatt",
+      "badge": "15% off",
+      "badge_class": "good",
+      "desc": "Marketing-/Growth-Angebot für frühe Teams. Nützlich für Launch, CRM, Analytics, Outreach oder SEO.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://mailchimp.com/pricing/",
+      "claim_url": "https://mailchimp.com/pricing/",
+      "tags": [
+        "Marketing",
+        "Growth",
+        "Tools"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.536352"
+    },
+    {
+      "id": "brevo",
+      "company": "Brevo (Sendinblue)",
+      "product": "Free Plan",
+      "cat": "marketing",
+      "logo": "🎁",
+      "value": "Startup-Programm",
+      "badge": "Startup",
+      "badge_class": "good",
+      "desc": "Marketing-/Growth-Angebot für frühe Teams. Nützlich für Launch, CRM, Analytics, Outreach oder SEO.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.brevo.com/pricing/",
+      "claim_url": "https://www.brevo.com/pricing/",
+      "tags": [
+        "Marketing",
+        "Growth",
+        "Tools"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.537897"
+    },
+    {
+      "id": "hunter",
+      "company": "Hunter.io",
+      "product": "Startup Plan",
+      "cat": "marketing",
+      "logo": "🎁",
+      "value": "Siehe Website",
+      "badge": "Deal",
+      "badge_class": "good",
+      "desc": "Marketing-/Growth-Angebot für frühe Teams. Nützlich für Launch, CRM, Analytics, Outreach oder SEO.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://hunter.io/pricing",
+      "claim_url": "https://hunter.io/pricing",
+      "tags": [
+        "Marketing",
+        "Growth",
+        "Tools"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.539510"
+    },
+    {
+      "id": "phantombuster",
+      "company": "Phantombuster",
+      "product": "Startup Plan",
+      "cat": "marketing",
+      "logo": "🎁",
+      "value": "Siehe Website",
+      "badge": "Deal",
+      "badge_class": "good",
+      "desc": "Marketing-/Growth-Angebot für frühe Teams. Nützlich für Launch, CRM, Analytics, Outreach oder SEO.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://phantombuster.com/pricing",
+      "claim_url": "https://phantombuster.com/pricing",
+      "tags": [
+        "Marketing",
+        "Growth",
+        "Tools"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.539540"
+    },
+    {
+      "id": "amplitude-startup",
+      "company": "Amplitude",
+      "product": "Startup Program",
+      "cat": "marketing",
+      "logo": "🎁",
+      "value": "Startup-Programm",
+      "badge": "Startup",
+      "badge_class": "good",
+      "desc": "Marketing-/Growth-Angebot für frühe Teams. Nützlich für Launch, CRM, Analytics, Outreach oder SEO.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://amplitude.com/startups",
+      "claim_url": "https://amplitude.com/startups",
+      "tags": [
+        "Marketing",
+        "Growth",
+        "Tools"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.542515"
+    },
+    {
+      "id": "apollo-startup",
+      "company": "Apollo.io",
+      "product": "Startup Program",
+      "cat": "marketing",
+      "logo": "🎁",
+      "value": "50% Rabatt",
+      "badge": "50% off",
+      "badge_class": "big",
+      "desc": "Marketing-/Growth-Angebot für frühe Teams. Nützlich für Launch, CRM, Analytics, Outreach oder SEO.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.apollo.io/startups",
+      "claim_url": "https://www.apollo.io/startups",
+      "tags": [
+        "Marketing",
+        "Growth",
+        "Tools"
+      ],
+      "tier": "big",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.543907"
+    },
+    {
+      "id": "deel",
+      "company": "Deel",
+      "product": "Startup Program",
+      "cat": "hr",
+      "logo": "🌍",
+      "value": "Startup-Programm",
+      "badge": "Startup",
+      "badge_class": "good",
+      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.deel.com/startups",
+      "claim_url": "https://www.deel.com/startups",
+      "tags": [
+        "HR",
+        "Recruiting",
+        "Talent"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.545253"
+    },
+    {
+      "id": "remote-com",
+      "company": "Remote",
+      "product": "Startup Deal",
+      "cat": "hr",
+      "logo": "💻",
+      "value": "Startup-Programm",
+      "badge": "Startup",
+      "badge_class": "good",
+      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://remote.com/startups",
+      "claim_url": "https://remote.com/startups",
+      "tags": [
+        "HR",
+        "Recruiting",
+        "Talent"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.546886"
+    },
+    {
+      "id": "ashby-startup",
+      "company": "Ashby",
+      "product": "Startup Program",
+      "cat": "hr",
+      "logo": "👥",
+      "value": "Startup-Programm",
+      "badge": "Startup",
+      "badge_class": "good",
+      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.ashbyhq.com/startups",
+      "claim_url": "https://www.ashbyhq.com/startups",
+      "tags": [
+        "HR",
+        "Recruiting",
+        "Talent"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.547431"
+    },
+    {
+      "id": "oyster-startup",
+      "company": "Oyster",
+      "product": "Startup Program",
+      "cat": "hr",
+      "logo": "🌍",
+      "value": "bis $1,200",
+      "badge": "$1,200",
+      "badge_class": "big",
+      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.oysterhr.com/startups",
+      "claim_url": "https://www.oysterhr.com/startups",
+      "tags": [
+        "HR",
+        "Recruiting",
+        "Talent"
+      ],
+      "tier": "big",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.547963"
+    },
+    {
+      "id": "greenhouse-pricing",
+      "company": "Greenhouse",
+      "product": "Hiring Platform",
+      "cat": "hr",
+      "logo": "🌱",
+      "value": "Siehe Website",
+      "badge": "Deal",
+      "badge_class": "good",
+      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.greenhouse.com/pricing",
+      "claim_url": "https://www.greenhouse.com/pricing",
+      "tags": [
+        "HR",
+        "Recruiting",
+        "Talent"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.549616"
+    },
+    {
+      "id": "workable-pricing",
+      "company": "Workable",
+      "product": "Recruiting Software",
+      "cat": "hr",
+      "logo": "👥",
+      "value": "bis $0.12 Credits",
+      "badge": "Deal",
+      "badge_class": "good",
+      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.workable.com/pricing",
+      "claim_url": "https://www.workable.com/pricing",
+      "tags": [
+        "HR",
+        "Recruiting",
+        "Talent"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.550466"
+    },
+    {
+      "id": "recruitee-pricing",
+      "company": "Recruitee",
+      "product": "Recruiting Software",
+      "cat": "hr",
+      "logo": "👥",
+      "value": "Siehe Website",
+      "badge": "Deal",
+      "badge_class": "good",
+      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://recruitee.com/pricing",
+      "claim_url": "https://recruitee.com/pricing",
+      "tags": [
+        "HR",
+        "Recruiting",
+        "Talent"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.552114"
+    },
+    {
+      "id": "factorial-pricing",
+      "company": "Factorial",
+      "product": "HR Software",
+      "cat": "hr",
+      "logo": "👔",
+      "value": "Siehe Website",
+      "badge": "Deal",
+      "badge_class": "good",
+      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://factorialhr.de/preise",
+      "claim_url": "https://factorialhr.de/preise",
+      "tags": [
+        "HR",
+        "Recruiting",
+        "Talent"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.553750"
+    },
+    {
+      "id": "kenjo-pricing",
+      "company": "Kenjo",
+      "product": "HR Software",
+      "cat": "hr",
+      "logo": "👔",
+      "value": "Siehe Website",
+      "badge": "Deal",
+      "badge_class": "good",
+      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://kenjo.io/de/preise",
+      "claim_url": "https://kenjo.io/de/preise",
+      "tags": [
+        "HR",
+        "Recruiting",
+        "Talent"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.554904"
+    },
+    {
+      "id": "homerun-pricing",
+      "company": "Homerun",
+      "product": "Hiring Software",
+      "cat": "hr",
+      "logo": "🏁",
+      "value": "20% Rabatt",
+      "badge": "20% off",
+      "badge_class": "good",
+      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.homerun.co/pricing",
+      "claim_url": "https://www.homerun.co/pricing",
+      "tags": [
+        "HR",
+        "Recruiting",
+        "Talent"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.555788"
+    },
+    {
+      "id": "ashby-pricing",
+      "company": "Ashby",
+      "product": "Talent Platform",
+      "cat": "hr",
+      "logo": "👥",
+      "value": "10% Rabatt",
+      "badge": "10% off",
+      "badge_class": "good",
+      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.ashbyhq.com/pricing",
+      "claim_url": "https://www.ashbyhq.com/pricing",
+      "tags": [
+        "HR",
+        "Recruiting",
+        "Talent"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.556369"
+    },
+    {
+      "id": "oyster-pricing",
+      "company": "Oyster",
+      "product": "Global Hiring",
+      "cat": "hr",
+      "logo": "🌍",
+      "value": "bis $1,200",
+      "badge": "$1,200",
+      "badge_class": "big",
+      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.oysterhr.com/pricing",
+      "claim_url": "https://www.oysterhr.com/pricing",
+      "tags": [
+        "HR",
+        "Recruiting",
+        "Talent"
+      ],
+      "tier": "big",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.557162"
     },
     {
       "id": "yc-startup-school",
@@ -1663,9 +1472,7 @@
       ],
       "tier": "free",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.557287",
-      "cat_icon": "🤝",
-      "cat_label": "Community"
+      "normalized_at": "2026-07-14T08:59:50.557287"
     },
     {
       "id": "founder-institute",
@@ -1688,9 +1495,53 @@
       ],
       "tier": "free",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.557649",
-      "cat_icon": "🤝",
-      "cat_label": "Community"
+      "normalized_at": "2026-07-14T08:59:50.557649"
+    },
+    {
+      "id": "german-accelerator",
+      "company": "German Accelerator",
+      "product": "Accelerator Program",
+      "cat": "community",
+      "logo": "🇩🇪",
+      "value": "Founder-Ressource",
+      "badge": "Startup",
+      "badge_class": "good",
+      "desc": "Founder-Community oder Accelerator-Ressource. Nützlich für Netzwerk, Feedback, Mentoren und erste Reichweite.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.germanaccelerator.com/",
+      "claim_url": "https://www.germanaccelerator.com/our-programs",
+      "tags": [
+        "Community",
+        "Netzwerk",
+        "Founder"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.558018"
+    },
+    {
+      "id": "techstars",
+      "company": "Techstars",
+      "product": "Accelerator Network",
+      "cat": "community",
+      "logo": "⭐",
+      "value": "Founder-Ressource",
+      "badge": "Startup",
+      "badge_class": "good",
+      "desc": "Founder-Community oder Accelerator-Ressource. Nützlich für Netzwerk, Feedback, Mentoren und erste Reichweite.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.techstars.com/accelerators",
+      "claim_url": "https://www.techstars.com/accelerators",
+      "tags": [
+        "Community",
+        "Netzwerk",
+        "Founder"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.558132"
     },
     {
       "id": "startup-genome",
@@ -1713,9 +1564,7 @@
       ],
       "tier": "free",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.558483",
-      "cat_icon": "🤝",
-      "cat_label": "Community"
+      "normalized_at": "2026-07-14T08:59:50.558483"
     },
     {
       "id": "indie-hackers",
@@ -1738,9 +1587,7 @@
       ],
       "tier": "free",
       "active": true,
-      "normalized_at": "2026-07-14T08:59:50.558852",
-      "cat_icon": "🤝",
-      "cat_label": "Community"
+      "normalized_at": "2026-07-14T08:59:50.558852"
     }
   ]
 }
