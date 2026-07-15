@@ -225,19 +225,21 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Rate-Limit: max 80 Nachrichten pro Nutzer pro Stunde (Schutz vor Abuse/Kosten).
-      const hourAgo = new Date(Date.now() - 3600_000).toISOString();
-      const { count: recentCount } = await supabase
-        .from("copilot_messages")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .eq("role", "user")
-        .gte("created_at", hourAgo);
-      if ((recentCount ?? 0) >= 80) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit erreicht — bitte in einer Stunde erneut." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
+      // Rate-Limit: max 80 Nachrichten pro Nutzer pro Stunde (nur eingeloggt).
+      if (user) {
+        const hourAgo = new Date(Date.now() - 3600_000).toISOString();
+        const { count: recentCount } = await supabase
+          .from("copilot_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("role", "user")
+          .gte("created_at", hourAgo);
+        if ((recentCount ?? 0) >= 80) {
+          return new Response(
+            JSON.stringify({ error: "Rate limit erreicht — bitte in einer Stunde erneut." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
       }
 
       // Gesprächsverlauf der Session laden (Client kann ihn auch mitschicken)
