@@ -307,7 +307,7 @@ Deno.serve(async (req) => {
         const v = ctxUpdates[key];
         if (typeof v === "string" && v.trim()) mergedFields[key] = v.trim();
       }
-      if (newFacts.length > 0 || Object.keys(mergedFields).length > 0) {
+      if (user && (newFacts.length > 0 || Object.keys(mergedFields).length > 0)) {
         const prevRaw =
           contextData?.raw_context && typeof contextData.raw_context === "object"
             ? (contextData.raw_context as Record<string, unknown>)
@@ -328,8 +328,8 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Save assistant message to DB
-      if (session_id) {
+      // Save assistant message to DB (nur mit User + Session)
+      if (user && session_id) {
         await supabase.from("copilot_messages").insert({
           session_id,
           user_id: user.id,
