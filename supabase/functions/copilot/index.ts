@@ -121,16 +121,15 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // Auth
+    // Auth — optional für Chat (Mobile/Guest), Pflicht für persistierende Tasks.
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return new Response("Unauthorized", { status: 401, headers: corsHeaders });
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
-    if (authError || !user)
-      return new Response("Unauthorized", { status: 401, headers: corsHeaders });
+    let user: { id: string } | null = null;
+    if (authHeader) {
+      const { data: authData } = await supabase.auth.getUser(
+        authHeader.replace("Bearer ", ""),
+      );
+      if (authData?.user) user = authData.user;
+    }
 
     const body = (await req.json()) as {
       task: TaskType;
@@ -141,20 +140,25 @@ Deno.serve(async (req) => {
 
     const { task, session_id, message = "", extra = {} } = body;
 
-    // Load founder context
-    const { data: contextData } = await supabase
-      .from("copilot_context")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .single();
+    // Persistierende Tasks brauchen einen echten User; Chat darf gastweise laufen.
+    if (!user && task !== "chat") {
+      return new Response("Unauthorized", { status: 401, headers: corsHeaders });
+    }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("display_name")
-      .eq("id", user.id)
-      .single();
+    // Load founder context (nur wenn eingeloggt)
+    const { data: contextData } = user
+      ? await supabase
+          .from("copilot_context")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .single()
+      : { data: null as Record<string, unknown> | null };
+
+    const { data: profile } = user
+      ? await supabase.from("profiles").select("display_name").eq("id", user.id).single()
+      : { data: null as { display_name?: string } | null };
 
     const ctx: FounderContext = {
       userName: profile?.display_name || "Founder",
@@ -221,19 +225,21 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Rate-Limit: max 80 Nachrichten pro Nutzer pro Stunde (Schutz vor Abuse/Kosten).
-      const hourAgo = new Date(Date.now() - 3600_000).toISOString();
-      const { count: recentCount } = await supabase
-        .from("copilot_messages")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .eq("role", "user")
-        .gte("created_at", hourAgo);
-      if ((recentCount ?? 0) >= 80) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit erreicht — bitte in einer Stunde erneut." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
+      // Rate-Limit: max 80 Nachrichten pro Nutzer pro Stunde (nur eingeloggt).
+      if (user) {
+        const hourAgo = new Date(Date.now() - 3600_000).toISOString();
+        const { count: recentCount } = await supabase
+          .from("copilot_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("role", "user")
+          .gte("created_at", hourAgo);
+        if ((recentCount ?? 0) >= 80) {
+          return new Response(
+            JSON.stringify({ error: "Rate limit erreicht — bitte in einer Stunde erneut." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
       }
 
       // Gesprächsverlauf der Session laden (Client kann ihn auch mitschicken)
@@ -301,7 +307,7 @@ Deno.serve(async (req) => {
         const v = ctxUpdates[key];
         if (typeof v === "string" && v.trim()) mergedFields[key] = v.trim();
       }
-      if (newFacts.length > 0 || Object.keys(mergedFields).length > 0) {
+      if (user && (newFacts.length > 0 || Object.keys(mergedFields).length > 0)) {
         const prevRaw =
           contextData?.raw_context && typeof contextData.raw_context === "object"
             ? (contextData.raw_context as Record<string, unknown>)
@@ -322,8 +328,8 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Save assistant message to DB
-      if (session_id) {
+      // Save assistant message to DB (nur mit User + Session)
+      if (user && session_id) {
         await supabase.from("copilot_messages").insert({
           session_id,
           user_id: user.id,
