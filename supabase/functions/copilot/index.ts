@@ -140,20 +140,25 @@ Deno.serve(async (req) => {
 
     const { task, session_id, message = "", extra = {} } = body;
 
-    // Load founder context
-    const { data: contextData } = await supabase
-      .from("copilot_context")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .single();
+    // Persistierende Tasks brauchen einen echten User; Chat darf gastweise laufen.
+    if (!user && task !== "chat") {
+      return new Response("Unauthorized", { status: 401, headers: corsHeaders });
+    }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("display_name")
-      .eq("id", user.id)
-      .single();
+    // Load founder context (nur wenn eingeloggt)
+    const { data: contextData } = user
+      ? await supabase
+          .from("copilot_context")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .single()
+      : { data: null as Record<string, unknown> | null };
+
+    const { data: profile } = user
+      ? await supabase.from("profiles").select("display_name").eq("id", user.id).single()
+      : { data: null as { display_name?: string } | null };
 
     const ctx: FounderContext = {
       userName: profile?.display_name || "Founder",
