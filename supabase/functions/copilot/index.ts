@@ -121,16 +121,15 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // Auth
+    // Auth — optional für Chat (Mobile/Guest), Pflicht für persistierende Tasks.
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return new Response("Unauthorized", { status: 401, headers: corsHeaders });
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
-    if (authError || !user)
-      return new Response("Unauthorized", { status: 401, headers: corsHeaders });
+    let user: { id: string } | null = null;
+    if (authHeader) {
+      const { data: authData } = await supabase.auth.getUser(
+        authHeader.replace("Bearer ", ""),
+      );
+      if (authData?.user) user = authData.user;
+    }
 
     const body = (await req.json()) as {
       task: TaskType;
