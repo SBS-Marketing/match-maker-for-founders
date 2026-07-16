@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────
 // matchfoundr · Co-Pilot Edge Function
-// Pipeline: Kimi K2.6 (heavy work) → Claude Sonnet (polish)
+// Pipeline: Kimi K3 (chat single-shot, schneller) → Sonnet nur für Plan
 // Routing via OpenRouter — one API key for both models
 // ─────────────────────────────────────────────────────────────
 
@@ -22,7 +22,7 @@ const corsHeaders = {
 };
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const KIMI_MODEL = "moonshotai/kimi-k2.6";
+const KIMI_MODEL = "moonshotai/kimi-k3";
 const SONNET_MODEL = "anthropic/claude-sonnet-4-6";
 const KIMI_TIMEOUT_MS = 25_000;
 const SONNET_TIMEOUT_MS = 14_000;
@@ -331,12 +331,9 @@ Deno.serve(async (req) => {
       console.log("[KIMI chat raw]", kimiRaw.slice(0, 300));
       const kimiData = parseJSON(kimiRaw);
 
-      // Extract draft — never pass empty string to Sonnet
+      // Extract draft — Kimi K3 antwortet direkt, kein Sonnet-Polish mehr (Latenz halbiert)
       const draft = extractDraft(kimiData, kimiRaw);
-
-      // Stage 2: Sonnet polishes the answer text (kennt den Verlauf).
-      const sonnetPrompt = buildChatPolishPrompt(ctx, draft, history);
-      const polishedAnswer = await callSonnet(sonnetPrompt, sink);
+      const polishedAnswer = draft;
 
       // Nav-Vorschläge gegen den Routen-Katalog validieren
       const validRoutes = new Set(ROUTE_CATALOG.map((r) => r.to as string));
@@ -391,7 +388,7 @@ Deno.serve(async (req) => {
           user_id: user.id,
           role: "assistant",
           content: polishedAnswer,
-          model_used: "kimi+sonnet",
+          model_used: "kimi-k3",
           sources: Array.isArray(kimiData.quellen) ? kimiData.quellen : [],
         });
 
