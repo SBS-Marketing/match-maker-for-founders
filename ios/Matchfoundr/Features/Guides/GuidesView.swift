@@ -1,13 +1,12 @@
-// Guides — Schritt-für-Schritt-Wissen für kleine Gründungen.
-// Suche, Kategorie-Chips, Karten mit Lesezeit; Artikel nativ lesbar.
+// Guides — Liste (pushbar aus Entdecken) + Artikel-Ansicht.
+// Suche, Kategorie-Chips, Karten mit Lesezeit — Warm Signal.
 
 import SwiftUI
 
-struct GuidesView: View {
+struct GuidesListView: View {
     @EnvironmentObject var state: AppState
     @State private var query = ""
     @State private var category: GuideCategory?
-    @State private var path: [Guide] = []
 
     private var filtered: [Guide] {
         var result = allGuides
@@ -23,47 +22,37 @@ struct GuidesView: View {
     }
 
     var body: some View {
-        NavigationStack(path: $path) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    searchField
-                    categoryChips
-                    LazyVStack(spacing: 12) {
-                        ForEach(filtered) { guide in
-                            Button {
-                                Haptics.tap()
-                                path.append(guide)
-                            } label: {
-                                GuideCard(guide: guide)
-                            }
-                            .buttonStyle(.plain)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                searchField
+                categoryChips
+                LazyVStack(spacing: 12) {
+                    ForEach(filtered) { guide in
+                        Button {
+                            Haptics.tap()
+                            state.discoverPath.append(.guide(guide))
+                        } label: {
+                            GuideCard(guide: guide)
                         }
-                    }
-                    if filtered.isEmpty {
-                        Text("Nichts gefunden — frag den Co-Pilot, der kennt alle \(allGuides.count) Guides.")
-                            .font(.system(size: 13.5)).foregroundStyle(MF.smoke)
-                            .frame(maxWidth: .infinity)
-                            .padding(24)
-                            .background(MF.surfaceSoft)
-                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 24)
+                if filtered.isEmpty {
+                    Text("Nichts gefunden — frag den Co-Pilot, der kennt alle \(allGuides.count) Guides.")
+                        .font(.system(size: 13.5)).foregroundStyle(MF.smoke)
+                        .frame(maxWidth: .infinity)
+                        .padding(24)
+                        .background(MF.surfaceSoft)
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
             }
-            .scrollIndicators(.hidden)
-            .background(MF.canvas.ignoresSafeArea())
-            .navigationTitle("Guides")
-            .navigationBarTitleDisplayMode(.large)
-            .navigationDestination(for: Guide.self) { GuideDetailView(guide: $0) }
+            .padding(20)
+            .padding(.bottom, 90)
         }
-        .tint(MF.emberDeep)
-        // Co-Pilot kann Guides direkt öffnen.
-        .onChange(of: state.openGuideSlug) { _, slug in
-            guard let slug, let guide = allGuides.first(where: { $0.slug == slug }) else { return }
-            path = [guide]
-            state.openGuideSlug = nil
-        }
+        .scrollIndicators(.hidden)
+        .background(MF.canvas.ignoresSafeArea())
+        .navigationTitle("Guides")
+        .navigationBarTitleDisplayMode(.large)
     }
 
     private var searchField: some View {
@@ -74,8 +63,9 @@ struct GuidesView: View {
         }
         .padding(.horizontal, 14).frame(height: 48)
         .background(MF.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 15).stroke(MF.border, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(MF.border, lineWidth: 1))
+        .warmShadow()
     }
 
     private var categoryChips: some View {
@@ -165,7 +155,6 @@ struct GuideDetailView: View {
                     }
                 }
 
-                // Anschluss an den Co-Pilot — Wissen wird Handlung.
                 VStack(alignment: .leading, spacing: 12) {
                     HStack(spacing: 10) {
                         Image(systemName: "sparkles")
@@ -182,7 +171,7 @@ struct GuideDetailView: View {
                     }
                     Button {
                         Haptics.tap()
-                        state.tab = .pilot
+                        state.open(.screen(.copilot))
                     } label: {
                         HStack(spacing: 7) {
                             Text("Co-Pilot fragen").font(.system(size: 14, weight: .semibold))
@@ -198,7 +187,7 @@ struct GuideDetailView: View {
                 .warmCard()
             }
             .padding(.horizontal, 20)
-            .padding(.bottom, 30)
+            .padding(.bottom, 90)
         }
         .scrollIndicators(.hidden)
         .background(MF.canvas.ignoresSafeArea())

@@ -24,33 +24,77 @@ const corsHeaders = {
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const KIMI_MODEL = "moonshotai/kimi-k2.6";
 const SONNET_MODEL = "anthropic/claude-sonnet-4-6";
+const KIMI_TIMEOUT_MS = 25_000;
+const SONNET_TIMEOUT_MS = 14_000;
+
+// ─── Token-Preise (USD pro 1M Tokens, Schätzwerte für Admin-Insights) ─
+const MODEL_PRICING: Record<string, { input: number; output: number }> = {
+  [KIMI_MODEL]: { input: 0.6, output: 2.5 },
+  [SONNET_MODEL]: { input: 3.0, output: 15.0 },
+};
+
+type UsageEntry = { model: string; promptTokens: number; completionTokens: number };
+type UsageSink = (entry: UsageEntry) => void;
+
+function costUsd(entry: UsageEntry): number {
+  const price = MODEL_PRICING[entry.model] ?? { input: 1, output: 4 };
+  return (entry.promptTokens * price.input + entry.completionTokens * price.output) / 1_000_000;
+}
 
 // ─── Generic OpenRouter call ─────────────────────────────────
-async function callOpenRouter(model: string, prompt: string, maxTokens = 2048): Promise<string> {
-  const res = await fetch(OPENROUTER_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${Deno.env.get("OPENROUTER_API_KEY")}`,
-      "HTTP-Referer": "https://matchfoundr.com",
-      "X-Title": "matchfoundr Co-Pilot",
-    },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: "user", content: prompt }],
-      temperature: model === KIMI_MODEL ? 0.3 : 0.7,
-      max_tokens: maxTokens,
-    }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(`OpenRouter error (${model}): ${JSON.stringify(data)}`);
-  const content = data?.choices?.[0]?.message?.content;
-  return typeof content === "string" ? content : content == null ? "" : JSON.stringify(content);
+async function callOpenRouter(
+  model: string,
+  prompt: string,
+  maxTokens = 2048,
+  timeoutMs = 30_000,
+  sink?: UsageSink,
+): Promise<string> {
+  const controller = new AbortController();
+  const timeoutID = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(OPENROUTER_URL, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${Deno.env.get("OPENROUTER_API_KEY")}`,
+        "HTTP-Referer": "https://matchfoundr.com",
+        "X-Title": "matchfoundr Co-Pilot",
+      },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: "user", content: prompt }],
+        temperature: model === KIMI_MODEL ? 0.3 : 0.7,
+        max_tokens: maxTokens,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(`OpenRouter error (${model}): ${JSON.stringify(data)}`);
+    if (sink && data?.usage) {
+      sink({
+        model,
+        promptTokens: Number(data.usage.prompt_tokens ?? 0),
+        completionTokens: Number(data.usage.completion_tokens ?? 0),
+      });
+    }
+    const content = data?.choices?.[0]?.message?.content;
+    return typeof content === "string" ? content : content == null ? "" : JSON.stringify(content);
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error(`OpenRouter timeout (${model}) after ${timeoutMs}ms`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutID);
+  }
 }
 
 // ─── Convenience wrappers ────────────────────────────────────
-const callKimi = (prompt: string) => callOpenRouter(KIMI_MODEL, prompt, 2048);
-const callSonnet = (prompt: string) => callOpenRouter(SONNET_MODEL, prompt, 1024);
+const callKimi = (prompt: string, sink?: UsageSink, maxTokens = 1024) =>
+  callOpenRouter(KIMI_MODEL, prompt, maxTokens, KIMI_TIMEOUT_MS, sink);
+const callSonnet = (prompt: string, sink?: UsageSink, maxTokens = 420) =>
+  callOpenRouter(SONNET_MODEL, prompt, maxTokens, SONNET_TIMEOUT_MS, sink);
 
 // ─── Strip markdown code fences ──────────────────────────────
 function stripFences(s: string): string {
@@ -121,16 +165,6 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // Auth — optional für Chat (Mobile/Guest), Pflicht für persistierende Tasks.
-    const authHeader = req.headers.get("Authorization");
-    let user: { id: string } | null = null;
-    if (authHeader) {
-      const { data: authData } = await supabase.auth.getUser(
-        authHeader.replace("Bearer ", ""),
-      );
-      if (authData?.user) user = authData.user;
-    }
-
     const body = (await req.json()) as {
       task: TaskType;
       session_id?: string;
@@ -140,35 +174,22 @@ Deno.serve(async (req) => {
 
     const { task, session_id, message = "", extra = {} } = body;
 
-    // Persistierende Tasks brauchen einen echten User; Chat darf gastweise laufen.
-    if (!user && task !== "chat") {
+    // Auth: Chat darf ohne DB-Persistenz laufen; persistierende Tasks brauchen User.
+    const authHeader = req.headers.get("Authorization");
+    const {
+      data: { user },
+      error: authError,
+    } = authHeader
+      ? await supabase.auth.getUser(authHeader.replace("Bearer ", ""))
+      : { data: { user: null }, error: new Error("missing auth") };
+    if ((authError || !user) && task !== "chat") {
       return new Response("Unauthorized", { status: 401, headers: corsHeaders });
     }
-
-    // Load founder context (nur wenn eingeloggt)
-    const { data: contextData } = user
-      ? await supabase
-          .from("copilot_context")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("updated_at", { ascending: false })
-          .limit(1)
-          .single()
-      : { data: null as Record<string, unknown> | null };
-
-    const { data: profile } = user
-      ? await supabase.from("profiles").select("display_name").eq("id", user.id).single()
-      : { data: null as { display_name?: string } | null };
-
-    const ctx: FounderContext = {
-      userName: profile?.display_name || "Founder",
-      role: contextData?.role,
-      idea: contextData?.idea,
-      stage: contextData?.stage,
-      city: contextData?.city,
-      goal: contextData?.goal,
-      risk: contextData?.risk,
+    const requireUser = () => {
+      if (!user) throw new Error("Authenticated user required");
+      return user;
     };
+
     const onboarding =
       extra?.onboarding && typeof extra.onboarding === "object"
         ? (extra.onboarding as Record<string, unknown>)
@@ -181,6 +202,35 @@ Deno.serve(async (req) => {
       onboarding?.skills && typeof onboarding.skills === "object"
         ? (onboarding.skills as Record<string, unknown>)
         : null;
+
+    // Load founder context
+    const { data: contextData } = user
+      ? await supabase
+          .from("copilot_context")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .single()
+      : { data: null };
+
+    const { data: profile } = user
+      ? await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("id", user.id)
+          .single()
+      : { data: null };
+
+    const ctx: FounderContext = {
+      userName: profile?.display_name || stringOrUndefined(onboarding?.userName) || "Founder",
+      role: contextData?.role,
+      idea: contextData?.idea,
+      stage: contextData?.stage,
+      city: contextData?.city,
+      goal: contextData?.goal,
+      risk: contextData?.risk,
+    };
 
     if (onboarding) {
       ctx.industry = ctx.industry || stringOrUndefined(onboarding.industry);
@@ -196,6 +246,10 @@ Deno.serve(async (req) => {
       ctx.risk = ctx.risk || stringOrUndefined(onboardingContext.risk);
     }
 
+    // Token-Verbrauch dieses Requests einsammeln → ai_usage (Admin-Insights)
+    const usages: UsageEntry[] = [];
+    const sink: UsageSink = (entry) => usages.push(entry);
+
     let result: Record<string, unknown> = {};
 
     // ── TASK ROUTER ──────────────────────────────────────────
@@ -203,18 +257,20 @@ Deno.serve(async (req) => {
     if (task === "context_parse") {
       // Kimi only — pure extraction
       const kimiPrompt = KIMI_PROMPTS.context_parse(ctx, message);
-      const kimiRaw = await callKimi(kimiPrompt);
+      const kimiRaw = await callKimi(kimiPrompt, sink);
       console.log("[KIMI context_parse]", kimiRaw.slice(0, 300));
       const parsed = parseJSON(kimiRaw);
 
       // Save/update context
-      await supabase.from("copilot_context").upsert({
-        user_id: user.id,
-        session_id: session_id || null,
-        ...parsed,
-        raw_context: parsed,
-        updated_at: new Date().toISOString(),
-      });
+      if (user) {
+        await supabase.from("copilot_context").upsert({
+          user_id: user.id,
+          session_id: session_id || null,
+          ...parsed,
+          raw_context: parsed,
+          updated_at: new Date().toISOString(),
+        });
+      }
 
       result = { context: parsed };
     } else if (task === "chat") {
@@ -248,7 +304,7 @@ Deno.serve(async (req) => {
             (t) => (t?.role === "user" || t?.role === "assistant") && typeof t.content === "string",
           )
         : [];
-      if (history.length === 0 && session_id) {
+      if (history.length === 0 && session_id && user) {
         const { data: prevMsgs } = await supabase
           .from("copilot_messages")
           .select("role, content")
@@ -270,17 +326,17 @@ Deno.serve(async (req) => {
       const surface = typeof extra.surface === "string" ? extra.surface : undefined;
 
       // Stage 1: Kimi — Analyse, Antwortentwurf, Memory-Extraktion, Nav-Vorschläge
-      const kimiPrompt = buildChatPrompt(ctx, { message, history, memory, surface });
-      const kimiRaw = await callKimi(kimiPrompt);
+      const kimiPrompt = buildChatPrompt(ctx, { message, history, memory, surface, app: extra.app });
+      const kimiRaw = await callKimi(kimiPrompt, sink);
       console.log("[KIMI chat raw]", kimiRaw.slice(0, 300));
       const kimiData = parseJSON(kimiRaw);
 
       // Extract draft — never pass empty string to Sonnet
       const draft = extractDraft(kimiData, kimiRaw);
 
-      // Stage 2: Sonnet polishes the answer text (kennt den Verlauf)
+      // Stage 2: Sonnet polishes the answer text (kennt den Verlauf).
       const sonnetPrompt = buildChatPolishPrompt(ctx, draft, history);
-      const polishedAnswer = await callSonnet(sonnetPrompt);
+      const polishedAnswer = await callSonnet(sonnetPrompt, sink);
 
       // Nav-Vorschläge gegen den Routen-Katalog validieren
       const validRoutes = new Set(ROUTE_CATALOG.map((r) => r.to as string));
@@ -363,18 +419,19 @@ Deno.serve(async (req) => {
         new_facts: newFacts,
       };
     } else if (task === "plan_generate") {
+      const authedUser = requireUser();
       // Load assessment + skills + industry for full context
       const [{ data: assessment }, { data: skills }, { data: profileFull }] = await Promise.all([
-        supabase.from("founder_assessment").select("scores").eq("user_id", user.id).single(),
+        supabase.from("founder_assessment").select("scores").eq("user_id", authedUser.id).single(),
         supabase
           .from("founder_skills")
           .select("skills, looking_for, availability")
-          .eq("user_id", user.id)
+          .eq("user_id", authedUser.id)
           .single(),
         supabase
           .from("profiles")
           .select("industry, venture_term, partner_term")
-          .eq("id", user.id)
+          .eq("id", authedUser.id)
           .single(),
       ]);
 
@@ -394,7 +451,7 @@ Deno.serve(async (req) => {
       });
 
       const sonnetPrompt = SONNET_PROMPTS.plan_presentation(ctx, fullContext);
-      const sonnetRaw = await callSonnet(sonnetPrompt);
+      const sonnetRaw = await callSonnet(sonnetPrompt, sink);
       console.log("[SONNET plan slides raw]", sonnetRaw.slice(0, 300));
 
       const parsedSlides = parseJSONLoose(sonnetRaw);
@@ -407,7 +464,7 @@ Deno.serve(async (req) => {
       console.log("[SLIDES count]", slides.length);
 
       await supabase.from("copilot_documents").insert({
-        user_id: user.id,
+        user_id: authedUser.id,
         session_id: session_id || null,
         type: "pitch_outline",
         title: `Persönlicher Plan — ${ctx.userName}`,
@@ -420,9 +477,10 @@ Deno.serve(async (req) => {
 
       result = { slides };
     } else if (task === "deadline_extract") {
+      const authedUser = requireUser();
       // Kimi only — pure extraction
       const kimiPrompt = KIMI_PROMPTS.deadline_extract(ctx, message);
-      const kimiRaw = await callKimi(kimiPrompt);
+      const kimiRaw = await callKimi(kimiPrompt, sink);
       console.log("[KIMI deadline_extract]", kimiRaw.slice(0, 300));
       const data = parseJSON(kimiRaw);
 
@@ -430,7 +488,7 @@ Deno.serve(async (req) => {
       if (deadlines.length > 0 && session_id) {
         await supabase.from("deadlines").insert(
           deadlines.map((d) => ({
-            user_id: user.id,
+            user_id: authedUser.id,
             session_id,
             title: d.titel,
             due_date: d.datum,
@@ -442,14 +500,15 @@ Deno.serve(async (req) => {
 
       result = { deadlines };
     } else if (task === "document_exist") {
+      const authedUser = requireUser();
       // Stage 1: Kimi fills content from profile
       const kimiPrompt = KIMI_PROMPTS.document_exist_draft(ctx, message);
-      const kimiRaw = await callKimi(kimiPrompt);
+      const kimiRaw = await callKimi(kimiPrompt, sink);
       console.log("[KIMI document_exist]", kimiRaw.slice(0, 300));
 
       // Stage 2: Sonnet polishes every section
       const sonnetPrompt = SONNET_PROMPTS.document_exist(ctx, kimiRaw);
-      const polished = await callSonnet(sonnetPrompt);
+      const polished = await callSonnet(sonnetPrompt, sink);
 
       // Calculate fill percentage
       const missing = (parseJSON(kimiRaw).fehlende_infos as string[]) || [];
@@ -459,7 +518,7 @@ Deno.serve(async (req) => {
       const { data: doc } = await supabase
         .from("copilot_documents")
         .insert({
-          user_id: user.id,
+          user_id: authedUser.id,
           session_id: session_id || null,
           type: "exist_antrag",
           title: "EXIST-Gründerstipendium Antrag",
@@ -478,13 +537,13 @@ Deno.serve(async (req) => {
 
       // Stage 1: Kimi analyzes fit
       const kimiPrompt = KIMI_PROMPTS.advisor_reasons(ctx, advisorInfo);
-      const kimiRaw = await callKimi(kimiPrompt);
+      const kimiRaw = await callKimi(kimiPrompt, sink);
       console.log("[KIMI advisor_reasons]", kimiRaw.slice(0, 300));
       const kimiData = parseJSON(kimiRaw);
 
       // Stage 2: Sonnet polishes the reason texts
       const sonnetPrompt = SONNET_PROMPTS.advisor_reasons(ctx, JSON.stringify(kimiData));
-      const polished = await callSonnet(sonnetPrompt);
+      const polished = await callSonnet(sonnetPrompt, sink);
 
       result = {
         reasons: kimiData.gründe || [],
@@ -492,12 +551,13 @@ Deno.serve(async (req) => {
         polished,
       };
     } else if (task === "daily_brief") {
+      const authedUser = requireUser();
       // Load today's data
       const today = new Date().toISOString().split("T")[0];
       const { data: deadlines } = await supabase
         .from("deadlines")
         .select("title, due_date")
-        .eq("user_id", user.id)
+        .eq("user_id", authedUser.id)
         .eq("status", "open")
         .lte("due_date", new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0]);
 
@@ -505,32 +565,33 @@ Deno.serve(async (req) => {
 
       // Stage 1: Kimi structures the brief
       const kimiPrompt = KIMI_PROMPTS.daily_brief_draft(ctx, dailyData);
-      const kimiRaw = await callKimi(kimiPrompt);
+      const kimiRaw = await callKimi(kimiPrompt, sink);
       console.log("[KIMI daily_brief]", kimiRaw.slice(0, 300));
 
       // Stage 2: Sonnet writes it naturally
       const sonnetPrompt = SONNET_PROMPTS.daily_brief(ctx, kimiRaw);
-      const brief = await callSonnet(sonnetPrompt);
+      const brief = await callSonnet(sonnetPrompt, sink);
 
       result = { brief, raw: parseJSON(kimiRaw) };
     }
 
     // ── EMAIL TASKS ──────────────────────────────────────────
     else if (task.startsWith("email_")) {
+      const authedUser = requireUser();
       // Stage 1: Kimi drafts structure
       const kimiPrompt = KIMI_PROMPTS.chat(ctx, `Erstelle einen Email-Entwurf für: ${message}`);
-      const kimiRaw = await callKimi(kimiPrompt);
+      const kimiRaw = await callKimi(kimiPrompt, sink);
       console.log("[KIMI email draft]", kimiRaw.slice(0, 300));
       const kimiData = parseJSON(kimiRaw);
 
       // Stage 2: Sonnet writes the actual email
       const sonnetKey = task as keyof typeof SONNET_PROMPTS;
       const sonnetPromptFn = SONNET_PROMPTS[sonnetKey] || SONNET_PROMPTS.chat;
-      const email = await callSonnet(sonnetPromptFn(ctx, String(kimiData.antwort || kimiRaw)));
+      const email = await callSonnet(sonnetPromptFn(ctx, String(kimiData.antwort || kimiRaw)), sink);
 
       // Save as document
       await supabase.from("copilot_documents").insert({
-        user_id: user.id,
+        user_id: authedUser.id,
         session_id: session_id || null,
         type: task,
         title: `Email: ${message.slice(0, 60)}`,
@@ -545,9 +606,27 @@ Deno.serve(async (req) => {
     } else if (task === "match_explain") {
       const matchInfo = JSON.stringify(extra.match || {});
       const kimiPrompt = KIMI_PROMPTS.match_explain(ctx, matchInfo);
-      const kimiRaw = await callKimi(kimiPrompt);
+      const kimiRaw = await callKimi(kimiPrompt, sink);
       console.log("[KIMI match_explain]", kimiRaw.slice(0, 300));
       result = { explanation: parseJSON(kimiRaw) };
+    }
+
+    // Verbrauch loggen — fire-and-forget, blockiert die Antwort nicht.
+    if (usages.length > 0) {
+      const rows = usages.map((u) => ({
+        user_id: user?.id ?? null,
+        task,
+        model: u.model,
+        prompt_tokens: u.promptTokens,
+        completion_tokens: u.completionTokens,
+        cost_usd: costUsd(u),
+      }));
+      supabase
+        .from("ai_usage")
+        .insert(rows)
+        .then(({ error }: { error: { message: string } | null }) => {
+          if (error) console.error("ai_usage insert failed:", error.message);
+        });
     }
 
     return new Response(JSON.stringify(result), {
