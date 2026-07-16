@@ -93,6 +93,39 @@ export type Database = {
           },
         ]
       }
+      ai_usage: {
+        Row: {
+          completion_tokens: number
+          cost_usd: number
+          created_at: string
+          id: string
+          model: string
+          prompt_tokens: number
+          task: string
+          user_id: string | null
+        }
+        Insert: {
+          completion_tokens?: number
+          cost_usd?: number
+          created_at?: string
+          id?: string
+          model: string
+          prompt_tokens?: number
+          task: string
+          user_id?: string | null
+        }
+        Update: {
+          completion_tokens?: number
+          cost_usd?: number
+          created_at?: string
+          id?: string
+          model?: string
+          prompt_tokens?: number
+          task?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       community_event_registrations: {
         Row: {
           created_at: string
