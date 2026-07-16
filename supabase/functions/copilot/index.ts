@@ -275,12 +275,10 @@ Deno.serve(async (req) => {
       console.log("[KIMI chat raw]", kimiRaw.slice(0, 300));
       const kimiData = parseJSON(kimiRaw);
 
-      // Extract draft — never pass empty string to Sonnet
+      // Extract draft — Kimi K3 antwortet direkt, kein Sonnet-Polish mehr (Latenz halbiert)
       const draft = extractDraft(kimiData, kimiRaw);
+      const polishedAnswer = draft;
 
-      // Stage 2: Sonnet polishes the answer text (kennt den Verlauf)
-      const sonnetPrompt = buildChatPolishPrompt(ctx, draft, history);
-      const polishedAnswer = await callSonnet(sonnetPrompt);
 
       // Nav-Vorschläge gegen den Routen-Katalog validieren
       const validRoutes = new Set(ROUTE_CATALOG.map((r) => r.to as string));
