@@ -23,6 +23,11 @@ const corsHeaders = {
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const KIMI_MODEL = "moonshotai/kimi-k3";
+const KIMI_FALLBACKS = [
+  "moonshotai/kimi-k3",
+  "moonshotai/kimi-k2-0905",
+  "deepseek/deepseek-chat-v3.1",
+];
 const SONNET_MODEL = "anthropic/claude-sonnet-4-6";
 
 // ─── Generic OpenRouter call ─────────────────────────────────
@@ -38,18 +43,40 @@ async function callOpenRouter(model: string, prompt: string, maxTokens = 2048): 
     body: JSON.stringify({
       model,
       messages: [{ role: "user", content: prompt }],
-      temperature: model === KIMI_MODEL ? 0.3 : 0.7,
+      temperature: model.startsWith("moonshotai/") ? 0.3 : 0.7,
       max_tokens: maxTokens,
     }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(`OpenRouter error (${model}): ${JSON.stringify(data)}`);
+  if (!res.ok) {
+    const err = new Error(`OpenRouter error (${model}): ${JSON.stringify(data)}`) as Error & {
+      status?: number;
+    };
+    err.status = res.status;
+    throw err;
+  }
   const content = data?.choices?.[0]?.message?.content;
   return typeof content === "string" ? content : content == null ? "" : JSON.stringify(content);
 }
 
-// ─── Convenience wrappers ────────────────────────────────────
-const callKimi = (prompt: string) => callOpenRouter(KIMI_MODEL, prompt, 2048);
+// ─── Kimi with automatic fallback on rate-limit / upstream errors ─
+async function callKimi(prompt: string): Promise<string> {
+  let lastErr: unknown = null;
+  for (const model of KIMI_FALLBACKS) {
+    try {
+      return await callOpenRouter(model, prompt, 2048);
+    } catch (e) {
+      const status = (e as { status?: number }).status;
+      lastErr = e;
+      if (status !== 429 && status !== 502 && status !== 503 && status !== 404 && status !== 410) {
+        throw e;
+      }
+      console.warn(`Model ${model} unavailable (status ${status}), trying next fallback…`);
+    }
+  }
+  throw lastErr ?? new Error("All Kimi fallbacks exhausted");
+}
+
 const callSonnet = (prompt: string) => callOpenRouter(SONNET_MODEL, prompt, 1024);
 
 // ─── Strip markdown code fences ──────────────────────────────
