@@ -27,11 +27,13 @@ supabase db push
 Wichtige neue Migrationen:
 - `20260529120000_notification_prefs.sql` — Opt-out-Tabelle für den E-Mail-Digest
 - `20260529120100_daily_digest_cron.sql` — pg_cron-Job (no-op bis Vault-Secrets gesetzt sind, danach erneut ausführen)
+- `20260715120000_admin_and_content.sql` — `ai_usage` (KI-Kosten-Log) + `guides` (Redaktion)
+- `20260717090000_community_events_admin.sql` — Admin-Policies auf `community_events` + `community_event_registrations`
 
 ## 3. Edge Functions
 
 ```bash
-supabase functions deploy copilot        # Pflicht nach Co-Pilot-V2: Verlauf, Memory, Nav-Aktionen
+supabase functions deploy copilot        # Co-Pilot aktualisieren, wenn Usage-Logging aktiv ist
 supabase functions deploy matching
 supabase functions deploy swipe
 supabase functions deploy resend-confirm
@@ -72,7 +74,30 @@ curl -X POST "https://urjpyhyezrwhwgnkkxjv.supabase.co/functions/v1/daily-digest
 Antwort: `{ ok, sent, skipped, errors }`. Nutzer ohne offene Tasks/Deadlines werden übersprungen;
 Opt-out über das Profil (Tabelle `notification_prefs`).
 
-## 5. Typen nach Schema-Änderungen
+## 5. Admin-Bereich freischalten
+
+Der Admin-Bereich liegt unter **`/admin`** (Insights · Events · Guides) und ist über
+RLS abgesichert: nur Accounts mit der Rolle `admin` in `user_roles` sehen echte Daten.
+
+Rolle vergeben (SQL-Editor, die User-ID steht unter Authentication → Users):
+
+```sql
+insert into public.user_roles (user_id, role)
+values ('<USER_UUID>', 'admin')
+on conflict do nothing;
+```
+
+Danach zeigt die Sidebar dem Account den Admin-Link. Ohne Login im Demo-Modus
+zeigt `/admin` nur Beispieldaten (RLS blockt alles Echte).
+
+- **Insights**: KI-Tokens + Kosten (aus `ai_usage`, sobald die Copilot-Function
+  Usage-Logging schreibt), Plattform-Zahlen, Status der Datenquellen.
+- **Events**: legt Einträge in `community_events` an (samt Banner-Upload in den
+  `media`-Bucket) — dieselbe Tabelle liest die iOS-App im Community-Tab.
+  Anmeldungen landen in `community_event_registrations`.
+- **Guides**: redaktionelle Guides in der `guides`-Tabelle, veröffentlichte sind öffentlich lesbar.
+
+## 6. Typen nach Schema-Änderungen
 
 ```bash
 supabase gen types typescript --linked > src/integrations/supabase/types.ts
@@ -82,7 +107,7 @@ supabase gen types typescript --linked > src/integrations/supabase/types.ts
 (`profiles.venture_term/partner_term`, `notification_prefs`) — nach dem nächsten
 `db push` einmal regenerieren, dann ist alles wieder aus einer Quelle.
 
-## 6. Smoke-Test nach Deploy
+## 7. Smoke-Test nach Deploy
 
 1. `/` Landing lädt ohne App-Shell.
 2. `/auth` → Konto anlegen / Google SSO → Redirect auf `/onboarding` bzw. `/heute`.

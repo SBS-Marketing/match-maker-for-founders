@@ -14,6 +14,7 @@ import {
   LogOut,
   MessageCircle,
   MoreHorizontal,
+  ShieldCheck,
   Sparkles,
   Store,
   User,
@@ -22,6 +23,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { Button } from "@/components/ui/button";
 import { CopilotDock } from "@/components/CopilotDock";
 
@@ -84,6 +86,7 @@ const TITLES: { match: (p: string) => boolean; title: string }[] = [
   { match: (p) => p.startsWith("/talent"), title: "Talent" },
   { match: (p) => p.startsWith("/growth"), title: "Growth" },
   { match: (p) => p.startsWith("/co-founder"), title: "Co-Founder" },
+  { match: (p) => p.startsWith("/admin"), title: "Admin" },
 ];
 
 function titleFor(pathname: string): string {
@@ -111,6 +114,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 function Sidebar({ pathname }: { pathname: string }) {
   const { user, signOut } = useAuth();
   const router = useRouter();
+  // Nur echte Admins sehen den Link — im Demo-Modus bleibt /admin direkt aufrufbar.
+  const { isAdmin, isPreview } = useIsAdmin();
 
   return (
     <aside className="sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-[var(--ruled-soft)] bg-[var(--surface)] text-[var(--ink)] lg:flex lg:w-[68px] xl:w-[228px]">
@@ -162,6 +167,16 @@ function Sidebar({ pathname }: { pathname: string }) {
       <div className="border-t border-[var(--ruled-soft)] px-2 py-3 xl:px-3">
         {user ? (
           <>
+            {isAdmin && !isPreview && (
+              <Link
+                to="/admin"
+                className={navClass(pathname.startsWith("/admin"))}
+                aria-label="Admin"
+              >
+                <ShieldCheck className="h-[18px] w-[18px] shrink-0" />
+                <span className="hidden truncate xl:inline">Admin</span>
+              </Link>
+            )}
             <Link
               to="/profile"
               className={navClass(pathname.startsWith("/profile"))}
