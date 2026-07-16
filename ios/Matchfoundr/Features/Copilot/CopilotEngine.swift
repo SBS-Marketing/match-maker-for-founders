@@ -1179,6 +1179,30 @@ enum CopilotEngine {
             ]
         }
 
+        if matches(combined, "budget", "kosten", "startkosten", "kapital") {
+            return [
+                "Ich will klein starten.",
+                "Ich kann etwas Budget einsetzen.",
+                "Ich brauche Finanzierung."
+            ]
+        }
+
+        if matches(combined, "wann", "heute", "morgen", "woche", "zeitplan", "deadline") {
+            return [
+                "Heute angehen.",
+                "Diese Woche planen.",
+                "Später priorisieren."
+            ]
+        }
+
+        if matches(combined, "verfügbarkeit", "verfuegbarkeit", "zeit investieren", "stunden") {
+            return [
+                "1-3 Stunden pro Woche.",
+                "4-8 Stunden pro Woche.",
+                "Mehr als 10 Stunden pro Woche."
+            ]
+        }
+
         return []
     }
 

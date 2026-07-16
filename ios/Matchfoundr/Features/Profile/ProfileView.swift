@@ -6,6 +6,7 @@ import SwiftUI
 enum ProfileRoute: Hashable {
     case company
     case documents
+    case memory
 }
 
 struct ProfileView: View {
@@ -40,6 +41,7 @@ struct ProfileView: View {
                         myEvents
                         MSectionHead(text: "KI-Nutzung")
                         aiUsageCard
+                        memoryAccessCard
                         MSectionHead(text: "Konto")
                         accountRows
                     }
@@ -54,6 +56,7 @@ struct ProfileView: View {
                 switch route {
                 case .company: CompanyProfileView()
                 case .documents: DocumentsView()
+                case .memory: ProfileMemoryView()
                 }
             }
             .sheet(isPresented: $editing) {
@@ -331,6 +334,41 @@ struct ProfileView: View {
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
+    private var memoryAccessCard: some View {
+        Button {
+            Haptics.tap()
+            path.append(.memory)
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "brain.head.profile")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 38, height: 38)
+                    .background(MF.indigoGrad)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Co-Pilot Memory")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(MF.ink)
+                    Text("\(state.copilotFacts.count) gespeicherte Fakten · \(state.founderMemory.compactSummary)")
+                        .font(.system(size: 12.5, weight: .semibold))
+                        .foregroundStyle(MF.smoke)
+                        .lineLimit(1)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(MF.faint)
+            }
+            .padding(15)
+            .background(MF.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 18).stroke(MF.border, lineWidth: 1))
+            .warmShadow()
+        }
+        .buttonStyle(.plain)
+    }
+
     // ─── Angemeldete Events ───────────────────────────────────
     private var myEvents: some View {
         let mine = state.events.filter { state.registeredEvents.contains($0.id) }
@@ -490,6 +528,214 @@ struct ProfileView: View {
             .padding(.horizontal, 15).padding(.vertical, 13)
         }
         .buttonStyle(.plain)
+    }
+}
+
+struct ProfileMemoryView: View {
+    @EnvironmentObject var state: AppState
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 0) {
+            MShellTop(title: "Co-Pilot Memory", subtitle: "\(state.copilotFacts.count) gespeicherte Fakten") {
+                HStack(spacing: 8) {
+                    Button {
+                        Haptics.tap()
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(MF.indigoInk)
+                            .frame(width: 38, height: 38)
+                            .background(MF.indigoTint)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        Haptics.tap()
+                        state.open(.screen(.copilot))
+                    } label: {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(MF.indigoInk)
+                            .frame(width: 38, height: 38)
+                            .background(MF.indigoTint)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    overviewCard
+                    MSectionHead(text: "Dynamisches Verzeichnis")
+                    liveFactsCard
+                    MSectionHead(text: "Gespeicherte Fakten")
+                    storedFactsCard
+                }
+                .padding(20)
+                .padding(.bottom, 90)
+            }
+            .scrollIndicators(.hidden)
+        }
+        .background(MF.canvas.ignoresSafeArea())
+        .toolbar(.hidden, for: .navigationBar)
+    }
+
+    private var overviewCard: some View {
+        let memory = state.founderMemory
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: "brain.head.profile")
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 44, height: 44)
+                    .background(MF.indigoGrad)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(memory.founderName)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(MF.ink)
+                    Text(memory.compactSummary)
+                        .font(.system(size: 12.5, weight: .semibold))
+                        .foregroundStyle(MF.smoke)
+                        .lineLimit(1)
+                }
+                Spacer()
+            }
+            Text(memory.idea)
+                .font(.system(size: 14.5))
+                .foregroundStyle(MF.inkSoft)
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 8) {
+                memoryMetric("Unterlagen", memory.documentProgress)
+                memoryMetric("Plan", "\(state.plannerItems.filter { !$0.done }.count) offen")
+                memoryMetric("Matches", "\(state.matches.count)")
+            }
+        }
+        .padding(16)
+        .background(MF.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(MF.border, lineWidth: 1))
+        .warmShadow()
+    }
+
+    private var liveFactsCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(state.copilotLiveContextFacts(), id: \.self) { fact in
+                factRow(fact, icon: "dot.scope", removable: false)
+            }
+        }
+        .padding(14)
+        .background(MF.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(MF.border, lineWidth: 1))
+        .warmShadow()
+    }
+
+    private var storedFactsCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if state.copilotFacts.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Noch nichts manuell gespeichert.")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(MF.ink)
+                    Text("Wenn der Co-Pilot neue Fakten erkennt oder du auf „Memory speichern” tippst, tauchen sie hier auf.")
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(MF.smoke)
+                        .lineSpacing(2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(14)
+                .background(MF.surfaceSoft)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            } else {
+                ForEach(Array(state.copilotFacts.enumerated()), id: \.offset) { index, fact in
+                    factRow(fact, icon: "checkmark.circle.fill", removable: true) {
+                        state.copilotFacts.remove(at: index)
+                    }
+                }
+                Button {
+                    Haptics.tap()
+                    state.copilotFacts.removeAll()
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 12, weight: .bold))
+                        Text("Gespeichertes Memory leeren")
+                            .font(.system(size: 13, weight: .bold))
+                    }
+                    .foregroundStyle(MF.emberDeep)
+                    .padding(.horizontal, 12)
+                    .frame(height: 36)
+                    .background(MF.emberTint)
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 4)
+            }
+        }
+        .padding(14)
+        .background(MF.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(MF.border, lineWidth: 1))
+        .warmShadow()
+    }
+
+    private func memoryMetric(_ label: String, _ value: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.system(size: 12.5, weight: .heavy))
+                .foregroundStyle(MF.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text(label)
+                .font(.system(size: 10.5, weight: .semibold))
+                .foregroundStyle(MF.faint)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 9)
+        .background(MF.surfaceSoft)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func factRow(
+        _ fact: String,
+        icon: String,
+        removable: Bool,
+        remove: (() -> Void)? = nil
+    ) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(MF.indigoInk)
+                .frame(width: 28, height: 28)
+                .background(MF.indigoTint)
+                .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+            Text(fact)
+                .font(.system(size: 13.2, weight: .medium))
+                .foregroundStyle(MF.inkSoft)
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+            if removable, let remove {
+                Button {
+                    Haptics.tap()
+                    remove()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(MF.faint)
+                        .frame(width: 28, height: 28)
+                        .background(MF.surfaceSoft)
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 }
 

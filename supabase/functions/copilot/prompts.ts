@@ -349,7 +349,11 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
        als kurze eigenständige Sätze. Keine Wiederholungen von schon Gemerktem. Max 3.
     5. Kontext-Updates: Hat sich role/idea/stage/city/goal/risk erkennbar geändert oder
        konkretisiert, liefere NUR die geänderten Felder in "kontext_updates", sonst {}.
-    6. Follow-ups: 2 kurze konkrete nächste Aktionen, die LOGISCH aus dem Gespräch folgen.
+    6. Follow-ups/Wizard: Wenn eine Entscheidung fehlt, stelle NICHT mehrere lange Fragen in der
+       Antwort. Gib in "follow_up_aktionen" 2-3 kurze Antwortoptionen aus Sicht des Founders
+       (z.B. "Ich starte erstmal solo.", "Ich suche aktiv einen Co-Founder.", "Ich bin noch unsicher.").
+       Der iOS-Client zeigt daraus eine eigene zweite Wizard-Nachricht. Wenn keine Entscheidung nötig ist:
+       2 kurze konkrete nächste Aktionen, die LOGISCH aus dem Gespräch folgen.
     7. Native App-Steuerung: Wenn sinnvoll, formuliere Follow-ups so, dass der iOS-Client daraus
        echte Chips bauen kann, z.B. "Termin eintragen", "Memory speichern", "Startup gründen",
        "Firmenprofil öffnen", "Nachricht schreiben". Keine Funktionen erfinden.
@@ -359,7 +363,7 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
       "antwort": "Deine Antwort in max. 2 kurzen Absätzen, konkret und app-nah",
       "zu_frueh": false,
       "quellen": [],
-      "follow_up_aktionen": ["Folgefrage 1", "Folgefrage 2"],
+      "follow_up_aktionen": ["Kurze Antwortoption oder Aktion 1", "Kurze Antwortoption oder Aktion 2"],
       "navigation": [{"to": "/foerderung", "label": "EXIST-Antrag weiterführen"}],
       "neue_fakten": ["Kurzer Fakt 1"],
       "kontext_updates": {},

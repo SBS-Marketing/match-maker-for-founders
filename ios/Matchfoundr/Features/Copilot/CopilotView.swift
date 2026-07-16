@@ -484,7 +484,7 @@ struct CopilotView: View {
         startThinkingCopyLoop(for: sessionID)
         Task { @MainActor in
             let answer = await CopilotEngine.answer(for: text, state: state, history: history)
-            state.appendCopilotMessage(answer, to: sessionID)
+            appendCopilotResponse(answer, to: sessionID)
             thinkingSessionID = nil
             if state.activeCopilotSessionID == sessionID {
                 withAnimation(.easeOut(duration: 0.25)) {
@@ -493,6 +493,45 @@ struct CopilotView: View {
             }
             runPendingCopilotPrompt()
         }
+    }
+
+    private func appendCopilotResponse(_ answer: CopilotMessage, to sessionID: UUID) {
+        guard !answer.quickReplies.isEmpty else {
+            state.appendCopilotMessage(answer, to: sessionID)
+            return
+        }
+
+        var mainAnswer = answer
+        let replies = answer.quickReplies
+        mainAnswer.quickReplies = []
+        state.appendCopilotMessage(mainAnswer, to: sessionID)
+
+        let wizard = CopilotMessage(
+            mine: false,
+            text: wizardPrompt(for: answer.text, replies: replies),
+            quickReplies: replies,
+            memory: answer.memory,
+            source: answer.source,
+            createdAt: .now
+        )
+        state.appendCopilotMessage(wizard, to: sessionID)
+    }
+
+    private func wizardPrompt(for answer: String, replies: [String]) -> String {
+        let combined = ([answer] + replies).joined(separator: " ").lowercased()
+        if combined.contains("skill-partner") || combined.contains("partner auf augenhöhe") {
+            return "Wie willst du dich aktuell positionieren?"
+        }
+        if combined.contains("solo") || combined.contains("co-founder") || combined.contains("cofounder") {
+            return "Welche Richtung passt gerade eher?"
+        }
+        if combined.contains("budget") || combined.contains("kosten") {
+            return "Womit soll ich weiterrechnen?"
+        }
+        if combined.contains("heute") || combined.contains("woche") || combined.contains("wann") {
+            return "Wann soll ich den nächsten Schritt einordnen?"
+        }
+        return "Wähle kurz eine Richtung, dann frage ich weiter."
     }
 
     private func startThinkingCopyLoop(for sessionID: UUID) {
@@ -544,7 +583,7 @@ struct CopilotView: View {
 
     private func appendAssistant(_ message: CopilotMessage) {
         let sessionID = state.ensureCopilotSession()
-        state.appendCopilotMessage(message, to: sessionID)
+        appendCopilotResponse(message, to: sessionID)
         if state.activeCopilotSessionID == sessionID {
             withAnimation(.easeOut(duration: 0.25)) {
                 messages = state.copilotMessages(for: sessionID)
