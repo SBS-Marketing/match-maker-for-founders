@@ -93,6 +93,137 @@ export type Database = {
           },
         ]
       }
+      ai_usage: {
+        Row: {
+          completion_tokens: number
+          cost_usd: number
+          created_at: string
+          id: string
+          model: string
+          prompt_tokens: number
+          task: string
+          user_id: string | null
+        }
+        Insert: {
+          completion_tokens?: number
+          cost_usd?: number
+          created_at?: string
+          id?: string
+          model: string
+          prompt_tokens?: number
+          task: string
+          user_id?: string | null
+        }
+        Update: {
+          completion_tokens?: number
+          cost_usd?: number
+          created_at?: string
+          id?: string
+          model?: string
+          prompt_tokens?: number
+          task?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      community_event_registrations: {
+        Row: {
+          created_at: string
+          email: string | null
+          event_id: string
+          id: string
+          name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          event_id: string
+          id?: string
+          name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          event_id?: string
+          id?: string
+          name?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "community_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_events: {
+        Row: {
+          agenda: string[]
+          banner_image_url: string | null
+          blurb: string | null
+          city: string | null
+          created_at: string
+          date_label: string | null
+          host: string | null
+          id: string
+          is_published: boolean
+          kind: string
+          service_id: string
+          spots: number
+          starts_at: string | null
+          taken: number
+          time_label: string | null
+          title: string
+          updated_at: string
+          venue: string | null
+        }
+        Insert: {
+          agenda?: string[]
+          banner_image_url?: string | null
+          blurb?: string | null
+          city?: string | null
+          created_at?: string
+          date_label?: string | null
+          host?: string | null
+          id: string
+          is_published?: boolean
+          kind?: string
+          service_id?: string
+          spots?: number
+          starts_at?: string | null
+          taken?: number
+          time_label?: string | null
+          title: string
+          updated_at?: string
+          venue?: string | null
+        }
+        Update: {
+          agenda?: string[]
+          banner_image_url?: string | null
+          blurb?: string | null
+          city?: string | null
+          created_at?: string
+          date_label?: string | null
+          host?: string | null
+          id?: string
+          is_published?: boolean
+          kind?: string
+          service_id?: string
+          spots?: number
+          starts_at?: string | null
+          taken?: number
+          time_label?: string | null
+          title?: string
+          updated_at?: string
+          venue?: string | null
+        }
+        Relationships: []
+      }
       company_profiles: {
         Row: {
           composition: Json
@@ -485,6 +616,45 @@ export type Database = {
           skills?: Json | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      guides: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          intro: string
+          minutes: number
+          published: boolean
+          sections: Json
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          intro?: string
+          minutes?: number
+          published?: boolean
+          sections?: Json
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          intro?: string
+          minutes?: number
+          published?: boolean
+          sections?: Json
+          slug?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
