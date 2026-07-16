@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────
 // matchfoundr · Co-Pilot Edge Function
-// Pipeline: Kimi K2.6 (heavy work) → Claude Sonnet (polish)
+// Pipeline: Kimi K3 (chat single-shot, schneller) → Sonnet nur für Plan
 // Routing via OpenRouter — one API key for both models
 // ─────────────────────────────────────────────────────────────
 
