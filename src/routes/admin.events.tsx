@@ -57,7 +57,7 @@ const EMPTY_FORM: EventRow = {
   blurb: null,
   agenda: [],
   banner_image_url: null,
-  is_published: false,
+  is_published: true,
 };
 
 const PREVIEW_EVENTS: EventRow[] = [
@@ -181,7 +181,15 @@ function AdminEvents() {
       toast.error(`Speichern fehlgeschlagen: ${error.message}`);
       return;
     }
-    toast.success(isNew ? "Event angelegt." : "Event gespeichert.");
+    toast.success(
+      row.is_published
+        ? isNew
+          ? "Event veröffentlicht und in der App sichtbar."
+          : "Event gespeichert und in der App sichtbar."
+        : isNew
+          ? "Event als Entwurf angelegt."
+          : "Event als Entwurf gespeichert."
+    );
     setEditing(null);
     load();
   }
@@ -219,7 +227,7 @@ function AdminEvents() {
     try {
       const url = await uploadImage(file, auth);
       setEditing({ ...editing, banner_image_url: url });
-      toast.success("Banner hochgeladen.");
+      toast.success("Banner hochgeladen. Speichern nicht vergessen.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload fehlgeschlagen.");
     } finally {
@@ -231,7 +239,7 @@ function AdminEvents() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-[13px] text-[var(--smoke)]">
-          Events erscheinen in der iOS-App (Community) und auf der Plattform, sobald sie veröffentlicht sind.
+          Live-Events erscheinen automatisch in der iOS-App (Community) und auf der Plattform. Entwürfe bleiben nur hier.
         </p>
         <button
           onClick={() => {
@@ -486,15 +494,22 @@ function AdminEvents() {
                 </div>
               </Field>
 
-              <label className="flex items-center gap-2 text-[13px] font-semibold text-[var(--ink)]">
-                <input
-                  type="checkbox"
-                  checked={editing.is_published}
-                  onChange={(e) => setEditing({ ...editing, is_published: e.target.checked })}
-                  className="h-4 w-4 accent-[var(--ember)]"
-                />
-                Sofort veröffentlichen
-              </label>
+              <div className="rounded-2xl border border-[var(--ruled)] bg-[var(--canvas)] p-3">
+                <label className="flex items-center gap-2 text-[13px] font-semibold text-[var(--ink)]">
+                  <input
+                    type="checkbox"
+                    checked={editing.is_published}
+                    onChange={(e) => setEditing({ ...editing, is_published: e.target.checked })}
+                    className="h-4 w-4 accent-[var(--ember)]"
+                  />
+                  In der App live schalten
+                </label>
+                {!editing.is_published && (
+                  <p className="mt-1 pl-6 text-[12px] text-[var(--smoke)]">
+                    Entwürfe werden nicht in die iOS-App synchronisiert.
+                  </p>
+                )}
+              </div>
 
               <div className="flex justify-end gap-2 pt-2">
                 <button

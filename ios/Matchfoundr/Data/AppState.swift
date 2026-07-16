@@ -388,14 +388,29 @@ final class AppState: ObservableObject {
         }
     }
 
-    func refreshCommunityEvents() async {
-        eventLoadState = .loading
+    func refreshCommunityEvents(showLoading: Bool = true) async {
+        let hadEvents = !events.isEmpty
+        if showLoading || !hadEvents {
+            eventLoadState = .loading
+        }
         do {
             events = try await SupabaseService.shared.fetchCommunityEvents()
             eventLoadState = .loaded
         } catch {
-            events = []
-            eventLoadState = .failed(error.localizedDescription)
+            if showLoading || !hadEvents {
+                events = []
+                eventLoadState = .failed(error.localizedDescription)
+            }
+        }
+    }
+
+    private func startCommunityEventPolling() {
+        eventRefreshTask?.cancel()
+        eventRefreshTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(45))
+                await self?.refreshCommunityEvents(showLoading: false)
+            }
         }
     }
 
@@ -427,6 +442,7 @@ final class AppState: ObservableObject {
     private static let maxCopilotSessions = 24
     private static let maxCopilotMessagesPerSession = 80
     private var authObserverTask: Task<Void, Never>?
+    private var eventRefreshTask: Task<Void, Never>?
 
     private init() {
         purgeLegacySeedStateIfNeeded()
@@ -441,6 +457,7 @@ final class AppState: ObservableObject {
         Task { await refreshBackendStatus() }
         Task { await refreshPartnerOffers() }
         Task { await refreshCommunityEvents() }
+        startCommunityEventPolling()
     }
 
     func bootstrapAuth() async {

@@ -19,6 +19,7 @@ struct MatchfoundrApp: App {
 
 struct RootView: View {
     @EnvironmentObject var state: AppState
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         Group {
@@ -42,6 +43,12 @@ struct RootView: View {
         .onOpenURL { url in
             Task {
                 await state.handleAuthCallback(url)
+            }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            Task {
+                await state.refreshCommunityEvents(showLoading: false)
             }
         }
         .animation(.easeOut(duration: 0.3), value: state.authIsLoading)
@@ -93,6 +100,11 @@ struct MainTabView: View {
             if tab != .today { state.todayPath = [] }
             if tab != .discover { state.discoverPath = [] }
             if tab != .community { state.communityPath = [] }
+            if tab == .community || tab == .discover {
+                Task {
+                    await state.refreshCommunityEvents(showLoading: false)
+                }
+            }
         }
         .onAppear {
             state.presentAppTourIfNeeded()
@@ -205,6 +217,9 @@ struct CommunityTabView: View {
                     .padding(.bottom, 90)
                 }
                 .scrollIndicators(.hidden)
+                .refreshable {
+                    await state.refreshCommunityEvents()
+                }
             }
             .background(MF.canvas.ignoresSafeArea())
             .navigationDestination(for: DiscoverRoute.self) { route in
@@ -225,6 +240,9 @@ struct CommunityTabView: View {
             .toolbar(.hidden, for: .navigationBar)
         }
         .tint(MF.emberDeep)
+        .task {
+            await state.refreshCommunityEvents(showLoading: false)
+        }
     }
 
     private var emptyCommunityEvents: some View {
