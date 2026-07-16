@@ -38,7 +38,13 @@ enum CopilotEngine {
             let quickActions = Array((response.quickActions ?? []).prefix(4))
             let nativeActions = nativeHint?.actions ?? []
             let navigation = (response.navigation ?? []).compactMap(nativeNav(from:))
-            let quickReplies = quickActions.filter { nativeAction(from: $0, answer: answer, newFacts: newFacts, state: state) == nil }
+            let choiceReplies = choiceReplies(for: answer, quickActions: quickActions, state: state)
+            let quickReplies = choiceReplies.isEmpty
+                ? quickActions.filter {
+                    nativeAction(from: $0, answer: answer, newFacts: newFacts, state: state) == nil
+                        && !isQuestionLikeFollowUp($0)
+                }
+                : choiceReplies
             return CopilotMessage(
                 mine: false,
                 text: answer,
@@ -102,6 +108,10 @@ enum CopilotEngine {
         let nextPlan = memory.openPlannerItems.prefix(3).enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n")
 
         if isStartupStartRequest(m) {
+            if !canFoundStartup(state: state) {
+                return skillPartnerStartupGuard(state: state)
+            }
+
             if state.hasStartupWorkspace {
                 return CopilotMessage(
                     mine: false,
@@ -1047,7 +1057,9 @@ enum CopilotEngine {
             actions.insert(action("Memory speichern", "brain.head.profile", .rememberFact(fact)), at: 0)
         }
 
-        if !state.hasStartupWorkspace && matches(answer.lowercased(), "startup", "workspace", "gründen", "gruenden", "firma", "vorhaben") {
+        if canFoundStartup(state: state)
+            && !state.hasStartupWorkspace
+            && matches(answer.lowercased(), "startup", "workspace", "gründen", "gruenden", "firma", "vorhaben") {
             actions.append(startupFoundingAction(state: state))
         }
 
@@ -1072,6 +1084,9 @@ enum CopilotEngine {
             return action("Memory speichern", "brain.head.profile", .rememberFact(fact))
         }
         if matches(lower, "startup gründen", "startup gruenden", "workspace gründen", "workspace gruenden", "firma anlegen", "vorhaben anlegen") {
+            guard canFoundStartup(state: state) else {
+                return action("Profilmodus prüfen", "person.text.rectangle.fill", .open(.tab(.profile)))
+            }
             return startupFoundingAction(state: state)
         }
         if matches(lower, "firmenprofil", "profil", "builder", "seite") {
@@ -1104,6 +1119,78 @@ enum CopilotEngine {
             city: city,
             idea: idea
         ))
+    }
+
+    @MainActor
+    private static func canFoundStartup(state: AppState) -> Bool {
+        state.profile?.mode != .skills
+    }
+
+    @MainActor
+    private static func skillPartnerStartupGuard(state: AppState) -> CopilotMessage {
+        CopilotMessage(
+            mine: false,
+            text:
+            """
+            Du bist aktuell als Skill-Partner unterwegs. Deshalb gründe ich dir hier keinen eigenen Startup Workspace.
+
+            Sinnvoller ist jetzt: passende Vorhaben finden, deine Rolle schärfen oder den Profilmodus bewusst wechseln, wenn du doch selbst gründen willst.
+            """,
+            actions: [
+                action("Profilmodus prüfen", "person.text.rectangle.fill", .open(.tab(.profile))),
+                action("Vorhaben finden", "magnifyingglass", .open(.screen(.swipe))),
+                action("Chats öffnen", "bubble.left.and.bubble.right.fill", .open(.screen(.chats))),
+            ],
+            quickReplies: [
+                "Ich will als Skill-Partner mitmachen.",
+                "Ich habe doch eine eigene Idee.",
+                "Ich bin noch unsicher."
+            ],
+            memory: state.founderMemory,
+            source: .local
+        )
+    }
+
+    @MainActor
+    private static func choiceReplies(for answer: String, quickActions: [String], state: AppState) -> [String] {
+        let lowerAnswer = answer.lowercased()
+        let combined = ([answer] + quickActions).joined(separator: " ").lowercased()
+
+        if mentionsSoloOrCofounder(combined) {
+            if state.profile?.mode == .skills {
+                return [
+                    "Ich will als Skill-Partner mitmachen.",
+                    "Ich will als Partner auf Augenhöhe einsteigen.",
+                    "Ich habe doch eine eigene Idee."
+                ]
+            }
+            return [
+                "Ich starte erstmal solo.",
+                "Ich suche aktiv einen Co-Founder.",
+                "Ich bin noch unsicher."
+            ]
+        }
+
+        if matches(lowerAnswer, "bist du da schon klarer", "hast du dich entschieden", "was fühlt sich", "was fuehlt sich") {
+            return [
+                "Ja, ich habe mich entschieden.",
+                "Nein, ich bin noch unsicher.",
+                "Hilf mir beim Einordnen."
+            ]
+        }
+
+        return []
+    }
+
+    private static func mentionsSoloOrCofounder(_ text: String) -> Bool {
+        matches(text, "solo", "allein", "selbst starten")
+            && matches(text, "co-founder", "cofounder", "mitgründer", "mitgruender", "partner")
+    }
+
+    private static func isQuestionLikeFollowUp(_ text: String) -> Bool {
+        let lower = text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        return lower.hasSuffix("?")
+            || matches(lower, "was ", "welche ", "welchen ", "wie ", "warum ", "wieso ", "ob du ", "fühlt sich", "fuehlt sich")
     }
 
     private static func dedupeActions(_ actions: [CopilotAction]) -> [CopilotAction] {

@@ -297,11 +297,11 @@ struct CopilotView: View {
                                     send(reply)
                                 } label: {
                                     HStack(spacing: 5) {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .font(.system(size: 10, weight: .bold))
                                         Text(reply)
                                             .font(.system(size: 12.5, weight: .semibold))
                                             .lineLimit(1)
-                                        Image(systemName: "arrow.up.right")
-                                            .font(.system(size: 8.5, weight: .bold))
                                     }
                                     .foregroundStyle(MF.indigoInk)
                                     .padding(.horizontal, 12).padding(.vertical, 8)

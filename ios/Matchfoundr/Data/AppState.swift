@@ -90,9 +90,13 @@ final class AppState: ObservableObject {
             "Idee/Vorhaben: \(memory.idea)",
             "Nächster offener Schritt: \(memory.nextStep)",
             "Unterlagen: \(memory.documentProgress), offen: \(memory.openDocumentsText)",
-            "Startup Workspace: \(hasStartupWorkspace ? "aktiv" : "noch nicht gegründet")",
             "Firmenprofil: \(companyProfile.isPublished ? "veröffentlicht" : "nicht veröffentlicht")",
         ]
+        if profile?.mode == .skills {
+            facts.append("Arbeitsmodus: Skill-Partner; sucht passende Vorhaben und sollte nicht ungefragt einen eigenen Startup-Gründungsflow starten.")
+        } else {
+            facts.append("Startup Workspace: \(hasStartupWorkspace ? "aktiv" : "noch nicht gegründet")")
+        }
 
         let openPlan = plannerItems
             .filter { !$0.done }
