@@ -22,7 +22,7 @@ const corsHeaders = {
 };
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const KIMI_MODEL = "moonshotai/kimi-k2.6";
+const KIMI_MODEL = "moonshotai/kimi-k3";
 const SONNET_MODEL = "anthropic/claude-sonnet-4-6";
 
 // ─── Generic OpenRouter call ─────────────────────────────────
