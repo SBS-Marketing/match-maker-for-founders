@@ -75,18 +75,6 @@ function AuthPage() {
   };
 
   const oauth = async (provider: "google" | "apple") => {
-    if (provider === "google") {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: { access_type: "offline", prompt: "consent" },
-        },
-      });
-      if (error) toast.error(error.message);
-      return;
-    }
-    // Apple via Lovable fallback
     const { lovable } = await import("@/integrations/lovable/index");
     const result = await lovable.auth.signInWithOAuth(provider, {
       redirect_uri: `${window.location.origin}/auth/callback`,
@@ -98,6 +86,7 @@ function AuthPage() {
     if (result.redirected) return;
     navigate({ to: "/heute" });
   };
+
 
   const skipAuth = () => {
     enterDemo();
