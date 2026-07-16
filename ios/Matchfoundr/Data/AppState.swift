@@ -83,6 +83,60 @@ final class AppState: ObservableObject {
         )
     }
 
+    func copilotLiveContextFacts() -> [String] {
+        let memory = founderMemory
+        var facts: [String] = [
+            "Gründer-Verzeichnis: \(memory.compactSummary)",
+            "Idee/Vorhaben: \(memory.idea)",
+            "Nächster offener Schritt: \(memory.nextStep)",
+            "Unterlagen: \(memory.documentProgress), offen: \(memory.openDocumentsText)",
+            "Startup Workspace: \(hasStartupWorkspace ? "aktiv" : "noch nicht gegründet")",
+            "Firmenprofil: \(companyProfile.isPublished ? "veröffentlicht" : "nicht veröffentlicht")",
+        ]
+
+        let openPlan = plannerItems
+            .filter { !$0.done }
+            .prefix(5)
+            .map { item in
+                let assignee = item.assigneeName.map { " · \($0)" } ?? ""
+                return "\(item.title) (\(item.dueLabel), \(item.kind.label)\(assignee))"
+            }
+        if !openPlan.isEmpty {
+            facts.append("Offene Kalender-/Planpunkte: \(openPlan.joined(separator: "; "))")
+        }
+
+        let recentMatches = matches
+            .sorted { lhs, rhs in
+                let lhsDate = lhs.messages.last?.at ?? .distantPast
+                let rhsDate = rhs.messages.last?.at ?? .distantPast
+                return lhsDate > rhsDate
+            }
+            .prefix(5)
+            .map { match in
+                let last = match.messages.last?.text.replacingOccurrences(of: "\n", with: " ") ?? "noch keine Nachricht"
+                let snippet = String(last.prefix(90))
+                return "\(match.card.name): \(match.card.role), \(match.card.matchPercent)% Fit, letzte Nachricht: \(snippet)"
+            }
+        if !recentMatches.isEmpty {
+            facts.append("Aktuelle Matches/Chats: \(recentMatches.joined(separator: " | "))")
+        }
+
+        let partnerSummary = partners.prefix(5).map { "\($0.name) (\($0.serviceLabel), \($0.fit)% Fit)" }
+        if !partnerSummary.isEmpty {
+            facts.append("Live-Partner verfügbar: \(partnerSummary.joined(separator: "; "))")
+        }
+
+        let eventSummary = events
+            .filter { registeredEvents.contains($0.id) }
+            .prefix(3)
+            .map { "\($0.title) am \($0.dateLabel) \($0.timeLabel)" }
+        if !eventSummary.isEmpty {
+            facts.append("Angemeldete Events: \(eventSummary.joined(separator: "; "))")
+        }
+
+        return facts
+    }
+
     // ─── Navigation ──────────────────────────────────────────
     @Published var tab: AppTab = .today
     @Published var todayPath: [TodayRoute] = []

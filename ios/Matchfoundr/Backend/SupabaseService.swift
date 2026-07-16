@@ -292,6 +292,15 @@ struct SupabaseAPIError: Decodable, LocalizedError {
     }
 }
 
+struct BackendRequestError: LocalizedError {
+    let statusCode: Int
+    let message: String
+
+    var errorDescription: String? {
+        "HTTP \(statusCode): \(message)"
+    }
+}
+
 struct SupabaseService {
     private static let liveSession: URLSession = {
         let configuration = URLSessionConfiguration.default
@@ -547,12 +556,21 @@ struct SupabaseService {
             throw URLError(.badServerResponse)
         }
         guard (200..<300).contains(http.statusCode) else {
-            if let error = try? decoder.decode(SupabaseAPIError.self, from: data) {
+            if let error = try? decoder.decode(SupabaseAPIError.self, from: data),
+               let description = error.errorDescription,
+               !description.isEmpty {
                 throw error
             }
-            throw URLError(.badServerResponse)
+            throw BackendRequestError(statusCode: http.statusCode, message: responsePreview(from: data))
         }
-        return try decoder.decode(Response.self, from: data)
+        do {
+            return try decoder.decode(Response.self, from: data)
+        } catch {
+            throw BackendRequestError(
+                statusCode: http.statusCode,
+                message: "Antwort konnte nicht gelesen werden: \(responsePreview(from: data))"
+            )
+        }
     }
 
     private func sendEmpty(_ request: URLRequest) async throws {
@@ -561,11 +579,23 @@ struct SupabaseService {
             throw URLError(.badServerResponse)
         }
         guard (200..<300).contains(http.statusCode) else {
-            if let error = try? decoder.decode(SupabaseAPIError.self, from: data) {
+            if let error = try? decoder.decode(SupabaseAPIError.self, from: data),
+               let description = error.errorDescription,
+               !description.isEmpty {
                 throw error
             }
-            throw URLError(.badServerResponse)
+            throw BackendRequestError(statusCode: http.statusCode, message: responsePreview(from: data))
         }
+    }
+
+    private func responsePreview(from data: Data) -> String {
+        guard !data.isEmpty else { return "Leere Antwort vom Server" }
+        let raw = String(data: data, encoding: .utf8) ?? "\(data.count) Bytes"
+        let compact = raw
+            .replacingOccurrences(of: "\n", with: " ")
+            .split(separator: " ")
+            .joined(separator: " ")
+        return String(compact.prefix(320))
     }
 }
 

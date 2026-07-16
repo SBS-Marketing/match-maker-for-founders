@@ -12,17 +12,14 @@ enum CopilotEngine {
         history: [CopilotMessage]
     ) async -> CopilotMessage {
         let localText = message.lowercased()
-        if requiresNativeControl(localText) {
-            return localAnswer(for: message, state: state)
-        }
+        let nativeHint = requiresNativeControl(localText) ? localAnswer(for: message, state: state) : nil
 
         do {
-            try await SupabaseService.shared.pingFunction("copilot")
             let request = CopilotCloudRequest(
                 message: message,
                 extra: CopilotCloudExtra(
                     surface: "/co-pilot",
-                    memory: state.copilotFacts,
+                    memory: state.copilotFacts + state.copilotLiveContextFacts(),
                     history: history.suffix(6).map {
                         CopilotCloudTurn(role: $0.mine ? "user" : "assistant", content: $0.text)
                     },
@@ -39,12 +36,18 @@ enum CopilotEngine {
             }
             let newFacts = response.newFacts ?? []
             let quickActions = Array((response.quickActions ?? []).prefix(4))
+            let nativeActions = nativeHint?.actions ?? []
+            let navigation = (response.navigation ?? []).compactMap(nativeNav(from:))
+            let quickReplies = quickActions.filter { nativeAction(from: $0, answer: answer, newFacts: newFacts, state: state) == nil }
             return CopilotMessage(
                 mine: false,
                 text: answer,
-                actions: cloudActions(for: answer, quickActions: quickActions, newFacts: newFacts, state: state),
-                navigation: (response.navigation ?? []).compactMap(nativeNav(from:)),
-                quickReplies: quickActions.filter { nativeAction(from: $0, answer: answer, newFacts: newFacts, state: state) == nil },
+                actions: dedupeActions(
+                    cloudActions(for: answer, quickActions: quickActions, newFacts: newFacts, state: state)
+                    + nativeActions
+                ),
+                navigation: navigation.isEmpty ? (nativeHint?.navigation ?? []) : navigation,
+                quickReplies: quickReplies.isEmpty ? (nativeHint?.quickReplies ?? []) : quickReplies,
                 memory: state.founderMemory,
                 source: .cloud
             )
