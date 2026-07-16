@@ -6,6 +6,7 @@ import SwiftUI
 struct OnboardingView: View {
     @EnvironmentObject var state: AppState
     @State private var step = 0
+    @State private var buildingPlan = false
 
     @State private var mode: FounderMode?
     @State private var industryId: String?
@@ -15,28 +16,45 @@ struct OnboardingView: View {
     @State private var pitch = ""
     @State private var plz = ""
     @State private var availability: Availability?
+    @State private var selectedPlan: OnboardingPlan = .standard
 
     private var canNext: Bool {
         switch step {
         case 0: mode != nil
         case 1: industryId != nil && !skills.isEmpty
-        default: name.count > 1 && role.count > 1 && availability != nil
+        case 2: name.count > 1 && role.count > 1 && availability != nil
+        default: true
         }
     }
 
+    private var selectedIndustry: Industry? {
+        industries.first { $0.id == industryId }
+    }
+
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            TabView(selection: $step) {
-                stepMode.tag(0)
-                stepIndustry.tag(1)
-                stepProfile.tag(2)
+        ZStack {
+            VStack(spacing: 0) {
+                header
+                TabView(selection: $step) {
+                    stepMode.tag(0)
+                    stepIndustry.tag(1)
+                    stepProfile.tag(2)
+                    stepPlan.tag(3)
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .animation(.easeOut(duration: 0.28), value: step)
+                footer
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .animation(.easeOut(duration: 0.28), value: step)
-            footer
+            .disabled(buildingPlan)
+            .blur(radius: buildingPlan ? 2 : 0)
+
+            if buildingPlan {
+                planOverlay
+                    .transition(.scale(scale: 0.96).combined(with: .opacity))
+            }
         }
         .background(MF.ink.ignoresSafeArea())
+        .animation(.easeOut(duration: 0.25), value: buildingPlan)
     }
 
     // ─── Kopf: Marke + Fortschritt ───────────────────────────
@@ -48,7 +66,7 @@ struct OnboardingView: View {
             }
             Spacer()
             HStack(spacing: 6) {
-                ForEach(0..<3) { i in
+                ForEach(0..<4) { i in
                     Capsule()
                         .fill(i <= step ? MF.ember : .white.opacity(0.2))
                         .frame(width: i == step ? 22 : 8, height: 6)
@@ -67,6 +85,7 @@ struct OnboardingView: View {
             Text("Womit startest du?")
                 .font(.system(size: 30, weight: .bold))
                 .foregroundStyle(.white)
+            copilotBriefing
             VStack(spacing: 12) {
                 modeCard(.skills, icon: "wrench.and.screwdriver.fill",
                          title: "Ich biete Skills",
@@ -120,6 +139,8 @@ struct OnboardingView: View {
                     .font(.system(size: 30, weight: .bold))
                     .foregroundStyle(.white)
                     .padding(.top, 24)
+
+                copilotBriefing
 
                 VStack(alignment: .leading, spacing: 10) {
                     Eyebrow(text: "Branche", color: .white.opacity(0.45))
@@ -195,6 +216,8 @@ struct OnboardingView: View {
                     .foregroundStyle(.white)
                     .padding(.top, 24)
 
+                copilotBriefing
+
                 field("Dein Name") {
                     darkTextField("Vorname reicht", text: $name)
                 }
@@ -209,7 +232,6 @@ struct OnboardingView: View {
                 }
                 field("PLZ") {
                     darkTextField("50667", text: $plz)
-                        .keyboardType(.numberPad)
                         .onChange(of: plz) { _, v in
                             plz = String(v.filter(\.isNumber).prefix(5))
                         }
@@ -243,6 +265,127 @@ struct OnboardingView: View {
         .scrollDismissesKeyboard(.interactively)
     }
 
+    private var stepPlan: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                Text("Wie willst du starten?")
+                    .font(.system(size: 30, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.top, 24)
+
+                copilotBriefing
+
+                VStack(spacing: 12) {
+                    planCard(
+                        plan: .standard,
+                        title: "Standard",
+                        price: "Kostenlos",
+                        subtitle: "Profil, Matching, Kalender und kleine KI-Hilfe.",
+                        bullets: ["2.000 KI-Tokens pro Tag", "8.000 KI-Tokens pro Woche", "Basis-Co-Pilot ohne tiefe Analyse"]
+                    )
+                    planCard(
+                        plan: .pro,
+                        title: "Pro",
+                        price: "3 Tage kostenlos testen",
+                        subtitle: "KI-Gründeranalyse, mehr Kontext und höhere Limits.",
+                        bullets: ["25.000 KI-Tokens pro Tag", "120.000 KI-Tokens pro Woche", "KI-Analyse direkt nach dem Onboarding"]
+                    )
+                }
+
+                aiAnalysisGate
+                Spacer(minLength: 16)
+            }
+            .padding(.horizontal, 22)
+        }
+        .scrollIndicators(.hidden)
+    }
+
+    private func planCard(
+        plan: OnboardingPlan,
+        title: String,
+        price: String,
+        subtitle: String,
+        bullets: [String]
+    ) -> some View {
+        let active = selectedPlan == plan
+        return Button {
+            Haptics.select()
+            selectedPlan = plan
+        } label: {
+            VStack(alignment: .leading, spacing: 13) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(title)
+                            .font(.system(size: 18, weight: .heavy))
+                            .foregroundStyle(.white)
+                        Text(price)
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(plan == .pro ? MF.ember : .white.opacity(0.72))
+                    }
+                    Spacer()
+                    Image(systemName: active ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 21, weight: .semibold))
+                        .foregroundStyle(active ? MF.ember : .white.opacity(0.42))
+                }
+
+                Text(subtitle)
+                    .font(.system(size: 13.5))
+                    .foregroundStyle(.white.opacity(0.66))
+                    .fixedSize(horizontal: false, vertical: true)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(bullets, id: \.self) { bullet in
+                        HStack(spacing: 8) {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(plan == .pro ? MF.ember : .white.opacity(0.7))
+                                .frame(width: 18, height: 18)
+                                .background(.white.opacity(0.08))
+                                .clipShape(Circle())
+                            Text(bullet)
+                                .font(.system(size: 12.5, weight: .semibold))
+                                .foregroundStyle(.white.opacity(0.78))
+                        }
+                    }
+                }
+            }
+            .padding(17)
+            .background(active ? MF.ember.opacity(plan == .pro ? 0.18 : 0.11) : .white.opacity(0.05))
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(active ? MF.ember : .white.opacity(0.12), lineWidth: active ? 1.5 : 1))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var aiAnalysisGate: some View {
+        let pro = selectedPlan == .pro
+        return HStack(alignment: .top, spacing: 12) {
+            Image(systemName: pro ? "sparkles" : "lock.fill")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 36, height: 36)
+                .background(pro ? AnyShapeStyle(MF.indigoGrad) : AnyShapeStyle(.white.opacity(0.12)))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            VStack(alignment: .leading, spacing: 5) {
+                Text("KI-Gründeranalyse")
+                    .font(.system(size: 14.5, weight: .bold))
+                    .foregroundStyle(.white)
+                Text(pro
+                     ? "Nach dem Start analysiere ich dein Vorhaben, Risiken, Team-Lücke und nächste App-Aktionen."
+                     : "Diese tiefere Analyse ist Pro. Standard startet ohne Analyse, du kannst später im Profil upgraden.")
+                    .font(.system(size: 12.5))
+                    .foregroundStyle(.white.opacity(0.64))
+                    .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .background(.white.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(.white.opacity(0.12), lineWidth: 1))
+    }
+
     private func field<C: View>(_ label: String, hint: String? = nil, @ViewBuilder content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack {
@@ -259,6 +402,7 @@ struct OnboardingView: View {
             .font(.system(size: 15))
             .foregroundStyle(.white)
             .tint(MF.ember)
+            .submitLabel(axis == .vertical ? .return : .done)
             .padding(.horizontal, 14)
             .padding(.vertical, 13)
             .background(.white.opacity(0.06))
@@ -274,6 +418,103 @@ struct OnboardingView: View {
                         .allowsHitTesting(false)
                 }
             }
+    }
+
+    private var copilotBriefing: some View {
+        let briefing = copilotBriefingCopy
+        return HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 34, height: 34)
+                .background(MF.indigoGrad)
+                .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+            VStack(alignment: .leading, spacing: 4) {
+                Text(briefing.title)
+                    .font(.system(size: 13.5, weight: .bold))
+                    .foregroundStyle(.white)
+                Text(briefing.text)
+                    .font(.system(size: 12.5))
+                    .foregroundStyle(.white.opacity(0.64))
+                    .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .background(.white.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(.white.opacity(0.12), lineWidth: 1))
+    }
+
+    private var copilotBriefingCopy: (title: String, text: String) {
+        switch step {
+        case 0:
+            let modeText = mode == .skills ? "Skills-Profil" : mode == .idea ? "Founder-Profil" : "deinen Startpunkt"
+            return (
+                "Co-Pilot-Briefing",
+                "Ich merke mir \(modeText) und baue daraus nach dem Onboarding erste Schritte, Match-Logik und Workspace-Kontext."
+            )
+        case 1:
+            if let selectedIndustry {
+                let skillText = skills.isEmpty ? "Wähle gleich noch deine stärksten Signale." : "\(skills.count) Skills fließen schon ein."
+                return (
+                    "\(selectedIndustry.ventureTerm)-Kontext",
+                    "\(selectedIndustry.copilotContext) \(skillText)"
+                )
+            }
+            return (
+                "Branche macht den Plan genauer",
+                "Je nach Feld spreche ich anders: Handwerk braucht andere Schritte als SaaS, Gastro oder Beratung."
+            )
+        case 2:
+            let idea = pitch.trimmingCharacters(in: .whitespacesAndNewlines)
+            return (
+                "Aus Antworten wird ein Plan",
+                idea.isEmpty
+                    ? "Name, Rolle, Ort und Verfügbarkeit werden gleich in Kalender, Firmenprofil und Unterlagen übersetzt."
+                    : "Ich nutze „\(idea)” gleich als Kern für Founder-Memory, Firmenprofil und erste Kalender-Schritte."
+            )
+        default:
+            return (
+                "Standard oder Pro",
+                "Standard begrenzt KI bewusst klein. Pro startet mit 3 Tagen kostenlos und schaltet die KI-Gründeranalyse plus höhere Tages- und Wochenlimits frei."
+            )
+        }
+    }
+
+    private var planOverlay: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 26, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 68, height: 68)
+                .background(MF.indigoGrad)
+                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .indigoGlow()
+            VStack(spacing: 7) {
+                Text(selectedPlan == .pro ? "KI-Analyse wird vorbereitet" : "Co-Pilot erstellt deinen Plan")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(MF.ink)
+                Text(selectedPlan == .pro
+                     ? "Dein Pro-Trial startet und der Co-Pilot analysiert Vorhaben, Risiken, Team-Lücke und nächste Schritte."
+                     : "Founder-Memory, Kalender, Firmenprofil und Unterlagen werden aus deinen Antworten vorbereitet.")
+                    .font(.system(size: 13.5))
+                    .foregroundStyle(MF.smoke)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(3)
+            }
+            ProgressView()
+                .tint(MF.indigo)
+                .padding(.top, 2)
+        }
+        .padding(22)
+        .frame(maxWidth: 320)
+        .background(MF.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 24).stroke(MF.border, lineWidth: 1))
+        .warmShadow(large: true)
+        .padding(24)
     }
 
     // ─── Fußzeile ────────────────────────────────────────────
@@ -295,10 +536,10 @@ struct OnboardingView: View {
             }
             Button {
                 Haptics.tap()
-                if step < 2 { step += 1 } else { finish() }
+                if step < 3 { step += 1 } else { finish() }
             } label: {
                 HStack(spacing: 8) {
-                    Text(step < 2 ? "Weiter" : "Los geht's")
+                    Text(step < 3 ? "Weiter" : selectedPlan == .pro ? "Analyse starten" : "Standard starten")
                         .font(.system(size: 15.5, weight: .semibold))
                     Image(systemName: "arrow.right").font(.system(size: 13, weight: .semibold))
                 }
@@ -307,10 +548,10 @@ struct OnboardingView: View {
                 .frame(height: 50)
                 .background(MF.emberGrad)
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .opacity(canNext ? 1 : 0.4)
+                .opacity(canNext && !buildingPlan ? 1 : 0.4)
             }
             .buttonStyle(.plain)
-            .disabled(!canNext)
+            .disabled(!canNext || buildingPlan)
             .emberGlow()
         }
         .padding(.horizontal, 22)
@@ -320,14 +561,25 @@ struct OnboardingView: View {
 
     private func finish() {
         guard let mode, let industryId, let availability else { return }
-        Haptics.success()
-        state.profile = MyProfile(
+        let profile = MyProfile(
             mode: mode, industryId: industryId, skills: Array(skills),
             name: name.trimmingCharacters(in: .whitespaces),
             role: role.trimmingCharacters(in: .whitespaces),
             pitch: pitch.trimmingCharacters(in: .whitespaces),
             plz: plz, availability: availability)
+        buildingPlan = true
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(900))
+            if selectedPlan == .pro {
+                state.activateTrial(days: 3)
+            }
+            state.completeOnboarding(with: profile, launchAIAnalysis: selectedPlan == .pro)
+        }
     }
+}
+
+private enum OnboardingPlan {
+    case standard, pro
 }
 
 /// Einfaches Flow-Layout für Tag-Wolken.
@@ -347,12 +599,16 @@ struct FlowLayout: Layout {
     }
 
     private func layout(proposal: ProposedViewSize, subviews: Subviews) -> (size: CGSize, positions: [CGPoint]) {
-        let maxWidth = proposal.width ?? .infinity
+        let proposedWidth = proposal.width ?? 0
+        let hasFiniteWidth = proposedWidth.isFinite && proposedWidth > 0
+        let maxWidth = hasFiniteWidth ? proposedWidth : CGFloat.greatestFiniteMagnitude
         var positions: [CGPoint] = []
         var x: CGFloat = 0, y: CGFloat = 0, rowHeight: CGFloat = 0
+        var contentWidth: CGFloat = 0
         for sub in subviews {
             let size = sub.sizeThatFits(.unspecified)
             if x + size.width > maxWidth, x > 0 {
+                contentWidth = max(contentWidth, x - spacing)
                 x = 0
                 y += rowHeight + spacing
                 rowHeight = 0
@@ -361,6 +617,7 @@ struct FlowLayout: Layout {
             x += size.width + spacing
             rowHeight = max(rowHeight, size.height)
         }
-        return (CGSize(width: maxWidth, height: y + rowHeight), positions)
+        contentWidth = max(contentWidth, x > 0 ? x - spacing : 0)
+        return (CGSize(width: hasFiniteWidth ? proposedWidth : contentWidth, height: y + rowHeight), positions)
     }
 }

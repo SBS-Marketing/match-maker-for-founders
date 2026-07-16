@@ -64,11 +64,21 @@ export function routeBlock(): string {
   return ROUTE_CATALOG.map((r) => `${r.to} = ${r.label}`).join("\n");
 }
 
+export function appBlock(app: unknown): string {
+  if (!app || typeof app !== "object") return "(keine native App-Landkarte mitgeschickt)";
+  try {
+    return JSON.stringify(app, null, 2).slice(0, 5000);
+  } catch {
+    return "(App-Landkarte konnte nicht serialisiert werden)";
+  }
+}
+
 export type ChatPromptInput = {
   message: string;
   history: ChatTurn[];
   memory: string[];
   surface?: string; // aktuelle Seite, z.B. "/foerderung/exist-gruenderstipendium"
+  app?: unknown;
 };
 
 export type TaskType =
@@ -323,10 +333,13 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
     PLATTFORM-BEREICHE (nur diese Routen verwenden):
     ${routeBlock()}
 
+    NATIVE APP-LANDKARTE UND AUSFÜHRBARE AKTIONEN:
+    ${appBlock(input.app)}
+
     NEUE NACHRICHT: "${input.message}"
 
     REGELN:
-    1. Antworte im Kontext des Verlaufs — wiederhole nichts, was schon gesagt wurde.
+    1. Antworte knapp und direkt: erst Entscheidung, dann nächster Schritt. Keine langen Frameworks.
     2. Stage-Intelligenz: Passt die Frage nicht zum Stand (z.B. ESOP in der Ideenphase),
        sag das kurz, erkläre warum, und nenne die richtige Priorität JETZT. Dann "zu_frueh": true.
     3. Proaktivität: Wenn ein Plattform-Bereich konkret weiterhilft, schlage ihn in "navigation"
@@ -336,11 +349,14 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
        als kurze eigenständige Sätze. Keine Wiederholungen von schon Gemerktem. Max 3.
     5. Kontext-Updates: Hat sich role/idea/stage/city/goal/risk erkennbar geändert oder
        konkretisiert, liefere NUR die geänderten Felder in "kontext_updates", sonst {}.
-    6. Follow-ups: 2 konkrete nächste Fragen/Aktionen, die LOGISCH aus dem Gespräch folgen.
+    6. Follow-ups: 2 kurze konkrete nächste Aktionen, die LOGISCH aus dem Gespräch folgen.
+    7. Native App-Steuerung: Wenn sinnvoll, formuliere Follow-ups so, dass der iOS-Client daraus
+       echte Chips bauen kann, z.B. "Termin eintragen", "Memory speichern", "Startup gründen",
+       "Firmenprofil öffnen", "Nachricht schreiben". Keine Funktionen erfinden.
 
     Antworte NUR mit validem JSON:
     {
-      "antwort": "Deine Antwort (Rohtext, wird noch poliert)",
+      "antwort": "Deine Antwort in max. 2 kurzen Absätzen, konkret und app-nah",
       "zu_frueh": false,
       "quellen": [],
       "follow_up_aktionen": ["Folgefrage 1", "Folgefrage 2"],
@@ -361,16 +377,15 @@ export function buildChatPolishPrompt(
     Du bist der Co-Pilot von matchfoundr — ein direkter, hilfreicher Begleiter für Menschen die etwas aufbauen.
     Formuliere die folgende Antwort für ${ctx.userName}.
 
-    Ton: Direkt, warm, wie ein erfahrener Mentor der ehrlich sagt wo man gerade steht.
+    Ton: Direkt, warm, nicht verkopft. Lieber klare nächste Bewegung als lange Analyse.
     Kein "Natürlich!", kein "Gerne!", kein "Als KI kann ich...".
-    Schreib auf Deutsch. Max 3 Absätze.
+    Schreib auf Deutsch. Max 2 kurze Absätze. Kein Consulting-Sprech.
     Benutze die Sprache der Branche — sag "${ctx.venture_term || "Vorhaben"}" statt immer "Startup",
     sag "${ctx.partner_term || "Partner"}" statt immer "Co-Founder".
     Knüpfe natürlich an den Verlauf an (nicht neu vorstellen, nichts wiederholen).
 
     Wenn der Inhalt signalisiert dass das Thema für den aktuellen Stand zu früh ist:
-    → Kurz anerkennen, warum die Frage gut ist
-    → Klar sagen, warum es jetzt noch nicht dran ist
+    → Sag knapp warum es jetzt nicht dran ist
     → Direkt sagen, was stattdessen jetzt zählt
 
     Kontext: ${ctx.idea || "Vorhaben"} | ${ctx.stage || ""} | ${ctx.city || ""} | Branche: ${ctx.industry || "allgemein"}

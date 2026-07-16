@@ -30,6 +30,7 @@ import { Route as CoPilotRouteImport } from './routes/co-pilot'
 import { Route as CoFounderRouteImport } from './routes/co-founder'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AufgabenRouteImport } from './routes/aufgaben'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TalentIndexRouteImport } from './routes/talent.index'
 import { Route as SteuerIndexRouteImport } from './routes/steuer.index'
@@ -40,6 +41,7 @@ import { Route as KapitalIndexRouteImport } from './routes/kapital.index'
 import { Route as GuidesIndexRouteImport } from './routes/guides.index'
 import { Route as GrowthIndexRouteImport } from './routes/growth.index'
 import { Route as FoerderungIndexRouteImport } from './routes/foerderung.index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as TalentSlugRouteImport } from './routes/talent.$slug'
 import { Route as SteuerSlugRouteImport } from './routes/steuer.$slug'
 import { Route as SSlugRouteImport } from './routes/s.$slug'
@@ -54,6 +56,8 @@ import { Route as AuthWaitlistConfirmRouteImport } from './routes/auth.waitlist-
 import { Route as AuthUpdatePasswordRouteImport } from './routes/auth.update-password'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ApiSttRouteImport } from './routes/api/stt'
+import { Route as AdminGuidesRouteImport } from './routes/admin.guides'
+import { Route as AdminEventsRouteImport } from './routes/admin.events'
 
 const UnterlagenRoute = UnterlagenRouteImport.update({
   id: '/unterlagen',
@@ -160,6 +164,11 @@ const AufgabenRoute = AufgabenRouteImport.update({
   path: '/aufgaben',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -209,6 +218,11 @@ const FoerderungIndexRoute = FoerderungIndexRouteImport.update({
   id: '/foerderung/',
   path: '/foerderung/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const TalentSlugRoute = TalentSlugRouteImport.update({
   id: '/$slug',
@@ -280,9 +294,20 @@ const ApiSttRoute = ApiSttRouteImport.update({
   path: '/api/stt',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminGuidesRoute = AdminGuidesRouteImport.update({
+  id: '/guides',
+  path: '/guides',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEventsRoute = AdminEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/aufgaben': typeof AufgabenRoute
   '/auth': typeof AuthRouteWithChildren
   '/co-founder': typeof CoFounderRoute
@@ -304,6 +329,8 @@ export interface FileRoutesByFullPath {
   '/talent': typeof TalentRouteWithChildren
   '/team': typeof TeamRoute
   '/unterlagen': typeof UnterlagenRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/guides': typeof AdminGuidesRoute
   '/api/stt': typeof ApiSttRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
@@ -318,6 +345,7 @@ export interface FileRoutesByFullPath {
   '/s/$slug': typeof SSlugRoute
   '/steuer/$slug': typeof SteuerSlugRoute
   '/talent/$slug': typeof TalentSlugRoute
+  '/admin/': typeof AdminIndexRoute
   '/foerderung/': typeof FoerderungIndexRoute
   '/growth/': typeof GrowthIndexRoute
   '/guides/': typeof GuidesIndexRoute
@@ -346,6 +374,8 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/team': typeof TeamRoute
   '/unterlagen': typeof UnterlagenRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/guides': typeof AdminGuidesRoute
   '/api/stt': typeof ApiSttRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
@@ -360,6 +390,7 @@ export interface FileRoutesByTo {
   '/s/$slug': typeof SSlugRoute
   '/steuer/$slug': typeof SteuerSlugRoute
   '/talent/$slug': typeof TalentSlugRoute
+  '/admin': typeof AdminIndexRoute
   '/foerderung': typeof FoerderungIndexRoute
   '/growth': typeof GrowthIndexRoute
   '/guides': typeof GuidesIndexRoute
@@ -373,6 +404,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/aufgaben': typeof AufgabenRoute
   '/auth': typeof AuthRouteWithChildren
   '/co-founder': typeof CoFounderRoute
@@ -394,6 +426,8 @@ export interface FileRoutesById {
   '/talent': typeof TalentRouteWithChildren
   '/team': typeof TeamRoute
   '/unterlagen': typeof UnterlagenRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/guides': typeof AdminGuidesRoute
   '/api/stt': typeof ApiSttRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
@@ -408,6 +442,7 @@ export interface FileRoutesById {
   '/s/$slug': typeof SSlugRoute
   '/steuer/$slug': typeof SteuerSlugRoute
   '/talent/$slug': typeof TalentSlugRoute
+  '/admin/': typeof AdminIndexRoute
   '/foerderung/': typeof FoerderungIndexRoute
   '/growth/': typeof GrowthIndexRoute
   '/guides/': typeof GuidesIndexRoute
@@ -422,6 +457,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/aufgaben'
     | '/auth'
     | '/co-founder'
@@ -443,6 +479,8 @@ export interface FileRouteTypes {
     | '/talent'
     | '/team'
     | '/unterlagen'
+    | '/admin/events'
+    | '/admin/guides'
     | '/api/stt'
     | '/auth/callback'
     | '/auth/update-password'
@@ -457,6 +495,7 @@ export interface FileRouteTypes {
     | '/s/$slug'
     | '/steuer/$slug'
     | '/talent/$slug'
+    | '/admin/'
     | '/foerderung/'
     | '/growth/'
     | '/guides/'
@@ -485,6 +524,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/team'
     | '/unterlagen'
+    | '/admin/events'
+    | '/admin/guides'
     | '/api/stt'
     | '/auth/callback'
     | '/auth/update-password'
@@ -499,6 +540,7 @@ export interface FileRouteTypes {
     | '/s/$slug'
     | '/steuer/$slug'
     | '/talent/$slug'
+    | '/admin'
     | '/foerderung'
     | '/growth'
     | '/guides'
@@ -511,6 +553,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/aufgaben'
     | '/auth'
     | '/co-founder'
@@ -532,6 +575,8 @@ export interface FileRouteTypes {
     | '/talent'
     | '/team'
     | '/unterlagen'
+    | '/admin/events'
+    | '/admin/guides'
     | '/api/stt'
     | '/auth/callback'
     | '/auth/update-password'
@@ -546,6 +591,7 @@ export interface FileRouteTypes {
     | '/s/$slug'
     | '/steuer/$slug'
     | '/talent/$slug'
+    | '/admin/'
     | '/foerderung/'
     | '/growth/'
     | '/guides/'
@@ -559,6 +605,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AufgabenRoute: typeof AufgabenRoute
   AuthRoute: typeof AuthRouteWithChildren
   CoFounderRoute: typeof CoFounderRoute
@@ -741,6 +788,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AufgabenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -810,6 +864,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/foerderung/'
       preLoaderRoute: typeof FoerderungIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/talent/$slug': {
       id: '/talent/$slug'
@@ -909,8 +970,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSttRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/guides': {
+      id: '/admin/guides'
+      path: '/guides'
+      fullPath: '/admin/guides'
+      preLoaderRoute: typeof AdminGuidesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/events': {
+      id: '/admin/events'
+      path: '/events'
+      fullPath: '/admin/events'
+      preLoaderRoute: typeof AdminEventsRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
+
+interface AdminRouteChildren {
+  AdminEventsRoute: typeof AdminEventsRoute
+  AdminGuidesRoute: typeof AdminGuidesRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminEventsRoute: AdminEventsRoute,
+  AdminGuidesRoute: AdminGuidesRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface AuthRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -994,6 +1083,7 @@ const TalentRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   AufgabenRoute: AufgabenRoute,
   AuthRoute: AuthRouteWithChildren,
   CoFounderRoute: CoFounderRoute,
@@ -1029,3 +1119,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

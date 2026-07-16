@@ -54,13 +54,13 @@ struct SwipeDeckView: View {
             Image(systemName: "checkmark.seal.fill")
                 .font(.system(size: 40))
                 .foregroundStyle(MF.ember)
-            Text("Alle gesehen!")
+            Text("Noch keine Live-Profile")
                 .font(.system(size: 22, weight: .bold)).foregroundStyle(MF.ink)
-            Text("Du hast alle Profile von heute durch.\nSchau später wieder rein — oder lade das Deck neu.")
+            Text("Sobald echte Gründerprofile in Supabase sichtbar sind, erscheinen sie hier.")
                 .font(.system(size: 14)).foregroundStyle(MF.smoke)
                 .multilineTextAlignment(.center)
-            MFGhostButton(title: "Deck neu laden", icon: "arrow.clockwise") {
-                state.resetDemo()
+            MFGhostButton(title: "Live neu laden", icon: "arrow.clockwise") {
+                state.reloadDeck()
             }
             .frame(width: 220)
         }
@@ -286,7 +286,7 @@ struct MatchCelebrationView: View {
                 VStack(spacing: 10) {
                     MFPrimaryButton(title: "Jetzt schreiben", icon: "bubble.left.fill") {
                         dismiss()
-                        state.tab = .chats
+                        state.open(.screen(.chats))
                     }
                     Button("Später") { dismiss() }
                         .font(.system(size: 14, weight: .semibold))
@@ -315,10 +315,10 @@ struct PremiumSheetView: View {
     let reason: AppState.PaywallReason
 
     private let features = [
-        "Unbegrenzt swipen — jeden Tag",
-        "Alle Matches anschreiben",
-        "Sehen, wer dein Profil besucht hat",
-        "Dein Gesuch ganz oben im Marktplatz",
+        "KI-Gründeranalyse nach dem Onboarding",
+        "25.000 KI-Tokens pro Tag",
+        "120.000 KI-Tokens pro Woche",
+        "Mehr Swipes, Matches und App-Aktionen",
     ]
 
     var body: some View {
@@ -331,16 +331,12 @@ struct PremiumSheetView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .emberGlow()
 
-            Text(reason == .swipes
-                 ? "Deine 5 Swipes für heute sind durch."
-                 : "Der nächste Kontakt gehört zu Premium.")
+            Text(title)
                 .font(.system(size: 22, weight: .bold))
                 .foregroundStyle(MF.ink)
                 .padding(.top, 16)
 
-            Text(reason == .swipes
-                 ? "Gute Partner warten nicht bis morgen. Mit Premium swipst du weiter — so viel du willst."
-                 : "Dein erster Kontakt ist immer frei. Für alle weiteren Gespräche schaltet Premium den Chat auf.")
+            Text(subtitle)
                 .font(.system(size: 14)).foregroundStyle(MF.smoke)
                 .padding(.top, 6)
 
@@ -361,8 +357,8 @@ struct PremiumSheetView: View {
 
             Spacer(minLength: 18)
 
-            MFPrimaryButton(title: "7 Tage kostenlos testen") {
-                state.activateTrial()
+            MFPrimaryButton(title: "3 Tage kostenlos testen") {
+                state.activateTrial(days: 3)
             }
             Text("Danach 9 €/Monat · jederzeit kündbar · endet automatisch")
                 .font(.system(size: 11.5)).foregroundStyle(MF.faint)
@@ -376,5 +372,31 @@ struct PremiumSheetView: View {
         }
         .padding(24)
         .background(MF.surface)
+    }
+
+    private var title: String {
+        switch reason {
+        case .swipes:
+            return "Deine 5 Swipes für heute sind durch."
+        case .chat:
+            return "Der nächste Kontakt gehört zu Pro."
+        case .aiAnalysis:
+            return "Die KI-Gründeranalyse ist Pro."
+        case .aiUsage:
+            return "Dein KI-Budget ist erreicht."
+        }
+    }
+
+    private var subtitle: String {
+        switch reason {
+        case .swipes:
+            return "Mit Pro swipst du weiter und bekommst deutlich mehr KI-Kontingent für Co-Pilot-Aufgaben."
+        case .chat:
+            return "Dein erster Kontakt ist frei. Pro schaltet weitere Gespräche und bessere KI-Unterstützung frei."
+        case .aiAnalysis:
+            return "Starte 3 Tage kostenlos und lass den Co-Pilot dein Vorhaben, Risiken und Team-Lücke analysieren."
+        case .aiUsage:
+            return "Standard bleibt bewusst knapp, damit KI-Kosten kontrollierbar bleiben. Pro hebt Tages- und Wochenlimit deutlich an."
+        }
     }
 }
