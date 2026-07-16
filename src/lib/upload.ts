@@ -32,12 +32,12 @@ export async function uploadImage(file: File, auth: UploadAuth): Promise<string>
 
   const ext = (file.name.split(".").pop() || "png").toLowerCase().replace(/[^a-z0-9]/g, "");
   const path = `${auth.user!.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const { error } = await supabase.storage.from("media").upload(path, file, {
+  const { error } = await supabase.storage.from("avatars").upload(path, file, {
     cacheControl: "31536000",
     upsert: false,
   });
   if (error) throw new Error(`Upload fehlgeschlagen: ${error.message}`);
-  const { data } = supabase.storage.from("media").getPublicUrl(path);
+  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
   return data.publicUrl;
 }
 
