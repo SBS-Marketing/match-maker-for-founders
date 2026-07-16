@@ -333,7 +333,7 @@ Deno.serve(async (req) => {
           user_id: user.id,
           role: "assistant",
           content: polishedAnswer,
-          model_used: "kimi+sonnet",
+          model_used: "kimi-k3",
           sources: Array.isArray(kimiData.quellen) ? kimiData.quellen : [],
         });
 
