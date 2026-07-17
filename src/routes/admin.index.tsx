@@ -111,13 +111,13 @@ function AdminDashboard() {
   }, [isPreview, checking]);
 
   useEffect(() => {
-    const files: { label: string; file: string; key: string }[] = [
-      { label: "Deals & Vergünstigungen", file: "/deals.json", key: "deals" },
-      { label: "Förderungen", file: "/grants.json", key: "grants" },
-      { label: "Partner & Ansprechpartner", file: "/partners.json", key: "partners" },
+    const files: { label: string; file: string; key: string; route: string }[] = [
+      { label: "Deals & Vergünstigungen", file: "/deals.json", key: "deals", route: "/deals" },
+      { label: "Förderungen", file: "/grants.json", key: "grants", route: "/foerderung" },
+      { label: "Partner & Ansprechpartner", file: "/partners.json", key: "partners", route: "/mentoren" },
     ];
     Promise.all(
-      files.map(async ({ label, file, key }): Promise<SourceStatus> => {
+      files.map(async ({ label, file, key, route }): Promise<SourceStatus> => {
         try {
           const res = await fetch(file);
           const json = await res.json();
@@ -125,11 +125,12 @@ function AdminDashboard() {
           return {
             label,
             file,
+            route,
             count: Array.isArray(items) ? items.length : null,
             generatedAt: typeof json?.generated_at === "string" ? json.generated_at : null,
           };
         } catch {
-          return { label, file, count: null, generatedAt: null };
+          return { label, file, route, count: null, generatedAt: null };
         }
       }),
     ).then(setSources);
