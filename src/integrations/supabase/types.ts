@@ -622,6 +622,66 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_offers: {
+        Row: {
+          slug: string
+          name: string
+          firm: string
+          service_id: string
+          city: string
+          blurb: string
+          fit: number
+          source_url: string | null
+          booking_url: string | null
+          scrape_status: string | null
+          specialties: Json
+          packages: Json
+          why: Json
+          vouches: Json
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          slug: string
+          name: string
+          firm: string
+          service_id: string
+          city?: string
+          blurb: string
+          fit?: number
+          source_url?: string | null
+          booking_url?: string | null
+          scrape_status?: string | null
+          specialties?: Json
+          packages?: Json
+          why?: Json
+          vouches?: Json
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          slug?: string
+          name?: string
+          firm?: string
+          service_id?: string
+          city?: string
+          blurb?: string
+          fit?: number
+          source_url?: string | null
+          booking_url?: string | null
+          scrape_status?: string | null
+          specialties?: Json
+          packages?: Json
+          why?: Json
+          vouches?: Json
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       guides: {
         Row: {
           category: string

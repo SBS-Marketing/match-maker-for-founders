@@ -1,16 +1,18 @@
 {
-  "generated_at": "2026-05-22T23:01:12.404140+00:00",
-  "source_file": "partners_2026-05-22.json",
+  "generated_at": "2026-07-17T10:33:10.270092+00:00",
+  "source_file": "partners_2026-07-17.json",
   "stats": {
-    "total_partners": 10,
+    "total_partners": 28,
     "by_service": {
-      "capital": 2,
-      "growth": 2,
-      "mentor": 2,
-      "talent": 2,
-      "tax": 2
+      "capital": 4,
+      "funding": 4,
+      "growth": 4,
+      "legal": 4,
+      "mentor": 4,
+      "talent": 4,
+      "tax": 4
     },
-    "last_updated": "2026-05-22"
+    "last_updated": "2026-07-17"
   },
   "partners": [
     {
@@ -47,6 +49,106 @@
           "name": "2 Wochen Sprint",
           "price": "auf Anfrage",
           "desc": "Bereitet Angel-Runde, Onepager, Target List und Intro-Material fuer Pre-Seed vor."
+        },
+        {
+          "name": "Co-Pilot Briefing",
+          "price": "inklusive",
+          "desc": "Profil, Kontext und offene Fragen werden vor dem Erstgespräch strukturiert."
+        }
+      ],
+      "why": [
+        "Passt in die Kategorie capital und ist fuer fruehe Teams vorkuratiert.",
+        "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
+        "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
+      ],
+      "vouches": [
+        {
+          "from": "matchfoundr",
+          "role": "Partner Research",
+          "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
+        }
+      ]
+    },
+    {
+      "slug": "buergschaftsbank-desk",
+      "name": "Bürgschaftsbank Desk",
+      "firm": "Verband Deutscher Bürgschaftsbanken",
+      "service": "capital",
+      "city": "Deine Region",
+      "blurb": "Wenn Sicherheiten fuer den Bankkredit fehlen: Buergschaftsbanken der Laender springen ein — auch fuer kleine Betriebe.",
+      "fit": 84,
+      "sourceUrl": "https://vdb.ermoeglicher.de/de/",
+      "bookingUrl": "https://www.vdb-info.de/",
+      "scrapeStatus": "ok",
+      "specialties": [
+        {
+          "label": "Buergschaft",
+          "level": 0.96
+        },
+        {
+          "label": "Bankkredit",
+          "level": 0.9
+        },
+        {
+          "label": "Sicherheiten",
+          "level": 0.84
+        }
+      ],
+      "packages": [
+        {
+          "name": "Antrag ueber Hausbank",
+          "price": "auf Anfrage",
+          "desc": "Wenn Sicherheiten fuer den Bankkredit fehlen: Buergschaftsbanken der Laender springen ein — auch fuer kleine Betriebe."
+        },
+        {
+          "name": "Co-Pilot Briefing",
+          "price": "inklusive",
+          "desc": "Profil, Kontext und offene Fragen werden vor dem Erstgespräch strukturiert."
+        }
+      ],
+      "why": [
+        "Passt in die Kategorie capital und ist fuer fruehe Teams vorkuratiert.",
+        "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
+        "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
+      ],
+      "vouches": [
+        {
+          "from": "matchfoundr",
+          "role": "Partner Research",
+          "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
+        }
+      ]
+    },
+    {
+      "slug": "landesfoerderbank-check",
+      "name": "Landesförderbank-Check",
+      "firm": "Förderbanken der Länder",
+      "service": "capital",
+      "city": "Deine Region",
+      "blurb": "NRW.BANK, L-Bank, IBB & Co: Gruendungsdarlehen deines Bundeslands — oft guenstiger als die Hausbank.",
+      "fit": 82,
+      "sourceUrl": "https://www.foerderdatenbank.de/FDB/DE/Foerderwissen/Foerderorganisationen/Landesfoerderinstitute/landesfoerderinstitute.html",
+      "bookingUrl": "https://www.foerderdatenbank.de/",
+      "scrapeStatus": "ok",
+      "specialties": [
+        {
+          "label": "Gruendungsdarlehen",
+          "level": 0.96
+        },
+        {
+          "label": "Landesbank",
+          "level": 0.9
+        },
+        {
+          "label": "Zinsvorteil",
+          "level": 0.84
+        }
+      ],
+      "packages": [
+        {
+          "name": "Antrag ueber Hausbank",
+          "price": "auf Anfrage",
+          "desc": "NRW.BANK, L-Bank, IBB & Co: Gruendungsdarlehen deines Bundeslands — oft guenstiger als die Hausbank."
         },
         {
           "name": "Co-Pilot Briefing",
@@ -110,6 +212,264 @@
       ],
       "why": [
         "Passt in die Kategorie capital und ist fuer fruehe Teams vorkuratiert.",
+        "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
+        "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
+      ],
+      "vouches": [
+        {
+          "from": "matchfoundr",
+          "role": "Partner Research",
+          "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
+        }
+      ]
+    },
+    {
+      "slug": "gruendungszuschuss-desk",
+      "name": "Gründungszuschuss Desk",
+      "firm": "Agentur für Arbeit",
+      "service": "funding",
+      "city": "Deutschland",
+      "blurb": "Bis zu 15 Monate Zuschuss aus der Arbeitslosigkeit in die Selbststaendigkeit — der Klassiker fuer kleine Gruendungen.",
+      "fit": 88,
+      "sourceUrl": "https://www.arbeitsagentur.de/selbstaendigkeit/gruendungszuschuss",
+      "bookingUrl": "https://www.arbeitsagentur.de/selbstaendigkeit/gruendungszuschuss",
+      "scrapeStatus": "error",
+      "specialties": [
+        {
+          "label": "Gruendungszuschuss",
+          "level": 0.96
+        },
+        {
+          "label": "Businessplan",
+          "level": 0.9
+        },
+        {
+          "label": "Tragfaehigkeit",
+          "level": 0.84
+        },
+        {
+          "label": "ALG-I",
+          "level": 0.78
+        }
+      ],
+      "packages": [
+        {
+          "name": "Kostenlos",
+          "price": "Kostenlos",
+          "desc": "Bis zu 15 Monate Zuschuss aus der Arbeitslosigkeit in die Selbststaendigkeit — der Klassiker fuer kleine Gruendungen."
+        },
+        {
+          "name": "Co-Pilot Briefing",
+          "price": "inklusive",
+          "desc": "Profil, Kontext und offene Fragen werden vor dem Erstgespräch strukturiert."
+        }
+      ],
+      "why": [
+        "Passt in die Kategorie funding und ist fuer fruehe Teams vorkuratiert.",
+        "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
+        "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
+      ],
+      "vouches": [
+        {
+          "from": "matchfoundr",
+          "role": "Partner Research",
+          "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
+        }
+      ]
+    },
+    {
+      "slug": "mikrokreditfonds",
+      "name": "Mein Mikrokredit",
+      "firm": "Mikrokreditfonds Deutschland",
+      "service": "funding",
+      "city": "Deutschland",
+      "blurb": "Kredite bis 25.000 € ohne Hausbank — ueber akkreditierte Mikrofinanzinstitute, auch fuer kleine Vorhaben.",
+      "fit": 86,
+      "sourceUrl": "https://www.mein-mikrokredit.de/",
+      "bookingUrl": "https://www.mein-mikrokredit.de/",
+      "scrapeStatus": "error",
+      "specialties": [
+        {
+          "label": "Mikrokredit",
+          "level": 0.96
+        },
+        {
+          "label": "bis 25k",
+          "level": 0.9
+        },
+        {
+          "label": "ohne Hausbank",
+          "level": 0.84
+        }
+      ],
+      "packages": [
+        {
+          "name": "Antrag ueber MFI",
+          "price": "auf Anfrage",
+          "desc": "Kredite bis 25.000 € ohne Hausbank — ueber akkreditierte Mikrofinanzinstitute, auch fuer kleine Vorhaben."
+        },
+        {
+          "name": "Co-Pilot Briefing",
+          "price": "inklusive",
+          "desc": "Profil, Kontext und offene Fragen werden vor dem Erstgespräch strukturiert."
+        }
+      ],
+      "why": [
+        "Passt in die Kategorie funding und ist fuer fruehe Teams vorkuratiert.",
+        "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
+        "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
+      ],
+      "vouches": [
+        {
+          "from": "matchfoundr",
+          "role": "Partner Research",
+          "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
+        }
+      ]
+    },
+    {
+      "slug": "bafa-beratungsfoerderung",
+      "name": "BAFA-Beratungsförderung",
+      "firm": "BAFA",
+      "service": "funding",
+      "city": "Deutschland",
+      "blurb": "Der Staat zahlt bis zu 80% deiner Unternehmensberatung — auch fuer Jungunternehmen in den ersten Jahren.",
+      "fit": 84,
+      "sourceUrl": "https://www.bafa.de/DE/Wirtschaft/Beratung_Finanzierung/Unternehmensberatung/unternehmensberatung_node.html",
+      "bookingUrl": "https://www.bafa.de/",
+      "scrapeStatus": "ok",
+      "specialties": [
+        {
+          "label": "Beratungszuschuss",
+          "level": 0.96
+        },
+        {
+          "label": "bis 80%",
+          "level": 0.9
+        },
+        {
+          "label": "Jungunternehmen",
+          "level": 0.84
+        }
+      ],
+      "packages": [
+        {
+          "name": "Zuschussantrag",
+          "price": "auf Anfrage",
+          "desc": "Der Staat zahlt bis zu 80% deiner Unternehmensberatung — auch fuer Jungunternehmen in den ersten Jahren."
+        },
+        {
+          "name": "Co-Pilot Briefing",
+          "price": "inklusive",
+          "desc": "Profil, Kontext und offene Fragen werden vor dem Erstgespräch strukturiert."
+        }
+      ],
+      "why": [
+        "Passt in die Kategorie funding und ist fuer fruehe Teams vorkuratiert.",
+        "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
+        "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
+      ],
+      "vouches": [
+        {
+          "from": "matchfoundr",
+          "role": "Partner Research",
+          "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
+        }
+      ]
+    },
+    {
+      "slug": "foerderdatenbank-bund",
+      "name": "Förderdatenbank des Bundes",
+      "firm": "BMWK",
+      "service": "funding",
+      "city": "Deutschland",
+      "blurb": "Alle Foerderprogramme von Bund, Laendern und EU durchsuchbar — nach Region, Branche und Vorhaben filterbar.",
+      "fit": 82,
+      "sourceUrl": "https://www.foerderdatenbank.de/FDB/DE/Home/home.html",
+      "bookingUrl": "https://www.foerderdatenbank.de/",
+      "scrapeStatus": "ok",
+      "specialties": [
+        {
+          "label": "Bund",
+          "level": 0.96
+        },
+        {
+          "label": "Laender",
+          "level": 0.9
+        },
+        {
+          "label": "EU",
+          "level": 0.84
+        },
+        {
+          "label": "Suche",
+          "level": 0.78
+        }
+      ],
+      "packages": [
+        {
+          "name": "Kostenlos",
+          "price": "Kostenlos",
+          "desc": "Alle Foerderprogramme von Bund, Laendern und EU durchsuchbar — nach Region, Branche und Vorhaben filterbar."
+        },
+        {
+          "name": "Co-Pilot Briefing",
+          "price": "inklusive",
+          "desc": "Profil, Kontext und offene Fragen werden vor dem Erstgespräch strukturiert."
+        }
+      ],
+      "why": [
+        "Passt in die Kategorie funding und ist fuer fruehe Teams vorkuratiert.",
+        "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
+        "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
+      ],
+      "vouches": [
+        {
+          "from": "matchfoundr",
+          "role": "Partner Research",
+          "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
+        }
+      ]
+    },
+    {
+      "slug": "google-unternehmensprofil",
+      "name": "Lokal gefunden werden",
+      "firm": "Google Unternehmensprofil",
+      "service": "growth",
+      "city": "Deine Region",
+      "blurb": "Kostenloses Unternehmensprofil bei Google Maps & Suche — der wichtigste Kanal fuer lokale Kundschaft.",
+      "fit": 90,
+      "sourceUrl": "https://consent.google.com/ml?continue=https://www.google.com/intl/de_de/business/&gl=DE&hl=en-US&cm=2&pc=acm&src=1&escs=AZ8E49CA2BMCxzf6N1ZFrxnwfj7J2XFimk2IdixwFWNa4kV5fAeC_0hw1PN3QIDSxjLIX9ILpI6O2GSOiTKJYjGvz-XpngJyqH1p",
+      "bookingUrl": "https://www.google.com/intl/de_de/business/",
+      "scrapeStatus": "ok",
+      "specialties": [
+        {
+          "label": "Google Maps",
+          "level": 0.96
+        },
+        {
+          "label": "Lokale Suche",
+          "level": 0.9
+        },
+        {
+          "label": "Bewertungen",
+          "level": 0.84
+        }
+      ],
+      "packages": [
+        {
+          "name": "Kostenlos",
+          "price": "Kostenlos",
+          "desc": "Kostenloses Unternehmensprofil bei Google Maps & Suche — der wichtigste Kanal fuer lokale Kundschaft."
+        },
+        {
+          "name": "Co-Pilot Briefing",
+          "price": "inklusive",
+          "desc": "Profil, Kontext und offene Fragen werden vor dem Erstgespräch strukturiert."
+        }
+      ],
+      "why": [
+        "Passt in die Kategorie growth und ist fuer fruehe Teams vorkuratiert.",
         "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
         "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
       ],
@@ -230,6 +590,272 @@
       ]
     },
     {
+      "slug": "zukunftswerkstatt-marketing",
+      "name": "Online-Marketing lernen",
+      "firm": "Google Zukunftswerkstatt",
+      "service": "growth",
+      "city": "Remote",
+      "blurb": "Kostenlose Kurse zu SEO, Social Media und Online-Werbung — fuer Gruender ohne Marketing-Vorwissen.",
+      "fit": 80,
+      "sourceUrl": "https://grow.google/intl/de/",
+      "bookingUrl": "https://learndigital.withgoogle.com/zukunftswerkstatt",
+      "scrapeStatus": "ok",
+      "specialties": [
+        {
+          "label": "SEO",
+          "level": 0.96
+        },
+        {
+          "label": "Social Media",
+          "level": 0.9
+        },
+        {
+          "label": "Ads",
+          "level": 0.84
+        },
+        {
+          "label": "Kurse",
+          "level": 0.78
+        }
+      ],
+      "packages": [
+        {
+          "name": "Kostenlos",
+          "price": "Kostenlos",
+          "desc": "Kostenlose Kurse zu SEO, Social Media und Online-Werbung — fuer Gruender ohne Marketing-Vorwissen."
+        },
+        {
+          "name": "Co-Pilot Briefing",
+          "price": "inklusive",
+          "desc": "Profil, Kontext und offene Fragen werden vor dem Erstgespräch strukturiert."
+        }
+      ],
+      "why": [
+        "Passt in die Kategorie growth und ist fuer fruehe Teams vorkuratiert.",
+        "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
+        "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
+      ],
+      "vouches": [
+        {
+          "from": "matchfoundr",
+          "role": "Partner Research",
+          "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
+        }
+      ]
+    },
+    {
+      "slug": "ihk-recht-erstberatung",
+      "name": "IHK-Erstberatung Recht",
+      "firm": "IHK",
+      "service": "legal",
+      "city": "Deine Region",
+      "blurb": "Kostenlose rechtliche Erstorientierung fuer Mitglieder: Vertraege, AGB, Gewerberecht, Arbeitsrecht.",
+      "fit": 86,
+      "sourceUrl": "https://www.ihk.de/",
+      "bookingUrl": "https://www.ihk.de/",
+      "scrapeStatus": "ok",
+      "specialties": [
+        {
+          "label": "AGB",
+          "level": 0.96
+        },
+        {
+          "label": "Gewerberecht",
+          "level": 0.9
+        },
+        {
+          "label": "Vertraege",
+          "level": 0.84
+        },
+        {
+          "label": "Arbeitsrecht",
+          "level": 0.78
+        }
+      ],
+      "packages": [
+        {
+          "name": "Kostenlos fuer Mitglieder",
+          "price": "Kostenlos",
+          "desc": "Kostenlose rechtliche Erstorientierung fuer Mitglieder: Vertraege, AGB, Gewerberecht, Arbeitsrecht."
+        },
+        {
+          "name": "Co-Pilot Briefing",
+          "price": "inklusive",
+          "desc": "Profil, Kontext und offene Fragen werden vor dem Erstgespräch strukturiert."
+        }
+      ],
+      "why": [
+        "Passt in die Kategorie legal und ist fuer fruehe Teams vorkuratiert.",
+        "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
+        "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
+      ],
+      "vouches": [
+        {
+          "from": "matchfoundr",
+          "role": "Partner Research",
+          "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
+        }
+      ]
+    },
+    {
+      "slug": "anwalt-gruendungsrecht",
+      "name": "Anwalt für Gründungsrecht finden",
+      "firm": "anwalt.de",
+      "service": "legal",
+      "city": "Deutschland",
+      "blurb": "Anwaelte fuer Rechtsform, Gesellschaftervertrag und Haftung — mit Bewertungen und Festpreis-Erstberatung.",
+      "fit": 84,
+      "sourceUrl": "https://www.anwalt.de/gesellschaftsrecht",
+      "bookingUrl": "https://www.anwalt.de/gesellschaftsrecht",
+      "scrapeStatus": "error",
+      "specialties": [
+        {
+          "label": "Rechtsform",
+          "level": 0.96
+        },
+        {
+          "label": "Gesellschaftervertrag",
+          "level": 0.9
+        },
+        {
+          "label": "Haftung",
+          "level": 0.84
+        },
+        {
+          "label": "Erstberatung",
+          "level": 0.78
+        }
+      ],
+      "packages": [
+        {
+          "name": "Erstberatung ab €99",
+          "price": "auf Anfrage",
+          "desc": "Anwaelte fuer Rechtsform, Gesellschaftervertrag und Haftung — mit Bewertungen und Festpreis-Erstberatung."
+        },
+        {
+          "name": "Co-Pilot Briefing",
+          "price": "inklusive",
+          "desc": "Profil, Kontext und offene Fragen werden vor dem Erstgespräch strukturiert."
+        }
+      ],
+      "why": [
+        "Passt in die Kategorie legal und ist fuer fruehe Teams vorkuratiert.",
+        "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
+        "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
+      ],
+      "vouches": [
+        {
+          "from": "matchfoundr",
+          "role": "Partner Research",
+          "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
+        }
+      ]
+    },
+    {
+      "slug": "firma-de-gruendungsservice",
+      "name": "Gründung digital abwickeln",
+      "firm": "firma.de",
+      "service": "legal",
+      "city": "Remote",
+      "blurb": "UG/GmbH/Einzelunternehmen digital gruenden — Notartermin, Handelsregister und Unterlagen aus einer Hand.",
+      "fit": 82,
+      "sourceUrl": "https://www.firma.de/",
+      "bookingUrl": "https://www.firma.de/",
+      "scrapeStatus": "ok",
+      "specialties": [
+        {
+          "label": "UG-Gruendung",
+          "level": 0.96
+        },
+        {
+          "label": "GmbH",
+          "level": 0.9
+        },
+        {
+          "label": "Handelsregister",
+          "level": 0.84
+        },
+        {
+          "label": "Notar",
+          "level": 0.78
+        }
+      ],
+      "packages": [
+        {
+          "name": "Pakete ab €49",
+          "price": "auf Anfrage",
+          "desc": "UG/GmbH/Einzelunternehmen digital gruenden — Notartermin, Handelsregister und Unterlagen aus einer Hand."
+        },
+        {
+          "name": "Co-Pilot Briefing",
+          "price": "inklusive",
+          "desc": "Profil, Kontext und offene Fragen werden vor dem Erstgespräch strukturiert."
+        }
+      ],
+      "why": [
+        "Passt in die Kategorie legal und ist fuer fruehe Teams vorkuratiert.",
+        "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
+        "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
+      ],
+      "vouches": [
+        {
+          "from": "matchfoundr",
+          "role": "Partner Research",
+          "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
+        }
+      ]
+    },
+    {
+      "slug": "existenzgruender-recht",
+      "name": "Verträge & Rechtsform-Check",
+      "firm": "BMWK existenzgruender.de",
+      "service": "legal",
+      "city": "Deutschland",
+      "blurb": "Offizielle Checklisten und Mustervorlagen des Bundeswirtschaftsministeriums zu Rechtsform und Vertraegen.",
+      "fit": 76,
+      "sourceUrl": "https://www.existenzgruendungsportal.de/DE/Gruendung-vorbereiten/Rechtsformen/inhalt.html",
+      "bookingUrl": "https://www.existenzgruender.de/",
+      "scrapeStatus": "error",
+      "specialties": [
+        {
+          "label": "Rechtsformwahl",
+          "level": 0.96
+        },
+        {
+          "label": "Mustervertraege",
+          "level": 0.9
+        },
+        {
+          "label": "Checklisten",
+          "level": 0.84
+        }
+      ],
+      "packages": [
+        {
+          "name": "Kostenlos",
+          "price": "Kostenlos",
+          "desc": "Offizielle Checklisten und Mustervorlagen des Bundeswirtschaftsministeriums zu Rechtsform und Vertraegen."
+        },
+        {
+          "name": "Co-Pilot Briefing",
+          "price": "inklusive",
+          "desc": "Profil, Kontext und offene Fragen werden vor dem Erstgespräch strukturiert."
+        }
+      ],
+      "why": [
+        "Passt in die Kategorie legal und ist fuer fruehe Teams vorkuratiert.",
+        "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
+        "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
+      ],
+      "vouches": [
+        {
+          "from": "matchfoundr",
+          "role": "Partner Research",
+          "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
+        }
+      ]
+    },
+    {
       "slug": "gtm-mentor-circle",
       "name": "GTM Mentor Circle",
       "firm": "matchfoundr Mentor Network",
@@ -338,6 +964,114 @@
       ]
     },
     {
+      "slug": "ihk-gruendungsberatung",
+      "name": "IHK-Gründungsberatung",
+      "firm": "IHK",
+      "service": "mentor",
+      "city": "Deine Region",
+      "blurb": "Persoenliche Beratung vor Ort: Businessplan-Feedback, Tragfaehigkeitsbescheinigung und Behoerdenwege.",
+      "fit": 86,
+      "sourceUrl": "https://www.ihk.de/themen/gruendung",
+      "bookingUrl": "https://www.ihk.de/",
+      "scrapeStatus": "error",
+      "specialties": [
+        {
+          "label": "Businessplan",
+          "level": 0.96
+        },
+        {
+          "label": "Tragfaehigkeit",
+          "level": 0.9
+        },
+        {
+          "label": "Behoerden",
+          "level": 0.84
+        },
+        {
+          "label": "Vor Ort",
+          "level": 0.78
+        }
+      ],
+      "packages": [
+        {
+          "name": "Kostenlos",
+          "price": "Kostenlos",
+          "desc": "Persoenliche Beratung vor Ort: Businessplan-Feedback, Tragfaehigkeitsbescheinigung und Behoerdenwege."
+        },
+        {
+          "name": "Co-Pilot Briefing",
+          "price": "inklusive",
+          "desc": "Profil, Kontext und offene Fragen werden vor dem Erstgespräch strukturiert."
+        }
+      ],
+      "why": [
+        "Passt in die Kategorie mentor und ist fuer fruehe Teams vorkuratiert.",
+        "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
+        "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
+      ],
+      "vouches": [
+        {
+          "from": "matchfoundr",
+          "role": "Partner Research",
+          "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
+        }
+      ]
+    },
+    {
+      "slug": "senior-experten-service",
+      "name": "Senior Experten Service",
+      "firm": "SES Bonn",
+      "service": "mentor",
+      "city": "Deutschland",
+      "blurb": "Ruhestaendler mit Jahrzehnten Branchenerfahrung begleiten kleine Betriebe — gegen Aufwandspauschale.",
+      "fit": 82,
+      "sourceUrl": "https://ses-bonn.de/home",
+      "bookingUrl": "https://www.ses-bonn.de/",
+      "scrapeStatus": "ok",
+      "specialties": [
+        {
+          "label": "Branchenerfahrung",
+          "level": 0.96
+        },
+        {
+          "label": "Handwerk",
+          "level": 0.9
+        },
+        {
+          "label": "Handel",
+          "level": 0.84
+        },
+        {
+          "label": "Pauschale",
+          "level": 0.78
+        }
+      ],
+      "packages": [
+        {
+          "name": "Aufwandspauschale",
+          "price": "auf Anfrage",
+          "desc": "Ruhestaendler mit Jahrzehnten Branchenerfahrung begleiten kleine Betriebe — gegen Aufwandspauschale."
+        },
+        {
+          "name": "Co-Pilot Briefing",
+          "price": "inklusive",
+          "desc": "Profil, Kontext und offene Fragen werden vor dem Erstgespräch strukturiert."
+        }
+      ],
+      "why": [
+        "Passt in die Kategorie mentor und ist fuer fruehe Teams vorkuratiert.",
+        "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
+        "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
+      ],
+      "vouches": [
+        {
+          "from": "matchfoundr",
+          "role": "Partner Research",
+          "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
+        }
+      ]
+    },
+    {
       "slug": "first-five-hires",
       "name": "First Five Hires",
       "firm": "matchfoundr Talent Desk",
@@ -371,6 +1105,110 @@
           "name": "Shortlist in 10 Tagen",
           "price": "auf Anfrage",
           "desc": "Pipeline fuer erste Engineer-, Growth- und Ops-Rollen mit Founder-tauglicher Vorauswahl."
+        },
+        {
+          "name": "Co-Pilot Briefing",
+          "price": "inklusive",
+          "desc": "Profil, Kontext und offene Fragen werden vor dem Erstgespräch strukturiert."
+        }
+      ],
+      "why": [
+        "Passt in die Kategorie talent und ist fuer fruehe Teams vorkuratiert.",
+        "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
+        "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
+      ],
+      "vouches": [
+        {
+          "from": "matchfoundr",
+          "role": "Partner Research",
+          "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
+        }
+      ]
+    },
+    {
+      "slug": "junico-freelancer",
+      "name": "Studentische Freelancer",
+      "firm": "Junico",
+      "service": "talent",
+      "city": "Remote",
+      "blurb": "Studierende fuer Design, Social Media, Webentwicklung — bezahlbar fuer kleine Budgets, projektweise buchbar.",
+      "fit": 84,
+      "sourceUrl": "https://www.junico.de/",
+      "bookingUrl": "https://www.junico.de/",
+      "scrapeStatus": "ok",
+      "specialties": [
+        {
+          "label": "Design",
+          "level": 0.96
+        },
+        {
+          "label": "Social Media",
+          "level": 0.9
+        },
+        {
+          "label": "Web",
+          "level": 0.84
+        },
+        {
+          "label": "Projektbasis",
+          "level": 0.78
+        }
+      ],
+      "packages": [
+        {
+          "name": "ab Stundensatz",
+          "price": "auf Anfrage",
+          "desc": "Studierende fuer Design, Social Media, Webentwicklung — bezahlbar fuer kleine Budgets, projektweise buchbar."
+        },
+        {
+          "name": "Co-Pilot Briefing",
+          "price": "inklusive",
+          "desc": "Profil, Kontext und offene Fragen werden vor dem Erstgespräch strukturiert."
+        }
+      ],
+      "why": [
+        "Passt in die Kategorie talent und ist fuer fruehe Teams vorkuratiert.",
+        "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
+        "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
+      ],
+      "vouches": [
+        {
+          "from": "matchfoundr",
+          "role": "Partner Research",
+          "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
+        }
+      ]
+    },
+    {
+      "slug": "ihk-lehrstellenboerse",
+      "name": "Azubis finden",
+      "firm": "IHK-Lehrstellenbörse",
+      "service": "talent",
+      "city": "Deutschland",
+      "blurb": "Ausbildungsplaetze kostenlos ausschreiben — der direkte Weg zu Nachwuchs fuer Handwerk und Betrieb.",
+      "fit": 78,
+      "sourceUrl": "https://meine-ausbildung-in-deutschland.de/",
+      "bookingUrl": "https://www.ihk-lehrstellenboerse.de/",
+      "scrapeStatus": "ok",
+      "specialties": [
+        {
+          "label": "Ausbildung",
+          "level": 0.96
+        },
+        {
+          "label": "Nachwuchs",
+          "level": 0.9
+        },
+        {
+          "label": "Kostenlos",
+          "level": 0.84
+        }
+      ],
+      "packages": [
+        {
+          "name": "Kostenlos",
+          "price": "Kostenlos",
+          "desc": "Ausbildungsplaetze kostenlos ausschreiben — der direkte Weg zu Nachwuchs fuer Handwerk und Betrieb."
         },
         {
           "name": "Co-Pilot Briefing",
@@ -533,6 +1371,110 @@
           "name": "Erstcheck kostenlos",
           "price": "Kostenlos",
           "desc": "Prueft FuE-Faehigkeit und strukturiert Nachweise fuer Forschungszulage-Antraege."
+        },
+        {
+          "name": "Co-Pilot Briefing",
+          "price": "inklusive",
+          "desc": "Profil, Kontext und offene Fragen werden vor dem Erstgespräch strukturiert."
+        }
+      ],
+      "why": [
+        "Passt in die Kategorie tax und ist fuer fruehe Teams vorkuratiert.",
+        "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
+        "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
+      ],
+      "vouches": [
+        {
+          "from": "matchfoundr",
+          "role": "Partner Research",
+          "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
+        }
+      ]
+    },
+    {
+      "slug": "steuerberater-suchdienst",
+      "name": "Steuerberater-Suchdienst",
+      "firm": "Bundessteuerberaterkammer",
+      "service": "tax",
+      "city": "Deine Region",
+      "blurb": "Offizielle Suche der Steuerberaterkammer — nach Ort, Branche und Schwerpunkt (z.B. Existenzgruendung) filterbar.",
+      "fit": 82,
+      "sourceUrl": "https://steuerberater.bstbk.de/",
+      "bookingUrl": "https://steuerberater.bstbk.de/",
+      "scrapeStatus": "error",
+      "specialties": [
+        {
+          "label": "Steuerberater-Suche",
+          "level": 0.96
+        },
+        {
+          "label": "Existenzgruendung",
+          "level": 0.9
+        },
+        {
+          "label": "Regional",
+          "level": 0.84
+        }
+      ],
+      "packages": [
+        {
+          "name": "Kostenlos",
+          "price": "Kostenlos",
+          "desc": "Offizielle Suche der Steuerberaterkammer — nach Ort, Branche und Schwerpunkt (z.B. Existenzgruendung) filterbar."
+        },
+        {
+          "name": "Co-Pilot Briefing",
+          "price": "inklusive",
+          "desc": "Profil, Kontext und offene Fragen werden vor dem Erstgespräch strukturiert."
+        }
+      ],
+      "why": [
+        "Passt in die Kategorie tax und ist fuer fruehe Teams vorkuratiert.",
+        "Co-Pilot kann Kontext, offene Unterlagen und naechste Fragen vorab uebergeben.",
+        "Geeignet fuer schnelle Erstpruefung statt langer Anbieterrecherche."
+      ],
+      "vouches": [
+        {
+          "from": "matchfoundr",
+          "role": "Partner Research",
+          "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
+        }
+      ]
+    },
+    {
+      "slug": "sevdesk-gruender",
+      "name": "Buchhaltung selbst machen",
+      "firm": "sevdesk",
+      "service": "tax",
+      "city": "Remote",
+      "blurb": "Rechnungen, Belege und EUeR selbst erledigen, bis sich ein Steuerberater lohnt — mit DATEV-Export.",
+      "fit": 80,
+      "sourceUrl": "https://sevdesk.de/",
+      "bookingUrl": "https://sevdesk.de/",
+      "scrapeStatus": "ok",
+      "specialties": [
+        {
+          "label": "Rechnungen",
+          "level": 0.96
+        },
+        {
+          "label": "EUeR",
+          "level": 0.9
+        },
+        {
+          "label": "Belege",
+          "level": 0.84
+        },
+        {
+          "label": "DATEV-Export",
+          "level": 0.78
+        }
+      ],
+      "packages": [
+        {
+          "name": "ab €8,90 / Monat",
+          "price": "auf Anfrage",
+          "desc": "Rechnungen, Belege und EUeR selbst erledigen, bis sich ein Steuerberater lohnt — mit DATEV-Export."
         },
         {
           "name": "Co-Pilot Briefing",

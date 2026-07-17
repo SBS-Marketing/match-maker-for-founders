@@ -6,7 +6,7 @@ Wo liegen die gescannten Daten, wie laufen die Jobs, und wie kommen sie in Web +
 
 | Katalog | Datei | Inhalt | Stand prüfen |
 |---|---|---|---|
-| **Partner / Ansprechpartner** | `public/partners.json` (+ `docs/partners.json`) | 10 kuratierte Ansprechpartner inkl. **KfW & Hausbank Finance Desk** (Kreditgeber, `bookingUrl` zum Termin) — Anwälte, Steuerberater, Förderberater | Feld `generated_at` |
+| **Partner / Ansprechpartner** | `public/partners.json` (+ `docs/partners.json`) | 28 kuratierte Partner über **alle 7 Kategorien** (je 4: Recht, Steuer, Förderung, Kapital, Mentoren, Talent, Growth) — inkl. Kreditgebern wie **KfW & Hausbank Finance Desk**, Mikrokreditfonds und Bürgschaftsbanken | Feld `generated_at` |
 | **Förderungen / Finanzierung** | `public/grants.json` (+ `docs/grants.json`) | 10 Förderprogramme mit `applyUrl`, `eligibility`, `timeline`, `materials` — Gründungszuschuss, Mikrokredit & Co. | Feld `generated_at` |
 | **Deals / Vergünstigungen** | `public/deals.json` (+ `docs/deals.json`) | ~70 Software- und Service-Deals mit `claim_url`, Kategorie, Wert | Feld `generated_at` |
 
@@ -21,6 +21,8 @@ Generierte TypeScript-Spiegel für die Website: `src/data/grants.generated.ts`, 
 
 **Automatisch:** GitHub Action `weekly-deals.yml` läuft **jeden Dienstag 07:00 UTC**, committet als `matchfoundr-bot` und legt bei Fehlern ein Issue an.
 **Manuell:** GitHub → Actions → *Weekly Deals* → **Run workflow**.
+**Partner → Supabase:** `scripts/build_partner_offers_sql.py` erzeugt aus dem aktuellen Katalog eine Upsert-Migration für `partner_offers` (die Tabelle, die die iOS-App liest). Zuletzt: `supabase/migrations/20260717103310_partner_offers_catalog.sql` (28 Partner).
+**Pflege danach:** im Admin unter `/admin/partner` — anlegen, bearbeiten, deaktivieren, Fit-Score.
 **Auslieferung:** `deploy-tools.yml` deployt `public/` bei jedem Push nach Netlify; `docs/` liegt zusätzlich auf GitHub Pages.
 
 ## Zugriff aus den Apps

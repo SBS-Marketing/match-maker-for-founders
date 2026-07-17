@@ -6,7 +6,7 @@
 
 import { type ReactNode } from "react";
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { BarChart3, BookOpen, CalendarDays, ShieldAlert, ShieldCheck } from "lucide-react";
+import { BarChart3, BookOpen, CalendarDays, ShieldAlert, ShieldCheck, Store } from "lucide-react";
 import { AuthGate } from "@/components/AuthGate";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 
@@ -40,8 +40,8 @@ function AdminGate({ children }: { children: ReactNode }) {
         </span>
         <h1 className="text-lg font-bold text-[var(--ink)]">Kein Zugriff</h1>
         <p className="text-[13px] leading-relaxed text-[var(--smoke)]">
-          Dieser Bereich ist dem matchfoundr-Team vorbehalten. Falls du Admin sein solltest,
-          fehlt deinem Account die Rolle — sie wird direkt in Supabase vergeben.
+          Dieser Bereich ist dem matchfoundr-Team vorbehalten. Falls du Admin sein solltest, fehlt
+          deinem Account die Rolle — sie wird direkt in Supabase vergeben.
         </p>
         <Link
           to="/heute"
@@ -60,6 +60,7 @@ const ADMIN_TABS = [
   { to: "/admin", label: "Insights", icon: BarChart3, exact: true },
   { to: "/admin/events", label: "Events", icon: CalendarDays, exact: false },
   { to: "/admin/guides", label: "Guides", icon: BookOpen, exact: false },
+  { to: "/admin/partner", label: "Partner", icon: Store, exact: false },
 ] as const;
 
 function AdminLayout() {
@@ -78,7 +79,7 @@ function AdminLayout() {
             <p className="text-[12px] text-[var(--smoke)]">Insights, Events & Redaktion</p>
           </div>
         </div>
-        <nav className="flex gap-1.5">
+        <nav className="flex flex-wrap gap-1.5">
           {ADMIN_TABS.map((tab) => {
             const active = tab.exact ? pathname === tab.to : pathname.startsWith(tab.to);
             return (
@@ -101,8 +102,8 @@ function AdminLayout() {
 
       {isPreview && (
         <div className="mb-4 rounded-xl border border-dashed border-[var(--ember)] bg-[var(--ember-tint)] px-3.5 py-2.5 text-[12.5px] font-semibold text-[var(--ember-deep)]">
-          Demo-Vorschau: Du siehst Beispieldaten. Echte Zahlen erscheinen mit einem
-          eingeloggten Admin-Account (Rolle „admin“ in Supabase).
+          Demo-Vorschau: Du siehst Beispieldaten. Echte Zahlen erscheinen mit einem eingeloggten
+          Admin-Account (Rolle „admin“ in Supabase).
         </div>
       )}
 

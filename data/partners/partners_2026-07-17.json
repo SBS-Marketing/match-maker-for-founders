@@ -1,19 +1,5 @@
 {
-  "generated_at": "2026-07-17T10:33:10.270092+00:00",
-  "source_file": "partners_2026-07-17.json",
-  "stats": {
-    "total_partners": 28,
-    "by_service": {
-      "capital": 4,
-      "funding": 4,
-      "growth": 4,
-      "legal": 4,
-      "mentor": 4,
-      "talent": 4,
-      "tax": 4
-    },
-    "last_updated": "2026-07-17"
-  },
+  "generated_at": "2026-07-17T10:33:10.240329+00:00",
   "partners": [
     {
       "slug": "angel-readiness",

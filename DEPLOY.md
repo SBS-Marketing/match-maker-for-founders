@@ -29,6 +29,8 @@ Wichtige neue Migrationen:
 - `20260529120100_daily_digest_cron.sql` — pg_cron-Job (no-op bis Vault-Secrets gesetzt sind, danach erneut ausführen)
 - `20260715120000_admin_and_content.sql` — `ai_usage` (KI-Kosten-Log) + `guides` (Redaktion)
 - `20260717090000_community_events_admin.sql` — Admin-Policies auf `community_events` + `community_event_registrations`
+- `20260717103310_partner_offers_catalog.sql` — 28 kuratierte Partner für alle 7 Entdecken-Kategorien (generiert aus der Scraper-Pipeline)
+- `20260717120000_partner_offers_admin.sql` — Admins dürfen `partner_offers` verwalten
 
 ## 3. Edge Functions
 
@@ -96,6 +98,10 @@ zeigt `/admin` nur Beispieldaten (RLS blockt alles Echte).
   `media`-Bucket) — dieselbe Tabelle liest die iOS-App im Community-Tab.
   Anmeldungen landen in `community_event_registrations`.
 - **Guides**: redaktionelle Guides in der `guides`-Tabelle, veröffentlichte sind öffentlich lesbar.
+- **Partner**: Katalog der Entdecken-Sektion (`partner_offers`) — anlegen, bearbeiten,
+  Fit-Score, aktiv/inaktiv. Neu befüllen: Pipeline laufen lassen
+  (`python3.11+ scrapers/partners_curated.py && scripts/normalize_partners.py &&
+  scripts/build_partners_json.py && scripts/build_partner_offers_sql.py`), dann `db push`.
 
 ## 6. Typen nach Schema-Änderungen
 

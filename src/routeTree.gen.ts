@@ -57,6 +57,7 @@ import { Route as AuthWaitlistConfirmRouteImport } from './routes/auth.waitlist-
 import { Route as AuthUpdatePasswordRouteImport } from './routes/auth.update-password'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ApiSttRouteImport } from './routes/api/stt'
+import { Route as AdminPartnerRouteImport } from './routes/admin.partner'
 import { Route as AdminGuidesRouteImport } from './routes/admin.guides'
 import { Route as AdminEventsRouteImport } from './routes/admin.events'
 
@@ -300,6 +301,11 @@ const ApiSttRoute = ApiSttRouteImport.update({
   path: '/api/stt',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminPartnerRoute = AdminPartnerRouteImport.update({
+  id: '/partner',
+  path: '/partner',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminGuidesRoute = AdminGuidesRouteImport.update({
   id: '/guides',
   path: '/guides',
@@ -338,6 +344,7 @@ export interface FileRoutesByFullPath {
   '/unterlagen': typeof UnterlagenRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/guides': typeof AdminGuidesRoute
+  '/admin/partner': typeof AdminPartnerRoute
   '/api/stt': typeof ApiSttRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
@@ -384,6 +391,7 @@ export interface FileRoutesByTo {
   '/unterlagen': typeof UnterlagenRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/guides': typeof AdminGuidesRoute
+  '/admin/partner': typeof AdminPartnerRoute
   '/api/stt': typeof ApiSttRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
@@ -437,6 +445,7 @@ export interface FileRoutesById {
   '/unterlagen': typeof UnterlagenRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/guides': typeof AdminGuidesRoute
+  '/admin/partner': typeof AdminPartnerRoute
   '/api/stt': typeof ApiSttRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
@@ -491,6 +500,7 @@ export interface FileRouteTypes {
     | '/unterlagen'
     | '/admin/events'
     | '/admin/guides'
+    | '/admin/partner'
     | '/api/stt'
     | '/auth/callback'
     | '/auth/update-password'
@@ -537,6 +547,7 @@ export interface FileRouteTypes {
     | '/unterlagen'
     | '/admin/events'
     | '/admin/guides'
+    | '/admin/partner'
     | '/api/stt'
     | '/auth/callback'
     | '/auth/update-password'
@@ -589,6 +600,7 @@ export interface FileRouteTypes {
     | '/unterlagen'
     | '/admin/events'
     | '/admin/guides'
+    | '/admin/partner'
     | '/api/stt'
     | '/auth/callback'
     | '/auth/update-password'
@@ -990,6 +1002,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSttRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/partner': {
+      id: '/admin/partner'
+      path: '/partner'
+      fullPath: '/admin/partner'
+      preLoaderRoute: typeof AdminPartnerRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/guides': {
       id: '/admin/guides'
       path: '/guides'
@@ -1010,12 +1029,14 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminEventsRoute: typeof AdminEventsRoute
   AdminGuidesRoute: typeof AdminGuidesRoute
+  AdminPartnerRoute: typeof AdminPartnerRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminEventsRoute: AdminEventsRoute,
   AdminGuidesRoute: AdminGuidesRoute,
+  AdminPartnerRoute: AdminPartnerRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
@@ -1140,3 +1161,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
