@@ -4,8 +4,8 @@
 // ─────────────────────────────────────────────────────────────
 
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { Bot, Coins, Database, ExternalLink, RefreshCw, Users } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowUpRight, Bot, Coins, Database, ExternalLink, RefreshCw, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 
