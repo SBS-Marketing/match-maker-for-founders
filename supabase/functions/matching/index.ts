@@ -394,7 +394,12 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message =
+      err instanceof Error
+        ? err.message
+        : typeof err === "object" && err !== null
+          ? JSON.stringify(err)
+          : String(err);
     console.error("[matching]", err);
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
@@ -402,3 +407,4 @@ Deno.serve(async (req) => {
     });
   }
 });
+
