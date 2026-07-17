@@ -316,60 +316,78 @@ Deno.serve(async (req) => {
       const limit = Number.isFinite(requestedLimit)
         ? Math.min(Math.max(requestedLimit, 1), 50)
         : 20;
-      const queryLimit = Math.min(limit * 3, 100);
-      const { data: recs, error } = await supabaseAdmin
-        .from("match_results")
-        .select(
-          `
-          *,
-          target:profiles!match_results_target_id_fkey(
-            id,
-            display_name,
-            photo_url,
-            bio,
-            skills,
-            industry,
-            role,
-            stage,
-            location,
-            city,
-            lat,
-            lng,
-            looking_for,
-            vision,
-            commitment,
-            years_experience,
-            path,
-            onboarded_at
-          )
-        `,
-        )
-        .eq("user_id", user.id)
-        .eq("target_type", "cofounder")
-        .eq("is_hidden", false)
-        .order("combined_score", { ascending: false })
-        .limit(queryLimit);
 
-      if (error) throw error;
+      // Actual profiles schema is minimal — select only existing columns.
+      const profileCols =
+        "id, display_name, photo_url, location, role, skills, industry, stage, commitment, vision, looking_for, onboarded_at, path, founder_type";
 
+      // swipes to exclude already-seen targets
       const { data: swipes, error: swipesError } = await supabaseAdmin
         .from("swipes")
         .select("target_id")
         .eq("swiper_id", user.id);
-
       if (swipesError) throw swipesError;
-
       const swipedIds = new Set(
-        (swipes ?? []).map((swipe: { target_id: string }) => swipe.target_id),
+        (swipes ?? []).map((s: { target_id: string }) => s.target_id),
       );
-      const recommendations = (recs ?? [])
-        .filter((rec: { target_id: string }) => !swipedIds.has(rec.target_id))
-        .slice(0, limit);
+
+      // Try match_results (minimal schema: fit_score, reasons, is_hidden)
+      let recommendations: unknown[] = [];
+      const { data: recs, error: recsErr } = await supabaseAdmin
+        .from("match_results")
+        .select("target_id, fit_score, reasons, is_hidden, created_at")
+        .eq("user_id", user.id)
+        .eq("is_hidden", false)
+        .order("fit_score", { ascending: false })
+        .limit(limit * 3);
+
+      if (!recsErr && recs && recs.length > 0) {
+        const targetIds = (recs as Array<{ target_id: string }>)
+          .map((r) => r.target_id)
+          .filter((id) => !swipedIds.has(id));
+        const { data: targets } = await supabaseAdmin
+          .from("profiles")
+          .select(profileCols)
+          .in("id", targetIds.length ? targetIds : ["00000000-0000-0000-0000-000000000000"]);
+        const byId = new Map(
+          (targets ?? []).map((t: { id: string }) => [t.id, t]),
+        );
+        recommendations = (recs as Array<{ target_id: string; fit_score: number; reasons: unknown }>)
+          .filter((r) => byId.has(r.target_id))
+          .slice(0, limit)
+          .map((r) => ({
+            target_id: r.target_id,
+            combined_score: r.fit_score,
+            explanation: r.reasons,
+            target: byId.get(r.target_id),
+          }));
+      }
+
+      // Fallback: no match_results yet → return onboarded profiles as recs
+      if (recommendations.length === 0) {
+        const { data: candidates, error: candErr } = await supabaseAdmin
+          .from("profiles")
+          .select(profileCols)
+          .not("onboarded_at", "is", null)
+          .neq("id", user.id)
+          .limit(limit * 3);
+        if (candErr) throw candErr;
+        recommendations = (candidates ?? [])
+          .filter((p: { id: string }) => !swipedIds.has(p.id))
+          .slice(0, limit)
+          .map((p: { id: string }) => ({
+            target_id: p.id,
+            combined_score: null,
+            explanation: null,
+            target: p,
+          }));
+      }
 
       return new Response(JSON.stringify({ success: true, recommendations }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     return new Response(JSON.stringify({ error: "Not found" }), {
       status: 404,
