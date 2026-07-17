@@ -33,6 +33,7 @@ type Counts = {
 type SourceStatus = {
   label: string;
   file: string;
+  route: string;
   count: number | null;
   generatedAt: string | null;
 };
