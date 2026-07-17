@@ -31,44 +31,47 @@ struct Industry: Identifiable, Hashable {
 
     var copilotContext: String {
         switch id {
-        case "tech":
-            "MVP, Product-Market Fit, EXIST, Cap Table, Hiring und Tech-Strategie."
+        case "lokal":
+            "Ladenfläche, Genehmigungen, Preise, erste Stammkunden, Google Maps und lokale Sichtbarkeit."
         case "handwerk":
-            "Meisterpflicht, Handwerkskammer, KfW-Kredit, Auftragsgewinnung und Kalkulation."
+            "Meisterpflicht, Handwerkskammer, Material, Kalkulation, Auftragsgewinnung und Versicherungen."
         case "gastro":
-            "HACCP, Konzession, Pachtvertrag, Lieferanten, Food-Costs und lokale Sichtbarkeit."
-        case "kreativ":
-            "Portfolio, Projektpreise, Urheberrecht, Kundenpitches und klare Positionierung."
+            "HACCP, Konzession, Pachtvertrag, Lieferanten, Food-Costs, Personal und lokale Sichtbarkeit."
+        case "agentur":
+            "Angebote, Stundensatz, Referenzen, erste Kunden, Positionierung und wiederkehrende Aufträge."
         case "handel":
-            "Shopify/Amazon, Lieferanten, Logistik, Retouren, Markenaufbau und Ads."
+            "Online-Shop, Lieferanten, Einkauf, Logistik, Retouren, Warenbestand und Ads."
+        case "beauty":
+            "Salonkonzept, Ausstattung, Hygiene, Preise, Buchungssystem, Stammkunden und Standort."
         case "bildung":
-            "Gemeinnützigkeit, Förderanträge, Betriebserlaubnis, Impact und Partnernetzwerk."
+            "Kurse, Erlaubnisse, Preise, Räume, Vertrauen, lokale Partner und wiederkehrende Teilnehmer."
         case "gesundheit":
             "Zulassung, Datenschutz, Praxisräume, Abrechnung, Vertrauen und lokale Nachfrage."
         case "beratung":
-            "Positionierung, Akquise, Stundensatz, Angebote, Partnerschaft und Skalierung."
+            "Positionierung, Akquise, Stundensatz, Angebote, Kundennutzen und planbare Auslastung."
         default:
             "Profil, Unterlagen, Matches, Kalender und nächste konkrete Schritte."
         }
     }
 }
 
-/// Die 8 Branchen — jede:r soll sich aufgenommen fühlen.
+/// Branchen für normale Gründungen: lokal, praktisch, dienstleistungsnah.
 let industries: [Industry] = [
-    .init(id: "tech", label: "Tech & Startup", emoji: "⚡️", ventureTerm: "Startup", partnerTerm: "Co-Founder"),
+    .init(id: "lokal", label: "Laden & lokales Geschäft", emoji: "🏪", ventureTerm: "Geschäft", partnerTerm: "Geschäftspartner"),
     .init(id: "handwerk", label: "Handwerk & Produktion", emoji: "🔨", ventureTerm: "Betrieb", partnerTerm: "Geschäftspartner"),
     .init(id: "gastro", label: "Gastro & Food", emoji: "🍳", ventureTerm: "Lokal", partnerTerm: "Mitgründer"),
-    .init(id: "kreativ", label: "Kreativwirtschaft", emoji: "🎨", ventureTerm: "Studio", partnerTerm: "Partner"),
-    .init(id: "handel", label: "Handel & E-Commerce", emoji: "🛍️", ventureTerm: "Shop", partnerTerm: "Mitgründer"),
-    .init(id: "bildung", label: "Bildung & Soziales", emoji: "📚", ventureTerm: "Projekt", partnerTerm: "Mitgründer"),
-    .init(id: "gesundheit", label: "Gesundheit & Sport", emoji: "💪", ventureTerm: "Praxis/Studio", partnerTerm: "Partner"),
+    .init(id: "beauty", label: "Friseur, Beauty & Wellness", emoji: "✂️", ventureTerm: "Salon", partnerTerm: "Partner"),
+    .init(id: "handel", label: "Online-Shop & Handel", emoji: "🛍️", ventureTerm: "Shop", partnerTerm: "Mitgründer"),
+    .init(id: "agentur", label: "Agentur & Freelance", emoji: "🎨", ventureTerm: "Agentur", partnerTerm: "Partner"),
+    .init(id: "bildung", label: "Kurse, Bildung & Soziales", emoji: "📚", ventureTerm: "Angebot", partnerTerm: "Mitgründer"),
+    .init(id: "gesundheit", label: "Praxis, Fitness & Gesundheit", emoji: "💪", ventureTerm: "Praxis/Studio", partnerTerm: "Partner"),
     .init(id: "beratung", label: "Beratung & Dienstleistung", emoji: "💼", ventureTerm: "Agentur", partnerTerm: "Partner"),
 ]
 
 let skillTags = [
-    "Entwicklung", "Design", "Vertrieb", "Marketing", "Finanzen", "Recht",
-    "Handwerk", "Organisation", "Content & Social", "Kundenkontakt",
-    "Einkauf & Logistik", "KI & Daten",
+    "Kundenkontakt", "Handwerk", "Verkauf", "Marketing", "Buchhaltung", "Organisation",
+    "Einkauf & Lieferanten", "Online-Shop", "Social Media", "Design", "Recht & Verträge",
+    "Website & Technik", "Preise kalkulieren", "Service vor Ort",
 ]
 
 /// Das eigene Profil (nach Onboarding).
@@ -233,7 +236,7 @@ struct CompanyProfile: Codable, Equatable {
     }
 
     static func empty(for profile: MyProfile?) -> CompanyProfile {
-        let category = profile?.industry.label ?? "Founder-Plattform"
+        let category = profile?.industry.label ?? "Kleine Gründung"
         let city = profile?.plz ?? ""
         return CompanyProfile(
             name: "",
@@ -260,12 +263,52 @@ struct FounderDocument: Identifiable, Codable, Hashable {
     var done: Bool
 
     static let defaults: [FounderDocument] = [
-        .init(id: "idea", title: "Ideenpapier", note: "Problem, Lösung, Markt und Team in einer sauberen Fassung.", done: false),
-        .init(id: "innovation", title: "Innovationsbeschreibung", note: "Technischer Kern und Abgrenzung zu Alternativen.", done: false),
-        .init(id: "financial", title: "Finanzplan", note: "12 Monate Kosten, Mittelverwendung und Meilensteine.", done: false),
-        .init(id: "team", title: "Teamprofil", note: "Rollen, Skills, Verfügbarkeit und offene Lücken.", done: false),
-        .init(id: "legal", title: "Rechtsform & Verträge", note: "GbR/GmbH-Entscheidung, Beteiligung, IP und NDA.", done: false),
+        .init(id: "businessplan", title: "Kurz-Businessplan", note: "Was du anbietest, für wen, warum Leute zahlen und wie du startest.", done: false),
+        .init(id: "startup-costs", title: "Startkosten & private Reserve", note: "Einmalige Kosten, laufende Kosten und dein eigener Lebensunterhalt.", done: false),
+        .init(id: "registration", title: "Anmeldung & Genehmigungen", note: "Gewerbe, Finanzamt, Kammer, Erlaubnisse, Hygiene oder Zulassung.", done: false),
+        .init(id: "pricing", title: "Preise & Angebot", note: "Pakete, Stundensatz, Marge, Mindestumsatz und Zahlungsbedingungen.", done: false),
+        .init(id: "customer-proof", title: "Kundenliste & Verkaufstest", note: "20 Zielkunden, 5 echte Gespräche und ein einfacher Testpreis.", done: false),
+        .init(id: "tax-insurance", title: "Steuern & Versicherung", note: "Kleinunternehmerregelung, Steuer-Rücklage, Haftpflicht und Buchhaltung.", done: false),
     ]
+}
+
+enum FounderDocumentAssetKind: String, Codable, Hashable {
+    case upload, generatedPDF
+
+    var label: String {
+        switch self {
+        case .upload: "Upload"
+        case .generatedPDF: "PDF"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .upload: "tray.and.arrow.up.fill"
+        case .generatedPDF: "doc.richtext.fill"
+        }
+    }
+}
+
+struct FounderDocumentAsset: Identifiable, Codable, Hashable {
+    var id: UUID = UUID()
+    var title: String
+    var fileName: String
+    var kind: FounderDocumentAssetKind
+    var sizeBytes: Int64
+    var importedAt: Date = .now
+    var textPreview: String = ""
+
+    var fileExtension: String {
+        URL(fileURLWithPath: fileName).pathExtension.uppercased()
+    }
+
+    var compactSize: String {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useKB, .useMB]
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: sizeBytes)
+    }
 }
 
 /// Arbeitsplan/Kalender: konkrete Schritte, die Co-Pilot, Heute und Workspace teilen.
@@ -319,7 +362,7 @@ enum PlannerTarget: String, Codable, Hashable {
         case .company: "Firmenprofil"
         case .documents: "Unterlagen"
         case .calendar: "Kalender"
-        case .startup: "Startup"
+        case .startup: "Business"
         case .pilot: "Co-Pilot"
         case .profile: "Profil"
         }
@@ -339,6 +382,20 @@ enum PlannerTarget: String, Codable, Hashable {
         case .profile: .tab(.profile)
         }
     }
+}
+
+/// Geführter Einstieg nach Login/Onboarding: konkrete Schritte statt reiner Feature-Tour.
+struct LaunchGuideStep: Identifiable, Hashable {
+    let id: String
+    let title: String
+    let subtitle: String
+    let detail: String
+    let actionTitle: String
+    let icon: String
+    let serviceId: String
+    let completed: Bool
+    let destination: CopilotDestination?
+    let copilotPrompt: String?
 }
 
 struct PlannerItem: Identifiable, Codable, Hashable {
@@ -416,15 +473,15 @@ struct PlannerItem: Identifiable, Codable, Hashable {
                 target: .documents
             ),
             PlannerItem(
-                title: "2 passende \(profile?.industry.partnerTerm ?? "Mitgründer") ansprechen",
+                title: "2 passende \(profile?.industry.partnerTerm ?? "Partner") oder Helfer ansprechen",
                 note: "Nicht nur swipen: eine kurze, ehrliche Nachricht mit konkretem 15-Minuten-Vorschlag senden.",
                 dueLabel: "Nächste 7 Tage",
                 kind: .match,
                 target: .swipe
             ),
             PlannerItem(
-                title: "\(venture)-Profil veröffentlichungsreif machen",
-                note: "Hero, Team, Stand und Call-to-Action so schärfen, dass ein Match sofort versteht, worum es geht.",
+                title: "\(venture)-Profil verständlich machen",
+                note: "Angebot, Zielgruppe, Standort, nächster Schritt und Kontakt so schärfen, dass fremde Menschen es sofort verstehen.",
                 dueLabel: "Nächster Meilenstein",
                 kind: .profile,
                 target: .company
@@ -476,7 +533,7 @@ struct FounderMemorySnapshot: Hashable {
 
         return FounderMemorySnapshot(
             founderName: profile?.name ?? "Noch kein Name",
-            role: profile?.role ?? "Founder",
+            role: profile?.role ?? "Gründer",
             ventureName: company.name.isEmpty ? (profile?.industry.ventureTerm ?? "Vorhaben") : company.name,
             industry: profile?.industry.label ?? company.category,
             stage: company.stage,
@@ -587,6 +644,45 @@ enum GuideCategory: String, CaseIterable {
 }
 
 /// Co-Pilot Nachricht + Navigation.
+struct CopilotSource: Identifiable, Codable, Hashable {
+    var id: String { url ?? title }
+    var type: String
+    var title: String
+    var url: String?
+    var snippet: String?
+
+    enum CodingKeys: String, CodingKey {
+        case type, typ, title, titel, url, snippet
+    }
+
+    init(type: String = "Web", title: String, url: String? = nil, snippet: String? = nil) {
+        self.type = type
+        self.title = title
+        self.url = url
+        self.snippet = snippet
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        type = try container.decodeIfPresent(String.self, forKey: .type)
+            ?? container.decodeIfPresent(String.self, forKey: .typ)
+            ?? "Web"
+        title = try container.decodeIfPresent(String.self, forKey: .title)
+            ?? container.decodeIfPresent(String.self, forKey: .titel)
+            ?? "Quelle"
+        url = try container.decodeIfPresent(String.self, forKey: .url)
+        snippet = try container.decodeIfPresent(String.self, forKey: .snippet)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(type, forKey: .type)
+        try container.encode(title, forKey: .title)
+        try container.encodeIfPresent(url, forKey: .url)
+        try container.encodeIfPresent(snippet, forKey: .snippet)
+    }
+}
+
 struct CopilotMessage: Identifiable, Codable {
     let id: UUID
     let mine: Bool
@@ -594,6 +690,7 @@ struct CopilotMessage: Identifiable, Codable {
     var navigation: [CopilotNav] = []
     var actions: [CopilotAction] = []
     var quickReplies: [String] = []
+    var sources: [CopilotSource] = []
     var memory: FounderMemorySnapshot?
     var source: CopilotAnswerSource = .local
     var createdAt: Date = .now
@@ -605,6 +702,7 @@ struct CopilotMessage: Identifiable, Codable {
         actions: [CopilotAction] = [],
         navigation: [CopilotNav] = [],
         quickReplies: [String] = [],
+        sources: [CopilotSource] = [],
         memory: FounderMemorySnapshot? = nil,
         source: CopilotAnswerSource = .local,
         createdAt: Date = .now
@@ -615,13 +713,14 @@ struct CopilotMessage: Identifiable, Codable {
         self.actions = actions
         self.navigation = navigation
         self.quickReplies = quickReplies
+        self.sources = sources
         self.memory = memory
         self.source = source
         self.createdAt = createdAt
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, mine, text, quickReplies, source, createdAt
+        case id, mine, text, quickReplies, sources, source, createdAt
     }
 
     init(from decoder: Decoder) throws {
@@ -630,6 +729,7 @@ struct CopilotMessage: Identifiable, Codable {
         mine = try container.decode(Bool.self, forKey: .mine)
         text = try container.decode(String.self, forKey: .text)
         quickReplies = try container.decodeIfPresent([String].self, forKey: .quickReplies) ?? []
+        sources = try container.decodeIfPresent([CopilotSource].self, forKey: .sources) ?? []
         source = try container.decodeIfPresent(CopilotAnswerSource.self, forKey: .source) ?? .local
         createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? .now
         navigation = []
@@ -723,10 +823,12 @@ enum CopilotCommand: Hashable {
     case refreshPartners
     case refreshFounderRadar
     case toggleDocument(String)
+    case exportDocumentPDF
     case addPlannerItem(title: String, note: String, dueLabel: String, kind: PlannerItemKind, target: PlannerTarget?)
     case addSmartPlannerItem(title: String, note: String, dueLabel: String, kind: PlannerItemKind, target: PlannerTarget?, assigneeName: String?)
     case rememberFact(String)
     case foundStartup(name: String, category: String, stage: String, city: String, idea: String)
+    case addKanbanCard(title: String, note: String)
 }
 
 enum CopilotDestination: Hashable {
@@ -740,6 +842,7 @@ enum TodayRoute: Hashable {
     case chats
     case chat(String)
     case calendar
+    case kanban
     case startup
     case radar
 }
@@ -752,7 +855,7 @@ enum AppTab: Int, Hashable, CaseIterable {
         case .today: "Heute"
         case .discover: "Entdecken"
         case .community: "Community"
-        case .startup: "Startup"
+        case .startup: "Business"
         case .profile: "Profil"
         }
     }
@@ -769,7 +872,7 @@ enum AppTab: Int, Hashable, CaseIterable {
 
 /// Ziel-Erweiterung: Screens, die der Co-Pilot/Heute öffnen kann.
 enum AppScreen: Hashable {
-    case cofounderDesk, swipe, chats, guides, events, company, documents, calendar, startup, radar, copilot
+    case cofounderDesk, swipe, chats, guides, events, company, documents, calendar, kanban, startup, radar, copilot
     case partners(String)
     case partner(String)
 }
@@ -786,7 +889,7 @@ struct StartupTeamMember: Identifiable, Codable, Hashable {
         var members: [StartupTeamMember] = [
             StartupTeamMember(
                 name: profile?.name ?? "Du",
-                role: profile?.role ?? "Founder",
+                role: profile?.role ?? "Gründer",
                 focus: profile.flatMap { $0.pitch.isEmpty ? nil : $0.pitch } ?? "Vision, Entscheidungen und nächster Schritt",
                 sourceMatchID: nil
             )
@@ -867,7 +970,7 @@ struct PartnerVouch: Codable, Hashable {
     let quote: String
 }
 
-struct PartnerOffer: Identifiable, Codable, Hashable {
+struct PartnerOffer: Identifiable, Decodable, Hashable {
     let slug: String
     let name: String
     let firm: String
@@ -877,6 +980,8 @@ struct PartnerOffer: Identifiable, Codable, Hashable {
     let fit: Int
     let sourceURL: URL?
     let bookingURL: URL?
+    let logoURL: URL?
+    let bannerURL: URL?
     let specialties: [PartnerSpecialty]
     let packages: [PartnerPackage]
     let why: [String]
@@ -887,11 +992,85 @@ struct PartnerOffer: Identifiable, Codable, Hashable {
     var serviceLabel: String { service?.label ?? serviceId.capitalized }
     var primaryURL: URL? { bookingURL ?? sourceURL }
 
-    enum CodingKeys: String, CodingKey {
+    private enum CodingKeys: String, CodingKey {
         case slug, name, firm, city, blurb, fit, specialties, packages, why, vouches
+        case service
         case serviceId
-        case sourceURL = "sourceUrl"
-        case bookingURL = "bookingUrl"
+        case serviceIdSnake = "service_id"
+        case sourceURL = "sourceURL"
+        case sourceUrl = "sourceUrl"
+        case sourceUrlSnake = "source_url"
+        case bookingURL = "bookingURL"
+        case bookingUrl = "bookingUrl"
+        case bookingUrlSnake = "booking_url"
+        case logoURL = "logoURL"
+        case logoUrl = "logoUrl"
+        case logoUrlSnake = "logo_url"
+        case bannerURL = "bannerURL"
+        case bannerUrl = "bannerUrl"
+        case bannerUrlSnake = "banner_url"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        slug = Self.string(in: container, .slug) ?? UUID().uuidString
+        name = Self.string(in: container, .name) ?? "Partner"
+        firm = Self.string(in: container, .firm) ?? "matchfoundr Partner"
+        serviceId = Self.firstString(in: container, [.serviceId, .serviceIdSnake, .service]) ?? "growth"
+        city = Self.string(in: container, .city) ?? "Remote"
+        blurb = Self.string(in: container, .blurb) ?? "Kuratierter Partner aus dem matchfoundr Netzwerk."
+        fit = Self.int(in: container, .fit) ?? 75
+        sourceURL = Self.url(in: container, [.sourceURL, .sourceUrl, .sourceUrlSnake])
+        bookingURL = Self.url(in: container, [.bookingURL, .bookingUrl, .bookingUrlSnake])
+        logoURL = Self.url(in: container, [.logoURL, .logoUrl, .logoUrlSnake])
+        bannerURL = Self.url(in: container, [.bannerURL, .bannerUrl, .bannerUrlSnake])
+        specialties = (try? container.decodeIfPresent([PartnerSpecialty].self, forKey: .specialties)) ?? []
+        packages = (try? container.decodeIfPresent([PartnerPackage].self, forKey: .packages)) ?? []
+        why = (try? container.decodeIfPresent([String].self, forKey: .why)) ?? []
+        vouches = (try? container.decodeIfPresent([PartnerVouch].self, forKey: .vouches)) ?? []
+    }
+
+    private static func firstString(
+        in container: KeyedDecodingContainer<CodingKeys>,
+        _ keys: [CodingKeys]
+    ) -> String? {
+        keys.lazy.compactMap { string(in: container, $0) }.first
+    }
+
+    private static func string(
+        in container: KeyedDecodingContainer<CodingKeys>,
+        _ key: CodingKeys
+    ) -> String? {
+        guard let value = try? container.decodeIfPresent(String.self, forKey: key) else { return nil }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private static func int(
+        in container: KeyedDecodingContainer<CodingKeys>,
+        _ key: CodingKeys
+    ) -> Int? {
+        if let value = try? container.decodeIfPresent(Int.self, forKey: key) {
+            return value
+        }
+        if let value = try? container.decodeIfPresent(Double.self, forKey: key) {
+            return Int(value.rounded())
+        }
+        return nil
+    }
+
+    private static func url(
+        in container: KeyedDecodingContainer<CodingKeys>,
+        _ keys: [CodingKeys]
+    ) -> URL? {
+        for key in keys {
+            guard let raw = string(in: container, key) else { continue }
+            if let url = RemoteAssetURL.resolve(raw) {
+                return url
+            }
+        }
+        return nil
     }
 }
 
@@ -905,12 +1084,12 @@ struct ServiceInfo: Identifiable {
 }
 
 let serviceCatalog: [ServiceInfo] = [
-    .init(id: "cofounder", label: "Co-Founder", blurb: "Der Mensch, mit dem du baust.", count: 412, icon: "person.2.fill"),
-    .init(id: "legal", label: "Recht & Verträge", blurb: "Anwälte für Gründung, Verträge, IP.", count: 86, icon: "checkmark.seal.fill"),
-    .init(id: "tax", label: "Steuer & Buchhaltung", blurb: "Steuerprofis, die Gründer verstehen.", count: 64, icon: "doc.text.fill"),
-    .init(id: "funding", label: "Förderung", blurb: "Zuschüsse & Programme, live gematcht.", count: 31, icon: "eurosign.circle.fill"),
-    .init(id: "capital", label: "Kapital", blurb: "Kredite, Mikrofonds, Angels.", count: 214, icon: "arrow.up.right.circle.fill"),
-    .init(id: "mentor", label: "Mentoren", blurb: "Leute, die es schon gemacht haben.", count: 178, icon: "safari.fill"),
-    .init(id: "talent", label: "Talent", blurb: "Erste Mitstreiter, vorgefiltert.", count: 540, icon: "sparkles"),
-    .init(id: "growth", label: "Growth", blurb: "Sichtbarkeit, Kunden, Wachstum.", count: 122, icon: "chart.line.uptrend.xyaxis"),
+    .init(id: "cofounder", label: "Partner & Mitstreiter", blurb: "Menschen, die wirklich mit anpacken.", count: 412, icon: "person.2.fill"),
+    .init(id: "legal", label: "Recht & Anmeldung", blurb: "Gewerbe, Verträge, Erlaubnisse, Haftung.", count: 86, icon: "checkmark.seal.fill"),
+    .init(id: "tax", label: "Steuer & Buchhaltung", blurb: "Kleinunternehmer, Belege, Rücklagen.", count: 64, icon: "doc.text.fill"),
+    .init(id: "funding", label: "Förderung", blurb: "Zuschüsse, IHK/HWK, Arbeitsagentur.", count: 31, icon: "eurosign.circle.fill"),
+    .init(id: "capital", label: "Startkapital", blurb: "Eigenmittel, Mikrokredit, KfW, Bank.", count: 214, icon: "arrow.up.right.circle.fill"),
+    .init(id: "mentor", label: "Erfahrene Gründer", blurb: "Leute, die kleine Betriebe kennen.", count: 178, icon: "safari.fill"),
+    .init(id: "talent", label: "Helfer & Team", blurb: "Aushilfe, Umsetzung, erste Unterstützung.", count: 540, icon: "sparkles"),
+    .init(id: "growth", label: "Kunden gewinnen", blurb: "Google, Social, Empfehlungen, lokale Sichtbarkeit.", count: 122, icon: "chart.line.uptrend.xyaxis"),
 ]

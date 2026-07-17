@@ -32,18 +32,20 @@ struct CopilotAppContext: Encodable {
         name: "Matchfoundr native iOS",
         areas: [
             .init(id: "today", label: "Heute", purpose: "Kommandozentrale, Chats, Kalender, Radar"),
-            .init(id: "discover", label: "Entdecken", purpose: "Swipe, Guides, Firmenprofil, Unterlagen, Partner, Co-Founder OS"),
-            .init(id: "community", label: "Community", purpose: "Events, Gründerkreis, RSVP"),
-            .init(id: "startup", label: "Startup", purpose: "Workspace erst nach bewusster Gründung, Team, Plan, Akten"),
+            .init(id: "discover", label: "Entdecken", purpose: "Kontakte, Guides, Business-Profil, Unterlagen, Partner, Deals"),
+            .init(id: "community", label: "Community", purpose: "Events, Gründerkreis, lokale Kontakte, RSVP"),
+            .init(id: "startup", label: "Business", purpose: "Workspace für kleine Gründung, Angebot, Kosten, Anmeldung, Team, Plan, Akten"),
             .init(id: "profile", label: "Profil", purpose: "Nutzung, Onboarding, App-Tour, Einstellungen"),
             .init(id: "copilot", label: "Co-Pilot", purpose: "Live-KI, gespeicherte Sessions, Memory, App-Aktionen"),
         ],
         actions: [
-            "open_calendar", "add_calendar_item", "open_startup", "found_startup",
+            "open_calendar", "add_calendar_item", "add_kanban_card", "open_kanban",
+            "open_business", "found_business",
             "open_company_profile", "publish_company_profile", "open_documents",
-            "open_matches", "draft_match_message", "remember_fact", "refresh_live_data"
+            "open_matches", "draft_match_message", "remember_fact", "refresh_live_data",
+            "web_research_sources", "find_authority_contacts"
         ],
-        rule: "Wenn eine Antwort eine App-Aktion braucht, formuliere sie konkret und gib passende navigation/follow_up_aktionen. Der native Client macht daraus Chips."
+        rule: "Wenn eine Antwort eine App-Aktion braucht, formuliere sie konkret und gib passende navigation/follow_up_aktionen. Bei Fragen zu Kammer, Amt, Genehmigung oder Ansprechpartnern nutze Web-Recherche und gib sources zurueck; der native Client zeigt daraus Quellen-Chips."
     )
 }
 
@@ -110,8 +112,19 @@ struct CopilotCloudResponse: Decodable {
     let answer: String?
     let quickActions: [String]?
     let navigation: [CopilotCloudNav]?
+    let appActions: [CopilotCloudAppAction]?
     let newFacts: [String]?
+    let sources: [CopilotSource]?
     let error: String?
+}
+
+/// Strukturierte, backend-validierte App-Aktion — wird zum tippbaren Chip.
+struct CopilotCloudAppAction: Decodable {
+    let action: String
+    let title: String?
+    let note: String?
+    let due: String?
+    let screen: String?
 }
 
 struct CopilotCloudNav: Decodable {

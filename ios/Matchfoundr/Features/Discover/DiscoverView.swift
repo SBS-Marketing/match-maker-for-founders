@@ -14,12 +14,15 @@ enum DiscoverRoute: Hashable {
     case documents
     case calendar
     case startup
+    case deals
+    case deal(String)
     case partners(String)
     case partner(String)
 }
 
 struct DiscoverView: View {
     @EnvironmentObject var state: AppState
+    @ObservedObject private var catalog = RemoteCatalog.shared
     @State private var query = ""
 
     var body: some View {
@@ -32,6 +35,10 @@ struct DiscoverView: View {
                     VStack(alignment: .leading, spacing: 14) {
                         searchField
                         serviceGrid
+                        MSectionHead(text: "Deals & Credits", action: "Alle") {
+                            state.discoverPath.append(.deals)
+                        }
+                        dealHighlights
                         MSectionHead(text: "Partner-Picks", action: "Alle") {
                             state.discoverPath.append(.partners("all"))
                         }
@@ -63,6 +70,8 @@ struct DiscoverView: View {
                 case .documents: DocumentsView()
                 case .calendar: PlannerView()
                 case .startup: StartupWorkspaceView()
+                case .deals: DealsIndexView()
+                case .deal(let id): DealDetailView(dealId: id)
                 case .partners(let serviceId): PartnerIndexView(serviceId: serviceId)
                 case .partner(let partnerId): PartnerDetailView(partnerId: partnerId)
                 }
@@ -87,10 +96,14 @@ struct DiscoverView: View {
             default:
                 break
             }
+            if catalog.deals.isEmpty {
+                await catalog.refresh()
+            }
         }
         .refreshable {
             await state.refreshPartnerOffers()
             await state.refreshCommunityEvents()
+            await catalog.refresh()
         }
     }
 
@@ -225,12 +238,42 @@ struct DiscoverView: View {
         .warmShadow()
     }
 
+    private var visibleDealHighlights: [CatalogDeal] {
+        let term = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let base = catalog.deals.filter { $0.active ?? true }
+        let filtered = term.isEmpty ? base : base.filter { $0.searchBlob.contains(term) }
+        return Array(filtered.sorted(by: dealPrioritySort).prefix(term.isEmpty ? 4 : 8))
+    }
+
+    private var dealHighlights: some View {
+        VStack(spacing: 10) {
+            if visibleDealHighlights.isEmpty {
+                livePartnerStatusCard(
+                    icon: catalog.isRefreshing ? "arrow.triangle.2.circlepath" : "giftcard.fill",
+                    title: catalog.isRefreshing ? "Deals laden" : "Keine Deals gefunden",
+                    text: catalog.lastError ?? "Cloud-Credits, SaaS-Rabatte und Legal-Angebote werden aus dem Web-Katalog geladen.",
+                    loading: catalog.isRefreshing
+                )
+            } else {
+                ForEach(visibleDealHighlights) { deal in
+                    Button {
+                        Haptics.tap()
+                        state.discoverPath.append(.deal(deal.id))
+                    } label: {
+                        DealPreviewCard(deal: deal, compact: true)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
     private var workspaceCards: some View {
         VStack(spacing: 10) {
             workspaceCard(
                 icon: "building.2.crop.circle",
-                title: "Startup Workspace",
-                text: "\(state.startupTeamMembers.count) Team · Plan, Unterlagen, Kalender",
+                title: "Business Workspace",
+                text: "\(state.startupTeamMembers.count) Rollen · Plan, Unterlagen, Kalender",
                 accent: MF.indigo,
                 tint: MF.indigoTint
             ) {
@@ -410,7 +453,7 @@ struct CofounderTrialOSView: View {
         }
         .scrollIndicators(.hidden)
         .background(MF.canvas.ignoresSafeArea())
-        .navigationTitle("Co-Founder")
+        .navigationTitle("Partner")
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -425,18 +468,18 @@ struct CofounderTrialOSView: View {
                     .background(MF.emberGrad)
                     .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
-                    Eyebrow(text: "Founder Due Diligence", color: hue.ink)
-                    Text("Nicht swipen und hoffen. Prüfen, testen, entscheiden.")
+                    Eyebrow(text: "Partner-Check", color: hue.ink)
+                    Text("Nicht swipen und hoffen. Kurz prüfen, sprechen, entscheiden.")
                         .font(.system(size: 12.5, weight: .semibold))
                         .foregroundStyle(MF.smoke)
                 }
                 Spacer()
             }
 
-            Text("Co-Founder Trial OS")
+            Text("Partner-Check")
                 .font(.system(size: 28, weight: .heavy))
                 .foregroundStyle(MF.ink)
-            Text("Finde heraus, mit wem du wirklich bauen solltest. Die App macht aus Matches eine Scorecard, einen Call und einen 7-Tage-Beweis.")
+            Text("Finde heraus, wer praktisch helfen kann: Partner, Dienstleister, erster Kunde oder Mitstreiter. Die App macht aus Kontakten eine einfache Checkliste und ein Gespräch.")
                 .font(.system(size: 14.5))
                 .foregroundStyle(MF.smoke)
                 .lineSpacing(3)
@@ -464,7 +507,7 @@ struct CofounderTrialOSView: View {
                     .background(MF.indigoTint)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Founder Gap")
+                    Text("Was fehlt gerade?")
                         .font(.system(size: 13.5, weight: .bold))
                         .foregroundStyle(MF.smoke)
                     Text(state.cofounderGapTitle())
@@ -766,6 +809,728 @@ struct ServiceTile: View {
     }
 }
 
+private struct RemoteLogoTile: View {
+    let url: URL?
+    let size: CGFloat
+    let cornerRadius: CGFloat
+    let background: Color
+    let fallbackText: String?
+    let fallbackSystemImage: String?
+    let fallbackColor: Color
+
+    var body: some View {
+        ZStack {
+            if let url {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFit()
+                            .padding(size * 0.16)
+                    case .failure:
+                        fallback
+                    case .empty:
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(fallbackColor)
+                    @unknown default:
+                        fallback
+                    }
+                }
+            } else {
+                fallback
+            }
+        }
+        .frame(width: size, height: size)
+        .background(background)
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+    }
+
+    @ViewBuilder
+    private var fallback: some View {
+        if let fallbackText {
+            Text(fallbackText)
+                .font(.system(size: size * 0.52))
+                .foregroundStyle(fallbackColor)
+        } else {
+            Image(systemName: fallbackSystemImage ?? "sparkles")
+                .font(.system(size: size * 0.38, weight: .semibold))
+                .foregroundStyle(fallbackColor)
+        }
+    }
+}
+
+private struct RemoteBannerTile: View {
+    let url: URL?
+    let height: CGFloat
+    let colors: [Color]
+
+    var body: some View {
+        ZStack {
+            if let url {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    case .failure:
+                        fallback
+                    case .empty:
+                        fallback
+                            .overlay {
+                                ProgressView()
+                                    .tint(.white)
+                            }
+                    @unknown default:
+                        fallback
+                    }
+                }
+            } else {
+                fallback
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: height)
+        .clipped()
+    }
+
+    private var fallback: some View {
+        LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+}
+
+// ─── Deals & Credits ─────────────────────────────────────────
+
+private struct DealCategory: Identifiable, Hashable {
+    let id: String
+    let label: String
+    let icon: String
+    let count: Int
+}
+
+struct DealPreviewCard: View {
+    let deal: CatalogDeal
+    var compact = false
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            RemoteLogoTile(
+                url: deal.logoImageURL,
+                size: compact ? 42 : 46,
+                cornerRadius: 13,
+                background: MF.surfaceSoft,
+                fallbackText: deal.displayLogo,
+                fallbackSystemImage: nil,
+                fallbackColor: MF.emberDeep
+            )
+
+            VStack(alignment: .leading, spacing: 7) {
+                HStack(alignment: .top, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(deal.product)
+                            .font(.system(size: compact ? 14.5 : 16, weight: .heavy))
+                            .foregroundStyle(MF.ink)
+                            .lineLimit(1)
+                        Text(deal.company)
+                            .font(.system(size: 12.5, weight: .semibold))
+                            .foregroundStyle(MF.smoke)
+                            .lineLimit(1)
+                    }
+                    Spacer(minLength: 8)
+                    DealBadgeView(deal: deal)
+                }
+
+                if let value = deal.cleanValue {
+                    Text(value)
+                        .font(.system(size: compact ? 12.5 : 13.5, weight: .bold))
+                        .foregroundStyle(deal.isEpic ? MF.emberDeep : MF.ink)
+                        .lineLimit(1)
+                }
+
+                if let desc = deal.cleanDescription {
+                    Text(desc)
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(MF.inkSoft)
+                        .lineSpacing(2)
+                        .lineLimit(compact ? 2 : 3)
+                }
+
+                FlowLayout(spacing: 6) {
+                    ForEach(deal.displayTags.prefix(compact ? 3 : 5), id: \.self) { tag in
+                        Text(tag)
+                            .font(.system(size: 10.5, weight: .semibold))
+                            .foregroundStyle(MF.indigoInk)
+                            .padding(.horizontal, 8)
+                            .frame(height: 24)
+                            .background(MF.indigoTint.opacity(0.7))
+                            .clipShape(Capsule())
+                    }
+                    Text(deal.categoryLabel)
+                        .font(.system(size: 10.5, weight: .bold))
+                        .foregroundStyle(MF.smoke)
+                        .padding(.horizontal, 8)
+                        .frame(height: 24)
+                        .background(MF.surfaceSoft)
+                        .clipShape(Capsule())
+                }
+            }
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(MF.faint)
+                .padding(.top, 4)
+        }
+        .padding(14)
+        .background(MF.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(deal.isEpic ? MF.ember.opacity(0.35) : MF.border, lineWidth: 1))
+        .warmShadow()
+    }
+}
+
+private struct DealBadgeView: View {
+    let deal: CatalogDeal
+
+    var body: some View {
+        Text(deal.badgeText)
+            .font(.system(size: 10.5, weight: .heavy))
+            .foregroundStyle(foreground)
+            .padding(.horizontal, 8)
+            .frame(height: 24)
+            .background(background)
+            .clipShape(Capsule())
+    }
+
+    private var background: Color {
+        switch deal.badgeStyle {
+        case "epic": MF.emberTint
+        case "premium": MF.indigoTint
+        case "hot": Color(hex: 0xFFE5D6)
+        default: MF.surfaceSoft
+        }
+    }
+
+    private var foreground: Color {
+        switch deal.badgeStyle {
+        case "epic": MF.emberDeep
+        case "premium": MF.indigoInk
+        case "hot": Color(hex: 0xB94718)
+        default: MF.inkSoft
+        }
+    }
+}
+
+struct DealsIndexView: View {
+    @EnvironmentObject var state: AppState
+    @ObservedObject private var catalog = RemoteCatalog.shared
+    @State private var selectedCategory = "all"
+    @State private var query = ""
+
+    private var categories: [DealCategory] {
+        dealCategories(from: catalog.deals)
+    }
+
+    private var visibleDeals: [CatalogDeal] {
+        let term = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let base = catalog.deals.filter { $0.active ?? true }
+        return base
+            .filter { selectedCategory == "all" || $0.cat == selectedCategory }
+            .filter { term.isEmpty || $0.searchBlob.contains(term) }
+            .sorted(by: dealPrioritySort)
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                header
+                categoryRail
+                search
+                if visibleDeals.isEmpty {
+                    emptyState
+                } else {
+                    LazyVStack(spacing: 11) {
+                        ForEach(visibleDeals) { deal in
+                            Button {
+                                Haptics.tap()
+                                state.discoverPath.append(.deal(deal.id))
+                            } label: {
+                                DealPreviewCard(deal: deal)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+            .padding(20)
+            .padding(.bottom, 90)
+        }
+        .scrollIndicators(.hidden)
+        .background(MF.canvas.ignoresSafeArea())
+        .navigationTitle("Deals")
+        .navigationBarTitleDisplayMode(.inline)
+        .task {
+            if catalog.deals.isEmpty {
+                await catalog.refresh()
+            }
+        }
+        .refreshable {
+            await catalog.refresh()
+        }
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            HStack(spacing: 9) {
+                Image(systemName: "giftcard.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(MF.emberDeep)
+                    .frame(width: 40, height: 40)
+                    .background(MF.emberTint)
+                    .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                Eyebrow(text: "Deals · \(catalog.deals.count) aktiv", color: MF.emberDeep)
+            }
+
+            Text("Gründer-Deals & Credits")
+                .font(.system(size: 28, weight: .heavy))
+                .foregroundStyle(MF.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("Rabatte, Tools, Legal-, Buchhaltungs- und Marketing-Angebote aus dem Web-Katalog.")
+                .font(.system(size: 14.5))
+                .foregroundStyle(MF.smoke)
+                .lineSpacing(3)
+
+            if let lastUpdated = catalog.lastUpdated {
+                Label("Aktualisiert \(lastUpdated.formatted(.dateTime.day().month().hour().minute()))", systemImage: "arrow.triangle.2.circlepath")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(MF.faint)
+            }
+        }
+        .padding(16)
+        .background(MF.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(MF.border, lineWidth: 1))
+        .warmShadow()
+    }
+
+    private var categoryRail: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                categoryChip(label: "Alle", icon: "✨", count: catalog.deals.count, id: "all")
+                ForEach(categories) { category in
+                    categoryChip(label: category.label, icon: category.icon, count: category.count, id: category.id)
+                }
+            }
+            .padding(.vertical, 1)
+        }
+    }
+
+    private func categoryChip(label: String, icon: String, count: Int, id: String) -> some View {
+        let selected = selectedCategory == id
+        return Button {
+            Haptics.select()
+            selectedCategory = id
+        } label: {
+            HStack(spacing: 5) {
+                Text(icon)
+                    .font(.system(size: 12))
+                Text("\(label) · \(count)")
+            }
+            .font(.system(size: 12.5, weight: .bold))
+            .foregroundStyle(selected ? MF.emberDeep : MF.smoke)
+            .padding(.horizontal, 13)
+            .frame(height: 36)
+            .background(selected ? MF.emberTint : MF.surface)
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(selected ? MF.ember.opacity(0.55) : MF.border, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var search: some View {
+        HStack(spacing: 9) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(MF.faint)
+            TextField("Suche: Buchhaltung, Website, Marketing ...", text: $query)
+                .font(.system(size: 14))
+        }
+        .padding(.horizontal, 14)
+        .frame(height: 46)
+        .background(MF.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(MF.border, lineWidth: 1))
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 11) {
+            if catalog.isRefreshing {
+                ProgressView()
+                    .controlSize(.regular)
+                    .tint(MF.ember)
+            } else {
+                Image(systemName: "giftcard")
+                    .font(.system(size: 26, weight: .semibold))
+                    .foregroundStyle(MF.faint)
+            }
+            Text(catalog.isRefreshing ? "Deals laden" : "Keine Deals gefunden")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(MF.ink)
+            Text(catalog.lastError ?? "Passe Suche oder Kategorie an. Der Katalog kommt aus public/deals.json der Webversion.")
+                .font(.system(size: 13))
+                .foregroundStyle(MF.smoke)
+                .multilineTextAlignment(.center)
+            if !catalog.isRefreshing {
+                Button {
+                    Haptics.tap()
+                    Task { await catalog.refresh() }
+                } label: {
+                    Label("Neu laden", systemImage: "arrow.clockwise")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(MF.emberDeep)
+                        .padding(.horizontal, 13)
+                        .frame(height: 36)
+                        .background(MF.emberTint)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(24)
+        .background(MF.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(MF.border, lineWidth: 1))
+    }
+}
+
+struct DealDetailView: View {
+    @ObservedObject private var catalog = RemoteCatalog.shared
+    @Environment(\.openURL) private var openURL
+    let dealId: String
+
+    private var deal: CatalogDeal? {
+        catalog.deals.first { $0.id == dealId }
+    }
+
+    var body: some View {
+        if let deal {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    hero(deal)
+                    valueCard(deal)
+                    detailBlock(title: "Was du bekommst", text: deal.cleanDescription ?? "Details stehen auf der Anbieter-Seite.")
+                    detailBlock(title: "Für wen", text: deal.cleanEligibility ?? "Gründer, kleine Unternehmen und Teams; Details auf der offiziellen Website prüfen.")
+                    detailBlock(title: "Laufzeit", text: deal.cleanDuration ?? "Siehe Website.")
+                    if !deal.displayTags.isEmpty {
+                        tags(deal)
+                    }
+                }
+                .padding(20)
+                .padding(.bottom, 118)
+            }
+            .scrollIndicators(.hidden)
+            .safeAreaInset(edge: .bottom) {
+                stickyCTA(deal)
+            }
+            .background(MF.canvas.ignoresSafeArea())
+            .navigationTitle(deal.categoryLabel)
+            .navigationBarTitleDisplayMode(.inline)
+        } else {
+            ContentUnavailableView("Deal nicht gefunden", systemImage: "giftcard")
+                .background(MF.canvas.ignoresSafeArea())
+                .task {
+                    if catalog.deals.isEmpty {
+                        await catalog.refresh()
+                    }
+                }
+        }
+    }
+
+    private func hero(_ deal: CatalogDeal) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            RemoteBannerTile(
+                url: deal.bannerImageURL,
+                height: 96,
+                colors: [MF.ember, MF.indigo]
+            )
+                .overlay(alignment: .bottomLeading) {
+                    RemoteLogoTile(
+                        url: deal.logoImageURL,
+                        size: 58,
+                        cornerRadius: 16,
+                        background: MF.surface,
+                        fallbackText: deal.displayLogo,
+                        fallbackSystemImage: nil,
+                        fallbackColor: MF.emberDeep
+                    )
+                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.5), lineWidth: 1))
+                    .padding(16)
+                    .offset(y: 30)
+                }
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Eyebrow(text: "\(deal.categoryIcon) \(deal.categoryLabel)", color: MF.emberDeep)
+                    Spacer()
+                    DealBadgeView(deal: deal)
+                }
+                .padding(.top, 28)
+                Text(deal.product)
+                    .font(.system(size: 27, weight: .heavy))
+                    .foregroundStyle(MF.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(deal.company)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(MF.smoke)
+            }
+            .padding(17)
+        }
+        .background(MF.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 22).stroke(deal.isEpic ? MF.ember.opacity(0.35) : MF.border, lineWidth: 1))
+        .warmShadow(large: true)
+    }
+
+    private func valueCard(_ deal: CatalogDeal) -> some View {
+        HStack(spacing: 10) {
+            dealMetric("Wert", deal.cleanValue ?? "Deal", "Vergünstigung")
+            dealMetric("Kategorie", deal.categoryLabel, deal.categoryIcon)
+            dealMetric("Status", deal.badgeText, deal.isEpic ? "Top" : "aktiv")
+        }
+    }
+
+    private func dealMetric(_ label: String, _ value: String, _ sub: String) -> some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.system(size: 14.5, weight: .heavy))
+                .foregroundStyle(label == "Wert" ? MF.emberDeep : MF.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.68)
+            Text(label)
+                .font(.system(size: 11.5, weight: .bold))
+                .foregroundStyle(MF.smoke)
+            Text(sub)
+                .font(.system(size: 10.5, weight: .semibold))
+                .foregroundStyle(MF.faint)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(MF.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(MF.border, lineWidth: 1))
+        .warmShadow()
+    }
+
+    private func detailBlock(title: String, text: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(MF.smoke)
+            Text(text)
+                .font(.system(size: 14.5))
+                .foregroundStyle(MF.inkSoft)
+                .lineSpacing(3)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(15)
+        .background(MF.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(MF.border, lineWidth: 1))
+    }
+
+    private func tags(_ deal: CatalogDeal) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Tags")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(MF.smoke)
+            FlowLayout(spacing: 7) {
+                ForEach(deal.displayTags, id: \.self) { tag in
+                    Text(tag)
+                        .font(.system(size: 11.5, weight: .bold))
+                        .foregroundStyle(MF.indigoInk)
+                        .padding(.horizontal, 10)
+                        .frame(height: 28)
+                        .background(MF.indigoTint)
+                        .clipShape(Capsule())
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(15)
+        .background(MF.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(MF.border, lineWidth: 1))
+    }
+
+    private func stickyCTA(_ deal: CatalogDeal) -> some View {
+        VStack(spacing: 0) {
+            Rectangle()
+                .fill(LinearGradient(colors: [.clear, MF.canvas], startPoint: .top, endPoint: .bottom))
+                .frame(height: 18)
+            HStack(spacing: 10) {
+                Button {
+                    Haptics.tap()
+                    if let url = deal.actionURL {
+                        openURL(url)
+                    }
+                } label: {
+                    Label("Angebot ansehen", systemImage: "arrow.up.right")
+                        .font(.system(size: 14, weight: .heavy))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(MF.emberGrad)
+                        .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .disabled(deal.actionURL == nil)
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 12)
+            .background(MF.canvas)
+        }
+    }
+}
+
+private func dealCategories(from deals: [CatalogDeal]) -> [DealCategory] {
+    var seen: [String: DealCategory] = [:]
+    for deal in deals where deal.active ?? true {
+        if let current = seen[deal.cat] {
+            seen[deal.cat] = DealCategory(id: current.id, label: current.label, icon: current.icon, count: current.count + 1)
+        } else {
+            seen[deal.cat] = DealCategory(id: deal.cat, label: deal.categoryLabel, icon: deal.categoryIcon, count: 1)
+        }
+    }
+    return seen.values.sorted { $0.count == $1.count ? $0.label < $1.label : $0.count > $1.count }
+}
+
+private func dealPrioritySort(_ lhs: CatalogDeal, _ rhs: CatalogDeal) -> Bool {
+    let left = dealRank(lhs)
+    let right = dealRank(rhs)
+    if left != right { return left > right }
+    return lhs.product < rhs.product
+}
+
+private func dealRank(_ deal: CatalogDeal) -> Int {
+    var score = 0
+    switch deal.tier?.lowercased() {
+    case "epic": score += 90
+    case "big": score += 70
+    case "good": score += 50
+    default: score += 30
+    }
+    switch deal.badgeStyle {
+    case "epic": score += 20
+    case "premium", "hot": score += 10
+    default: break
+    }
+    if deal.cat == "cloud" || deal.cat == "ai" { score += 5 }
+    return score
+}
+
+private func fallbackDealCategoryLabel(_ id: String) -> String {
+    switch id {
+    case "cloud": "Cloud & Infra"
+    case "saas": "SaaS"
+    case "legal": "Legal"
+    case "ai": "AI"
+    case "marketing": "Marketing"
+    case "hr": "HR & Team"
+    case "community": "Community"
+    default: id.capitalized
+    }
+}
+
+private func fallbackDealCategoryIcon(_ id: String) -> String {
+    switch id {
+    case "cloud": "☁️"
+    case "saas": "🧰"
+    case "legal": "⚖️"
+    case "ai": "✨"
+    case "marketing": "📣"
+    case "hr": "👥"
+    case "community": "🤝"
+    default: "🎁"
+    }
+}
+
+private extension CatalogDeal {
+    var displayLogo: String {
+        clean(logo) ?? categoryIcon
+    }
+
+    var logoImageURL: URL? {
+        if let resolved = RemoteAssetURL.resolve(logoUrl) {
+            return resolved
+        }
+        guard let raw = clean(logo),
+              raw.hasPrefix("http://") || raw.hasPrefix("https://") || raw.hasPrefix("/") || raw.contains("/")
+        else { return nil }
+        return RemoteAssetURL.resolve(raw)
+    }
+
+    var bannerImageURL: URL? {
+        RemoteAssetURL.resolve(bannerUrl)
+    }
+
+    var categoryIcon: String {
+        clean(catIcon) ?? fallbackDealCategoryIcon(cat)
+    }
+
+    var categoryLabel: String {
+        clean(catLabel) ?? fallbackDealCategoryLabel(cat)
+    }
+
+    var cleanValue: String? { clean(value) }
+    var cleanDescription: String? { clean(desc) }
+    var cleanEligibility: String? { clean(eligibility) }
+    var cleanDuration: String? { clean(duration) }
+
+    var badgeText: String {
+        clean(badge) ?? (isEpic ? "EPIC" : "Deal")
+    }
+
+    var badgeStyle: String {
+        (tier ?? badge ?? "").lowercased()
+    }
+
+    var isEpic: Bool {
+        badgeStyle == "epic"
+    }
+
+    var displayTags: [String] {
+        (tags ?? []).compactMap { clean($0) }
+    }
+
+    var actionURL: URL? {
+        if let claim = clean(claimUrl), let url = URL(string: claim) { return url }
+        if let urlString = clean(url), let url = URL(string: urlString) { return url }
+        return nil
+    }
+
+    var searchBlob: String {
+        [
+            company,
+            product,
+            cat,
+            categoryLabel,
+            cleanValue ?? "",
+            cleanDescription ?? "",
+            displayTags.joined(separator: " "),
+        ]
+        .joined(separator: " ")
+        .lowercased()
+    }
+
+    private func clean(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+}
+
 // ─── Partner-Marktplatz ──────────────────────────────────────
 
 struct PartnerPreviewCard: View {
@@ -774,12 +1539,15 @@ struct PartnerPreviewCard: View {
     var body: some View {
         let hue = MF.services[partner.serviceId] ?? MF.services["growth"]!
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: partner.service?.icon ?? "sparkles")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(hue.hue)
-                .frame(width: 40, height: 40)
-                .background(hue.tint)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            RemoteLogoTile(
+                url: partner.logoURL,
+                size: 42,
+                cornerRadius: 12,
+                background: hue.tint,
+                fallbackText: nil,
+                fallbackSystemImage: partner.service?.icon ?? "sparkles",
+                fallbackColor: hue.hue
+            )
 
             VStack(alignment: .leading, spacing: 7) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -1090,16 +1858,22 @@ struct PartnerDetailView: View {
 
     private func hero(_ partner: PartnerOffer, hue: MF.ServiceHue) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            LinearGradient(colors: [hue.hue, hue.ink], startPoint: .topLeading, endPoint: .bottomTrailing)
-                .frame(height: 82)
+            RemoteBannerTile(
+                url: partner.bannerURL,
+                height: 92,
+                colors: [hue.hue, hue.ink]
+            )
             VStack(alignment: .leading, spacing: 11) {
                 HStack(spacing: 9) {
-                    Image(systemName: partner.service?.icon ?? "sparkles")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(hue.ink)
-                        .frame(width: 42, height: 42)
-                        .background(hue.tint)
-                        .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    RemoteLogoTile(
+                        url: partner.logoURL,
+                        size: 42,
+                        cornerRadius: 13,
+                        background: hue.tint,
+                        fallbackText: nil,
+                        fallbackSystemImage: partner.service?.icon ?? "sparkles",
+                        fallbackColor: hue.ink
+                    )
                     VStack(alignment: .leading, spacing: 2) {
                         Eyebrow(text: "\(partner.serviceLabel) · verifizierter Match", color: hue.ink)
                         Text(partner.firm)

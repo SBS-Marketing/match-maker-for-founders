@@ -12,6 +12,7 @@ enum ProfileRoute: Hashable {
 struct ProfileView: View {
     @EnvironmentObject var state: AppState
     @State private var editing = false
+    @State private var confirmingSignOut = false
     @State private var path: [ProfileRoute] = []
 
     var body: some View {
@@ -66,6 +67,14 @@ struct ProfileView: View {
             }
         }
         .tint(MF.emberDeep)
+        .confirmationDialog("Abmelden?", isPresented: $confirmingSignOut, titleVisibility: .visible) {
+            Button("Abmelden", role: .destructive) {
+                Task { await state.signOut() }
+            }
+            Button("Abbrechen", role: .cancel) { }
+        } message: {
+            Text("Du kannst dich danach jederzeit wieder mit deinem Supabase-Konto anmelden.")
+        }
     }
 
     // ─── Hero: Avatar, Name, Rolle, Pitch, Skills ─────────────
@@ -217,7 +226,7 @@ struct ProfileView: View {
 
     private var workspaceRows: some View {
         VStack(spacing: 0) {
-            accountRow(icon: "scope", label: "Founder Radar") {
+            accountRow(icon: "scope", label: "Business Radar") {
                 state.open(.screen(.radar))
             }
             Divider().overlay(MF.borderSoft).padding(.leading, 52)
@@ -226,7 +235,7 @@ struct ProfileView: View {
                 state.open(.screen(.calendar))
             }
             Divider().overlay(MF.borderSoft).padding(.leading, 52)
-            accountRow(icon: "person.3.fill", label: "Startup Workspace") {
+            accountRow(icon: "person.3.fill", label: "Business Workspace") {
                 state.open(.screen(.startup))
             }
             Divider().overlay(MF.borderSoft).padding(.leading, 52)
@@ -419,8 +428,8 @@ struct ProfileView: View {
             Divider().overlay(MF.borderSoft).padding(.leading, 52)
             authAccountRow
             Divider().overlay(MF.borderSoft).padding(.leading, 52)
-            accountRow(icon: "rectangle.portrait.and.arrow.right", label: "Abmelden") {
-                Task { await state.signOut() }
+            accountRow(icon: "rectangle.portrait.and.arrow.right", label: "Abmelden", destructive: true) {
+                confirmingSignOut = true
             }
             Divider().overlay(MF.borderSoft).padding(.leading, 52)
             accountRow(icon: "bolt.fill", label: state.isPremium ? "Premium aktiv" : "Premium testen") {
@@ -497,22 +506,24 @@ struct ProfileView: View {
         .padding(.horizontal, 15).padding(.vertical, 13)
     }
 
-    private func accountRow(icon: String, label: String, badge: Int = 0,
+    private func accountRow(icon: String, label: String, badge: Int = 0, destructive: Bool = false,
                             action: @escaping () -> Void) -> some View {
-        Button {
+        let tint = destructive ? Color.red : MF.emberDeep
+        let tintBackground = destructive ? Color.red.opacity(0.12) : MF.emberTint
+        return Button {
             Haptics.tap()
             action()
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(MF.emberDeep)
+                    .foregroundStyle(tint)
                     .frame(width: 30, height: 30)
-                    .background(MF.emberTint)
+                    .background(tintBackground)
                     .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
                 Text(label)
                     .font(.system(size: 14.5, weight: .semibold))
-                    .foregroundStyle(MF.ink)
+                    .foregroundStyle(destructive ? tint : MF.ink)
                 Spacer()
                 if badge > 0 {
                     Text("\(badge)")
@@ -762,18 +773,18 @@ struct ProfileEditSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     field("Name") { editField($name, placeholder: "Dein Name") }
-                    field("Rolle") { editField($role, placeholder: "z.B. Gründerin") }
-                    field("Pitch (\(pitch.count)/140)") {
-                        editField($pitch, placeholder: "Dein Satz", axis: .vertical)
+                    field("Rolle") { editField($role, placeholder: "z.B. Friseur, Händler, Handwerkerin") }
+                    field("Idee (\(pitch.count)/140)") {
+                        editField($pitch, placeholder: "Was willst du anbieten?", axis: .vertical)
                             .onChange(of: pitch) { _, v in
                                 if v.count > 140 { pitch = String(v.prefix(140)) }
                             }
                     }
                     field("Headline") {
-                        editField($headline, placeholder: "Product Founder · sucht Tech Co-Founder")
+                        editField($headline, placeholder: "Friseursalon · sucht Buchhaltung & Website-Hilfe")
                     }
                     field("Über mich") {
-                        editField($about, placeholder: "Was baust du, was treibt dich an, wen suchst du?", axis: .vertical)
+                        editField($about, placeholder: "Was bietest du an, für wen, und welche Hilfe brauchst du?", axis: .vertical)
                     }
                     field("PLZ") {
                         editField($plz, placeholder: "50667")

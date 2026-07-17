@@ -363,7 +363,7 @@ private struct CompanyPreviewBlock: View {
         switch block.type {
         case .hero:
             VStack(alignment: .leading, spacing: 13) {
-                Eyebrow(text: block.eyebrow.isEmpty ? "Startup" : block.eyebrow, color: .white.opacity(0.72))
+                Eyebrow(text: block.eyebrow.isEmpty ? "Business" : block.eyebrow, color: .white.opacity(0.72))
                 Text(block.title)
                     .font(.system(size: 27, weight: .bold))
                     .foregroundStyle(.white)

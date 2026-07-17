@@ -88,7 +88,7 @@ struct MainTabView: View {
                 .tabItem { Label("Community", systemImage: "person.2.fill") }
                 .tag(AppTab.community)
             StartupWorkspaceView()
-                .tabItem { Label("Startup", systemImage: "building.2.fill") }
+                .tabItem { Label("Business", systemImage: "building.2.fill") }
                 .tag(AppTab.startup)
             ProfileView()
                 .tabItem { Label("Profil", systemImage: "person.fill") }
@@ -114,6 +114,14 @@ struct MainTabView: View {
         .overlay {
             if let card = state.celebrating {
                 MatchCelebrationView(card: card)
+            }
+        }
+        .overlay(alignment: .bottomTrailing) {
+            if state.copilotFloating {
+                FloatingCopilotDock()
+                    .padding(.trailing, 16)
+                    .padding(.bottom, 92)
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
             }
         }
         // Premium-Paywall — nach Feature-Nutzung, nie im Onboarding.
@@ -166,6 +174,53 @@ struct MainTabView: View {
         let canMoveRight = horizontal > 0 && state.tab != .today
 
         return isIntentional && isMostlyHorizontal && (canMoveLeft || canMoveRight)
+    }
+}
+
+private struct FloatingCopilotDock: View {
+    @EnvironmentObject private var state: AppState
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Button {
+                Haptics.tap()
+                state.openCopilot()
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 13, weight: .bold))
+                    Text("Co-Pilot")
+                        .font(.system(size: 13, weight: .heavy))
+                        .lineLimit(1)
+                }
+                .foregroundStyle(.white)
+                .padding(.leading, 13)
+                .padding(.trailing, 12)
+                .frame(height: 44)
+                .background(MF.indigoGrad)
+                .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                Haptics.tap()
+                state.closeCopilotFloating()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 11, weight: .heavy))
+                    .foregroundStyle(MF.indigoInk)
+                    .frame(width: 36, height: 36)
+                    .background(MF.surface)
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(MF.border, lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(5)
+        .background(.ultraThinMaterial)
+        .clipShape(Capsule())
+        .overlay(Capsule().stroke(MF.border, lineWidth: 1))
+        .warmShadow(large: true)
     }
 }
 
@@ -233,6 +288,8 @@ struct CommunityTabView: View {
                 case .documents: DocumentsView()
                 case .calendar: PlannerView()
                 case .startup: StartupWorkspaceView()
+                case .deals: DealsIndexView()
+                case .deal(let id): DealDetailView(dealId: id)
                 case .partners(let serviceId): PartnerIndexView(serviceId: serviceId)
                 case .partner(let partnerId): PartnerDetailView(partnerId: partnerId)
                 }
@@ -312,6 +369,8 @@ struct ChatsTabView: View {
                         ChatsListView()
                     case .calendar:
                         PlannerView()
+                    case .kanban:
+                        KanbanView()
                     case .startup:
                         StartupWorkspaceView()
                     case .radar:

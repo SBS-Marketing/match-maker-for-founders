@@ -35,6 +35,10 @@ struct CopilotView: View {
                         inputFocused = false
                         showingSessions = true
                     }
+                    headerButton("chevron.down") {
+                        inputFocused = false
+                        state.minimizeCopilot()
+                    }
                 }
             }
 
@@ -268,6 +272,9 @@ struct CopilotView: View {
                     if let memory = msg.memory {
                         memoryInline(memory)
                     }
+                    if !msg.sources.isEmpty {
+                        sourceChips(msg.sources)
+                    }
                     if !msg.actions.isEmpty {
                         FlowLayout(spacing: 7) {
                             ForEach(msg.actions) { action in
@@ -318,6 +325,9 @@ struct CopilotView: View {
                                 Button {
                                     Haptics.tap()
                                     state.open(nav.destination)
+                                    if nav.destination != .screen(.copilot) {
+                                        state.minimizeCopilot()
+                                    }
                                 } label: {
                                     HStack(spacing: 5) {
                                         Text(nav.label)
@@ -402,6 +412,38 @@ struct CopilotView: View {
         .padding(11)
         .background(MF.indigoTint.opacity(0.7))
         .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+    }
+
+    private func sourceChips(_ sources: [CopilotSource]) -> some View {
+        FlowLayout(spacing: 7) {
+            ForEach(sources.prefix(5)) { source in
+                if let url = source.url.flatMap(URL.init(string:)) {
+                    Link(destination: url) {
+                        sourceChip(source)
+                    }
+                } else {
+                    sourceChip(source)
+                }
+            }
+        }
+        .padding(.top, 1)
+    }
+
+    private func sourceChip(_ source: CopilotSource) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: source.type.localizedCaseInsensitiveContains("web") ? "globe" : "doc.text.fill")
+                .font(.system(size: 10.5, weight: .bold))
+            Text(source.title)
+                .font(.system(size: 11.5, weight: .bold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+        .foregroundStyle(MF.smoke)
+        .padding(.horizontal, 10)
+        .frame(height: 30)
+        .background(Color(hex: 0xEFE6D6))
+        .overlay(Capsule().stroke(Color(hex: 0xD9CBB6), lineWidth: 1))
+        .clipShape(Capsule())
     }
 
     // ─── Prompt-Chips (Spec: IndigoTint-Pillen) ───────────────
@@ -558,6 +600,23 @@ struct CopilotView: View {
             if let confirmation = confirmationMessage(for: action) {
                 appendAssistant(confirmation)
             }
+            if shouldMinimizeAfter(action) {
+                state.minimizeCopilot()
+            }
+        }
+    }
+
+    private func shouldMinimizeAfter(_ action: CopilotAction) -> Bool {
+        switch action.command {
+        case .open(let destination):
+            return destination != .screen(.copilot)
+        case .openMatchChat, .sendMatchMessage, .rebuildPlanner, .generateDocumentDraft, .exportDocumentPDF,
+             .publishCompanyProfile, .refreshFounderRadar, .addPlannerItem, .addSmartPlannerItem, .foundStartup,
+             .addKanbanCard:
+            return true
+        case .askCopilot, .draftMatchMessage, .startCofounderTrial, .refreshBackend, .refreshPartners,
+             .toggleDocument, .rememberFact:
+            return false
         }
     }
 
@@ -565,17 +624,29 @@ struct CopilotView: View {
         switch action.command {
         case .addPlannerItem(let title, _, let dueLabel, _, _):
             return CopilotMessage(mine: false, text: "Erledigt. Ich habe „\(title)” für \(dueLabel) in den Kalender gelegt.", memory: state.founderMemory, source: .local)
+        case .addKanbanCard(let title, _):
+            return CopilotMessage(mine: false, text: "Erledigt. „\(title)” liegt jetzt als Karte auf deinem Board.", memory: state.founderMemory, source: .local)
         case .addSmartPlannerItem(let title, _, let dueLabel, _, _, _):
             return CopilotMessage(mine: false, text: "Erledigt. „\(title)” steht jetzt für \(dueLabel) im Kalender und ist als Co-Pilot-Schritt markiert.", memory: state.founderMemory, source: .local)
         case .rememberFact(let fact):
-            return CopilotMessage(mine: false, text: "Gespeichert im Gründer-Verzeichnis:\n\(fact)", memory: state.founderMemory, source: .local)
+            return CopilotMessage(mine: false, text: "Gespeichert im Business-Memory:\n\(fact)", memory: state.founderMemory, source: .local)
         case .foundStartup(let name, _, _, _, _):
             let title = name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? state.companyProfile.name : name
-            return CopilotMessage(mine: false, text: "Startup Workspace ist angelegt: \(title). Ich habe auch den ersten Profil-Check in den Kalender gelegt.", memory: state.founderMemory, source: .local)
+            return CopilotMessage(mine: false, text: "Business Workspace ist angelegt: \(title). Ich habe auch den ersten Profil-Check in den Kalender gelegt.", memory: state.founderMemory, source: .local)
         case .publishCompanyProfile:
             return CopilotMessage(mine: false, text: "Profil-Link ist gesetzt. Du kannst die Vorschau jetzt im Firmenprofil prüfen.", memory: state.founderMemory, source: .local)
         case .rebuildPlanner:
             return CopilotMessage(mine: false, text: "Plan neu aufgebaut. Ich habe den Kalender geöffnet, damit du die nächsten Schritte direkt prüfen kannst.", memory: state.founderMemory, source: .local)
+        case .generateDocumentDraft:
+            return CopilotMessage(mine: false, text: "Entwurf erstellt. Ich öffne die Unterlagen und bleibe unten rechts, damit wir dort weiterarbeiten können.", memory: state.founderMemory, source: .local)
+        case .exportDocumentPDF:
+            return CopilotMessage(mine: false, text: "PDF erstellt, sofern ein Entwurf vorhanden war. Du findest sie in den Unterlagen unter Dateien.", memory: state.founderMemory, source: .local)
+        case .open(.screen(.documents)):
+            return CopilotMessage(mine: false, text: "Ich öffne die Unterlagen. Du kannst dort hochladen, bearbeiten oder eine PDF erzeugen; ich bleibe als kleiner Button erreichbar.", memory: state.founderMemory, source: .local)
+        case .open(.screen(.calendar)):
+            return CopilotMessage(mine: false, text: "Ich öffne den Kalender. Ich bleibe unten rechts erreichbar, falls du den Termin direkt mit mir durchgehen willst.", memory: state.founderMemory, source: .local)
+        case .open(.screen(.startup)):
+            return CopilotMessage(mine: false, text: "Ich öffne den Business-Bereich und bleibe als kleiner Button erreichbar.", memory: state.founderMemory, source: .local)
         default:
             return nil
         }

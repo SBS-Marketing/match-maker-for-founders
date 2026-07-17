@@ -126,6 +126,47 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_token_grants: {
+        Row: {
+          created_at: string
+          note: string
+          period: string
+          resets_at: string | null
+          token_limit: number
+          tokens_used: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          note?: string
+          period?: string
+          resets_at?: string | null
+          token_limit?: number
+          tokens_used?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          note?: string
+          period?: string
+          resets_at?: string | null
+          token_limit?: number
+          tokens_used?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_grants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_event_registrations: {
         Row: {
           created_at: string
@@ -622,6 +663,93 @@ export type Database = {
         }
         Relationships: []
       }
+      connected_accounts: {
+        Row: {
+          id: string
+          user_id: string
+          provider: string
+          status: string
+          account_label: string | null
+          meta: Json
+          connected_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          provider: string
+          status?: string
+          account_label?: string | null
+          meta?: Json
+          connected_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          provider?: string
+          status?: string
+          account_label?: string | null
+          meta?: Json
+          connected_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      daily_reports: {
+        Row: {
+          id: string
+          user_id: string
+          report_date: string
+          content: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          report_date?: string
+          content?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          report_date?: string
+          content?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
+      whatsapp_messages: {
+        Row: {
+          id: string
+          user_id: string | null
+          wa_from: string
+          wa_name: string | null
+          body: string
+          direction: string
+          received_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          wa_from: string
+          wa_name?: string | null
+          body: string
+          direction?: string
+          received_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          wa_from?: string
+          wa_name?: string | null
+          body?: string
+          direction?: string
+          received_at?: string
+        }
+        Relationships: []
+      }
       guides: {
         Row: {
           category: string
@@ -980,6 +1108,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      consume_ai_tokens: {
+        Args: { p_tokens: number; p_user_id: string }
+        Returns: Database["public"]["Tables"]["ai_token_grants"]["Row"]
+      }
       confirm_waitlist_entry: { Args: { p_token: string }; Returns: boolean }
       has_role: {
         Args: {

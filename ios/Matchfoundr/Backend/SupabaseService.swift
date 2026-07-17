@@ -104,7 +104,7 @@ struct SupabaseProfileRow: Decodable, Equatable {
             mode: mode,
             industryId: resolvedIndustry,
             skills: skills ?? [],
-            name: clean(displayName) ?? fallbackEmail?.split(separator: "@").first.map(String.init) ?? "Founder",
+            name: clean(displayName) ?? fallbackEmail?.split(separator: "@").first.map(String.init) ?? "Gründer",
             role: roleLabel,
             pitch: clean(vision) ?? "",
             plz: clean(location) ?? "",
@@ -117,7 +117,7 @@ struct SupabaseProfileRow: Decodable, Equatable {
         let cardSkills = skills ?? []
         return FounderCard(
             id: id,
-            name: clean(displayName) ?? "Founder",
+            name: clean(displayName) ?? "Gründer",
             role: roleLabel,
             city: clean(location) ?? "DACH",
             pitch: clean(vision) ?? clean(lookingFor) ?? "Profil ist angelegt, aber noch nicht ausgefuellt.",
@@ -132,16 +132,16 @@ struct SupabaseProfileRow: Decodable, Equatable {
         if let founderType {
             switch founderType {
             case "talent": return "Skill-Partner"
-            case "hybrid": return "Founder & Operator"
+            case "hybrid": return "Gründer & Macher"
             default: break
             }
         }
         switch role {
-        case "tech": return "Tech Founder"
-        case "business": return "Business Founder"
-        case "product": return "Product Founder"
-        case "design": return "Design Founder"
-        default: return "Founder"
+        case "tech": return "Website & Technik"
+        case "business": return "Business & Verkauf"
+        case "product": return "Produkt & Angebot"
+        case "design": return "Design & Auftritt"
+        default: return "Gründer"
         }
     }
 
@@ -375,7 +375,7 @@ struct SupabaseService {
         try await rest(
             "partner_offers",
             query: [
-                URLQueryItem(name: "select", value: "slug,name,firm,serviceId:service_id,city,blurb,fit,sourceUrl:source_url,bookingUrl:booking_url,specialties,packages,why,vouches"),
+                URLQueryItem(name: "select", value: "slug,name,firm,serviceId:service_id,city,blurb,fit,sourceUrl:source_url,bookingUrl:booking_url,logoUrl:logo_url,bannerUrl:banner_url,specialties,packages,why,vouches"),
                 URLQueryItem(name: "is_active", value: "eq.true"),
                 URLQueryItem(name: "order", value: "fit.desc"),
                 URLQueryItem(name: "limit", value: "\(limit)")

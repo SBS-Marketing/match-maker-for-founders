@@ -1,5 +1,5 @@
-// Co-Pilot Engine — kontextbewusst: liest Founder-Memory, Unterlagen,
-// Kalender, Matches und Firmenprofil und kann App-Aktionen auslösen.
+// Co-Pilot Engine — kontextbewusst: liest Business-Memory, Unterlagen,
+// Kalender, Kontakte und Profil und kann App-Aktionen auslösen.
 
 import Foundation
 
@@ -36,7 +36,8 @@ enum CopilotEngine {
             }
             let newFacts = response.newFacts ?? []
             let quickActions = Array((response.quickActions ?? []).prefix(4))
-            let nativeActions = nativeHint?.actions ?? []
+            let structuredActions = (response.appActions ?? []).compactMap(structuredAction(from:))
+            let nativeActions = structuredActions + (nativeHint?.actions ?? [])
             let navigation = (response.navigation ?? []).compactMap(nativeNav(from:))
             let choiceReplies = choiceReplies(for: answer, quickActions: quickActions, state: state)
             let quickReplies = choiceReplies.isEmpty
@@ -54,6 +55,7 @@ enum CopilotEngine {
                 ),
                 navigation: navigation.isEmpty ? (nativeHint?.navigation ?? []) : navigation,
                 quickReplies: quickReplies.isEmpty ? (nativeHint?.quickReplies ?? []) : quickReplies,
+                sources: Array((response.sources ?? []).prefix(5)),
                 memory: state.founderMemory,
                 source: .cloud
             )
@@ -115,12 +117,12 @@ enum CopilotEngine {
             if state.hasStartupWorkspace {
                 return CopilotMessage(
                     mine: false,
-                    text: "Dein Startup Workspace läuft schon. Nächster sinnvoller Schritt: Teamlücke klären, Profil schärfen oder einen Kalenderblock setzen.",
+                    text: "Dein Business Workspace läuft schon. Nächster sinnvoller Schritt: offene Anmeldung/Kosten/Preise klären, Profil schärfen oder einen Kalenderblock setzen.",
                     actions: [
-                        action("Startup öffnen", "building.2.fill", .open(.screen(.startup))),
+                        action("Business öffnen", "building.2.fill", .open(.screen(.startup))),
                         action("Termin eintragen", "calendar.badge.plus", .addSmartPlannerItem(
-                            title: "Startup Workspace scharfstellen",
-                            note: "Teamlücke, Profil und nächsten Beweis prüfen.",
+                            title: "Business Workspace scharfstellen",
+                            note: "Kosten, Anmeldung, Angebot und nächsten Beweis prüfen.",
                             dueLabel: "Heute",
                             kind: .profile,
                             target: .startup,
@@ -135,11 +137,11 @@ enum CopilotEngine {
 
             return CopilotMessage(
                 mine: false,
-                text: "Kurz: Starte erst den Workspace, dann füllen wir Profil, Team und Plan. Nicht vorher alles zerdenken.",
+                text: "Kurz: Lege erst dein Business an. Dann klären wir Angebot, Preise, Anmeldung, Kosten und erste Kunden. Nicht vorher alles zerdenken.",
                 actions: [
                     startupFoundingAction(state: state),
-                    action("Gründer entdecken", "magnifyingglass", .open(.screen(.swipe))),
-                    action("Startup öffnen", "building.2.fill", .open(.screen(.startup))),
+                    action("Kontakte entdecken", "magnifyingglass", .open(.screen(.swipe))),
+                    action("Business öffnen", "building.2.fill", .open(.screen(.startup))),
                 ],
                 memory: memory,
                 source: .local
@@ -238,24 +240,25 @@ enum CopilotEngine {
             )
         }
 
-        if matches(m, "unterlagen", "dokument", "ideenpapier", "finanzplan", "innovation", "förder", "foerder", "zuschuss", "stipendium", "exist") {
+        if matches(m, "unterlagen", "dokument", "businessplan", "finanzplan", "startkosten", "anmeldung", "förder", "foerder", "zuschuss", "stipendium", "exist") {
             let missing = memory.openDocuments.isEmpty ? "Dein Unterlagenpaket ist gerade komplett markiert." : "Es fehlen noch: \(openDocs)."
             return CopilotMessage(
                 mine: false,
                 text:
                 """
-                Für \(memory.ventureName) ist der wichtigste Hebel nicht irgendein Guide, sondern ein belastbarer Nachweis-Stapel.
+                Für \(memory.ventureName) ist der wichtigste Hebel nicht irgendein Guide, sondern ein einfacher, belastbarer Papierkram-Stapel.
 
                 \(missing)
 
-                Ich kann dir aus deinem Firmenprofil sofort einen ersten Arbeitsentwurf für Ideenpapier und Innovationsbeschreibung schreiben. Danach sollte der Finanzplan als nächster Kalendereintrag folgen, weil Förderung ohne Zahlen schnell weich wird.
+                Ich kann dir aus deinem Profil sofort einen ersten Kurz-Businessplan schreiben. Danach sollten Startkosten, Preise und Anmeldung als nächste Schritte in den Kalender, weil kleine Gründungen ohne Zahlen und Papierkram schnell hängen bleiben.
                 """,
                 actions: [
                     action("Entwurf erstellen", "doc.text.fill", .generateDocumentDraft),
+                    action("PDF erstellen", "doc.richtext.fill", .exportDocumentPDF),
                     action("Unterlagen öffnen", "folder.fill", .open(.screen(.documents))),
-                    action("Finanzplan einplanen", "calendar.badge.plus", .addPlannerItem(
-                        title: "Finanzplan grob rechnen",
-                        note: "12 Monate Kosten, private Lebenshaltung, Mittelverwendung und erster Umsatzpfad.",
+                    action("Startkosten einplanen", "calendar.badge.plus", .addPlannerItem(
+                        title: "Startkosten grob rechnen",
+                        note: "Einmalige Kosten, Monatskosten, private Lebenshaltung und Steuer-Rücklage.",
                         dueLabel: "Diese Woche",
                         kind: .funding,
                         target: .documents
@@ -276,7 +279,7 @@ enum CopilotEngine {
                 """
                 \(publicState)
 
-                Ich würde das Firmenprofil als Arbeitskarte für Matches behandeln: Hero-Satz, aktueller Stand, Teamlücke und klare CTA. Gerade bei \(memory.ventureName) muss ein Match in 10 Sekunden verstehen, ob es operativ helfen kann.
+                Ich würde das Profil als klare Geschäftskarte behandeln: Angebot, Zielgruppe, Standort/Region, aktueller Stand und nächste Kontaktmöglichkeit. Gerade bei \(memory.ventureName) muss jemand in 10 Sekunden verstehen, was du anbietest und wobei Hilfe gebraucht wird.
 
                 Wenn du willst, öffne ich den Builder oder setze den Profil-Link direkt auf veröffentlicht.
                 """,
@@ -284,8 +287,8 @@ enum CopilotEngine {
                     action("Builder öffnen", "building.2.fill", .open(.screen(.company))),
                     action("Profil-Link setzen", "paperplane.fill", .publishCompanyProfile),
                     action("Profil-Review einplanen", "calendar.badge.plus", .addPlannerItem(
-                        title: "Firmenprofil auf Match-Klarheit prüfen",
-                        note: "Hero, Teamlücke, Stand und CTA so lesen, als wärst du ein fremdes Match.",
+                        title: "Business-Profil auf Klarheit prüfen",
+                        note: "Angebot, Zielgruppe, Ort, Stand und Kontakt so lesen, als wärst du ein fremder Kunde oder Partner.",
                         dueLabel: "Heute",
                         kind: .profile,
                         target: .company
@@ -354,6 +357,38 @@ enum CopilotEngine {
             )
         }
 
+        if matches(m, "preis", "preise", "mindestumsatz", "stundensatz", "tagessatz", "kalkulation", "angebotspreis", "paketpreis", "marge") {
+            return CopilotMessage(
+                mine: false,
+                text:
+                """
+                Für \(memory.ventureName) würde ich Preise nicht aus dem Bauch entscheiden. Erst grob rechnen:
+
+                Fixkosten + privater Bedarf + Steuer/Puffer = Mindestumsatz. Daraus entstehen Tageswert, Stundenwert und ein einfacher Testpreis für echte Gespräche.
+
+                Öffne im Business-Bereich den Preisrechner, speichere den Anker in deine Unterlagen und teste ihn diese Woche mit drei möglichen Kunden. Genau da wird aus Idee ein echtes Geschäftssignal.
+                """,
+                actions: [
+                    action("Preisrechner öffnen", "eurosign.circle.fill", .open(.screen(.startup))),
+                    action("Preis-Test planen", "calendar.badge.plus", .addPlannerItem(
+                        title: "Preis mit 3 Zielkunden testen",
+                        note: "Einen einfachen Preis nennen und Reaktion notieren: Interesse, Einwand, Budget oder Alternative.",
+                        dueLabel: "Diese Woche",
+                        kind: .focus,
+                        target: .documents
+                    )),
+                    action("Unterlagen öffnen", "folder.fill", .open(.screen(.documents))),
+                ],
+                quickReplies: [
+                    "Welche Zahlen brauche ich?",
+                    "Mach daraus ein Angebot",
+                    "Schreib eine Testnachricht",
+                ],
+                memory: memory,
+                source: .local
+            )
+        }
+
         if matches(m, "startkosten", "was kostet", "kapitalbedarf", "budget", "runway", "investor", "kapital", "kredit") {
             return CopilotMessage(
                 mine: false,
@@ -389,17 +424,18 @@ enum CopilotEngine {
                 """
                 Bei \(memory.ventureName) würde ich Sichtbarkeit nicht abstrakt starten. Nimm eine kleine Zielgruppe, eine konkrete Nachfrage und einen Beweis.
 
-                Praktisch: 10 warme Kontakte, 3 kurze Problemgespräche, 1 öffentliches Profil, 1 Follow-up-Termin. Das lässt sich besser steuern als „Marketing machen".
+                Praktisch: 20 Zielkunden notieren, 5 kurze Gespräche anbahnen, 1 Testpreis nennen und danach das Business-Profil schärfen. Das lässt sich besser steuern als „Marketing machen".
                 """,
                 actions: [
-                    action("Akquise-Sprint planen", "calendar.badge.plus", .addPlannerItem(
-                        title: "10 warme Kontakte ansprechen",
-                        note: "Nicht um Auftrag bitten, sondern um Empfehlung und Problemfeedback.",
+                    action("Kunden-Sprint planen", "calendar.badge.plus", .addPlannerItem(
+                        title: "5 Kundengespräche anbahnen",
+                        note: "Kurze Nachricht, konkrete Frage, 15 Minuten. Ziel ist Lernen, nicht perfekt verkaufen.",
                         dueLabel: "Nächste 7 Tage",
                         kind: .focus,
                         target: .calendar
                     )),
-                    action("Firmenprofil öffnen", "building.2.fill", .open(.screen(.company))),
+                    action("Business öffnen", "building.2.fill", .open(.screen(.startup))),
+                    action("Kontakttext schreiben", "paperplane.fill", .open(.screen(.copilot))),
                 ],
                 navigation: [.init(label: "Die ersten 10 Kunden", destination: .guide("erste-kunden"))]
             )
@@ -550,7 +586,7 @@ enum CopilotEngine {
             mine: false,
             text:
             """
-            Ich würde Co-Founder-Suche nicht als Swipe-Spiel behandeln, sondern als Trial-Prozess.
+            Ich würde Partner- oder Helfersuche nicht als Swipe-Spiel behandeln, sondern als kleinen Prüfprozess.
 
             Deine stärksten aktuellen Matches:
 
@@ -561,7 +597,7 @@ enum CopilotEngine {
             Der nächste sinnvolle Schritt ist: Scorecard öffnen, Top-Kandidat prüfen, dann einen 15-Minuten-Call und 7-Tage-Test statt endloser Chaterei starten.
             """,
             actions: [
-                action("Co-Founder OS", "person.2.fill", .open(.screen(.cofounderDesk))),
+                action("Partner-Check", "person.2.fill", .open(.screen(.cofounderDesk))),
                 action("Nachricht schreiben", "square.and.pencil", .askCopilot("Schreib mir eine Nachricht an ein Match")),
                 action("Chats öffnen", "bubble.left.and.bubble.right.fill", .open(.screen(.chats))),
                 action("Swipe öffnen", "person.2.fill", .open(.screen(.swipe))),
@@ -580,7 +616,7 @@ enum CopilotEngine {
         let top = candidates.first
 
         var actions: [CopilotAction] = [
-            action("Co-Founder OS öffnen", "person.2.fill", .open(.screen(.cofounderDesk))),
+            action("Partner-Check öffnen", "person.2.fill", .open(.screen(.cofounderDesk))),
             action("Swipe öffnen", "rectangle.stack.person.crop.fill", .open(.screen(.swipe))),
         ]
         if let top {
@@ -612,12 +648,15 @@ enum CopilotEngine {
 
     static let quickPrompts = [
         "Was weißt du über mein Vorhaben?",
-        "Zeig mir mein Founder Radar",
+        "Zeig mir mein Business Radar",
         "Plane meine nächsten 7 Tage",
-        "Baue meine Co-Founder Scorecard",
+        "Was muss ich als Erstes anmelden?",
+        "Finde meine zuständige Kammer und Ämter",
+        "Kalkuliere meinen ersten Preis",
         "Welche Unterlagen fehlen mir?",
-        "Zeig mir Growth-Partner",
-        "Formuliere eine Nachricht an ein Match",
+        "Starte einen 7-Tage-Kunden-Sprint",
+        "Wie gewinne ich erste Kunden?",
+        "Formuliere eine Nachricht an einen Kontakt",
     ]
 
     private static func action(_ label: String, _ icon: String, _ command: CopilotCommand) -> CopilotAction {
@@ -741,7 +780,7 @@ enum CopilotEngine {
         }.joined(separator: "\n")
 
         var actions: [CopilotAction] = [
-            action("Founder Radar öffnen", "scope", .open(.screen(.radar))),
+            action("Business Radar öffnen", "scope", .open(.screen(.radar))),
             action("Live neu berechnen", "arrow.clockwise", .refreshFounderRadar),
             action("Board-Brief durchgehen", "brain.head.profile", .askCopilot(brief.copilotPrompt)),
         ]
@@ -762,7 +801,7 @@ enum CopilotEngine {
             mine: false,
             text:
             """
-            Dein Founder Radar sagt gerade: \(brief.verdict)
+            Dein Business Radar sagt gerade: \(brief.verdict)
 
             Score: \(brief.overallScore)/100 · \(brief.scoreLabel)
             Primäres Risiko: \(brief.primaryRisk)
@@ -774,7 +813,7 @@ enum CopilotEngine {
             Nächste Moves:
             \(moveLines)
 
-            Die harte Board-Frage ist: \(brief.investorQuestion)
+            Die harte Gründungsfrage ist: \(brief.investorQuestion)
             """,
             actions: actions,
             quickReplies: [
@@ -854,24 +893,24 @@ enum CopilotEngine {
             mine: false,
             text:
             """
-            Deine KI-Gründeranalyse ist fertig.
+            Dein KI-Gründungscheck ist fertig.
 
-            Kurzdiagnose: \(memory.compactSummary). Der Hebel ist nicht mehr nur Idee sammeln, sondern die nächste beweisbare Bewegung: \(memory.nextStep).
+            Kurzdiagnose: \(memory.compactSummary). Der Hebel ist nicht, die perfekte große Vision zu bauen, sondern den nächsten einfachen Schritt real zu machen: \(memory.nextStep).
 
             Risiken der nächsten 14 Tage:
-            1. Zu lange am Profil feilen, ohne mit passenden Menschen zu sprechen.
+            1. Zu lange nachdenken, ohne Kosten, Preise oder Anmeldung zu klären.
             2. Unterlagen bleiben offen: \(openDocs).
-            3. Team-Lücke wird nicht konkret genug benannt.
+            3. Erste Kunden oder echte Helfer werden zu spät angesprochen.
 
-            Beste Team-Lücke: Suche jemanden, der deine Rolle ergänzt und sofort operativ an einem kleinen Ergebnis mitarbeitet. Gute Signale wären:
-            \(matches.isEmpty ? "- Noch keine belastbaren Matches. Erst Swipe-Deck füllen und Gespräch starten." : matches)
+            Nächster Kontakt-Hebel: Sprich jemanden an, der praktisch helfen kann: Buchhaltung, Website, Standort, Einkauf, Genehmigung, erster Kunde oder operativer Partner.
+            \(matches.isEmpty ? "- Noch keine belastbaren Kontakte. Erst Kontakte entdecken und ein Gespräch starten." : matches)
 
-            Meine nächsten App-Aktionen: Plan neu bauen, Firmenprofil schärfen, erstes passendes Match anschreiben.
+            Meine nächsten App-Aktionen: Plan neu bauen, Business-Profil schärfen, ersten passenden Kontakt anschreiben.
             """,
             actions: [
                 action("Plan neu bauen", "wand.and.stars", .rebuildPlanner),
-                action("Firmenprofil", "building.2.fill", .open(.screen(.company))),
-                action("Match anschreiben", "square.and.pencil", .askCopilot("Formuliere eine Nachricht an ein Match")),
+                action("Business-Profil", "building.2.fill", .open(.screen(.company))),
+                action("Kontakt anschreiben", "square.and.pencil", .askCopilot("Formuliere eine Nachricht an einen passenden Kontakt")),
                 action("Unterlagen", "folder.fill", .open(.screen(.documents))),
             ],
             quickReplies: [
@@ -904,13 +943,13 @@ enum CopilotEngine {
 
             Für jetzt würde ich es so anfassen:
 
-            \(openPlan.isEmpty ? "1. Einen konkreten nächsten Schritt festlegen.\n2. Zuständigkeit im Startup Workspace klären.\n3. Den nächsten Kalenderblock setzen." : openPlan)
+            \(openPlan.isEmpty ? "1. Einen konkreten nächsten Schritt festlegen.\n2. Zuständigkeit im Business Workspace klären.\n3. Den nächsten Kalenderblock setzen." : openPlan)
 
-            Wenn du willst, kann ich daraus direkt den Plan neu bauen, den Startup Workspace öffnen oder dich zurück in den Kalender bringen.
+            Wenn du willst, kann ich daraus direkt den Plan neu bauen, den Business Workspace öffnen oder dich zurück in den Kalender bringen.
             """,
             actions: [
                 action("Plan neu bauen", "wand.and.stars", .rebuildPlanner),
-                action("Startup öffnen", "person.3.fill", .open(.screen(.startup))),
+                action("Business öffnen", "person.3.fill", .open(.screen(.startup))),
                 action("Kalender öffnen", "calendar", .open(.screen(.calendar))),
                 action("Unterlagen prüfen", "folder.fill", .open(.screen(.documents))),
             ],
@@ -944,13 +983,13 @@ enum CopilotEngine {
     private static func isFastAppControlRequest(_ text: String) -> Bool {
         isStartupStartRequest(text)
             || matches(text, "kalender", "termin", "plane", "planen", "woche planen", "eintragen")
-            || matches(text, "unterlagen", "dokument", "finanzplan", "ideenpapier")
+            || matches(text, "unterlagen", "dokument", "finanzplan", "businessplan", "startkosten", "anmeldung")
             || matches(text, "firmenprofil", "firma", "profil bearbeiten", "profil öffnen", "profil oeffnen")
     }
 
     private static func isStartupStartRequest(_ text: String) -> Bool {
-        let startup = matches(text, "startup", "start up", "workspace", "firma", "vorhaben")
-        let start = matches(text, "gründen", "gruenden", "starten", "anlegen", "erstellen", "founden", "öffnen", "oeffnen")
+        let startup = matches(text, "startup", "start up", "workspace", "firma", "business", "betrieb", "geschäft", "geschaeft", "laden", "salon", "shop", "vorhaben", "gewerbe")
+        let start = matches(text, "gründen", "gruenden", "starten", "anlegen", "erstellen", "eröffnen", "eroeffnen", "founden", "öffnen", "oeffnen")
         return startup && start
     }
 
@@ -1013,21 +1052,22 @@ enum CopilotEngine {
 
     private static func defaultActions(for answer: String) -> [CopilotAction] {
         let lower = answer.lowercased()
-        if matches(lower, "unterlagen", "ideenpapier", "finanzplan", "antrag") {
+        if matches(lower, "unterlagen", "businessplan", "startkosten", "finanzplan", "antrag", "anmeldung") {
             return [
                 action("Unterlagen öffnen", "folder.fill", .open(.screen(.documents))),
+                action("PDF erstellen", "doc.richtext.fill", .exportDocumentPDF),
                 action("Kalender öffnen", "calendar", .open(.screen(.calendar))),
             ]
         }
-        if matches(lower, "founder radar", "board brief", "readiness", "risiko", "score") {
+        if matches(lower, "founder radar", "business radar", "readiness", "risiko", "score") {
             return [
-                action("Founder Radar", "scope", .open(.screen(.radar))),
+                action("Business Radar", "scope", .open(.screen(.radar))),
                 action("Live neu berechnen", "arrow.clockwise", .refreshFounderRadar),
             ]
         }
-        if matches(lower, "match", "co-founder", "mitgründer", "mitgruender", "anschreiben") {
+        if matches(lower, "match", "co-founder", "mitgründer", "mitgruender", "partner", "kontakt", "anschreiben") {
             return [
-                action("Co-Founder OS", "person.2.fill", .open(.screen(.cofounderDesk))),
+                action("Partner-Check", "person.2.fill", .open(.screen(.cofounderDesk))),
                 action("Chats öffnen", "bubble.left.and.bubble.right.fill", .open(.screen(.chats))),
             ]
         }
@@ -1059,7 +1099,7 @@ enum CopilotEngine {
 
         if canFoundStartup(state: state)
             && !state.hasStartupWorkspace
-            && matches(answer.lowercased(), "startup", "workspace", "gründen", "gruenden", "firma", "vorhaben") {
+            && matches(answer.lowercased(), "startup", "business", "betrieb", "workspace", "gründen", "gruenden", "firma", "gewerbe", "vorhaben") {
             actions.append(startupFoundingAction(state: state))
         }
 
@@ -1083,7 +1123,7 @@ enum CopilotEngine {
             let fact = newFacts.first ?? inferredFact(from: answer, state: state)
             return action("Memory speichern", "brain.head.profile", .rememberFact(fact))
         }
-        if matches(lower, "startup gründen", "startup gruenden", "workspace gründen", "workspace gruenden", "firma anlegen", "vorhaben anlegen") {
+        if matches(lower, "startup gründen", "startup gruenden", "business starten", "business anlegen", "betrieb anlegen", "geschäft anlegen", "geschaeft anlegen", "workspace gründen", "workspace gruenden", "firma anlegen", "vorhaben anlegen") {
             guard canFoundStartup(state: state) else {
                 return action("Profilmodus prüfen", "person.text.rectangle.fill", .open(.tab(.profile)))
             }
@@ -1092,11 +1132,14 @@ enum CopilotEngine {
         if matches(lower, "firmenprofil", "profil", "builder", "seite") {
             return action("Firmenprofil öffnen", "building.2.fill", .open(.screen(.company)))
         }
-        if matches(lower, "unterlagen", "dokument", "ideenpapier", "finanzplan") {
+        if matches(lower, "pdf", "export", "teilen", "datei erstellen") {
+            return action("PDF erstellen", "doc.richtext.fill", .exportDocumentPDF)
+        }
+        if matches(lower, "unterlagen", "dokument", "businessplan", "startkosten", "finanzplan") {
             return action("Unterlagen öffnen", "folder.fill", .open(.screen(.documents)))
         }
         if matches(lower, "match", "nachricht", "anschreiben", "chat") {
-            return action("Nachricht schreiben", "square.and.pencil", .askCopilot("Formuliere eine Nachricht an ein Match"))
+            return action("Nachricht schreiben", "square.and.pencil", .askCopilot("Formuliere eine Nachricht an einen passenden Kontakt"))
         }
         if matches(lower, "partner", "growth", "kapital", "steuer", "mentor", "talent") {
             return action("Partner öffnen", "person.crop.circle.badge.checkmark", .open(.screen(.partners(serviceHint(in: lower) ?? "all"))))
@@ -1112,7 +1155,7 @@ enum CopilotEngine {
         let stage = state.companyProfile.stage.isEmpty ? "Idee" : state.companyProfile.stage
         let city = state.companyProfile.city.isEmpty ? (profile?.plz ?? "DACH") : state.companyProfile.city
         let idea = profile?.pitch.isEmpty == false ? profile!.pitch : state.founderMemory.idea
-        return action("Startup gründen", "building.2.fill", .foundStartup(
+        return action("Business anlegen", "building.2.fill", .foundStartup(
             name: name,
             category: category,
             stage: stage,
@@ -1132,13 +1175,13 @@ enum CopilotEngine {
             mine: false,
             text:
             """
-            Du bist aktuell als Skill-Partner unterwegs. Deshalb gründe ich dir hier keinen eigenen Startup Workspace.
+            Du bist aktuell als Skill-Partner unterwegs. Deshalb lege ich dir hier nicht ungefragt ein eigenes Business an.
 
-            Sinnvoller ist jetzt: passende Vorhaben finden, deine Rolle schärfen oder den Profilmodus bewusst wechseln, wenn du doch selbst gründen willst.
+            Sinnvoller ist jetzt: passende kleine Betriebe, Aufträge oder Vorhaben finden, deine Rolle schärfen oder den Profilmodus bewusst wechseln, wenn du doch selbst gründen willst.
             """,
             actions: [
                 action("Profilmodus prüfen", "person.text.rectangle.fill", .open(.tab(.profile))),
-                action("Vorhaben finden", "magnifyingglass", .open(.screen(.swipe))),
+                action("Betriebe finden", "magnifyingglass", .open(.screen(.swipe))),
                 action("Chats öffnen", "bubble.left.and.bubble.right.fill", .open(.screen(.chats))),
             ],
             quickReplies: [
@@ -1166,7 +1209,7 @@ enum CopilotEngine {
             }
             return [
                 "Ich starte erstmal solo.",
-                "Ich suche aktiv einen Co-Founder.",
+                "Ich suche aktiv einen Partner oder Mitstreiter.",
                 "Ich bin noch unsicher."
             ]
         }
@@ -1283,6 +1326,66 @@ enum CopilotEngine {
         return "\(memory.ventureName): \(String(clean.prefix(140)))"
     }
 
+    /// Backend-validierte App-Aktion → ausführbarer Chip.
+    private static func structuredAction(from cloud: CopilotCloudAppAction) -> CopilotAction? {
+        let title = (cloud.title ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let note = (cloud.note ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        switch cloud.action {
+        case "add_calendar_item":
+            guard !title.isEmpty else { return nil }
+            let due = (cloud.due ?? "").isEmpty ? "Diese Woche" : cloud.due!
+            return action(
+                "Termin: \(title)",
+                "calendar.badge.plus",
+                .addPlannerItem(title: title, note: note, dueLabel: due, kind: .focus, target: nil)
+            )
+        case "add_kanban_card":
+            guard !title.isEmpty else { return nil }
+            return action("Aufs Board: \(title)", "square.stack.3d.up.fill", .addKanbanCard(title: title, note: note))
+        case "remember_fact":
+            guard !title.isEmpty else { return nil }
+            return action("Merken: \(String(title.prefix(28)))…", "brain.head.profile", .rememberFact(title))
+        case "open_screen":
+            guard let screen = screenDestination(cloud.screen ?? "") else { return nil }
+            return action(screenLabel(cloud.screen ?? ""), "arrow.up.right.square", .open(screen))
+        default:
+            return nil
+        }
+    }
+
+    private static func screenDestination(_ id: String) -> CopilotDestination? {
+        switch id {
+        case "kanban": .screen(.kanban)
+        case "calendar": .screen(.calendar)
+        case "swipe": .screen(.swipe)
+        case "chats": .screen(.chats)
+        case "documents": .screen(.documents)
+        case "company": .screen(.company)
+        case "startup": .screen(.startup)
+        case "radar": .screen(.radar)
+        case "events": .screen(.events)
+        case "guides": .screen(.guides)
+        case "copilot": .screen(.copilot)
+        default: nil
+        }
+    }
+
+    private static func screenLabel(_ id: String) -> String {
+        switch id {
+        case "kanban": "Board öffnen"
+        case "calendar": "Kalender öffnen"
+        case "swipe": "Kontakte entdecken"
+        case "chats": "Chats öffnen"
+        case "documents": "Unterlagen öffnen"
+        case "company": "Firmenprofil öffnen"
+        case "startup": "Business öffnen"
+        case "radar": "Radar öffnen"
+        case "events": "Events öffnen"
+        case "guides": "Guides öffnen"
+        default: "Öffnen"
+        }
+    }
+
     private static func nativeNav(from nav: CopilotCloudNav) -> CopilotNav? {
         guard let destination = nativeDestination(for: nav.to) else { return nil }
         return CopilotNav(label: nav.label, destination: destination)
@@ -1298,6 +1401,8 @@ enum CopilotEngine {
             return .screen(.radar)
         case "/heute", "/plan", "/kalender":
             return .screen(.calendar)
+        case "/kanban", "/aufgaben":
+            return .screen(.kanban)
         case "/guides":
             return .screen(.guides)
         case "/co-founder":

@@ -10,7 +10,7 @@ struct FounderRadarView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            MShellTop(title: "Founder Radar", subtitle: "Board-Brief aus deinem Workspace") {
+            MShellTop(title: "Business Radar", subtitle: "Tragfähigkeitscheck aus deinem Workspace") {
                 Button {
                     Task { await refresh() }
                 } label: {
@@ -40,7 +40,7 @@ struct FounderRadarView: View {
             .scrollIndicators(.hidden)
         }
         .background(MF.canvas.ignoresSafeArea())
-        .navigationTitle("Founder Radar")
+        .navigationTitle("Business Radar")
         .navigationBarTitleDisplayMode(.inline)
         .task {
             guard !didAutoRefresh else { return }
@@ -199,15 +199,15 @@ struct FounderRadarView: View {
 
     private var boardQuestion: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Eyebrow(text: "Board-Frage", color: MF.indigoInk)
+            Eyebrow(text: "Gründungsfrage", color: MF.indigoInk)
             Text(brief.investorQuestion)
                 .font(.system(size: 18, weight: .bold))
                 .foregroundStyle(MF.ink)
                 .fixedSize(horizontal: false, vertical: true)
             Button {
                 state.queueCopilotPrompt(
-                    "Beantworte mit mir diese Board-Frage aus dem Founder Radar: \(brief.investorQuestion)",
-                    title: "Board-Frage"
+                    "Beantworte mit mir diese Gründungsfrage aus dem Business Radar: \(brief.investorQuestion)",
+                    title: "Gründungsfrage"
                 )
             } label: {
                 Label("Mit Co-Pilot beantworten", systemImage: "sparkles")

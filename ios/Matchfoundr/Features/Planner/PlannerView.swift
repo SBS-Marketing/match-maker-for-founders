@@ -326,7 +326,7 @@ struct PlannerView: View {
                     .background(.white.opacity(0.16))
                     .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Founder-Memory")
+                    Text("Business-Memory")
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(.white)
                     Text(memory.compactSummary)
@@ -564,10 +564,10 @@ struct PlannerView: View {
 
         return """
         KALENDER-KONTEXT
-        Bitte geh diesen konkreten Kalender-Kontext mit mir durch. Beziehe dich auf Datum, Termine, Founder-Memory, Team und offene Aufgaben. Sag mir praktisch, was wichtig ist, was blockiert und was ich als nächstes in der App tun sollte.
+        Bitte geh diesen konkreten Kalender-Kontext mit mir durch. Beziehe dich auf Datum, Termine, Business-Memory, Team und offene Aufgaben. Sag mir praktisch, was wichtig ist, was blockiert und was ich als nächstes in der App tun sollte.
 
         Datum: \(fullDateLabel(for: selectedDate))
-        Founder-Memory: \(memory.compactSummary)
+        Business-Memory: \(memory.compactSummary)
         Nächster Schritt: \(memory.nextStep)
         Offene Unterlagen: \(memory.openDocumentsText)
 
@@ -586,7 +586,7 @@ struct PlannerView: View {
         let date = calendarDate(for: item)
         return """
         TERMIN-KONTEXT
-        Bitte geh genau diesen Termin mit mir durch. Nutze den Kontext aus Gründer-Memory, Team und Kalender und schlage konkrete nächste Schritte oder App-Aktionen vor.
+        Bitte geh genau diesen Termin mit mir durch. Nutze den Kontext aus Business-Memory, Team und Kalender und schlage konkrete nächste Schritte oder App-Aktionen vor.
 
         Termin: \(item.title)
         Datum: \(fullDateLabel(for: date))
@@ -596,7 +596,7 @@ struct PlannerView: View {
         Zielbereich: \(item.target?.title ?? "Kein Zielbereich")
         Notiz: \(item.note)
 
-        Founder-Memory: \(memory.compactSummary)
+        Business-Memory: \(memory.compactSummary)
         Nächster Schritt: \(memory.nextStep)
         Team:
         \(startupTeamContext())
@@ -613,7 +613,7 @@ struct PlannerView: View {
 
     private func startupTeamContext() -> String {
         let members = state.startupTeamMembers.prefix(6)
-        guard !members.isEmpty else { return "- Noch kein Team im Startup Workspace." }
+        guard !members.isEmpty else { return "- Noch kein Team im Business Workspace." }
         return members.map { "- \($0.name): \($0.role) · \($0.focus)" }.joined(separator: "\n")
     }
 
@@ -880,7 +880,7 @@ private struct PlannerItemEditor: View {
                 }
             }
             .pickerStyle(.menu)
-            Toggle("Smart im Startup-Plan markieren", isOn: $smart)
+            Toggle("Smart im Business-Plan markieren", isOn: $smart)
                 .font(.system(size: 14, weight: .semibold))
                 .tint(MF.indigo)
         }

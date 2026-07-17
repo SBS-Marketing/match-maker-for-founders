@@ -56,8 +56,14 @@ const PREVIEW_GUIDES: GuideRow[] = [
     minutes: 6,
     intro: "Bis 25.000 € ohne Hausbank: Mikrokreditfonds Deutschland Schritt für Schritt.",
     sections: [
-      { h: "Wer bekommt einen Mikrokredit?", body: "Kleine Unternehmen und Gründer ohne Bankzugang…" },
-      { h: "Ablauf über ein Mikrofinanzinstitut", body: "Du stellst den Antrag nicht bei einer Bank…" },
+      {
+        h: "Wer bekommt einen Mikrokredit?",
+        body: "Kleine Unternehmen und Gründer ohne Bankzugang…",
+      },
+      {
+        h: "Ablauf über ein Mikrofinanzinstitut",
+        body: "Du stellst den Antrag nicht bei einer Bank…",
+      },
     ],
     published: true,
   },
@@ -91,7 +97,6 @@ function AdminGuides() {
       });
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(load, [isPreview, checking]);
 
   async function save() {
@@ -112,7 +117,10 @@ function AdminGuides() {
     };
 
     if (isPreview) {
-      setGuides((prev) => [{ ...row, id: `demo-${Date.now()}` }, ...(prev ?? []).filter((g) => g.slug !== row.slug)]);
+      setGuides((prev) => [
+        { ...row, id: `demo-${Date.now()}` },
+        ...(prev ?? []).filter((g) => g.slug !== row.slug),
+      ]);
       setEditing(null);
       toast.success("Demo: Guide nur lokal gespeichert.");
       return;
@@ -149,10 +157,15 @@ function AdminGuides() {
 
   async function togglePublish(guide: GuideRow) {
     if (isPreview || !guide.id) {
-      setGuides((prev) => (prev ?? []).map((g) => (g.slug === guide.slug ? { ...g, published: !g.published } : g)));
+      setGuides((prev) =>
+        (prev ?? []).map((g) => (g.slug === guide.slug ? { ...g, published: !g.published } : g)),
+      );
       return;
     }
-    const { error } = await supabase.from("guides").update({ published: !guide.published }).eq("id", guide.id);
+    const { error } = await supabase
+      .from("guides")
+      .update({ published: !guide.published })
+      .eq("id", guide.id);
     if (error) toast.error(error.message);
     else load();
   }
@@ -199,8 +212,8 @@ function AdminGuides() {
                   </span>
                 </div>
                 <p className="mt-0.5 text-[12px] text-[var(--smoke)]">
-                  {CATEGORIES.find((c) => c.id === g.category)?.label ?? g.category} · {g.minutes} Min ·{" "}
-                  {g.sections.length} Abschnitte
+                  {CATEGORIES.find((c) => c.id === g.category)?.label ?? g.category} · {g.minutes}{" "}
+                  Min · {g.sections.length} Abschnitte
                 </p>
               </div>
               <div className="flex items-center gap-1.5">
@@ -211,7 +224,12 @@ function AdminGuides() {
                   {g.published ? "Verbergen" : "Veröffentlichen"}
                 </button>
                 <button
-                  onClick={() => setEditing({ ...g, sections: g.sections.length ? [...g.sections] : [{ h: "", body: "" }] })}
+                  onClick={() =>
+                    setEditing({
+                      ...g,
+                      sections: g.sections.length ? [...g.sections] : [{ h: "", body: "" }],
+                    })
+                  }
                   className="rounded-lg border border-[var(--ruled)] p-2 text-[var(--smoke)] hover:text-[var(--ink)]"
                   aria-label="Bearbeiten"
                 >
@@ -238,7 +256,11 @@ function AdminGuides() {
               <h2 className="text-[16px] font-bold text-[var(--ink)]">
                 {editing.id ? "Guide bearbeiten" : "Neuer Guide"}
               </h2>
-              <button onClick={() => setEditing(null)} className="rounded-lg p-1.5 text-[var(--smoke)]" aria-label="Schließen">
+              <button
+                onClick={() => setEditing(null)}
+                className="rounded-lg p-1.5 text-[var(--smoke)]"
+                aria-label="Schließen"
+              >
                 <X className="h-4.5 w-4.5" />
               </button>
             </div>
@@ -272,7 +294,9 @@ function AdminGuides() {
                     type="number"
                     min={1}
                     value={editing.minutes}
-                    onChange={(e) => setEditing({ ...editing, minutes: Number(e.target.value) || 1 })}
+                    onChange={(e) =>
+                      setEditing({ ...editing, minutes: Number(e.target.value) || 1 })
+                    }
                     className={inputCls}
                   />
                 </Field>
@@ -299,7 +323,10 @@ function AdminGuides() {
                         {editing.sections.length > 1 && (
                           <button
                             onClick={() =>
-                              setEditing({ ...editing, sections: editing.sections.filter((_, j) => j !== i) })
+                              setEditing({
+                                ...editing,
+                                sections: editing.sections.filter((_, j) => j !== i),
+                              })
                             }
                             className="text-[var(--smoke)] hover:text-[var(--ember-deep)]"
                             aria-label="Abschnitt entfernen"

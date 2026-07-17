@@ -24,6 +24,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { CopilotMark } from "@/components/Copilot";
+import { MorningReport } from "@/components/MorningReport";
 import { askCopilot, type CopilotNav } from "@/lib/copilot-client";
 import {
   buildLocalPlanSlides,
@@ -199,6 +200,11 @@ function TodayPage() {
         >
           <RefreshCw className="h-4 w-4" />
         </button>
+      </div>
+
+      {/* Morgenreport des Co-Piloten (8:00, wenn vorhanden) */}
+      <div className="mt-4">
+        <MorningReport />
       </div>
 
       {/* DER eine Fokus */}

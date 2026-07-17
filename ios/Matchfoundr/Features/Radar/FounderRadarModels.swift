@@ -83,15 +83,15 @@ struct FounderRadarBrief: Identifiable, Codable, Hashable {
             "\(idx + 1). \(move.title) — \(move.reason) Erfolg: \(move.successMetric)"
         }.joined(separator: "\n")
         return """
-        FOUNDER-RADAR-BRIEF
-        Bitte geh diesen Board-Brief mit mir durch und hilf mir, die nächsten Schritte konkret auszuführen.
+        BUSINESS-RADAR-BRIEF
+        Bitte geh diesen Tragfähigkeitscheck mit mir durch und hilf mir, die nächsten Schritte konkret auszuführen.
 
         Urteil: \(verdict)
         Score: \(overallScore)/100 · \(scoreLabel)
         Dringlichkeit: \(urgency)
         Risiko: \(primaryRisk)
         Chance: \(hiddenOpportunity)
-        Harte Frage: \(investorQuestion)
+        Harte Gründungsfrage: \(investorQuestion)
 
         Signale:
         \(signalLines)
@@ -99,7 +99,7 @@ struct FounderRadarBrief: Identifiable, Codable, Hashable {
         Nächste Moves:
         \(moveLines)
 
-        Bitte antworte wie ein kritischer, aber praktischer Startup-Operator: erst Entscheidung, dann konkrete App-Aktionen.
+        Bitte antworte wie ein praktischer Gründungsbegleiter für kleine Betriebe: einfache Sprache, erst Entscheidung, dann konkrete App-Aktionen.
         """
     }
 }

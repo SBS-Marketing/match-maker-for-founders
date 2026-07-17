@@ -3,6 +3,12 @@
 // Supabase-live mit lokalen Nutzerdaten fuer den nativen Arbeitsfluss.
 
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
+#if canImport(PDFKit)
+import PDFKit
+#endif
 
 @MainActor
 final class AppState: ObservableObject {
@@ -28,6 +34,9 @@ final class AppState: ObservableObject {
     @Published var documents: [FounderDocument] = [] {
         didSet { persist(documents, key: "mf.documents") }
     }
+    @Published var documentAssets: [FounderDocumentAsset] = [] {
+        didSet { persist(documentAssets, key: "mf.documents.assets") }
+    }
     @Published var plannerItems: [PlannerItem] = [] {
         didSet { persist(plannerItems, key: "mf.planner.items") }
     }
@@ -48,6 +57,7 @@ final class AppState: ObservableObject {
     }
     @Published var pendingCopilotPrompt: String?
     @Published var showingCopilot = false
+    @Published var copilotFloating = false
     @Published var showingAppTour = false
     @Published var hasSeenAppTour = false {
         didSet { defaults.set(hasSeenAppTour, forKey: "mf.appTour.seen") }
@@ -90,12 +100,13 @@ final class AppState: ObservableObject {
             "Idee/Vorhaben: \(memory.idea)",
             "Nächster offener Schritt: \(memory.nextStep)",
             "Unterlagen: \(memory.documentProgress), offen: \(memory.openDocumentsText)",
+            "Datei-Uploads: \(documentAssets.isEmpty ? "keine hochgeladenen Unterlagen" : documentAssets.prefix(6).map { "\($0.title) (\($0.kind.label), \($0.compactSize))" }.joined(separator: "; "))",
             "Firmenprofil: \(companyProfile.isPublished ? "veröffentlicht" : "nicht veröffentlicht")",
         ]
         if profile?.mode == .skills {
-            facts.append("Arbeitsmodus: Skill-Partner; sucht passende Vorhaben und sollte nicht ungefragt einen eigenen Startup-Gründungsflow starten.")
+            facts.append("Arbeitsmodus: Skill-Partner; sucht passende kleine Betriebe, Aufträge oder Vorhaben und sollte nicht ungefragt einen eigenen Gründungsflow starten.")
         } else {
-            facts.append("Startup Workspace: \(hasStartupWorkspace ? "aktiv" : "noch nicht gegründet")")
+            facts.append("Business Workspace: \(hasStartupWorkspace ? "aktiv" : "noch nicht angelegt")")
         }
 
         let openPlan = plannerItems
@@ -182,13 +193,16 @@ final class AppState: ObservableObject {
         case .screen(.calendar):
             tab = .today
             todayPath = [.calendar]
+        case .screen(.kanban):
+            tab = .today
+            todayPath = [.kanban]
         case .screen(.startup):
             tab = .startup
         case .screen(.radar):
             tab = .today
             todayPath = [.radar]
         case .screen(.copilot):
-            showingCopilot = true
+            openCopilot()
         case .screen(.partners(let serviceId)):
             tab = .discover
             discoverPath = [.partners(serviceId)]
@@ -196,6 +210,20 @@ final class AppState: ObservableObject {
             tab = .discover
             discoverPath = [.partner(partnerId)]
         }
+    }
+
+    func openCopilot() {
+        copilotFloating = false
+        showingCopilot = true
+    }
+
+    func minimizeCopilot() {
+        showingCopilot = false
+        copilotFloating = true
+    }
+
+    func closeCopilotFloating() {
+        copilotFloating = false
     }
 
     // ─── Community-Events ────────────────────────────────────
@@ -227,19 +255,141 @@ final class AppState: ObservableObject {
         partners.first { $0.id == id }
     }
 
+    var launchGuideSteps: [LaunchGuideStep] {
+        let isSkillPartner = profile?.mode == .skills
+        let venture = profile?.industry.ventureTerm ?? "Vorhaben"
+        let partnerTerm = profile?.industry.partnerTerm ?? "Partner"
+        let hasCopilotMemory = !copilotFacts.isEmpty || !copilotSessions.isEmpty
+        let hasStartedWorkspace = isSkillPartner
+            ? (swipesToday > 0 || !matches.isEmpty)
+            : (startupWorkspaceActivated || !companyProfile.isBlank)
+        let hasStartedDocument = documents.contains(where: \.done)
+            || !documentDraft.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("Noch kein Entwurf")
+        let hasTouchedPlan = plannerItems.contains { $0.done || $0.createdByCopilot }
+        let hasFirstSignal = swipesToday > 0
+            || registeredEvents.isEmpty == false
+            || matches.contains { match in match.messages.contains(where: \.mine) }
+
+        return [
+            LaunchGuideStep(
+                id: "orientation",
+                title: "Ablauf verstehen",
+                subtitle: "Heute, Co-Pilot, Business, Community",
+                detail: "Einmal sehen, in welcher Reihenfolge die App dich durch Profil, Arbeitsstück, Plan und erste Gespräche führt.",
+                actionTitle: "Startplan öffnen",
+                icon: "map.fill",
+                serviceId: "cofounder",
+                completed: hasSeenAppTour || showingAppTour,
+                destination: nil,
+                copilotPrompt: nil
+            ),
+            LaunchGuideStep(
+                id: "memory",
+                title: "Gründer-Memory schärfen",
+                subtitle: "Co-Pilot versteht dich und dein Vorhaben",
+                detail: "Lass den Co-Pilot deine Ausgangslage, offene Fragen und nächste App-Aktionen als internes Arbeitsprofil zusammenziehen.",
+                actionTitle: "Memory bauen",
+                icon: "brain.head.profile",
+                serviceId: "capital",
+                completed: hasCopilotMemory,
+                destination: .screen(.copilot),
+                copilotPrompt: launchGuideMemoryPrompt()
+            ),
+            LaunchGuideStep(
+                id: "workspace",
+                title: isSkillPartner ? "Passende Betriebe finden" : "\(venture)-Workspace anlegen",
+                subtitle: isSkillPartner ? "Skill-Partner Modus sauber starten" : "Arbeitsfläche statt lose Tabs",
+                detail: isSkillPartner
+                    ? "Du brauchst nicht sofort selbst zu gründen. Starte mit passenden kleinen Betrieben, Rollen und echten Gesprächen."
+                    : "Lege dein Geschäft als Arbeitsfläche an, damit Unterlagen, Kalender, Kontakte und Co-Pilot denselben Kontext nutzen.",
+                actionTitle: isSkillPartner ? "Betriebe entdecken" : "Business starten",
+                icon: isSkillPartner ? "person.2.fill" : "building.2.fill",
+                serviceId: isSkillPartner ? "talent" : "cofounder",
+                completed: hasStartedWorkspace,
+                destination: isSkillPartner ? .screen(.swipe) : .screen(.startup),
+                copilotPrompt: nil
+            ),
+            LaunchGuideStep(
+                id: "artifact",
+                title: "Erstes Arbeitsstück erstellen",
+                subtitle: "Kurz-Businessplan, Startkosten oder Preise",
+                detail: "Die App wird greifbar, sobald ein echtes Dokument entsteht. Das ist dein Anker für Anmeldung, Finanzierung, Partner und Kalender.",
+                actionTitle: "Unterlagen öffnen",
+                icon: "doc.text.fill",
+                serviceId: "funding",
+                completed: hasStartedDocument,
+                destination: .screen(.documents),
+                copilotPrompt: nil
+            ),
+            LaunchGuideStep(
+                id: "plan",
+                title: "7-Tage-Plan festziehen",
+                subtitle: "Kalender wird zum Prozess",
+                detail: "Aus offenen Punkten werden konkrete Termine. So führt dich die App jeden Tag weiter, statt nur Flächen zu zeigen.",
+                actionTitle: "Plan öffnen",
+                icon: "calendar",
+                serviceId: "legal",
+                completed: hasTouchedPlan,
+                destination: .screen(.calendar),
+                copilotPrompt: nil
+            ),
+            LaunchGuideStep(
+                id: "signal",
+                title: "Erstes Marktsignal holen",
+                subtitle: isSkillPartner ? "Vorhaben, Partner oder Community" : "\(partnerTerm), Partner oder Community",
+                detail: "Ein Kontakt, eine Nachricht, ein Termin oder ein Partnergespräch reicht, damit matchfoundr nicht abstrakt bleibt.",
+                actionTitle: isSkillPartner ? "Partner öffnen" : "Matching starten",
+                icon: "paperplane.fill",
+                serviceId: "growth",
+                completed: hasFirstSignal,
+                destination: isSkillPartner ? .screen(.partners("all")) : .screen(.swipe),
+                copilotPrompt: nil
+            )
+        ]
+    }
+
+    var launchGuideCompletedCount: Int {
+        launchGuideSteps.filter(\.completed).count
+    }
+
+    var launchGuideProgress: Double {
+        let steps = launchGuideSteps
+        guard !steps.isEmpty else { return 1 }
+        return Double(launchGuideCompletedCount) / Double(steps.count)
+    }
+
+    var nextLaunchGuideStep: LaunchGuideStep? {
+        launchGuideSteps.first { !$0.completed }
+    }
+
+    var isLaunchGuideComplete: Bool {
+        launchGuideCompletedCount >= launchGuideSteps.count
+    }
+
+    func startLaunchGuideStep(_ step: LaunchGuideStep) {
+        Haptics.tap()
+        if step.id == "orientation" {
+            startAppTour()
+        } else if let prompt = step.copilotPrompt {
+            queueCopilotPrompt(prompt, title: step.title)
+        } else if let destination = step.destination {
+            open(destination)
+        }
+    }
+
     func cofounderGapTitle() -> String {
         let ownSkills = Set(profile?.skills ?? [])
-        if !ownSkills.contains("Vertrieb") && !ownSkills.contains("Kundenkontakt") {
-            return "Sales-Operator mit echtem Kundenkontakt"
+        if !ownSkills.contains("Verkauf") && !ownSkills.contains("Kundenkontakt") {
+            return "Jemand mit echtem Kundenkontakt"
         }
-        if !ownSkills.contains("Entwicklung") && profile?.industryId == "tech" {
-            return "Tech/Product Co-Founder"
+        if !ownSkills.contains("Website & Technik") && !ownSkills.contains("Online-Shop") {
+            return "Hilfe bei Website, Shop oder Buchungssystem"
         }
-        if !ownSkills.contains("Finanzen") && !ownSkills.contains("Organisation") {
-            return "Finance/Ops-Gegenpart"
+        if !ownSkills.contains("Buchhaltung") && !ownSkills.contains("Organisation") {
+            return "Buchhaltung/Ops-Gegenpart"
         }
-        if !ownSkills.contains("Marketing") && !ownSkills.contains("Content & Social") {
-            return "Growth- und Positionierungsprofil"
+        if !ownSkills.contains("Marketing") && !ownSkills.contains("Social Media") {
+            return "Marketing- und Sichtbarkeitshilfe"
         }
         return "Umsetzungsstarker Sparringspartner"
     }
@@ -265,23 +415,23 @@ final class AppState: ObservableObject {
     func startCofounderTrial(with candidate: CofounderCandidate) {
         let firstName = candidate.card.name.split(separator: " ").first.map(String.init) ?? candidate.card.name
         addPlannerItem(
-            title: "Scorecard für \(candidate.card.name) finalisieren",
-            note: "Muss-Kriterien, Red Flags und Trial-Frage festlegen. Fokus: \(candidate.testSprint)",
+            title: "Partner-Check für \(candidate.card.name) finalisieren",
+            note: "Muss-Kriterien, Red Flags und Gesprächsfrage festlegen. Fokus: \(candidate.testSprint)",
             dueLabel: "Heute",
             kind: .match,
             target: .startup,
             createdByCopilot: true
         )
         addPlannerItem(
-            title: "15-Minuten Founder-Call mit \(firstName)",
-            note: "Rolle, Zeitbudget, Arbeitsstil und nächstes Testprojekt prüfen.",
+            title: "15-Minuten Gespräch mit \(firstName)",
+            note: "Rolle, Zeitbudget, Arbeitsstil und nächsten kleinen Test prüfen.",
             dueLabel: "Diese Woche",
             kind: .meeting,
             target: .chats,
             createdByCopilot: true
         )
         addPlannerItem(
-            title: "7-Tage Trial Sprint · \(firstName)",
+            title: "7-Tage Praxistest · \(firstName)",
             note: candidate.testSprint,
             dueLabel: "Nach dem Call",
             kind: .match,
@@ -290,7 +440,7 @@ final class AppState: ObservableObject {
         )
         queueCopilotPrompt(
             cofounderTrialPrompt(for: candidate),
-            title: "Trial Sprint: \(firstName)"
+            title: "Praxistest: \(firstName)"
         )
     }
 
@@ -338,13 +488,13 @@ final class AppState: ObservableObject {
     }
 
     private func cofounderSprint(for card: FounderCard) -> String {
-        if card.skills.contains("Vertrieb") || card.skills.contains("Kundenkontakt") {
-            return "In 7 Tagen 20 Zielkunden definieren, 5 Gespräche anbahnen und die Learnings ins Firmenprofil zurückspielen."
+        if card.skills.contains("Vertrieb") || card.skills.contains("Verkauf") || card.skills.contains("Kundenkontakt") {
+            return "In 7 Tagen 20 Zielkunden definieren, 5 Gespräche anbahnen und die Learnings ins Business-Profil zurückspielen."
         }
-        if card.skills.contains("Entwicklung") || card.skills.contains("KI & Daten") {
-            return "In 7 Tagen einen klickbaren MVP-Scope, 3 technische Risiken und einen ersten Build-Plan liefern."
+        if card.skills.contains("Website & Technik") || card.skills.contains("Online-Shop") {
+            return "In 7 Tagen eine einfache Website-, Shop- oder Buchungssystem-Checkliste mit Kosten und nächstem Schritt liefern."
         }
-        if card.skills.contains("Finanzen") || card.skills.contains("Organisation") {
+        if card.skills.contains("Buchhaltung") || card.skills.contains("Finanzen") || card.skills.contains("Organisation") {
             return "In 7 Tagen Startkosten, Rollen, Zuständigkeiten und 12-Wochen-Meilensteinplan belastbar machen."
         }
         return "In 7 Tagen ein konkretes Ergebnis liefern: Zielgruppe, Aufgabe, Ergebnisformat und Entscheidungskriterium vorher festlegen."
@@ -352,23 +502,23 @@ final class AppState: ObservableObject {
 
     private func cofounderTrialPrompt(for candidate: CofounderCandidate) -> String {
         """
-        COFOUNDER-TRIAL-OS
-        Bereite einen seriösen Co-Founder Trial Sprint vor.
+        PARTNER-CHECK
+        Bereite einen seriösen Partner- oder Helfer-Check für eine kleine Gründung vor.
 
         Mein Bedarf: \(cofounderGapTitle())
         Kandidat: \(candidate.card.name), \(candidate.card.role), \(candidate.card.city)
-        Pitch: \(candidate.card.pitch)
+        Angebot/Profil: \(candidate.card.pitch)
         Skills: \(candidate.card.skills.joined(separator: ", "))
         Verfügbarkeit: \(candidate.card.availability.label)
         Score: \(candidate.total)
         Risiken: \(candidate.risks.joined(separator: "; "))
-        Trial-Idee: \(candidate.testSprint)
+        Test-Idee: \(candidate.testSprint)
 
         Bitte erstelle:
         1. eine kurze Entscheidungshypothese
         2. eine 15-Minuten-Call-Agenda
         3. harte Prüf-Fragen
-        4. ein 7-Tage-Testprojekt mit Erfolgskriterien
+        4. einen kleinen Praxistest mit Erfolgskriterien
         5. eine Nachricht, die ich senden kann
         """
     }
@@ -384,7 +534,13 @@ final class AppState: ObservableObject {
             partnerLoadState = .loaded
         } catch {
             partners = []
-            partnerLoadState = .failed(error.localizedDescription)
+            if let backendError = error as? BackendRequestError,
+               backendError.statusCode == 200,
+               backendError.message.contains("Antwort konnte nicht gelesen werden") {
+                partnerLoadState = .failed("Partnerdaten wurden geladen, konnten aber nicht verarbeitet werden. Bitte erneut laden.")
+            } else {
+                partnerLoadState = .failed(error.localizedDescription)
+            }
         }
     }
 
@@ -444,6 +600,13 @@ final class AppState: ObservableObject {
     private static let liveDataGeneration = 2
     private static let maxCopilotSessions = 24
     private static let maxCopilotMessagesPerSession = 80
+    private static let documentDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "de_DE")
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter
+    }()
     private var authObserverTask: Task<Void, Never>?
     private var eventRefreshTask: Task<Void, Never>?
 
@@ -499,6 +662,9 @@ final class AppState: ObservableObject {
                 if documents.isEmpty {
                     documents = FounderDocument.defaults
                 }
+                if documentAssets.isEmpty {
+                    documentAssets = []
+                }
                 if plannerItems.isEmpty {
                     plannerItems = personalizedPlannerItems()
                 }
@@ -508,6 +674,7 @@ final class AppState: ObservableObject {
                 profileExtras = .empty(for: nil)
                 companyProfile = .empty(for: nil)
                 documents = []
+                documentAssets = []
                 plannerItems = []
                 deck = []
                 matches = []
@@ -518,6 +685,7 @@ final class AppState: ObservableObject {
             profileExtras = .empty(for: nil)
             companyProfile = .empty(for: nil)
             documents = []
+            documentAssets = []
             plannerItems = []
             deck = []
             matches = []
@@ -530,6 +698,7 @@ final class AppState: ObservableObject {
         profileExtras = .empty(for: nil)
         companyProfile = .empty(for: nil)
         documents = []
+        documentAssets = []
         plannerItems = []
         deck = []
         matches = []
@@ -644,6 +813,7 @@ final class AppState: ObservableObject {
             case "company": open(.screen(.company))
             case "documents": open(.screen(.documents))
             case "calendar": open(.screen(.calendar))
+            case "kanban": open(.screen(.kanban))
             case "startup": open(.screen(.startup))
             case "radar": open(.screen(.radar))
             case "cofounder": open(.screen(.cofounderDesk))
@@ -724,7 +894,8 @@ final class AppState: ObservableObject {
         profileExtras = .empty(for: profile)
         companyProfile = .empty(for: profile)
         documents = FounderDocument.defaults
-        documentDraft = "Noch kein Entwurf. Lass den Co-Pilot ein Ideenpapier aus deinem Profil und Firmenprofil vorbereiten."
+        documentAssets = []
+        documentDraft = "Noch kein Entwurf. Lass den Co-Pilot einen Kurz-Businessplan aus deinem Profil und Business-Profil vorbereiten."
         plannerItems = personalizedPlannerItems()
         startupTeamMembers = []
         startupWorkspaceActivated = false
@@ -734,7 +905,7 @@ final class AppState: ObservableObject {
         hasSeenAppTour = launchAIAnalysis
         showingAppTour = !launchAIAnalysis
         if launchAIAnalysis {
-            queueCopilotPrompt(onboardingAnalysisPrompt(for: profile), title: "KI-Gründeranalyse")
+            queueCopilotPrompt(onboardingAnalysisPrompt(for: profile), title: "KI-Gründungscheck")
         } else {
             tab = .today
         }
@@ -760,10 +931,11 @@ final class AppState: ObservableObject {
         profileExtras = .empty(for: nil)
         companyProfile = .empty(for: nil)
         documents = []
+        documentAssets = []
         plannerItems = []
         startupTeamMembers = []
         startupWorkspaceActivated = false
-        documentDraft = "Noch kein Entwurf. Lass den Co-Pilot ein Ideenpapier aus deinem Profil und Firmenprofil vorbereiten."
+        documentDraft = "Noch kein Entwurf. Lass den Co-Pilot einen Kurz-Businessplan aus deinem Profil und Business-Profil vorbereiten."
         copilotFacts = []
         copilotSessions = []
         activeCopilotSessionID = nil
@@ -778,6 +950,7 @@ final class AppState: ObservableObject {
         paywall = nil
         celebrating = nil
         showingCopilot = false
+        copilotFloating = false
         showingAppTour = false
         hasSeenAppTour = false
         if let userID = authUser?.userID {
@@ -833,21 +1006,40 @@ final class AppState: ObservableObject {
 
     func onboardingAnalysisPrompt(for profile: MyProfile) -> String {
         """
-        ONBOARDING-KI-ANALYSE
-        Erstelle eine konkrete Gründeranalyse aus meinem Onboarding. Bitte mit:
-        1. Kurzdiagnose meines Vorhabens
-        2. Risiken der nächsten 14 Tage
-        3. Beste Co-Founder-/Team-Lücke
-        4. Nächste 3 App-Aktionen
+        ONBOARDING-GRÜNDUNGSCHECK
+        Erstelle eine konkrete Analyse für eine kleine Gründung. Keine Unicorn-, VC- oder Startup-Floskeln.
+        Bitte mit:
+        1. Was ich eigentlich starten will, in einfachen Worten
+        2. Die wichtigsten Risiken der nächsten 14 Tage
+        3. Was ich als erstes klären muss: Anmeldung, Startkosten, Preise, Kunden oder Partner
+        4. Die nächsten 3 App-Aktionen
 
         Name: \(profile.name)
         Rolle: \(profile.role)
-        Modus: \(profile.mode == .idea ? "Ich habe eine Idee" : "Ich biete Skills")
+        Modus: \(profile.mode == .idea ? "Ich will ein Geschäft starten" : "Ich biete Skills/Hilfe an")
         Branche: \(profile.industry.label)
         Skills/Bedarf: \(profile.skills.joined(separator: ", "))
-        Pitch: \(profile.pitch)
+        Idee/Angebot: \(profile.pitch)
         PLZ: \(profile.plz)
         Verfügbarkeit: \(profile.availability.label)
+        """
+    }
+
+    private func launchGuideMemoryPrompt() -> String {
+        let memory = founderMemory
+        return """
+        START-ASSISTENT · GRÜNDER-MEMORY
+        Baue mir aus der App einen klaren Arbeitsstand. Keine allgemeine Beratung.
+
+        Nutze diese App-Kontexte:
+        \(copilotLiveContextFacts().map { "- \($0)" }.joined(separator: "\n"))
+
+        Bitte liefere:
+        1. Mein Gründer-Memory in 5 knappen Fakten
+        2. Was in der App als Nächstes passieren sollte
+        3. Eine Entscheidung: erst Unterlage, erst \(memory.partnerTerm)-Suche oder erst Termin?
+        4. Drei konkrete App-Aktionen mit kurzer Begründung
+        5. Eine Rückfrage, die wirklich nötig ist
         """
     }
 
@@ -901,25 +1093,290 @@ final class AppState: ObservableObject {
         documentDraft = """
         Arbeitsentwurf · \(idea)
 
-        Problem
-        Viele Gründerinnen und Gründer kommen nicht an den nächsten Schritt, weil Mitgründer, Förderlogik, Unterlagen und operative Aufgaben getrennt voneinander liegen.
+        Kurz-Businessplan
+        Ich starte \(idea) als \(venture). Ziel ist kein Unicorn, sondern ein tragfähiges kleines Geschäft mit klarer Zielgruppe, sauberer Kalkulation und ersten zahlenden Kunden.
 
-        Lösung
-        \(idea) bündelt Matching, Co-Pilot, Unterlagen und konkrete nächste Schritte in einem mobilen Arbeitsfluss. Das \(venture) bleibt nicht nur Idee, sondern bekommt Struktur, Menschen und Nachweise.
+        Angebot
+        Beschreibe hier konkret, was verkauft wird, wer dafür zahlt, wo das Angebot stattfindet und warum Kundinnen oder Kunden es brauchen.
+
+        Startkosten
+        1. Einmalige Kosten: Anmeldung, Ausstattung, Kaution, Website, Material.
+        2. Monatliche Kosten: Miete, Software, Versicherungen, Einkauf, Marketing.
+        3. Private Reserve: Lebenshaltung, Krankenversicherung und Steuer-Rücklage.
 
         Nächste Meilensteine
-        1. Pilotprofil veröffentlichen
-        2. Drei passende Mitgründer-Gespräche führen
-        3. Finanzplan und Innovationsbeschreibung finalisieren
+        1. Gewerbe-/Genehmigungsweg klären
+        2. Startkosten und Mindestumsatz berechnen
+        3. Erstes Angebot mit Preis testen
+        4. Drei echte Kunden- oder Partnergespräche führen
         """
-        if let index = documents.firstIndex(where: { $0.id == "idea" }) {
+        if let index = documents.firstIndex(where: { $0.id == "businessplan" }) {
             documents[index].done = true
         }
-        if let index = documents.firstIndex(where: { $0.id == "innovation" }) {
+        if let index = documents.firstIndex(where: { $0.id == "startup-costs" }) {
             documents[index].done = true
         }
         Haptics.success()
     }
+
+    @discardableResult
+    func importDocumentFiles(_ urls: [URL]) -> [FounderDocumentAsset] {
+        let imported = urls.compactMap { importDocumentFile($0) }
+        guard !imported.isEmpty else { return [] }
+        documentAssets.insert(contentsOf: imported, at: 0)
+        if let index = documents.firstIndex(where: { $0.id == "businessplan" }) {
+            documents[index].done = true
+        }
+        Haptics.success()
+        return imported
+    }
+
+    @discardableResult
+    func exportDocumentDraftPDF() -> FounderDocumentAsset? {
+        let cleanDraft = documentDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanDraft.isEmpty, !cleanDraft.hasPrefix("Noch kein Entwurf") else { return nil }
+
+        #if canImport(UIKit)
+        let ventureName = companyProfile.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? (profile?.industry.ventureTerm ?? "Vorhaben")
+            : companyProfile.name
+        let fileName = uniqueDocumentFileName(base: "\(ventureName)-Arbeitsentwurf", ext: "pdf")
+        let url = documentStorageDirectory().appendingPathComponent(fileName)
+
+        do {
+            try renderDraftPDF(title: "Arbeitsentwurf · \(ventureName)", body: cleanDraft, to: url)
+            let size = fileSize(at: url)
+            let asset = FounderDocumentAsset(
+                title: "Arbeitsentwurf · \(ventureName)",
+                fileName: fileName,
+                kind: .generatedPDF,
+                sizeBytes: size,
+                importedAt: .now,
+                textPreview: String(cleanDraft.prefix(900))
+            )
+            documentAssets.insert(asset, at: 0)
+            if let index = documents.firstIndex(where: { $0.id == "businessplan" }) {
+                documents[index].done = true
+            }
+            rememberCopilotFact("Unterlagen-PDF erstellt: \(asset.title).")
+            Haptics.success()
+            return asset
+        } catch {
+            backendStatus = .offline("PDF konnte nicht erstellt werden: \(error.localizedDescription)")
+            return nil
+        }
+        #else
+        return nil
+        #endif
+    }
+
+    func documentAssetURL(_ asset: FounderDocumentAsset) -> URL? {
+        let url = documentStorageDirectory().appendingPathComponent(asset.fileName)
+        return FileManager.default.fileExists(atPath: url.path) ? url : nil
+    }
+
+    func deleteDocumentAsset(_ id: UUID) {
+        guard let asset = documentAssets.first(where: { $0.id == id }) else { return }
+        if let url = documentAssetURL(asset) {
+            try? FileManager.default.removeItem(at: url)
+        }
+        documentAssets.removeAll { $0.id == id }
+        Haptics.tap()
+    }
+
+    func startDocumentCopilot(task: String) {
+        queueCopilotPrompt(documentCopilotPrompt(task: task), title: "Unterlagen · \(task)")
+    }
+
+    func documentCopilotPrompt(task: String) -> String {
+        let assets = documentAssets.isEmpty
+            ? "- Noch keine Datei hochgeladen."
+            : documentAssets.prefix(8).map { asset in
+                let preview = asset.textPreview.trimmingCharacters(in: .whitespacesAndNewlines)
+                let previewLine = preview.isEmpty ? "Keine lesbare Textvorschau." : String(preview.prefix(600))
+                return "- \(asset.title) · \(asset.kind.label) · \(asset.compactSize)\n  Vorschau: \(previewLine)"
+            }.joined(separator: "\n")
+        let draft = documentDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        let draftContext = draft.isEmpty ? "Noch kein Entwurf." : String(draft.prefix(2600))
+
+        return """
+        UNTERLAGEN-WORKSPACE · \(task)
+        Arbeite nicht generisch. Nutze die App-Daten, die hochgeladenen/erzeugten Unterlagen und leite mich in konkrete App-Aktionen.
+
+        App-Kontext:
+        \(copilotLiveContextFacts().map { "- \($0)" }.joined(separator: "\n"))
+
+        Unterlagen-Dateien:
+        \(assets)
+
+        Aktueller editierbarer Entwurf:
+        \(draftContext)
+
+        Bitte antworte als Arbeitsbegleiter:
+        1. Was fehlt konkret oder ist schwach?
+        2. Was soll ich in dieser Unterlagen-Seite als Nächstes tun?
+        3. Wenn sinnvoll: gib mir direkt eine überarbeitete Passage.
+        4. Schlage maximal drei App-Aktionen vor: Unterlagen öffnen, PDF erstellen/prüfen, Kalenderblock setzen oder Memory speichern.
+        """
+    }
+
+    private func importDocumentFile(_ sourceURL: URL) -> FounderDocumentAsset? {
+        let accessGranted = sourceURL.startAccessingSecurityScopedResource()
+        defer {
+            if accessGranted {
+                sourceURL.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        let originalTitle = sourceURL.deletingPathExtension().lastPathComponent
+        let ext = sourceURL.pathExtension.isEmpty ? "dat" : sourceURL.pathExtension
+        let fileName = uniqueDocumentFileName(base: originalTitle, ext: ext)
+        let destination = documentStorageDirectory().appendingPathComponent(fileName)
+
+        do {
+            if FileManager.default.fileExists(atPath: destination.path) {
+                try FileManager.default.removeItem(at: destination)
+            }
+            try FileManager.default.copyItem(at: sourceURL, to: destination)
+            return FounderDocumentAsset(
+                title: originalTitle.isEmpty ? "Unterlage" : originalTitle,
+                fileName: fileName,
+                kind: .upload,
+                sizeBytes: fileSize(at: destination),
+                importedAt: .now,
+                textPreview: extractedTextPreview(from: destination)
+            )
+        } catch {
+            backendStatus = .offline("Unterlage konnte nicht importiert werden: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    private func documentStorageDirectory() -> URL {
+        let base = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let directory = base.appendingPathComponent("FounderDocuments", isDirectory: true)
+        if !FileManager.default.fileExists(atPath: directory.path) {
+            try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        }
+        return directory
+    }
+
+    private func uniqueDocumentFileName(base: String, ext: String) -> String {
+        let safeBase = base
+            .lowercased()
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+            .joined(separator: "-")
+        let stem = safeBase.isEmpty ? "unterlage" : safeBase
+        let cleanExt = ext.lowercased().trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        let suffix = cleanExt.isEmpty ? "dat" : cleanExt
+        var candidate = "\(stem).\(suffix)"
+        let directory = documentStorageDirectory()
+        if FileManager.default.fileExists(atPath: directory.appendingPathComponent(candidate).path) {
+            candidate = "\(stem)-\(UUID().uuidString.prefix(6)).\(suffix)"
+        }
+        return candidate
+    }
+
+    private func fileSize(at url: URL) -> Int64 {
+        let values = try? url.resourceValues(forKeys: [.fileSizeKey])
+        return Int64(values?.fileSize ?? 0)
+    }
+
+    private func extractedTextPreview(from url: URL) -> String {
+        let ext = url.pathExtension.lowercased()
+        if ext == "pdf" {
+            #if canImport(PDFKit)
+            guard let pdf = PDFDocument(url: url) else { return "" }
+            var chunks: [String] = []
+            for index in 0..<min(pdf.pageCount, 4) {
+                if let text = pdf.page(at: index)?.string, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    chunks.append(text)
+                }
+            }
+            return compactPreview(chunks.joined(separator: "\n"))
+            #else
+            return ""
+            #endif
+        }
+        if ["txt", "md", "csv", "json", "rtf"].contains(ext),
+           let text = try? String(contentsOf: url, encoding: .utf8) {
+            return compactPreview(text)
+        }
+        return ""
+    }
+
+    private func compactPreview(_ text: String) -> String {
+        String(
+            text
+                .replacingOccurrences(of: "\n", with: " ")
+                .split(separator: " ")
+                .joined(separator: " ")
+                .prefix(1200)
+        )
+    }
+
+    #if canImport(UIKit)
+    private func renderDraftPDF(title: String, body: String, to url: URL) throws {
+        let pageRect = CGRect(x: 0, y: 0, width: 595, height: 842)
+        let margin: CGFloat = 46
+        let textWidth = pageRect.width - margin * 2
+        let renderer = UIGraphicsPDFRenderer(bounds: pageRect)
+
+        try renderer.writePDF(to: url) { context in
+            var y = margin
+
+            func beginPage() {
+                context.beginPage()
+                y = margin
+            }
+
+            func drawBlock(_ text: String, attributes: [NSAttributedString.Key: Any], after spacing: CGFloat) {
+                let attributed = NSAttributedString(string: text, attributes: attributes)
+                let rect = attributed.boundingRect(
+                    with: CGSize(width: textWidth, height: .greatestFiniteMagnitude),
+                    options: [.usesLineFragmentOrigin, .usesFontLeading],
+                    context: nil
+                )
+                let height = ceil(rect.height) + 2
+                if y + height > pageRect.height - margin {
+                    beginPage()
+                }
+                attributed.draw(
+                    with: CGRect(x: margin, y: y, width: textWidth, height: height),
+                    options: [.usesLineFragmentOrigin, .usesFontLeading],
+                    context: nil
+                )
+                y += height + spacing
+            }
+
+            beginPage()
+            drawBlock(title, attributes: [
+                .font: UIFont.systemFont(ofSize: 24, weight: .bold),
+                .foregroundColor: UIColor.black
+            ], after: 8)
+            drawBlock("matchfoundr · erstellt am \(Self.documentDateFormatter.string(from: .now))", attributes: [
+                .font: UIFont.systemFont(ofSize: 10, weight: .semibold),
+                .foregroundColor: UIColor.darkGray
+            ], after: 24)
+
+            let bodyAttributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 12.5, weight: .regular),
+                .foregroundColor: UIColor.black,
+                .paragraphStyle: {
+                    let style = NSMutableParagraphStyle()
+                    style.lineSpacing = 4
+                    return style
+                }()
+            ]
+
+            for paragraph in body.components(separatedBy: "\n") {
+                let clean = paragraph.trimmingCharacters(in: .whitespacesAndNewlines)
+                drawBlock(clean.isEmpty ? " " : clean, attributes: bodyAttributes, after: clean.isEmpty ? 4 : 10)
+            }
+        }
+    }
+    #endif
 
     func rebuildPlannerFromMemory() {
         let doneTitles = Set(plannerItems.filter(\.done).map(\.title))
@@ -966,7 +1423,7 @@ final class AppState: ObservableObject {
     func queueFounderRadarCopilot(_ brief: FounderRadarBrief? = nil) {
         queueCopilotPrompt(
             (brief ?? currentFounderRadarBrief()).copilotPrompt,
-            title: "Founder Radar"
+            title: "Business Radar"
         )
     }
 
@@ -988,32 +1445,32 @@ final class AppState: ObservableObject {
         let venture = memory.ventureName
         let topMatch = bestCandidate?.card.name ?? matches.first?.card.name ?? "dein stärkstes Match"
         let verdict: String = {
-            if overall >= 78 { return "\(venture) hat genug Substanz für einen fokussierten 7-Tage-Test." }
-            if overall >= 62 { return "\(venture) ist nah dran, braucht aber einen sichtbaren Beweis statt mehr Planung." }
-            return "\(venture) braucht jetzt Klarheit: Beweis, Teamlücke und eine konkrete nächste Entscheidung."
+            if overall >= 78 { return "\(venture) hat genug Substanz für einen fokussierten 7-Tage-Start." }
+            if overall >= 62 { return "\(venture) ist nah dran, braucht aber einen sichtbaren Kundentest statt mehr Planung." }
+            return "\(venture) braucht jetzt Klarheit: Kosten, Angebot, Anmeldung und eine konkrete nächste Entscheidung."
         }()
 
         let primaryRisk: String = {
-            if !hasPublishedProfile { return "Dein Firmenprofil ist noch nicht veröffentlichungsreif; Matches sehen zu wenig Beweis auf einen Blick." }
-            if !openDocs.isEmpty { return "\(missingDoc) ist noch offen; ohne Nachweis bleibt Förderung/Partnergespräch weich." }
-            if !hasTeamSignal { return "Team-Signal ist noch dünn; Co-Founder-Suche kann wie Networking statt Trial wirken." }
-            return "Der Plan ist da, aber die Erfolgskriterien sind noch nicht hart genug formuliert."
+            if !hasPublishedProfile { return "Dein Business-Profil ist noch nicht klar genug; Kunden oder Partner verstehen zu wenig auf einen Blick." }
+            if !openDocs.isEmpty { return "\(missingDoc) ist noch offen; ohne Zahlen oder Papierkram bleibt Förderung/Bank/Partnergespräch weich." }
+            if !hasTeamSignal { return "Kontakt-Signal ist noch dünn; sprich erst echte Kunden, Helfer oder Partner an." }
+            return "Der Plan ist da, aber Preis, Kundenziel oder Erfolgskriterium sind noch nicht hart genug formuliert."
         }()
 
         let hiddenOpportunity: String = {
             if let bestCandidate {
-                return "\(bestCandidate.card.name) eignet sich für einen kleinen Trial statt weiterem Chat: \(bestCandidate.testSprint)"
+                return "\(bestCandidate.card.name) eignet sich für ein kleines Test-Gespräch statt weiterem Chat: \(bestCandidate.testSprint)"
             }
             if !partners.isEmpty {
                 return "Die Live-Partnerdaten können als Gesprächsbriefing genutzt werden, bevor du blind Anbieter kontaktierst."
             }
-            return "Dein Kalender kann aus Unterlagen, Matching und Team in einen 7-Tage-Sprint übersetzt werden."
+            return "Dein Kalender kann aus Unterlagen, Kontakten und offenen Fragen in einen einfachen 7-Tage-Start übersetzt werden."
         }()
 
-        let investorQuestion = "Welcher messbare Beweis entsteht in den nächsten 7 Tagen, der \(venture) glaubwürdiger macht?"
+        let investorQuestion = "Welche kleine Sache passiert in den nächsten 7 Tagen, die zeigt, dass jemand für \(venture) zahlen oder helfen würde?"
 
         return FounderRadarBrief(
-            title: "Founder Radar · \(memory.ventureName)",
+            title: "Business Radar · \(memory.ventureName)",
             verdict: verdict,
             overallScore: overall,
             urgency: overall >= 72 ? "Diese Woche entscheiden" : "Heute fokussieren",
@@ -1023,19 +1480,19 @@ final class AppState: ObservableObject {
             hiddenOpportunity: hiddenOpportunity,
             investorQuestion: investorQuestion,
             signals: [
-                .init(id: "proof", label: "Beweis", score: proofScore, note: "\(documents.filter(\.done).count)/\(documents.count) Unterlagen · Profil \(hasPublishedProfile ? "sichtbar" : "intern")", trend: proofScore >= 70 ? "steigt" : "offen"),
-                .init(id: "market", label: "Markt", score: marketScore, note: "\(matches.count) Matches · \(registeredEvents.count) Events · \(partners.count) Live-Partner", trend: marketScore >= 70 ? "aktiv" : "leise"),
-                .init(id: "team", label: "Team", score: teamScore, note: bestCandidate.map { "\($0.card.name) mit \($0.total) Trial-Score" } ?? "Noch keine harte Trial-Hypothese", trend: hasTeamSignal ? "Signal" : "Lücke"),
+                .init(id: "proof", label: "Papierkram", score: proofScore, note: "\(documents.filter(\.done).count)/\(documents.count) Unterlagen · Profil \(hasPublishedProfile ? "sichtbar" : "intern")", trend: proofScore >= 70 ? "steigt" : "offen"),
+                .init(id: "market", label: "Kunden", score: marketScore, note: "\(matches.count) Kontakte · \(registeredEvents.count) Events · \(partners.count) Live-Partner", trend: marketScore >= 70 ? "aktiv" : "leise"),
+                .init(id: "team", label: "Hilfe", score: teamScore, note: bestCandidate.map { "\($0.card.name) mit \($0.total) Kontakt-Score" } ?? "Noch kein klarer Helfer/Partner getestet", trend: hasTeamSignal ? "Signal" : "Lücke"),
                 .init(id: "execution", label: "Tempo", score: executionScore, note: "\(openPlan.count) offene Schritte · \(openPlan.filter(\.createdByCopilot).count) Co-Pilot-Schritte", trend: executionScore >= 70 ? "klar" : "zerstreut"),
             ],
             moves: [
                 .init(
-                    title: "Board-Beweis für \(venture) festlegen",
-                    reason: "Ein harter Beweis macht Matching, Förderung und Partnergespräche sofort konkreter.",
+                    title: "Ersten Kundentest für \(venture) festlegen",
+                    reason: "Ein einfacher Kundentest macht Angebot, Förderung und Partnergespräche sofort konkreter.",
                     dueLabel: "Heute",
                     kind: .focus,
                     target: .startup,
-                    successMetric: "Eine Zahl oder ein Artefakt, das ein fremder Partner prüfen kann."
+                    successMetric: "Eine konkrete Zahl, Zusage oder Rückmeldung von einem echten Menschen."
                 ),
                 .init(
                     title: "\(missingDoc) mit Co-Pilot schließen",
@@ -1046,12 +1503,12 @@ final class AppState: ObservableObject {
                     successMetric: "Erster Entwurf liegt in Unterlagen und ist nicht mehr leer."
                 ),
                 .init(
-                    title: "Trial-Nachricht an \(topMatch)",
-                    reason: "Co-Founder-Fit wird durch kleine Arbeitsprobe besser geprüft als durch endloses Schreiben.",
+                    title: "Kontakt-Nachricht an \(topMatch)",
+                    reason: "Ob jemand wirklich helfen oder Kunde werden kann, zeigt sich besser im kleinen Gespräch als im endlosen Schreiben.",
                     dueLabel: "Diese Woche",
                     kind: .match,
                     target: .chats,
-                    successMetric: "15-Minuten-Call oder 7-Tage-Test ist konkret vorgeschlagen."
+                    successMetric: "15-Minuten-Gespräch oder kleiner Test ist konkret vorgeschlagen."
                 ),
             ]
         )
@@ -1148,13 +1605,13 @@ final class AppState: ObservableObject {
         let founderName = profile?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let founderRole = profile?.role.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let finalName = cleanName.isEmpty
-            ? (profile?.pitch.isEmpty == false ? profile!.pitch : "\(profile?.industry.ventureTerm ?? "Startup") \(profile?.plz ?? "")").trimmingCharacters(in: .whitespacesAndNewlines)
+            ? (profile?.pitch.isEmpty == false ? profile!.pitch : "\(profile?.industry.ventureTerm ?? "Business") \(profile?.plz ?? "")").trimmingCharacters(in: .whitespacesAndNewlines)
             : cleanName
         let finalIdea = idea.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             ? (profile?.pitch.isEmpty == false ? profile!.pitch : "Noch zu schärfendes Vorhaben")
             : idea.trimmingCharacters(in: .whitespacesAndNewlines)
         let finalCategory = category.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            ? (profile?.industry.label ?? "Founder-Plattform")
+            ? (profile?.industry.label ?? "Kleine Gründung")
             : category.trimmingCharacters(in: .whitespacesAndNewlines)
         let finalStage = stage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Idee" : stage.trimmingCharacters(in: .whitespacesAndNewlines)
         let finalCity = city.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -1162,7 +1619,7 @@ final class AppState: ObservableObject {
             : city.trimmingCharacters(in: .whitespacesAndNewlines)
 
         var hero = CompanyBlock.empty(.hero)
-        hero.eyebrow = profile?.industry.ventureTerm ?? "Startup"
+        hero.eyebrow = profile?.industry.ventureTerm ?? "Business"
         hero.title = finalName
         hero.subtitle = "\(finalStage) · \(finalCity)"
         hero.body = finalIdea
@@ -1175,7 +1632,7 @@ final class AppState: ObservableObject {
 
         var team = CompanyBlock.empty(.team)
         team.members = [
-            CompanyMember(name: founderName.isEmpty ? "Founder" : founderName, role: founderRole.isEmpty ? "Founder" : founderRole, linkedin: "")
+            CompanyMember(name: founderName.isEmpty ? "Gründer" : founderName, role: founderRole.isEmpty ? "Inhaber" : founderRole, linkedin: "")
         ]
 
         var cta = CompanyBlock.empty(.cta)
@@ -1207,14 +1664,14 @@ final class AppState: ObservableObject {
             ]
         }
         addSmartPlannerItem(
-            title: "Startup Workspace scharfstellen",
-            note: "Profilvorschau pruefen, Teamluecke benennen und naechsten Kalenderblock setzen.",
+            title: "Business Workspace scharfstellen",
+            note: "Profilvorschau prüfen, offene Fragen benennen und nächsten Kalenderblock setzen.",
             dueLabel: "Heute",
             kind: .profile,
             target: .company,
             assigneeName: founderName.isEmpty ? nil : founderName
         )
-        rememberCopilotFact("Startup gegruendet: \(finalName) · \(finalStage) · \(finalCategory) · \(finalCity).")
+        rememberCopilotFact("Business angelegt: \(finalName) · \(finalStage) · \(finalCategory) · \(finalCity).")
         Haptics.success()
     }
 
@@ -1288,6 +1745,9 @@ final class AppState: ObservableObject {
             }
         case .toggleDocument(let id):
             toggleDocument(id)
+        case .exportDocumentPDF:
+            _ = exportDocumentDraftPDF()
+            open(.screen(.documents))
         case .addPlannerItem(let title, let note, let dueLabel, let kind, let target):
             addPlannerItem(title: title, note: note, dueLabel: dueLabel, kind: kind, target: target)
             open(.screen(.calendar))
@@ -1300,6 +1760,9 @@ final class AppState: ObservableObject {
         case .foundStartup(let name, let category, let stage, let city, let idea):
             foundStartup(name: name, category: category, stage: stage, city: city, idea: idea)
             open(.screen(.startup))
+        case .addKanbanCard(let title, let note):
+            KanbanStore.shared.add(title: title, note: note)
+            open(.screen(.kanban))
         }
     }
 
@@ -1339,7 +1802,7 @@ final class AppState: ObservableObject {
             haptic: true
         )
         pendingCopilotPrompt = cleanPrompt
-        showingCopilot = true
+        openCopilot()
         return sessionID
     }
 
@@ -1426,6 +1889,7 @@ final class AppState: ObservableObject {
             "mf.profile.extras",
             "mf.company.profile",
             "mf.documents",
+            "mf.documents.assets",
             "mf.planner.items",
             "mf.startup.team",
             "mf.documents.draft",
@@ -1439,7 +1903,8 @@ final class AppState: ObservableObject {
     private func loadWorkspaceData() {
         profileExtras = load(ProfileExtras.self, key: "mf.profile.extras") ?? .empty(for: profile)
         companyProfile = load(CompanyProfile.self, key: "mf.company.profile") ?? .empty(for: profile)
-        documents = load([FounderDocument].self, key: "mf.documents") ?? []
+        documents = mergedFounderDocuments(load([FounderDocument].self, key: "mf.documents") ?? [])
+        documentAssets = load([FounderDocumentAsset].self, key: "mf.documents.assets") ?? []
         plannerItems = load([PlannerItem].self, key: "mf.planner.items") ?? []
         founderRadarBrief = load(FounderRadarBrief.self, key: "mf.founder.radar.brief")
         startupTeamMembers = load([StartupTeamMember].self, key: "mf.startup.team") ?? []
@@ -1455,8 +1920,36 @@ final class AppState: ObservableObject {
         }
         documentDraft = defaults.string(forKey: "mf.documents.draft") ?? ""
         if documentDraft.isEmpty {
-            documentDraft = "Noch kein Entwurf. Lass den Co-Pilot ein Ideenpapier aus deinem Profil und Firmenprofil vorbereiten."
+            documentDraft = "Noch kein Entwurf. Lass den Co-Pilot einen Kurz-Businessplan aus deinem Profil und Business-Profil vorbereiten."
         }
+    }
+
+    private func mergedFounderDocuments(_ stored: [FounderDocument]) -> [FounderDocument] {
+        guard !stored.isEmpty else { return [] }
+        let legacyIDs = Set(["idea", "innovation", "finance", "team", "legal"])
+        var legacyDone: [String: Bool] = [:]
+        stored.forEach { legacyDone[$0.id] = (legacyDone[$0.id] ?? false) || $0.done }
+        var merged = stored.filter { !legacyIDs.contains($0.id) }
+
+        for defaultDocument in FounderDocument.defaults {
+            if let index = merged.firstIndex(where: { $0.id == defaultDocument.id }) {
+                merged[index].title = defaultDocument.title
+                merged[index].note = defaultDocument.note
+            } else {
+                merged.append(defaultDocument)
+            }
+        }
+
+        func mark(_ id: String, ifAnyLegacyDone legacy: [String]) {
+            guard let index = merged.firstIndex(where: { $0.id == id }) else { return }
+            if legacy.contains(where: { legacyDone[$0] == true }) {
+                merged[index].done = true
+            }
+        }
+        mark("businessplan", ifAnyLegacyDone: ["idea", "innovation"])
+        mark("startup-costs", ifAnyLegacyDone: ["finance"])
+        mark("registration", ifAnyLegacyDone: ["legal"])
+        return merged
     }
 
     private func persist<T: Encodable>(_ value: T, key: String) {
@@ -1628,7 +2121,7 @@ final class AppState: ObservableObject {
         let raw = String(allowed)
             .split(separator: "-")
             .joined(separator: "-")
-        return raw.isEmpty ? "startup" : String(raw.prefix(48))
+        return raw.isEmpty ? "business" : String(raw.prefix(48))
     }
 }
 

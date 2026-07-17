@@ -89,10 +89,10 @@ struct OnboardingView: View {
             VStack(spacing: 12) {
                 modeCard(.skills, icon: "wrench.and.screwdriver.fill",
                          title: "Ich biete Skills",
-                         sub: "Ich kann etwas — und suche ein Vorhaben oder Menschen, die mich brauchen.")
+                         sub: "Ich kann etwas — und suche Aufträge, Partner oder kleine Betriebe, die Hilfe brauchen.")
                 modeCard(.idea, icon: "lightbulb.fill",
                          title: "Ich habe eine Idee",
-                         sub: "Ich will etwas aufbauen — und suche Menschen, die mitmachen.")
+                         sub: "Ich will ein Geschäft starten — auch wenn ich von Business noch wenig Ahnung habe.")
             }
             Spacer()
             Spacer()
@@ -221,13 +221,13 @@ struct OnboardingView: View {
                 field("Dein Name") {
                     darkTextField("Vorname reicht", text: $name)
                 }
-                field(mode == .skills ? "Deine Rolle" : "Deine Rolle im Vorhaben") {
-                    darkTextField(mode == .skills ? "z.B. Elektriker, Designerin" : "z.B. Gründerin, Macher", text: $role)
+                field(mode == .skills ? "Deine Rolle" : "Was bist du / willst du machen?") {
+                    darkTextField(mode == .skills ? "z.B. Elektriker, Designerin" : "z.B. Friseur, Händler, Handwerkerin", text: $role)
                 }
-                field("Dein Pitch in einem Satz", hint: "\(pitch.count)/140") {
+                field("Deine Idee in einem Satz", hint: "\(pitch.count)/140") {
                     darkTextField(mode == .skills
-                        ? "Ich baue Websites, die Handwerkern Kunden bringen."
-                        : "Ich eröffne eine Padelhalle in Köln.", text: $pitch, axis: .vertical)
+                        ? "Ich helfe Handwerkern mit Website, Fotos und Google-Profil."
+                        : "Ich will einen Friseursalon, Online-Shop oder mobilen Service starten.", text: $pitch, axis: .vertical)
                         .onChange(of: pitch) { _, v in if v.count > 140 { pitch = String(v.prefix(140)) } }
                 }
                 field("PLZ") {
@@ -280,14 +280,14 @@ struct OnboardingView: View {
                         plan: .standard,
                         title: "Standard",
                         price: "Kostenlos",
-                        subtitle: "Profil, Matching, Kalender und kleine KI-Hilfe.",
+                        subtitle: "Profil, Kontakte, Kalender und kleine KI-Hilfe für den Start.",
                         bullets: ["2.000 KI-Tokens pro Tag", "8.000 KI-Tokens pro Woche", "Basis-Co-Pilot ohne tiefe Analyse"]
                     )
                     planCard(
                         plan: .pro,
                         title: "Pro",
                         price: "3 Tage kostenlos testen",
-                        subtitle: "KI-Gründeranalyse, mehr Kontext und höhere Limits.",
+                        subtitle: "Tiefere Analyse für Kosten, Anmeldung, Kunden und nächste Schritte.",
                         bullets: ["25.000 KI-Tokens pro Tag", "120.000 KI-Tokens pro Woche", "KI-Analyse direkt nach dem Onboarding"]
                     )
                 }
@@ -367,11 +367,11 @@ struct OnboardingView: View {
                 .background(pro ? AnyShapeStyle(MF.indigoGrad) : AnyShapeStyle(.white.opacity(0.12)))
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             VStack(alignment: .leading, spacing: 5) {
-                Text("KI-Gründeranalyse")
+                Text("KI-Gründungscheck")
                     .font(.system(size: 14.5, weight: .bold))
                     .foregroundStyle(.white)
                 Text(pro
-                     ? "Nach dem Start analysiere ich dein Vorhaben, Risiken, Team-Lücke und nächste App-Aktionen."
+                     ? "Nach dem Start prüfe ich Idee, Startkosten, Papierkram, Kundenweg und nächste App-Aktionen."
                      : "Diese tiefere Analyse ist Pro. Standard startet ohne Analyse, du kannst später im Profil upgraden.")
                     .font(.system(size: 12.5))
                     .foregroundStyle(.white.opacity(0.64))
@@ -450,10 +450,10 @@ struct OnboardingView: View {
     private var copilotBriefingCopy: (title: String, text: String) {
         switch step {
         case 0:
-            let modeText = mode == .skills ? "Skills-Profil" : mode == .idea ? "Founder-Profil" : "deinen Startpunkt"
+            let modeText = mode == .skills ? "Skills-Profil" : mode == .idea ? "Gründungsprofil" : "deinen Startpunkt"
             return (
                 "Co-Pilot-Briefing",
-                "Ich merke mir \(modeText) und baue daraus nach dem Onboarding erste Schritte, Match-Logik und Workspace-Kontext."
+                "Ich merke mir \(modeText) und baue daraus nach dem Onboarding erste Schritte, Kontakte, Unterlagen und einen verständlichen Plan."
             )
         case 1:
             if let selectedIndustry {
@@ -465,20 +465,20 @@ struct OnboardingView: View {
             }
             return (
                 "Branche macht den Plan genauer",
-                "Je nach Feld spreche ich anders: Handwerk braucht andere Schritte als SaaS, Gastro oder Beratung."
+                "Je nach Feld spreche ich anders: Friseur, Online-Shop, Handwerk, Gastro und Agentur brauchen unterschiedliche erste Schritte."
             )
         case 2:
             let idea = pitch.trimmingCharacters(in: .whitespacesAndNewlines)
             return (
                 "Aus Antworten wird ein Plan",
                 idea.isEmpty
-                    ? "Name, Rolle, Ort und Verfügbarkeit werden gleich in Kalender, Firmenprofil und Unterlagen übersetzt."
-                    : "Ich nutze „\(idea)” gleich als Kern für Founder-Memory, Firmenprofil und erste Kalender-Schritte."
+                    ? "Name, Rolle, Ort und Verfügbarkeit werden gleich in Kalender, Business-Profil und Unterlagen übersetzt."
+                    : "Ich nutze „\(idea)” gleich als Kern für Business-Memory, Profil und erste Kalender-Schritte."
             )
         default:
             return (
                 "Standard oder Pro",
-                "Standard begrenzt KI bewusst klein. Pro startet mit 3 Tagen kostenlos und schaltet die KI-Gründeranalyse plus höhere Tages- und Wochenlimits frei."
+                "Standard begrenzt KI bewusst klein. Pro startet mit 3 Tagen kostenlos und schaltet den tieferen Gründungscheck plus höhere Limits frei."
             )
         }
     }
@@ -493,12 +493,12 @@ struct OnboardingView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
                 .indigoGlow()
             VStack(spacing: 7) {
-                Text(selectedPlan == .pro ? "KI-Analyse wird vorbereitet" : "Co-Pilot erstellt deinen Plan")
+                Text(selectedPlan == .pro ? "Gründungscheck wird vorbereitet" : "Co-Pilot erstellt deinen Plan")
                     .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(MF.ink)
                 Text(selectedPlan == .pro
-                     ? "Dein Pro-Trial startet und der Co-Pilot analysiert Vorhaben, Risiken, Team-Lücke und nächste Schritte."
-                     : "Founder-Memory, Kalender, Firmenprofil und Unterlagen werden aus deinen Antworten vorbereitet.")
+                     ? "Dein Pro-Trial startet und der Co-Pilot prüft Kosten, Anmeldung, Angebot, Kundenweg und nächste Schritte."
+                     : "Business-Memory, Kalender, Profil und Unterlagen werden aus deinen Antworten vorbereitet.")
                     .font(.system(size: 13.5))
                     .foregroundStyle(MF.smoke)
                     .multilineTextAlignment(.center)

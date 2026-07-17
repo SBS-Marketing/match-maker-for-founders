@@ -37,7 +37,13 @@ type EventRow = {
   is_published: boolean;
 };
 
-type Registration = { id: string; event_id: string; name: string | null; email: string | null; created_at: string };
+type Registration = {
+  id: string;
+  event_id: string;
+  name: string | null;
+  email: string | null;
+  created_at: string;
+};
 
 const EVENT_KINDS = ["Event", "Meetup", "Workshop", "Stammtisch", "Webinar"];
 
@@ -112,14 +118,28 @@ function AdminEvents() {
     if (isPreview) {
       setEvents(PREVIEW_EVENTS);
       setRegistrations([
-        { id: "r1", event_id: "demo-gruenderstammtisch", name: "Lena K.", email: "lena@example.com", created_at: new Date().toISOString() },
-        { id: "r2", event_id: "demo-gruenderstammtisch", name: "Tarek B.", email: "tarek@example.com", created_at: new Date().toISOString() },
+        {
+          id: "r1",
+          event_id: "demo-gruenderstammtisch",
+          name: "Lena K.",
+          email: "lena@example.com",
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: "r2",
+          event_id: "demo-gruenderstammtisch",
+          name: "Tarek B.",
+          email: "tarek@example.com",
+          created_at: new Date().toISOString(),
+        },
       ]);
       return;
     }
     supabase
       .from("community_events")
-      .select("id,title,kind,service_id,starts_at,date_label,time_label,city,venue,spots,taken,host,blurb,agenda,banner_image_url,is_published")
+      .select(
+        "id,title,kind,service_id,starts_at,date_label,time_label,city,venue,spots,taken,host,blurb,agenda,banner_image_url,is_published",
+      )
       .order("starts_at", { ascending: true, nullsFirst: false })
       .then(({ data, error }) => {
         if (error) toast.error(`Events laden fehlgeschlagen: ${error.message}`);
@@ -132,7 +152,6 @@ function AdminEvents() {
       .then(({ data }) => setRegistrations((data as Registration[]) ?? []));
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(load, [isPreview, checking]);
 
   const regCount = useMemo(() => {
@@ -157,10 +176,14 @@ function AdminEvents() {
       // Labels fürs schnelle Rendern in der App aus dem Datum ableiten, wenn leer.
       date_label:
         editing.date_label?.trim() ||
-        (starts ? starts.toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "long" }) : null),
+        (starts
+          ? starts.toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "long" })
+          : null),
       time_label:
         editing.time_label?.trim() ||
-        (starts ? starts.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : null),
+        (starts
+          ? starts.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })
+          : null),
       agenda: editing.agenda.map((a) => a.trim()).filter(Boolean),
     };
 
@@ -188,7 +211,7 @@ function AdminEvents() {
           : "Event gespeichert und in der App sichtbar."
         : isNew
           ? "Event als Entwurf angelegt."
-          : "Event als Entwurf gespeichert."
+          : "Event als Entwurf gespeichert.",
     );
     setEditing(null);
     load();
@@ -210,7 +233,9 @@ function AdminEvents() {
 
   async function togglePublish(ev: EventRow) {
     if (isPreview) {
-      setEvents((prev) => (prev ?? []).map((e) => (e.id === ev.id ? { ...e, is_published: !e.is_published } : e)));
+      setEvents((prev) =>
+        (prev ?? []).map((e) => (e.id === ev.id ? { ...e, is_published: !e.is_published } : e)),
+      );
       return;
     }
     const { error } = await supabase
@@ -239,7 +264,8 @@ function AdminEvents() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-[13px] text-[var(--smoke)]">
-          Live-Events erscheinen automatisch in der iOS-App (Community) und auf der Plattform. Entwürfe bleiben nur hier.
+          Live-Events erscheinen automatisch in der iOS-App (Community) und auf der Plattform.
+          Entwürfe bleiben nur hier.
         </p>
         <button
           onClick={() => {
@@ -257,12 +283,17 @@ function AdminEvents() {
       ) : events.length === 0 ? (
         <div className="rounded-[18px] border border-dashed border-[var(--ruled)] p-8 text-center">
           <CalendarDays className="mx-auto h-6 w-6 text-[var(--faint)]" />
-          <p className="mt-2 text-[13px] text-[var(--smoke)]">Noch keine Events — leg das erste an.</p>
+          <p className="mt-2 text-[13px] text-[var(--smoke)]">
+            Noch keine Events — leg das erste an.
+          </p>
         </div>
       ) : (
         <div className="space-y-2.5">
           {events.map((ev) => (
-            <div key={ev.id} className="overflow-hidden rounded-[18px] border border-[var(--ruled)] bg-[var(--surface)]">
+            <div
+              key={ev.id}
+              className="overflow-hidden rounded-[18px] border border-[var(--ruled)] bg-[var(--surface)]"
+            >
               {ev.banner_image_url && (
                 <img src={ev.banner_image_url} alt="" className="h-28 w-full object-cover" />
               )}
@@ -330,7 +361,10 @@ function AdminEvents() {
                       {registrations
                         .filter((r) => r.event_id === ev.id)
                         .map((r) => (
-                          <li key={r.id} className="flex justify-between text-[12.5px] text-[var(--ink)]">
+                          <li
+                            key={r.id}
+                            className="flex justify-between text-[12.5px] text-[var(--ink)]"
+                          >
                             <span>{r.name || "Ohne Name"}</span>
                             <span className="text-[var(--smoke)]">{r.email || "—"}</span>
                           </li>
@@ -352,7 +386,11 @@ function AdminEvents() {
               <h2 className="text-[16px] font-bold text-[var(--ink)]">
                 {isNew ? "Neues Event" : "Event bearbeiten"}
               </h2>
-              <button onClick={() => setEditing(null)} className="rounded-lg p-1.5 text-[var(--smoke)]" aria-label="Schließen">
+              <button
+                onClick={() => setEditing(null)}
+                className="rounded-lg p-1.5 text-[var(--smoke)]"
+                aria-label="Schließen"
+              >
                 <X className="h-4.5 w-4.5" />
               </button>
             </div>
@@ -413,7 +451,9 @@ function AdminEvents() {
                     type="number"
                     min={0}
                     value={editing.spots}
-                    onChange={(e) => setEditing({ ...editing, spots: Math.max(0, Number(e.target.value) || 0) })}
+                    onChange={(e) =>
+                      setEditing({ ...editing, spots: Math.max(0, Number(e.target.value) || 0) })
+                    }
                     className={inputCls}
                   />
                 </Field>
@@ -468,14 +508,22 @@ function AdminEvents() {
               <Field label="Banner">
                 <div className="flex items-center gap-2.5">
                   {editing.banner_image_url ? (
-                    <img src={editing.banner_image_url} alt="" className="h-14 w-24 rounded-lg object-cover" />
+                    <img
+                      src={editing.banner_image_url}
+                      alt=""
+                      className="h-14 w-24 rounded-lg object-cover"
+                    />
                   ) : (
                     <div className="flex h-14 w-24 items-center justify-center rounded-lg border border-dashed border-[var(--ruled)] text-[var(--faint)]">
                       <ImagePlus className="h-4 w-4" />
                     </div>
                   )}
                   <label className="cursor-pointer rounded-xl border border-[var(--ruled)] px-3 py-2 text-[12.5px] font-semibold text-[var(--ink)]">
-                    {uploading ? "Lädt…" : editing.banner_image_url ? "Banner ersetzen" : "Banner hochladen"}
+                    {uploading
+                      ? "Lädt…"
+                      : editing.banner_image_url
+                        ? "Banner ersetzen"
+                        : "Banner hochladen"}
                     <input
                       type="file"
                       accept="image/*"

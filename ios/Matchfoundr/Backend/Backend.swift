@@ -9,7 +9,7 @@ struct BackendAuthSnapshot: Equatable {
     let email: String?
 
     var displayName: String {
-        email?.split(separator: "@").first.map(String.init) ?? "Founder"
+        email?.split(separator: "@").first.map(String.init) ?? "Gründer"
     }
 }
 

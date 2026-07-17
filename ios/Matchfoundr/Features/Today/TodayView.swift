@@ -15,6 +15,7 @@ struct TodayView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
+                        launchGuideCard
                         focalCard
                         MSectionHead(text: "Heute", action: "Kalender") {
                             state.todayPath.append(.calendar)
@@ -36,6 +37,7 @@ struct TodayView: View {
                 case .chats: ChatsListView()
                 case .chat(let id): ChatDetailView(matchId: id)
                 case .calendar: PlannerView()
+                case .kanban: KanbanView()
                 case .startup: StartupWorkspaceView()
                 case .radar: FounderRadarView()
                 }
@@ -110,6 +112,108 @@ struct TodayView: View {
         }
     }
 
+    @ViewBuilder
+    private var launchGuideCard: some View {
+        if !state.isLaunchGuideComplete, let step = state.nextLaunchGuideStep {
+            let hue = MF.services[step.serviceId] ?? MF.services["cofounder"]!
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "map.fill")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(MF.emberDeep)
+                        .frame(width: 40, height: 40)
+                        .background(MF.emberTint)
+                        .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 6) {
+                            Text("Start-Assistent")
+                                .font(.system(size: 12.5, weight: .heavy))
+                                .foregroundStyle(MF.emberDeep)
+                            Text("\(state.launchGuideCompletedCount)/\(state.launchGuideSteps.count)")
+                                .font(.mfMono(11))
+                                .foregroundStyle(MF.faint)
+                        }
+                        Text(step.title)
+                            .font(.system(size: 20, weight: .heavy))
+                            .foregroundStyle(MF.ink)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(step.detail)
+                            .font(.system(size: 13.5))
+                            .foregroundStyle(MF.smoke)
+                            .lineSpacing(3)
+                    }
+                }
+
+                GeometryReader { proxy in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(MF.borderSoft)
+                        Capsule()
+                            .fill(MF.emberGrad)
+                            .frame(width: max(14, proxy.size.width * state.launchGuideProgress))
+                    }
+                }
+                .frame(height: 7)
+
+                HStack(spacing: 8) {
+                    Button {
+                        Haptics.tap()
+                        state.startLaunchGuideStep(step)
+                    } label: {
+                        Label(step.actionTitle, systemImage: step.icon)
+                            .font(.system(size: 13.5, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 44)
+                            .background(LinearGradient(colors: [hue.hue, hue.ink], startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        Haptics.tap()
+                        state.startAppTour()
+                    } label: {
+                        Image(systemName: "list.bullet.rectangle")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(MF.ink)
+                            .frame(width: 44, height: 44)
+                            .background(MF.surfaceSoft)
+                            .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                launchGuideMiniSteps
+            }
+            .padding(16)
+            .background(MF.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(MF.border, lineWidth: 1))
+            .warmShadow()
+        }
+    }
+
+    private var launchGuideMiniSteps: some View {
+        VStack(spacing: 7) {
+            ForEach(state.launchGuideSteps.prefix(4)) { item in
+                HStack(spacing: 8) {
+                    Image(systemName: item.completed ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(item.completed ? MF.emberDeep : MF.faint)
+                    Text(item.title)
+                        .font(.system(size: 12.5, weight: .semibold))
+                        .foregroundStyle(item.completed ? MF.faint : MF.inkSoft)
+                        .lineLimit(1)
+                    Spacer()
+                }
+            }
+        }
+        .padding(11)
+        .background(MF.surfaceSoft)
+        .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+    }
+
     private var momentumCard: some View {
         let score = founderMomentumScore
         let progress = CGFloat(score) / 100
@@ -124,7 +228,7 @@ struct TodayView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "chart.line.uptrend.xyaxis")
                             .font(.system(size: 13, weight: .bold))
-                        Text("Founder Momentum")
+                        Text("Business Fortschritt")
                             .font(.system(size: 12.5, weight: .bold))
                     }
                     .foregroundStyle(MF.emberDeep)
@@ -248,8 +352,8 @@ struct TodayView: View {
             ),
             .init(
                 id: "startup",
-                title: "Startup",
-                subtitle: "\(state.startupTeamMembers.count) Teamrollen",
+                title: "Business",
+                subtitle: "\(state.startupTeamMembers.count) Rollen",
                 badge: state.companyProfile.stage,
                 icon: "person.3.fill",
                 serviceId: "cofounder",
@@ -257,8 +361,8 @@ struct TodayView: View {
             ),
             .init(
                 id: "cofounder",
-                title: "Co-Founder",
-                subtitle: topCandidate.map { "\($0.card.name) · \($0.total)" } ?? "Scorecard & Trial",
+                title: "Partner",
+                subtitle: topCandidate.map { "\($0.card.name) · \($0.total)" } ?? "Hilfe & Mitstreiter",
                 badge: topCandidate == nil ? "neu" : "fit",
                 icon: "person.2.fill",
                 serviceId: "talent",
@@ -327,10 +431,10 @@ struct TodayView: View {
 
     private var todaySortingPrompt: String {
         """
-        Ordne meinen heutigen Founder-Tag aus der App heraus.
+        Ordne meinen heutigen Gründungstag aus der App heraus.
 
-        Bitte nutze mein Profil, Founder Radar, offene Kalenderpunkte, Unterlagen, Matches und Startup-Team.
-        Gib mir genau drei Prioritäten, sag was ich ignorieren kann, und schlage konkrete App-Aktionen vor.
+        Bitte nutze mein Profil, Business-Radar, offene Kalenderpunkte, Unterlagen, Kontakte und Team.
+        Gib mir genau drei Prioritäten in einfacher Sprache, sag was ich ignorieren kann, und schlage konkrete App-Aktionen vor.
         """
     }
 
@@ -427,7 +531,7 @@ struct TodayView: View {
                 .frame(width: 48, height: 48)
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Founder Radar")
+                    Text("Business Radar")
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(MF.ink)
                     Text("\(brief.scoreLabel) · \(brief.primaryRisk)")
@@ -462,10 +566,10 @@ struct TodayView: View {
                     .background(MF.indigoTint)
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Startup Workspace")
+                    Text("Business Workspace")
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(MF.ink)
-                    Text("\(state.startupTeamMembers.count) Team · \(state.plannerItems.filter { !$0.done }.count) offene Schritte · Unterlagen")
+                    Text("\(state.startupTeamMembers.count) Rollen · \(state.plannerItems.filter { !$0.done }.count) offene Schritte · Unterlagen")
                         .font(.system(size: 12.5))
                         .foregroundStyle(MF.smoke)
                         .lineLimit(1)
@@ -499,10 +603,10 @@ struct TodayView: View {
                     .background(MF.emberTint)
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Co-Founder Trial OS")
+                    Text("Partner-Check")
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(MF.ink)
-                    Text(top.map { "\($0.card.name) · \($0.total) Score · 7-Tage-Test bereit" } ?? "Gap, Scorecard, Shortlist und Trial Sprint")
+                    Text(top.map { "\($0.card.name) · \($0.total) Score · Test-Gespräch bereit" } ?? "Hilfe, Partner, Shortlist und nächstes Gespräch")
                         .font(.system(size: 12.5))
                         .foregroundStyle(MF.smoke)
                         .lineLimit(1)

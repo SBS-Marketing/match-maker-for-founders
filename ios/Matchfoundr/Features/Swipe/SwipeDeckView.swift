@@ -315,7 +315,7 @@ struct PremiumSheetView: View {
     let reason: AppState.PaywallReason
 
     private let features = [
-        "KI-Gründeranalyse nach dem Onboarding",
+        "KI-Gründungscheck nach dem Onboarding",
         "25.000 KI-Tokens pro Tag",
         "120.000 KI-Tokens pro Woche",
         "Mehr Swipes, Matches und App-Aktionen",
@@ -381,7 +381,7 @@ struct PremiumSheetView: View {
         case .chat:
             return "Der nächste Kontakt gehört zu Pro."
         case .aiAnalysis:
-            return "Die KI-Gründeranalyse ist Pro."
+            return "Der KI-Gründungscheck ist Pro."
         case .aiUsage:
             return "Dein KI-Budget ist erreicht."
         }
@@ -394,7 +394,7 @@ struct PremiumSheetView: View {
         case .chat:
             return "Dein erster Kontakt ist frei. Pro schaltet weitere Gespräche und bessere KI-Unterstützung frei."
         case .aiAnalysis:
-            return "Starte 3 Tage kostenlos und lass den Co-Pilot dein Vorhaben, Risiken und Team-Lücke analysieren."
+            return "Starte 3 Tage kostenlos und lass den Co-Pilot Idee, Startkosten, Anmeldung, Preise und erste Kunden prüfen."
         case .aiUsage:
             return "Standard bleibt bewusst knapp, damit KI-Kosten kontrollierbar bleiben. Pro hebt Tages- und Wochenlimit deutlich an."
         }

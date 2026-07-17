@@ -20,22 +20,28 @@ export type FounderContext = {
 };
 
 export type ChatTurn = { role: "user" | "assistant"; content: string };
+export type WebSource = {
+  type?: string;
+  title: string;
+  url: string;
+  snippet?: string;
+};
 
 // Plattform-Bereiche, auf die der Co-Pilot aktiv verweisen darf.
 export const ROUTE_CATALOG = [
   { to: "/heute", label: "Heute (Tagesplan)" },
-  { to: "/guides", label: "Guides (Schritt-für-Schritt-Anleitungen für Gründer)" },
+  { to: "/guides", label: "Guides (Schritt-für-Schritt-Anleitungen für Gründung und Selbstständigkeit)" },
   { to: "/plan", label: "Persönlicher Plan" },
-  { to: "/discover", label: "Co-Founder Swipe" },
-  { to: "/marketplace", label: "Marktplatz (alle Services)" },
+  { to: "/discover", label: "Entdecken (Kontakte, Partner, Deals, lokale Chancen)" },
+  { to: "/marketplace", label: "Partner-Marktplatz (Services, Kammern, Berater, Anbieter)" },
   { to: "/foerderung", label: "Förderprogramme" },
-  { to: "/kapital", label: "Kapital & Investoren" },
+  { to: "/kapital", label: "Kapital, Kredit & Zuschüsse" },
   { to: "/recht", label: "Recht & Verträge" },
   { to: "/steuer", label: "Steuer & Buchhaltung" },
-  { to: "/mentoren", label: "Mentoren & Advisor" },
-  { to: "/talent", label: "Talent & Hires" },
-  { to: "/growth", label: "Growth & GTM" },
-  { to: "/firma", label: "Firmenprofil (Startup-Landingpage)" },
+  { to: "/mentoren", label: "Mentoren, Kammern & Beratung" },
+  { to: "/talent", label: "Team, Helfer & Geschäftspartner" },
+  { to: "/growth", label: "Erste Kunden & lokales Marketing" },
+  { to: "/firma", label: "Business-Profil" },
   { to: "/team", label: "Team-Workspace" },
   { to: "/aufgaben", label: "Aufgaben" },
   { to: "/kanban", label: "Kanban-Board" },
@@ -73,12 +79,24 @@ export function appBlock(app: unknown): string {
   }
 }
 
+export function webSourcesBlock(sources: WebSource[] = []): string {
+  if (!sources.length) return "(keine Live-Web-Recherche fuer diese Nachricht)";
+  return sources
+    .slice(0, 8)
+    .map((source, index) => {
+      const snippet = source.snippet ? `\n  Auszug: ${source.snippet.slice(0, 420)}` : "";
+      return `${index + 1}. ${source.title}\n  URL: ${source.url}${snippet}`;
+    })
+    .join("\n");
+}
+
 export type ChatPromptInput = {
   message: string;
   history: ChatTurn[];
   memory: string[];
   surface?: string; // aktuelle Seite, z.B. "/foerderung/exist-gruenderstipendium"
   app?: unknown;
+  webSources?: WebSource[];
 };
 
 export type TaskType =
@@ -336,6 +354,9 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
     NATIVE APP-LANDKARTE UND AUSFÜHRBARE AKTIONEN:
     ${appBlock(input.app)}
 
+    AKTUELLE WEB-RECHERCHE / SCRAPER-TREFFER:
+    ${webSourcesBlock(input.webSources)}
+
     NEUE NACHRICHT: "${input.message}"
 
     REGELN:
@@ -354,17 +375,31 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
        (z.B. "Ich starte erstmal solo.", "Ich suche aktiv einen Co-Founder.", "Ich bin noch unsicher.").
        Der iOS-Client zeigt daraus eine eigene zweite Wizard-Nachricht. Wenn keine Entscheidung nötig ist:
        2 kurze konkrete nächste Aktionen, die LOGISCH aus dem Gespräch folgen.
-    7. Native App-Steuerung: Wenn sinnvoll, formuliere Follow-ups so, dass der iOS-Client daraus
-       echte Chips bauen kann, z.B. "Termin eintragen", "Memory speichern", "Startup gründen",
-       "Firmenprofil öffnen", "Nachricht schreiben". Keine Funktionen erfinden.
+    7. Native App-Steuerung: Wenn der Founder eine App-Aktion verlangt oder klar davon
+       profitiert, gib sie STRUKTURIERT in "app_aktionen" zurück (max 2). Erlaubte Aktionen:
+       - {"aktion": "add_calendar_item", "titel": "…", "notiz": "…", "faellig": "z.B. Fr oder 24.07."}
+       - {"aktion": "add_kanban_card", "titel": "…", "notiz": "…"}  (legt eine Karte aufs Board)
+       - {"aktion": "remember_fact", "titel": "der Fakt als Satz"}
+       - {"aktion": "open_screen", "screen": "kanban|calendar|swipe|chats|documents|company|startup|radar|events|guides|copilot"}
+       Der Client zeigt daraus tippbare Aktions-Chips — nichts wird ungefragt ausgeführt.
+       Keine Funktionen erfinden, keine anderen Aktions-Namen.
+    8. Web-Recherche: Wenn Web-Treffer mitgeschickt wurden, nutze sie aktiv für konkrete
+       Ansprechpartner/Institutionen: Handwerkskammer, IHK, Gewerbeamt, Finanzamt,
+       Gesundheitsamt, Berufsgenossenschaft, Innung, Gründerberatung. Erfinde keine Namen,
+       Telefonnummern oder Zuständigkeiten. Wenn ein konkreter Ansprechpartner im Treffer nicht
+       sichtbar ist, sage "offizielle Anlaufstelle/Terminseite prüfen" und verweise auf die Quelle.
+    9. Quellen: Wenn du Web-Treffer verwendest, gib in "quellen" NUR Quellen aus der
+       Web-Recherche zurück, exakt mit Titel und URL. Keine erfundenen URLs, keine allgemeinen
+       Quellen ohne Treffer. Max 5 Quellen.
 
     Antworte NUR mit validem JSON:
     {
       "antwort": "Deine Antwort in max. 2 kurzen Absätzen, konkret und app-nah",
       "zu_frueh": false,
-      "quellen": [],
+      "quellen": [{"type": "Web", "title": "Quelle", "url": "https://...", "snippet": "optional"}],
       "follow_up_aktionen": ["Kurze Antwortoption oder Aktion 1", "Kurze Antwortoption oder Aktion 2"],
       "navigation": [{"to": "/foerderung", "label": "EXIST-Antrag weiterführen"}],
+      "app_aktionen": [{"aktion": "add_calendar_item", "titel": "…", "notiz": "…", "faellig": "Fr"}],
       "neue_fakten": ["Kurzer Fakt 1"],
       "kontext_updates": {},
       "neue_deadline_erkannt": null

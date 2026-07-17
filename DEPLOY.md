@@ -32,11 +32,16 @@ Wichtige neue Migrationen:
 - `20260717120000_partner_offers_admin.sql` — Admins dürfen `partner_offers` verwalten
 - `20260717130000_partner_offers_branding.sql` — Spalten `logo_url` + `banner_url`
 - `20260717140000_partner_offers_catalog.sql` — 28 kuratierte Partner für alle 7 Entdecken-Kategorien inkl. gescrapter Logos/Banner
+- `20260718090000_connected_accounts.sql` — Konten-Verknüpfung, Tokens, Morgenreports, WhatsApp-Inbox
+- `20260718091000_morning_report_cron.sql` — 8-Uhr-Report-Cron (no-op bis Vault-Secrets gesetzt, siehe INTEGRATIONS.md)
 
 ## 3. Edge Functions
 
 ```bash
-supabase functions deploy copilot        # Co-Pilot aktualisieren, wenn Usage-Logging aktiv ist
+supabase functions deploy copilot        # Pflicht: schnellerer Chat-Pfad + strukturierte App-Aktionen
+supabase functions deploy connect-google # Konten-Verknüpfung Gmail/Kalender (INTEGRATIONS.md)
+supabase functions deploy morning-report # 8-Uhr-Report des Co-Piloten (INTEGRATIONS.md)
+supabase functions deploy whatsapp-webhook
 supabase functions deploy matching
 supabase functions deploy swipe
 supabase functions deploy resend-confirm

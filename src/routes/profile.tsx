@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthGate } from "@/components/AuthGate";
+import { ConnectedAccounts } from "@/components/ConnectedAccounts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const Route = createFileRoute("/profile")({
@@ -288,6 +289,12 @@ function ProfilePage() {
               onChange={(socials) => setExtras((cur) => ({ ...cur, socials }))}
             />
           </Section>
+
+          {user && (
+            <Section title="Konten & Automationen" compact>
+              <ConnectedAccounts userId={user.id} />
+            </Section>
+          )}
 
           {user && <DigestPreference userId={user.id} />}
 
