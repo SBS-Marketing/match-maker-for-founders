@@ -889,9 +889,9 @@ struct PartnerOffer: Identifiable, Codable, Hashable {
 
     enum CodingKeys: String, CodingKey {
         case slug, name, firm, city, blurb, fit, specialties, packages, why, vouches
-        case serviceId = "service_id"
-        case sourceURL = "source_url"
-        case bookingURL = "booking_url"
+        case serviceId
+        case sourceURL = "sourceUrl"
+        case bookingURL = "bookingUrl"
     }
 }
 
