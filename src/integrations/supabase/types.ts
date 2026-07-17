@@ -171,6 +171,7 @@ export type Database = {
           date_label: string | null
           host: string | null
           id: string
+          image_url: string | null
           is_published: boolean
           kind: string
           service_id: string
@@ -191,6 +192,7 @@ export type Database = {
           date_label?: string | null
           host?: string | null
           id: string
+          image_url?: string | null
           is_published?: boolean
           kind?: string
           service_id?: string
@@ -211,6 +213,7 @@ export type Database = {
           date_label?: string | null
           host?: string | null
           id?: string
+          image_url?: string | null
           is_published?: boolean
           kind?: string
           service_id?: string
