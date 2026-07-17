@@ -198,14 +198,22 @@ function AdminDashboard() {
                   {s.generatedAt ? ` · Stand ${formatDate(s.generatedAt)}` : ""}
                 </p>
               </div>
-              <a
-                href={s.file}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-1 text-[12px] font-semibold text-[var(--indigo)]"
-              >
-                {s.file} <ExternalLink className="h-3.5 w-3.5" />
-              </a>
+              <div className="flex items-center gap-3">
+                <Link
+                  to={s.route}
+                  className="inline-flex items-center gap-1 rounded-lg bg-[var(--ink)] px-2.5 py-1.5 text-[12px] font-semibold text-white"
+                >
+                  In der App ansehen <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+                <a
+                  href={s.file}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--smoke)] hover:text-[var(--ink)]"
+                >
+                  JSON <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
             </div>
           ))}
         </div>
