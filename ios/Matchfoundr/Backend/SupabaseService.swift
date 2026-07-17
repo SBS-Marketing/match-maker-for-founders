@@ -391,7 +391,8 @@ struct SupabaseService {
                 URLQueryItem(name: "is_published", value: "eq.true"),
                 URLQueryItem(name: "order", value: "starts_at.asc"),
                 URLQueryItem(name: "limit", value: "\(limit)")
-            ]
+            ],
+            accessToken: SupabaseConfig.anonKey
         )
         return rows.map { $0.toEvent() }
     }

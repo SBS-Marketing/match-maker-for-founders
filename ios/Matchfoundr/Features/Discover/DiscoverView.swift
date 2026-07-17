@@ -304,7 +304,17 @@ struct DiscoverView: View {
     // ─── Events (User-Wunsch: öffnen + anmelden) ─────────────
     private var eventsRow: some View {
         VStack(spacing: 10) {
-            if state.eventLoadState == .loading {
+            if !state.events.isEmpty {
+                ForEach(state.events) { event in
+                    Button {
+                        Haptics.tap()
+                        state.discoverPath.append(.event(event.id))
+                    } label: {
+                        EventCard(event: event, registered: state.registeredEvents.contains(event.id))
+                    }
+                    .buttonStyle(.plain)
+                }
+            } else if state.eventLoadState == .loading {
                 livePartnerStatusCard(icon: "arrow.triangle.2.circlepath", title: "Live-Events laden", text: "Ich hole Event-Banner, Termine und Plätze aus Supabase.", loading: true)
             } else if case .failed(let message) = state.eventLoadState {
                 livePartnerStatusCard(icon: "exclamationmark.triangle.fill", title: "Live-Events fehlgeschlagen", text: "\(message) · Versuch es erneut.", loading: false)
@@ -325,16 +335,6 @@ struct DiscoverView: View {
                 .background(MF.surface)
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 16).stroke(MF.border, lineWidth: 1))
-            } else {
-                ForEach(state.events) { event in
-                Button {
-                    Haptics.tap()
-                    state.discoverPath.append(.event(event.id))
-                } label: {
-                    EventCard(event: event, registered: state.registeredEvents.contains(event.id))
-                }
-                .buttonStyle(.plain)
-            }
             }
         }
     }

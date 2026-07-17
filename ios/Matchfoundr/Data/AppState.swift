@@ -389,17 +389,20 @@ final class AppState: ObservableObject {
     }
 
     func refreshCommunityEvents(showLoading: Bool = true) async {
-        let hadEvents = !events.isEmpty
-        if showLoading || !hadEvents {
+        let previousEvents = events
+        if showLoading && previousEvents.isEmpty {
             eventLoadState = .loading
         }
         do {
             events = try await SupabaseService.shared.fetchCommunityEvents()
             eventLoadState = .loaded
         } catch {
-            if showLoading || !hadEvents {
+            if previousEvents.isEmpty {
                 events = []
                 eventLoadState = .failed(error.localizedDescription)
+            } else {
+                events = previousEvents
+                eventLoadState = .loaded
             }
         }
     }
