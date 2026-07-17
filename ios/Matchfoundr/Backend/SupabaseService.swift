@@ -375,7 +375,7 @@ struct SupabaseService {
         try await rest(
             "partner_offers",
             query: [
-                URLQueryItem(name: "select", value: "slug,name,firm,service_id,city,blurb,fit,source_url,booking_url,specialties,packages,why,vouches"),
+                URLQueryItem(name: "select", value: "slug,name,firm,serviceId:service_id,city,blurb,fit,sourceUrl:source_url,bookingUrl:booking_url,specialties,packages,why,vouches"),
                 URLQueryItem(name: "is_active", value: "eq.true"),
                 URLQueryItem(name: "order", value: "fit.desc"),
                 URLQueryItem(name: "limit", value: "\(limit)")
