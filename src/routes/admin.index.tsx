@@ -4,8 +4,8 @@
 // ─────────────────────────────────────────────────────────────
 
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { Bot, Coins, Database, ExternalLink, RefreshCw, Users } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowUpRight, Bot, Coins, Database, ExternalLink, RefreshCw, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 
@@ -33,6 +33,7 @@ type Counts = {
 type SourceStatus = {
   label: string;
   file: string;
+  route: string;
   count: number | null;
   generatedAt: string | null;
 };
@@ -111,13 +112,13 @@ function AdminDashboard() {
   }, [isPreview, checking]);
 
   useEffect(() => {
-    const files: { label: string; file: string; key: string }[] = [
-      { label: "Deals & Vergünstigungen", file: "/deals.json", key: "deals" },
-      { label: "Förderungen", file: "/grants.json", key: "grants" },
-      { label: "Partner & Ansprechpartner", file: "/partners.json", key: "partners" },
+    const files: { label: string; file: string; key: string; route: string }[] = [
+      { label: "Deals & Vergünstigungen", file: "/deals.json", key: "deals", route: "/deals" },
+      { label: "Förderungen", file: "/grants.json", key: "grants", route: "/foerderung" },
+      { label: "Partner & Ansprechpartner", file: "/partners.json", key: "partners", route: "/mentoren" },
     ];
     Promise.all(
-      files.map(async ({ label, file, key }): Promise<SourceStatus> => {
+      files.map(async ({ label, file, key, route }): Promise<SourceStatus> => {
         try {
           const res = await fetch(file);
           const json = await res.json();
@@ -125,11 +126,12 @@ function AdminDashboard() {
           return {
             label,
             file,
+            route,
             count: Array.isArray(items) ? items.length : null,
             generatedAt: typeof json?.generated_at === "string" ? json.generated_at : null,
           };
         } catch {
-          return { label, file, count: null, generatedAt: null };
+          return { label, file, route, count: null, generatedAt: null };
         }
       }),
     ).then(setSources);
@@ -196,14 +198,22 @@ function AdminDashboard() {
                   {s.generatedAt ? ` · Stand ${formatDate(s.generatedAt)}` : ""}
                 </p>
               </div>
-              <a
-                href={s.file}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-1 text-[12px] font-semibold text-[var(--indigo)]"
-              >
-                {s.file} <ExternalLink className="h-3.5 w-3.5" />
-              </a>
+              <div className="flex items-center gap-3">
+                <Link
+                  to={s.route}
+                  className="inline-flex items-center gap-1 rounded-lg bg-[var(--ink)] px-2.5 py-1.5 text-[12px] font-semibold text-white"
+                >
+                  In der App ansehen <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+                <a
+                  href={s.file}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--smoke)] hover:text-[var(--ink)]"
+                >
+                  JSON <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
             </div>
           ))}
         </div>

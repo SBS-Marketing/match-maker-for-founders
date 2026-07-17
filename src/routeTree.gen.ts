@@ -26,6 +26,7 @@ import { Route as GrowthRouteImport } from './routes/growth'
 import { Route as FirmaRouteImport } from './routes/firma'
 import { Route as EntdeckenRouteImport } from './routes/entdecken'
 import { Route as DiscoverRouteImport } from './routes/discover'
+import { Route as DealsRouteImport } from './routes/deals'
 import { Route as CoPilotRouteImport } from './routes/co-pilot'
 import { Route as CoFounderRouteImport } from './routes/co-founder'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -142,6 +143,11 @@ const EntdeckenRoute = EntdeckenRouteImport.update({
 const DiscoverRoute = DiscoverRouteImport.update({
   id: '/discover',
   path: '/discover',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DealsRoute = DealsRouteImport.update({
+  id: '/deals',
+  path: '/deals',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoPilotRoute = CoPilotRouteImport.update({
@@ -312,6 +318,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRouteWithChildren
   '/co-founder': typeof CoFounderRoute
   '/co-pilot': typeof CoPilotRoute
+  '/deals': typeof DealsRoute
   '/discover': typeof DiscoverRoute
   '/entdecken': typeof EntdeckenRoute
   '/firma': typeof FirmaRoute
@@ -362,6 +369,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRouteWithChildren
   '/co-founder': typeof CoFounderRoute
   '/co-pilot': typeof CoPilotRoute
+  '/deals': typeof DealsRoute
   '/discover': typeof DiscoverRoute
   '/entdecken': typeof EntdeckenRoute
   '/firma': typeof FirmaRoute
@@ -409,6 +417,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRouteWithChildren
   '/co-founder': typeof CoFounderRoute
   '/co-pilot': typeof CoPilotRoute
+  '/deals': typeof DealsRoute
   '/discover': typeof DiscoverRoute
   '/entdecken': typeof EntdeckenRoute
   '/firma': typeof FirmaRoute
@@ -462,6 +471,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/co-founder'
     | '/co-pilot'
+    | '/deals'
     | '/discover'
     | '/entdecken'
     | '/firma'
@@ -512,6 +522,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/co-founder'
     | '/co-pilot'
+    | '/deals'
     | '/discover'
     | '/entdecken'
     | '/firma'
@@ -558,6 +569,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/co-founder'
     | '/co-pilot'
+    | '/deals'
     | '/discover'
     | '/entdecken'
     | '/firma'
@@ -610,6 +622,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRouteWithChildren
   CoFounderRoute: typeof CoFounderRoute
   CoPilotRoute: typeof CoPilotRoute
+  DealsRoute: typeof DealsRoute
   DiscoverRoute: typeof DiscoverRoute
   EntdeckenRoute: typeof EntdeckenRoute
   FirmaRoute: typeof FirmaRoute
@@ -758,6 +771,13 @@ declare module '@tanstack/react-router' {
       path: '/discover'
       fullPath: '/discover'
       preLoaderRoute: typeof DiscoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/deals': {
+      id: '/deals'
+      path: '/deals'
+      fullPath: '/deals'
+      preLoaderRoute: typeof DealsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/co-pilot': {
@@ -1088,6 +1108,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRouteWithChildren,
   CoFounderRoute: CoFounderRoute,
   CoPilotRoute: CoPilotRoute,
+  DealsRoute: DealsRoute,
   DiscoverRoute: DiscoverRoute,
   EntdeckenRoute: EntdeckenRoute,
   FirmaRoute: FirmaRoute,
