@@ -765,6 +765,66 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_offers: {
+        Row: {
+          blurb: string
+          booking_url: string | null
+          city: string
+          created_at: string
+          firm: string
+          fit: number
+          is_active: boolean
+          name: string
+          packages: Json
+          scrape_status: string | null
+          service_id: string
+          slug: string
+          source_url: string | null
+          specialties: Json
+          updated_at: string
+          vouches: Json
+          why: Json
+        }
+        Insert: {
+          blurb: string
+          booking_url?: string | null
+          city?: string
+          created_at?: string
+          firm: string
+          fit?: number
+          is_active?: boolean
+          name: string
+          packages?: Json
+          scrape_status?: string | null
+          service_id: string
+          slug: string
+          source_url?: string | null
+          specialties?: Json
+          updated_at?: string
+          vouches?: Json
+          why?: Json
+        }
+        Update: {
+          blurb?: string
+          booking_url?: string | null
+          city?: string
+          created_at?: string
+          firm?: string
+          fit?: number
+          is_active?: boolean
+          name?: string
+          packages?: Json
+          scrape_status?: string | null
+          service_id?: string
+          slug?: string
+          source_url?: string | null
+          specialties?: Json
+          updated_at?: string
+          vouches?: Json
+          why?: Json
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           commitment: Database["public"]["Enums"]["founder_commitment"] | null
