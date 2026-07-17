@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-05-22T13:45:31.408762",
-  "source_file": "deals_2026-05-22.json",
+  "generated_at": "2026-07-14T08:59:50.723159",
+  "source_file": "deals_2026-07-14.json",
   "stats": {
-    "total_deals": 73,
-    "total_value_approx": "$6513K+",
+    "total_deals": 69,
+    "total_value_approx": "$6623K+",
     "categories": 7,
     "by_category": {
       "cloud": 13,
-      "saas": 12,
+      "saas": 11,
       "legal": 8,
       "ai": 13,
-      "marketing": 7,
-      "hr": 13,
-      "community": 7
+      "marketing": 6,
+      "hr": 12,
+      "community": 6
     },
-    "last_updated": "2026-05-22"
+    "last_updated": "2026-07-14"
   },
   "deals": [
     {
@@ -23,7 +23,7 @@
       "product": "AWS Activate",
       "cat": "cloud",
       "logo": "🟠",
-      "value": "bis $100,000 Credits",
+      "value": "bis $200,000 Credits",
       "badge": "EPIC",
       "badge_class": "epic",
       "desc": "Cloud- oder Infrastruktur-Angebot für Startups. Nützlich für Hosting, Datenbanken, Deployments und technische Skalierung.",
@@ -38,9 +38,10 @@
       ],
       "tier": "epic",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.310910",
+      "normalized_at": "2026-07-14T08:59:50.486760",
       "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "cat_label": "Cloud & Infra",
+      "logo_url": "/logos/aws-activate.png"
     },
     {
       "id": "azure-startup",
@@ -63,9 +64,11 @@
       ],
       "tier": "epic",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.312253",
+      "normalized_at": "2026-07-14T08:59:50.489373",
       "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "cat_label": "Cloud & Infra",
+      "logo_url": "/logos/azure-startup.png",
+      "banner_url": "/banners/azure-startup.jpg"
     },
     {
       "id": "render",
@@ -73,7 +76,7 @@
       "product": "Free Tier",
       "cat": "cloud",
       "logo": "🎁",
-      "value": "bis $100K Credits",
+      "value": "bis $10K Credits",
       "badge": "EPIC",
       "badge_class": "epic",
       "desc": "Cloud- oder Infrastruktur-Angebot für Startups. Nützlich für Hosting, Datenbanken, Deployments und technische Skalierung.",
@@ -88,9 +91,10 @@
       ],
       "tier": "epic",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.314316",
+      "normalized_at": "2026-07-14T08:59:50.493640",
       "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "cat_label": "Cloud & Infra",
+      "banner_url": "/banners/render.jpg"
     },
     {
       "id": "neon-startup",
@@ -98,7 +102,7 @@
       "product": "Startup Program",
       "cat": "cloud",
       "logo": "🟩",
-      "value": "bis $100K Credits",
+      "value": "bis $200K Credits",
       "badge": "EPIC",
       "badge_class": "epic",
       "desc": "Cloud- oder Infrastruktur-Angebot für Startups. Nützlich für Hosting, Datenbanken, Deployments und technische Skalierung.",
@@ -113,9 +117,11 @@
       ],
       "tier": "epic",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.316014",
+      "normalized_at": "2026-07-14T08:59:50.496799",
       "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "cat_label": "Cloud & Infra",
+      "logo_url": "/logos/neon-startup.png",
+      "banner_url": "/banners/neon-startup.jpg"
     },
     {
       "id": "retool-startup",
@@ -138,9 +144,11 @@
       ],
       "tier": "epic",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.318701",
+      "normalized_at": "2026-07-14T08:59:50.502838",
       "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "cat_label": "SaaS & Tools",
+      "logo_url": "/logos/retool-startup.png",
+      "banner_url": "/banners/retool-startup.jpg"
     },
     {
       "id": "brex",
@@ -163,9 +171,11 @@
       ],
       "tier": "epic",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.329793",
+      "normalized_at": "2026-07-14T08:59:50.526419",
       "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
+      "cat_label": "Legal & Finance",
+      "logo_url": "/logos/brex.png",
+      "banner_url": "/banners/brex.jpg"
     },
     {
       "id": "digitalocean",
@@ -188,9 +198,10 @@
       ],
       "tier": "big",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.312828",
+      "normalized_at": "2026-07-14T08:59:50.490342",
       "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "cat_label": "Cloud & Infra",
+      "logo_url": "/logos/digitalocean.png"
     },
     {
       "id": "notion-startup",
@@ -213,9 +224,11 @@
       ],
       "tier": "big",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.317356",
+      "normalized_at": "2026-07-14T08:59:50.499850",
       "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "cat_label": "SaaS & Tools",
+      "logo_url": "/logos/notion-startup.png",
+      "banner_url": "/banners/notion-startup.jpg"
     },
     {
       "id": "hubspot-startup",
@@ -238,9 +251,11 @@
       ],
       "tier": "big",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.317858",
+      "normalized_at": "2026-07-14T08:59:50.501023",
       "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "cat_label": "SaaS & Tools",
+      "logo_url": "/logos/hubspot-startup.png",
+      "banner_url": "/banners/hubspot-startup.jpg"
     },
     {
       "id": "intercom",
@@ -248,8 +263,8 @@
       "product": "Early Stage Program",
       "cat": "saas",
       "logo": "💬",
-      "value": "90% Rabatt",
-      "badge": "90% off",
+      "value": "93% Rabatt",
+      "badge": "93% off",
       "badge_class": "big",
       "desc": "SaaS-Tool für frühe Teams. Nützlich für Produktivität, Kollaboration, Analytics oder interne Workflows.",
       "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
@@ -263,9 +278,11 @@
       ],
       "tier": "big",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.318263",
+      "normalized_at": "2026-07-14T08:59:50.501857",
       "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "cat_label": "SaaS & Tools",
+      "logo_url": "/logos/intercom.png",
+      "banner_url": "/banners/intercom.jpg"
     },
     {
       "id": "linear-startup",
@@ -288,9 +305,11 @@
       ],
       "tier": "big",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.318607",
+      "normalized_at": "2026-07-14T08:59:50.502637",
       "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "cat_label": "SaaS & Tools",
+      "logo_url": "/logos/linear-startup.png",
+      "banner_url": "/banners/linear-startup.jpg"
     },
     {
       "id": "elevenlabs",
@@ -313,9 +332,11 @@
       ],
       "tier": "big",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.324544",
+      "normalized_at": "2026-07-14T08:59:50.514004",
       "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "cat_label": "AI & ML",
+      "logo_url": "/logos/elevenlabs.png",
+      "banner_url": "/banners/elevenlabs.jpg"
     },
     {
       "id": "lexoffice",
@@ -338,9 +359,11 @@
       ],
       "tier": "big",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.330313",
+      "normalized_at": "2026-07-14T08:59:50.527463",
       "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
+      "cat_label": "Legal & Finance",
+      "logo_url": "/logos/lexoffice.png",
+      "banner_url": "/banners/lexoffice.jpg"
     },
     {
       "id": "sevdesk",
@@ -363,9 +386,11 @@
       ],
       "tier": "big",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.330910",
+      "normalized_at": "2026-07-14T08:59:50.528687",
       "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
+      "cat_label": "Legal & Finance",
+      "logo_url": "/logos/sevdesk.png",
+      "banner_url": "/banners/sevdesk.jpg"
     },
     {
       "id": "apollo-startup",
@@ -388,34 +413,11 @@
       ],
       "tier": "big",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.338349",
+      "normalized_at": "2026-07-14T08:59:50.543907",
       "cat_icon": "📣",
-      "cat_label": "Marketing"
-    },
-    {
-      "id": "deel",
-      "company": "Deel",
-      "product": "Startup Program",
-      "cat": "hr",
-      "logo": "🌍",
-      "value": "6 Monate kostenlos",
-      "badge": "6 Mo",
-      "badge_class": "big",
-      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.deel.com/startups",
-      "claim_url": "https://www.deel.com/startups",
-      "tags": [
-        "HR",
-        "Recruiting",
-        "Talent"
-      ],
-      "tier": "big",
-      "active": true,
-      "normalized_at": "2026-05-22T13:45:31.338973",
-      "cat_icon": "👥",
-      "cat_label": "HR & Talent"
+      "cat_label": "Marketing",
+      "logo_url": "/logos/apollo-startup.png",
+      "banner_url": "/banners/apollo-startup.jpg"
     },
     {
       "id": "oyster-startup",
@@ -438,9 +440,11 @@
       ],
       "tier": "big",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.340170",
+      "normalized_at": "2026-07-14T08:59:50.547963",
       "cat_icon": "👥",
-      "cat_label": "HR & Talent"
+      "cat_label": "HR & Talent",
+      "logo_url": "/logos/oyster-startup.png",
+      "banner_url": "/banners/oyster-startup.jpg"
     },
     {
       "id": "oyster-pricing",
@@ -463,9 +467,11 @@
       ],
       "tier": "big",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.345274",
+      "normalized_at": "2026-07-14T08:59:50.557162",
       "cat_icon": "👥",
-      "cat_label": "HR & Talent"
+      "cat_label": "HR & Talent",
+      "logo_url": "/logos/oyster-pricing.png",
+      "banner_url": "/banners/oyster-pricing.jpg"
     },
     {
       "id": "gcp-startup",
@@ -488,9 +494,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.312060",
+      "normalized_at": "2026-07-14T08:59:50.488945",
       "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "cat_label": "Cloud & Infra",
+      "logo_url": "/logos/gcp-startup.png",
+      "banner_url": "/banners/gcp-startup.jpg"
     },
     {
       "id": "vercel-startup",
@@ -513,9 +521,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.312594",
+      "normalized_at": "2026-07-14T08:59:50.489774",
       "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "cat_label": "Cloud & Infra",
+      "logo_url": "/logos/vercel-startup.png",
+      "banner_url": "/banners/vercel-startup.jpg"
     },
     {
       "id": "cloudflare",
@@ -538,9 +548,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.313565",
+      "normalized_at": "2026-07-14T08:59:50.491978",
       "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "cat_label": "Cloud & Infra",
+      "logo_url": "/logos/cloudflare.png",
+      "banner_url": "/banners/cloudflare.jpg"
     },
     {
       "id": "railway",
@@ -563,9 +575,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.313922",
+      "normalized_at": "2026-07-14T08:59:50.492802",
       "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "cat_label": "Cloud & Infra",
+      "logo_url": "/logos/railway.png",
+      "banner_url": "/banners/railway.jpg"
     },
     {
       "id": "fly-io",
@@ -588,9 +602,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.314127",
+      "normalized_at": "2026-07-14T08:59:50.493288",
       "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "cat_label": "Cloud & Infra",
+      "logo_url": "/logos/fly-io.png",
+      "banner_url": "/banners/fly-io.jpg"
     },
     {
       "id": "planetscale",
@@ -613,9 +629,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.315116",
+      "normalized_at": "2026-07-14T08:59:50.494912",
       "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "cat_label": "Cloud & Infra",
+      "logo_url": "/logos/planetscale.png",
+      "banner_url": "/banners/planetscale.jpg"
     },
     {
       "id": "mongodb-startup",
@@ -638,9 +656,10 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.315847",
+      "normalized_at": "2026-07-14T08:59:50.496450",
       "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "cat_label": "Cloud & Infra",
+      "logo_url": "/logos/mongodb-startup.png"
     },
     {
       "id": "heroku-startup",
@@ -663,9 +682,10 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.316734",
+      "normalized_at": "2026-07-14T08:59:50.498467",
       "cat_icon": "☁️",
-      "cat_label": "Cloud & Infra"
+      "cat_label": "Cloud & Infra",
+      "logo_url": "/logos/heroku-startup.png"
     },
     {
       "id": "1password",
@@ -688,9 +708,10 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.318752",
+      "normalized_at": "2026-07-14T08:59:50.502952",
       "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "cat_label": "SaaS & Tools",
+      "logo_url": "/logos/1password.png"
     },
     {
       "id": "miro",
@@ -713,9 +734,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.319377",
+      "normalized_at": "2026-07-14T08:59:50.504348",
       "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "cat_label": "SaaS & Tools",
+      "logo_url": "/logos/miro.png",
+      "banner_url": "/banners/miro.jpg"
     },
     {
       "id": "postman",
@@ -738,9 +761,10 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.319403",
+      "normalized_at": "2026-07-14T08:59:50.504367",
       "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "cat_label": "SaaS & Tools",
+      "logo_url": "/logos/postman.png"
     },
     {
       "id": "segment-startup",
@@ -763,9 +787,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.320275",
+      "normalized_at": "2026-07-14T08:59:50.506061",
       "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "cat_label": "SaaS & Tools",
+      "logo_url": "/logos/segment-startup.png",
+      "banner_url": "/banners/segment-startup.jpg"
     },
     {
       "id": "mixpanel",
@@ -788,9 +814,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.320952",
+      "normalized_at": "2026-07-14T08:59:50.507711",
       "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "cat_label": "SaaS & Tools",
+      "logo_url": "/logos/mixpanel.png",
+      "banner_url": "/banners/mixpanel.jpg"
     },
     {
       "id": "atlassian-startup",
@@ -813,34 +841,10 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.321729",
+      "normalized_at": "2026-07-14T08:59:50.509388",
       "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
-    },
-    {
-      "id": "webflow-startup",
-      "company": "Webflow",
-      "product": "Webflow for Startups",
-      "cat": "saas",
-      "logo": "🌊",
-      "value": "Startup-Programm",
-      "badge": "Startup",
-      "badge_class": "good",
-      "desc": "SaaS-Tool für frühe Teams. Nützlich für Produktivität, Kollaboration, Analytics oder interne Workflows.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://webflow.com/startups",
-      "claim_url": "https://webflow.com/startups",
-      "tags": [
-        "SaaS",
-        "Produktivität",
-        "Tools"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-05-22T13:45:31.322471",
-      "cat_icon": "🛠",
-      "cat_label": "SaaS & Tools"
+      "cat_label": "SaaS & Tools",
+      "logo_url": "/logos/atlassian-startup.png"
     },
     {
       "id": "anthropic-startup",
@@ -863,9 +867,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.323211",
+      "normalized_at": "2026-07-14T08:59:50.511060",
       "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "cat_label": "AI & ML",
+      "logo_url": "/logos/anthropic-startup.png",
+      "banner_url": "/banners/anthropic-startup.jpg"
     },
     {
       "id": "huggingface",
@@ -888,9 +894,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.323269",
+      "normalized_at": "2026-07-14T08:59:50.511169",
       "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "cat_label": "AI & ML",
+      "logo_url": "/logos/huggingface.png",
+      "banner_url": "/banners/huggingface.jpg"
     },
     {
       "id": "replicate",
@@ -913,9 +921,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.324165",
+      "normalized_at": "2026-07-14T08:59:50.512701",
       "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "cat_label": "AI & ML",
+      "logo_url": "/logos/replicate.png",
+      "banner_url": "/banners/replicate.jpg"
     },
     {
       "id": "deepgram",
@@ -938,9 +948,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.324849",
+      "normalized_at": "2026-07-14T08:59:50.514595",
       "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "cat_label": "AI & ML",
+      "logo_url": "/logos/deepgram.png",
+      "banner_url": "/banners/deepgram.jpg"
     },
     {
       "id": "fireworks-ai",
@@ -963,9 +975,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.325205",
+      "normalized_at": "2026-07-14T08:59:50.515406",
       "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "cat_label": "AI & ML",
+      "logo_url": "/logos/fireworks-ai.png",
+      "banner_url": "/banners/fireworks-ai.jpg"
     },
     {
       "id": "baseten",
@@ -988,9 +1002,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.325837",
+      "normalized_at": "2026-07-14T08:59:50.516898",
       "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "cat_label": "AI & ML",
+      "logo_url": "/logos/baseten.png",
+      "banner_url": "/banners/baseten.jpg"
     },
     {
       "id": "langchain",
@@ -1013,9 +1029,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.326537",
+      "normalized_at": "2026-07-14T08:59:50.518457",
       "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "cat_label": "AI & ML",
+      "logo_url": "/logos/langchain.png",
+      "banner_url": "/banners/langchain.jpg"
     },
     {
       "id": "llamaindex",
@@ -1038,9 +1056,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.326773",
+      "normalized_at": "2026-07-14T08:59:50.519000",
       "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "cat_label": "AI & ML",
+      "logo_url": "/logos/llamaindex.png",
+      "banner_url": "/banners/llamaindex.jpg"
     },
     {
       "id": "pinecone-pricing",
@@ -1063,9 +1083,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.327136",
+      "normalized_at": "2026-07-14T08:59:50.519815",
       "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "cat_label": "AI & ML",
+      "logo_url": "/logos/pinecone-pricing.png",
+      "banner_url": "/banners/pinecone-pricing.jpg"
     },
     {
       "id": "assemblyai-pricing",
@@ -1088,9 +1110,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.327869",
+      "normalized_at": "2026-07-14T08:59:50.521369",
       "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "cat_label": "AI & ML",
+      "logo_url": "/logos/assemblyai-pricing.png",
+      "banner_url": "/banners/assemblyai-pricing.jpg"
     },
     {
       "id": "cohere-pricing",
@@ -1113,9 +1137,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.328595",
+      "normalized_at": "2026-07-14T08:59:50.522923",
       "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "cat_label": "AI & ML",
+      "logo_url": "/logos/cohere-pricing.png",
+      "banner_url": "/banners/cohere-pricing.jpg"
     },
     {
       "id": "stripe-atlas",
@@ -1138,9 +1164,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.329623",
+      "normalized_at": "2026-07-14T08:59:50.525987",
       "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
+      "cat_label": "Legal & Finance",
+      "logo_url": "/logos/stripe-atlas.png",
+      "banner_url": "/banners/stripe-atlas.jpg"
     },
     {
       "id": "wise-business",
@@ -1163,9 +1191,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.331640",
+      "normalized_at": "2026-07-14T08:59:50.530245",
       "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
+      "cat_label": "Legal & Finance",
+      "logo_url": "/logos/wise-business.png",
+      "banner_url": "/banners/wise-business.jpg"
     },
     {
       "id": "qonto-pricing",
@@ -1188,9 +1218,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.332383",
+      "normalized_at": "2026-07-14T08:59:50.531813",
       "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
+      "cat_label": "Legal & Finance",
+      "logo_url": "/logos/qonto-pricing.png",
+      "banner_url": "/banners/qonto-pricing.jpg"
     },
     {
       "id": "penta-qonto",
@@ -1213,9 +1245,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.333837",
+      "normalized_at": "2026-07-14T08:59:50.535036",
       "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
+      "cat_label": "Legal & Finance",
+      "logo_url": "/logos/penta-qonto.png",
+      "banner_url": "/banners/penta-qonto.jpg"
     },
     {
       "id": "mailchimp",
@@ -1238,34 +1272,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.334461",
+      "normalized_at": "2026-07-14T08:59:50.536352",
       "cat_icon": "📣",
-      "cat_label": "Marketing"
-    },
-    {
-      "id": "semrush",
-      "company": "Semrush",
-      "product": "Startup Program",
-      "cat": "marketing",
-      "logo": "📈",
-      "value": "Siehe Website",
-      "badge": "Deal",
-      "badge_class": "good",
-      "desc": "Marketing-/Growth-Angebot für frühe Teams. Nützlich für Launch, CRM, Analytics, Outreach oder SEO.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.semrush.com/kb/1038-startup-program",
-      "claim_url": "https://www.semrush.com/kb/1038-startup-program",
-      "tags": [
-        "Marketing",
-        "Growth",
-        "Tools"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-05-22T13:45:31.334965",
-      "cat_icon": "📣",
-      "cat_label": "Marketing"
+      "cat_label": "Marketing",
+      "logo_url": "/logos/mailchimp.png",
+      "banner_url": "/banners/mailchimp.jpg"
     },
     {
       "id": "brevo",
@@ -1288,9 +1299,10 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.335694",
+      "normalized_at": "2026-07-14T08:59:50.537897",
       "cat_icon": "📣",
-      "cat_label": "Marketing"
+      "cat_label": "Marketing",
+      "logo_url": "/logos/brevo.png"
     },
     {
       "id": "hunter",
@@ -1313,9 +1325,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.336451",
+      "normalized_at": "2026-07-14T08:59:50.539510",
       "cat_icon": "📣",
-      "cat_label": "Marketing"
+      "cat_label": "Marketing",
+      "logo_url": "/logos/hunter.png",
+      "banner_url": "/banners/hunter.jpg"
     },
     {
       "id": "phantombuster",
@@ -1338,9 +1352,10 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.336464",
+      "normalized_at": "2026-07-14T08:59:50.539540",
       "cat_icon": "📣",
-      "cat_label": "Marketing"
+      "cat_label": "Marketing",
+      "logo_url": "/logos/phantombuster.png"
     },
     {
       "id": "amplitude-startup",
@@ -1363,9 +1378,38 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.337240",
+      "normalized_at": "2026-07-14T08:59:50.542515",
       "cat_icon": "📣",
-      "cat_label": "Marketing"
+      "cat_label": "Marketing",
+      "logo_url": "/logos/amplitude-startup.png",
+      "banner_url": "/banners/amplitude-startup.jpg"
+    },
+    {
+      "id": "deel",
+      "company": "Deel",
+      "product": "Startup Program",
+      "cat": "hr",
+      "logo": "🌍",
+      "value": "Startup-Programm",
+      "badge": "Startup",
+      "badge_class": "good",
+      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
+      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
+      "duration": "Siehe Website",
+      "url": "https://www.deel.com/startups",
+      "claim_url": "https://www.deel.com/startups",
+      "tags": [
+        "HR",
+        "Recruiting",
+        "Talent"
+      ],
+      "tier": "good",
+      "active": true,
+      "normalized_at": "2026-07-14T08:59:50.545253",
+      "cat_icon": "👥",
+      "cat_label": "HR & Talent",
+      "logo_url": "/logos/deel.png",
+      "banner_url": "/banners/deel.jpg"
     },
     {
       "id": "remote-com",
@@ -1388,9 +1432,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.339715",
+      "normalized_at": "2026-07-14T08:59:50.546886",
       "cat_icon": "👥",
-      "cat_label": "HR & Talent"
+      "cat_label": "HR & Talent",
+      "logo_url": "/logos/remote-com.png",
+      "banner_url": "/banners/remote-com.jpg"
     },
     {
       "id": "ashby-startup",
@@ -1413,34 +1459,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.339956",
+      "normalized_at": "2026-07-14T08:59:50.547431",
       "cat_icon": "👥",
-      "cat_label": "HR & Talent"
-    },
-    {
-      "id": "personio-pricing",
-      "company": "Personio",
-      "product": "HR Plattform",
-      "cat": "hr",
-      "logo": "👔",
-      "value": "Siehe Website",
-      "badge": "Deal",
-      "badge_class": "good",
-      "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.personio.de/preise/",
-      "claim_url": "https://www.personio.de/preise/",
-      "tags": [
-        "HR",
-        "Recruiting",
-        "Talent"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-05-22T13:45:31.340907",
-      "cat_icon": "👥",
-      "cat_label": "HR & Talent"
+      "cat_label": "HR & Talent",
+      "logo_url": "/logos/ashby-startup.png",
+      "banner_url": "/banners/ashby-startup.jpg"
     },
     {
       "id": "greenhouse-pricing",
@@ -1463,9 +1486,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.341638",
+      "normalized_at": "2026-07-14T08:59:50.549616",
       "cat_icon": "👥",
-      "cat_label": "HR & Talent"
+      "cat_label": "HR & Talent",
+      "logo_url": "/logos/greenhouse-pricing.png",
+      "banner_url": "/banners/greenhouse-pricing.jpg"
     },
     {
       "id": "workable-pricing",
@@ -1473,7 +1498,7 @@
       "product": "Recruiting Software",
       "cat": "hr",
       "logo": "👥",
-      "value": "Siehe Website",
+      "value": "bis $0.12 Credits",
       "badge": "Deal",
       "badge_class": "good",
       "desc": "HR-/Talent-Angebot für Startups. Nützlich für Recruiting, Onboarding, Payroll oder Teamprozesse.",
@@ -1488,9 +1513,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.342092",
+      "normalized_at": "2026-07-14T08:59:50.550466",
       "cat_icon": "👥",
-      "cat_label": "HR & Talent"
+      "cat_label": "HR & Talent",
+      "logo_url": "/logos/workable-pricing.png",
+      "banner_url": "/banners/workable-pricing.jpg"
     },
     {
       "id": "recruitee-pricing",
@@ -1513,9 +1540,10 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.342815",
+      "normalized_at": "2026-07-14T08:59:50.552114",
       "cat_icon": "👥",
-      "cat_label": "HR & Talent"
+      "cat_label": "HR & Talent",
+      "logo_url": "/logos/recruitee-pricing.png"
     },
     {
       "id": "factorial-pricing",
@@ -1538,9 +1566,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.343536",
+      "normalized_at": "2026-07-14T08:59:50.553750",
       "cat_icon": "👥",
-      "cat_label": "HR & Talent"
+      "cat_label": "HR & Talent",
+      "logo_url": "/logos/factorial-pricing.png",
+      "banner_url": "/banners/factorial-pricing.jpg"
     },
     {
       "id": "kenjo-pricing",
@@ -1563,9 +1593,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.344253",
+      "normalized_at": "2026-07-14T08:59:50.554904",
       "cat_icon": "👥",
-      "cat_label": "HR & Talent"
+      "cat_label": "HR & Talent",
+      "logo_url": "/logos/kenjo-pricing.png",
+      "banner_url": "/banners/kenjo-pricing.jpg"
     },
     {
       "id": "homerun-pricing",
@@ -1588,9 +1620,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.344672",
+      "normalized_at": "2026-07-14T08:59:50.555788",
       "cat_icon": "👥",
-      "cat_label": "HR & Talent"
+      "cat_label": "HR & Talent",
+      "logo_url": "/logos/homerun-pricing.png",
+      "banner_url": "/banners/homerun-pricing.jpg"
     },
     {
       "id": "ashby-pricing",
@@ -1613,34 +1647,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.344929",
+      "normalized_at": "2026-07-14T08:59:50.556369",
       "cat_icon": "👥",
-      "cat_label": "HR & Talent"
-    },
-    {
-      "id": "f6s-deals",
-      "company": "F6S",
-      "product": "Deal Directory",
-      "cat": "community",
-      "logo": "🎁",
-      "value": "Founder-Ressource",
-      "badge": "Startup",
-      "badge_class": "good",
-      "desc": "Founder-Community oder Accelerator-Ressource. Nützlich für Netzwerk, Feedback, Mentoren und erste Reichweite.",
-      "eligibility": "Startups, Gründerteams oder kleine Unternehmen; Details auf der offiziellen Website prüfen.",
-      "duration": "Siehe Website",
-      "url": "https://www.f6s.com/company-deals",
-      "claim_url": "https://www.f6s.com/company-deals",
-      "tags": [
-        "Community",
-        "Netzwerk",
-        "Founder"
-      ],
-      "tier": "good",
-      "active": true,
-      "normalized_at": "2026-05-22T13:45:31.345290",
-      "cat_icon": "🤝",
-      "cat_label": "Community"
+      "cat_label": "HR & Talent",
+      "logo_url": "/logos/ashby-pricing.png",
+      "banner_url": "/banners/ashby-pricing.jpg"
     },
     {
       "id": "german-accelerator",
@@ -1663,9 +1674,11 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.345632",
+      "normalized_at": "2026-07-14T08:59:50.558018",
       "cat_icon": "🤝",
-      "cat_label": "Community"
+      "cat_label": "Community",
+      "logo_url": "/logos/german-accelerator.png",
+      "banner_url": "/banners/german-accelerator.jpg"
     },
     {
       "id": "techstars",
@@ -1688,9 +1701,10 @@
       ],
       "tier": "good",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.345676",
+      "normalized_at": "2026-07-14T08:59:50.558132",
       "cat_icon": "🤝",
-      "cat_label": "Community"
+      "cat_label": "Community",
+      "logo_url": "/logos/techstars.png"
     },
     {
       "id": "mistral-pricing",
@@ -1713,9 +1727,11 @@
       ],
       "tier": "free",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.328900",
+      "normalized_at": "2026-07-14T08:59:50.524472",
       "cat_icon": "🤖",
-      "cat_label": "AI & ML"
+      "cat_label": "AI & ML",
+      "logo_url": "/logos/mistral-pricing.png",
+      "banner_url": "/banners/mistral-pricing.jpg"
     },
     {
       "id": "kontist",
@@ -1738,9 +1754,11 @@
       ],
       "tier": "free",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.333102",
+      "normalized_at": "2026-07-14T08:59:50.533356",
       "cat_icon": "⚖️",
-      "cat_label": "Legal & Finance"
+      "cat_label": "Legal & Finance",
+      "logo_url": "/logos/kontist.png",
+      "banner_url": "/banners/kontist.jpg"
     },
     {
       "id": "yc-startup-school",
@@ -1763,9 +1781,11 @@
       ],
       "tier": "free",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.345338",
+      "normalized_at": "2026-07-14T08:59:50.557287",
       "cat_icon": "🤝",
-      "cat_label": "Community"
+      "cat_label": "Community",
+      "logo_url": "/logos/yc-startup-school.png",
+      "banner_url": "/banners/yc-startup-school.jpg"
     },
     {
       "id": "founder-institute",
@@ -1788,9 +1808,11 @@
       ],
       "tier": "free",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.345483",
+      "normalized_at": "2026-07-14T08:59:50.557649",
       "cat_icon": "🤝",
-      "cat_label": "Community"
+      "cat_label": "Community",
+      "logo_url": "/logos/founder-institute.png",
+      "banner_url": "/banners/founder-institute.jpg"
     },
     {
       "id": "startup-genome",
@@ -1813,9 +1835,11 @@
       ],
       "tier": "free",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.345814",
+      "normalized_at": "2026-07-14T08:59:50.558483",
       "cat_icon": "🤝",
-      "cat_label": "Community"
+      "cat_label": "Community",
+      "logo_url": "/logos/startup-genome.png",
+      "banner_url": "/banners/startup-genome.jpg"
     },
     {
       "id": "indie-hackers",
@@ -1838,9 +1862,11 @@
       ],
       "tier": "free",
       "active": true,
-      "normalized_at": "2026-05-22T13:45:31.345976",
+      "normalized_at": "2026-07-14T08:59:50.558852",
       "cat_icon": "🤝",
-      "cat_label": "Community"
+      "cat_label": "Community",
+      "logo_url": "/logos/indie-hackers.png",
+      "banner_url": "/banners/indie-hackers.jpg"
     }
   ]
 }

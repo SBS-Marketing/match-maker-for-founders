@@ -29,8 +29,9 @@ Wichtige neue Migrationen:
 - `20260529120100_daily_digest_cron.sql` — pg_cron-Job (no-op bis Vault-Secrets gesetzt sind, danach erneut ausführen)
 - `20260715120000_admin_and_content.sql` — `ai_usage` (KI-Kosten-Log) + `guides` (Redaktion)
 - `20260717090000_community_events_admin.sql` — Admin-Policies auf `community_events` + `community_event_registrations`
-- `20260717103310_partner_offers_catalog.sql` — 28 kuratierte Partner für alle 7 Entdecken-Kategorien (generiert aus der Scraper-Pipeline)
 - `20260717120000_partner_offers_admin.sql` — Admins dürfen `partner_offers` verwalten
+- `20260717130000_partner_offers_branding.sql` — Spalten `logo_url` + `banner_url`
+- `20260717140000_partner_offers_catalog.sql` — 28 kuratierte Partner für alle 7 Entdecken-Kategorien inkl. gescrapter Logos/Banner
 
 ## 3. Edge Functions
 

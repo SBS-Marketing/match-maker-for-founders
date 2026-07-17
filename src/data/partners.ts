@@ -12,6 +12,8 @@ export type Partner = {
   sourceUrl?: string;
   bookingUrl?: string;
   scrapeStatus?: "ok" | "error";
+  logoUrl?: string;
+  bannerUrl?: string;
   specialties: { label: string; level: number }[];
   packages: { name: string; price: string; desc: string }[];
   why: string[];

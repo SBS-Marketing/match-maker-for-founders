@@ -6,10 +6,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Pencil, Plus, Store, Trash2, X } from "lucide-react";
+import { ImagePlus, Pencil, Plus, Store, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { uploadImage } from "@/lib/upload";
 import { SERVICES } from "@/data/services";
 
 export const Route = createFileRoute("/admin/partner")({
@@ -28,6 +30,8 @@ type PartnerRow = {
   fit: number;
   source_url: string | null;
   booking_url: string | null;
+  logo_url: string | null;
+  banner_url: string | null;
   specialties: Specialty[];
   is_active: boolean;
 };
@@ -45,6 +49,8 @@ const EMPTY_FORM: PartnerRow = {
   fit: 80,
   source_url: null,
   booking_url: null,
+  logo_url: null,
+  banner_url: null,
   specialties: [],
   is_active: true,
 };
@@ -77,12 +83,14 @@ const PREVIEW_PARTNERS: PartnerRow[] = [
 ];
 
 function AdminPartner() {
+  const auth = useAuth();
   const { isPreview, checking } = useIsAdmin();
   const [partners, setPartners] = useState<PartnerRow[] | null>(null);
   const [filter, setFilter] = useState<string>("all");
   const [editing, setEditing] = useState<PartnerRow | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState<"logo" | "banner" | null>(null);
 
   const load = () => {
     // Warten bis der Admin-Check durch ist (verhindert Demo/Echt-Race).
@@ -94,7 +102,7 @@ function AdminPartner() {
     supabase
       .from("partner_offers")
       .select(
-        "slug,name,firm,service_id,city,blurb,fit,source_url,booking_url,specialties,is_active",
+        "slug,name,firm,service_id,city,blurb,fit,source_url,booking_url,logo_url,banner_url,specialties,is_active",
       )
       .order("service_id")
       .order("fit", { ascending: false })
@@ -189,6 +197,20 @@ function AdminPartner() {
     else load();
   }
 
+  async function onImage(kind: "logo" | "banner", file: File | undefined) {
+    if (!file || !editing) return;
+    setUploading(kind);
+    try {
+      const url = await uploadImage(file, auth);
+      setEditing({ ...editing, [kind === "logo" ? "logo_url" : "banner_url"]: url });
+      toast.success(kind === "logo" ? "Logo hochgeladen." : "Banner hochgeladen.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload fehlgeschlagen.");
+    } finally {
+      setUploading(null);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -236,29 +258,43 @@ function AdminPartner() {
               key={p.slug}
               className="flex flex-wrap items-center justify-between gap-2 rounded-[18px] border border-[var(--ruled)] bg-[var(--surface)] p-3.5"
             >
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="truncate text-[14px] font-bold text-[var(--ink)]">{p.name}</p>
-                  <span
-                    className={
-                      p.is_active
-                        ? "rounded-full bg-[var(--ember-tint)] px-2 py-0.5 text-[11px] font-bold text-[var(--ember-deep)]"
-                        : "rounded-full bg-[var(--canvas)] px-2 py-0.5 text-[11px] font-bold text-[var(--faint)]"
-                    }
-                  >
-                    {p.is_active ? "Aktiv" : "Aus"}
+              <div className="flex min-w-0 items-center gap-2.5">
+                {p.logo_url ? (
+                  <img
+                    src={p.logo_url}
+                    alt=""
+                    loading="lazy"
+                    className="h-9 w-9 shrink-0 rounded-lg border border-[var(--ruled)] bg-white object-contain p-0.5"
+                  />
+                ) : (
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--canvas)] text-[var(--faint)]">
+                    <Store className="h-4 w-4" />
                   </span>
+                )}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-[14px] font-bold text-[var(--ink)]">{p.name}</p>
+                    <span
+                      className={
+                        p.is_active
+                          ? "rounded-full bg-[var(--ember-tint)] px-2 py-0.5 text-[11px] font-bold text-[var(--ember-deep)]"
+                          : "rounded-full bg-[var(--canvas)] px-2 py-0.5 text-[11px] font-bold text-[var(--faint)]"
+                      }
+                    >
+                      {p.is_active ? "Aktiv" : "Aus"}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-[12px] text-[var(--smoke)]">
+                    {[
+                      PARTNER_SERVICES.find((s) => s.id === p.service_id)?.short ?? p.service_id,
+                      p.firm,
+                      p.city,
+                      `Fit ${p.fit}`,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
                 </div>
-                <p className="mt-0.5 text-[12px] text-[var(--smoke)]">
-                  {[
-                    PARTNER_SERVICES.find((s) => s.id === p.service_id)?.short ?? p.service_id,
-                    p.firm,
-                    p.city,
-                    `Fit ${p.fit}`,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
               </div>
               <div className="flex items-center gap-1.5">
                 <button
@@ -410,6 +446,51 @@ function AdminPartner() {
                   className={inputCls}
                   placeholder="Businessplan, Tragfähigkeit, Behörden"
                 />
+              </Field>
+
+              <Field label="Logo (Quadrat) & Banner">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {editing.logo_url ? (
+                    <img
+                      src={editing.logo_url}
+                      alt=""
+                      className="h-12 w-12 rounded-xl border border-[var(--ruled)] bg-white object-contain p-1"
+                    />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-dashed border-[var(--ruled)] text-[var(--faint)]">
+                      <ImagePlus className="h-4 w-4" />
+                    </div>
+                  )}
+                  <label className="cursor-pointer rounded-xl border border-[var(--ruled)] px-3 py-2 text-[12.5px] font-semibold text-[var(--ink)]">
+                    {uploading === "logo" ? "Lädt…" : "Logo"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => onImage("logo", e.target.files?.[0])}
+                    />
+                  </label>
+                  {editing.banner_url ? (
+                    <img
+                      src={editing.banner_url}
+                      alt=""
+                      className="h-12 w-24 rounded-lg border border-[var(--ruled)] object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-12 w-24 items-center justify-center rounded-lg border border-dashed border-[var(--ruled)] text-[var(--faint)]">
+                      <ImagePlus className="h-4 w-4" />
+                    </div>
+                  )}
+                  <label className="cursor-pointer rounded-xl border border-[var(--ruled)] px-3 py-2 text-[12.5px] font-semibold text-[var(--ink)]">
+                    {uploading === "banner" ? "Lädt…" : "Banner"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => onImage("banner", e.target.files?.[0])}
+                    />
+                  </label>
+                </div>
               </Field>
 
               <label className="flex items-center gap-2 text-[13px] font-semibold text-[var(--ink)]">

@@ -23,7 +23,7 @@ jobs:
           cache: pip
 
       - name: Abhängigkeiten installieren
-        run: pip install httpx anthropic
+        run: pip install httpx anthropic pillow
 
       # ── Scraping ──────────────────────────────────────────────────────
       - name: Curated Deal-Seiten scrapen
@@ -43,6 +43,11 @@ jobs:
       # ── Build public/deals.json ───────────────────────────────────────
       - name: public/deals.json bauen
         run: python3 scripts/build_deals_json.py
+
+      # ── Logos & Banner nachziehen (nur neue — vorhandene bleiben) ─────
+      - name: Logos & Banner scrapen
+        run: python3 scripts/fetch_logos.py
+        continue-on-error: true
 
       # ── Qualitäts-Check ───────────────────────────────────────────────
       - name: Qualitäts-Check
@@ -82,7 +87,7 @@ jobs:
         run: |
           git config user.name "matchfoundr-bot"
           git config user.email "bot@matchfoundr.de"
-          git add public/deals.json data/deals/
+          git add public/deals.json public/logos/ public/banners/ data/deals/
           git diff --staged --quiet || git commit -m "data: Startup-Deals $(date +%Y-%m-%d) aktualisiert"
           git push
 

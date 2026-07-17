@@ -1,5 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { CalendarCheck, Check, ExternalLink, MapPin, MessageCircle, ShieldCheck } from "lucide-react";
+import {
+  CalendarCheck,
+  Check,
+  ExternalLink,
+  MapPin,
+  MessageCircle,
+  ShieldCheck,
+} from "lucide-react";
 import { AITag, CopilotMark, FitScore } from "@/components/Copilot";
 import { ServiceIcon } from "@/components/ServiceIcon";
 import { Button } from "@/components/ui/button";
@@ -19,10 +26,15 @@ export function PartnerDetail({ partner }: Props) {
   return (
     <div className="mx-auto flex h-[calc(100svh-10rem)] max-w-5xl flex-col overflow-hidden px-3 pt-3 sm:h-auto sm:px-6 sm:pt-8 sm:pb-24">
       <div className="flex shrink-0 items-center gap-2 text-[12px] text-[var(--smoke)]">
-        <Link to="/marketplace" className="hover:underline">Marketplace</Link>
+        <Link to="/marketplace" className="hover:underline">
+          Marketplace
+        </Link>
         <span>/</span>
         <a href={service.route} className="inline-flex items-center gap-1.5 hover:underline">
-          <span className="flex h-4 w-4 items-center justify-center rounded text-[var(--cream)]" style={{ background: service.hue }}>
+          <span
+            className="flex h-4 w-4 items-center justify-center rounded text-[var(--cream)]"
+            style={{ background: service.hue }}
+          >
             <ServiceIcon name={service.icon} size={9} stroke={2.4} />
           </span>
           {service.short}
@@ -31,15 +43,36 @@ export function PartnerDetail({ partner }: Props) {
 
       <div className="mt-3 grid min-h-0 flex-1 gap-4 overflow-y-auto pr-1 sm:mt-5 sm:flex-none sm:overflow-visible lg:grid-cols-[1.18fr_0.82fr]">
         <main className="min-w-0">
+          {partner.bannerUrl && (
+            <img
+              src={partner.bannerUrl}
+              alt=""
+              loading="lazy"
+              className="mb-5 h-36 w-full rounded-2xl border border-[rgba(21,20,15,0.08)] object-cover sm:h-44"
+            />
+          )}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <div className="mb-3 flex items-center gap-2">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--cream)]" style={{ background: service.hue }}>
-                  <ServiceIcon name={service.icon} size={17} stroke={2.2} />
-                </span>
+                {partner.logoUrl ? (
+                  <img
+                    src={partner.logoUrl}
+                    alt=""
+                    className="h-9 w-9 rounded-lg border border-[rgba(21,20,15,0.08)] bg-white object-contain p-1"
+                  />
+                ) : (
+                  <span
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--cream)]"
+                    style={{ background: service.hue }}
+                  >
+                    <ServiceIcon name={service.icon} size={17} stroke={2.2} />
+                  </span>
+                )}
                 <AITag tone="light">verifizierter Match</AITag>
               </div>
-              <h1 className="text-balance text-[30px] font-semibold leading-tight tracking-tight sm:text-5xl">{partner.name}</h1>
+              <h1 className="text-balance text-[30px] font-semibold leading-tight tracking-tight sm:text-5xl">
+                {partner.name}
+              </h1>
               <div className="mt-2 flex flex-wrap items-center gap-3 text-[14px] text-[var(--smoke)]">
                 <span>{partner.firm}</span>
                 <span className="inline-flex items-center gap-1">
@@ -50,7 +83,9 @@ export function PartnerDetail({ partner }: Props) {
             </div>
           </div>
 
-          <p className="mt-5 max-w-2xl text-[15px] leading-relaxed text-[var(--ink-soft)]">{partner.blurb}</p>
+          <p className="mt-5 max-w-2xl text-[15px] leading-relaxed text-[var(--ink-soft)]">
+            {partner.blurb}
+          </p>
 
           <section className="glass-pane-ink mt-6 p-5">
             <div className="mb-2 flex items-center gap-2">
@@ -59,7 +94,10 @@ export function PartnerDetail({ partner }: Props) {
             </div>
             <ul className="mt-3 space-y-2">
               {partner.why.map((reason) => (
-                <li key={reason} className="flex items-start gap-2 text-[13.5px] leading-snug text-[var(--cream)]/90">
+                <li
+                  key={reason}
+                  className="flex items-start gap-2 text-[13.5px] leading-snug text-[var(--cream)]/90"
+                >
                   <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--ember-light)]" />
                   {reason}
                 </li>
@@ -74,10 +112,15 @@ export function PartnerDetail({ partner }: Props) {
                 <div key={specialty.label}>
                   <div className="flex justify-between gap-4 text-[13px]">
                     <span>{specialty.label}</span>
-                    <span className="font-mono text-[11px] text-[var(--smoke)]">{Math.round(specialty.level * 100)}%</span>
+                    <span className="font-mono text-[11px] text-[var(--smoke)]">
+                      {Math.round(specialty.level * 100)}%
+                    </span>
                   </div>
                   <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[rgba(21,20,15,0.08)]">
-                    <div className="h-full rounded-full" style={{ width: `${specialty.level * 100}%`, background: service.hue }} />
+                    <div
+                      className="h-full rounded-full"
+                      style={{ width: `${specialty.level * 100}%`, background: service.hue }}
+                    />
                   </div>
                 </div>
               ))}
@@ -89,9 +132,12 @@ export function PartnerDetail({ partner }: Props) {
             <div className="mt-4 space-y-4">
               {partner.vouches.map((vouch) => (
                 <div key={`${vouch.from}-${vouch.role}`}>
-                  <p className="text-[15px] font-medium leading-relaxed text-[var(--ink-soft)]">"{vouch.quote}"</p>
+                  <p className="text-[15px] font-medium leading-relaxed text-[var(--ink-soft)]">
+                    "{vouch.quote}"
+                  </p>
                   <div className="mt-2 text-[12px] text-[var(--smoke)]">
-                    <span className="font-semibold text-[var(--ink)]">{vouch.from}</span> · {vouch.role}
+                    <span className="font-semibold text-[var(--ink)]">{vouch.from}</span> ·{" "}
+                    {vouch.role}
                   </div>
                 </div>
               ))}
@@ -104,12 +150,19 @@ export function PartnerDetail({ partner }: Props) {
             <div className="eyebrow">Pakete</div>
             <div className="mt-4 space-y-3">
               {partner.packages.map((pkg) => (
-                <div key={pkg.name} className="rounded-xl border border-[var(--ruled)] bg-white/45 p-4">
+                <div
+                  key={pkg.name}
+                  className="rounded-xl border border-[var(--ruled)] bg-white/45 p-4"
+                >
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="text-[14px] font-semibold">{pkg.name}</span>
-                    <span className="shrink-0 text-[14px] font-semibold text-[var(--ember-deep)]">{pkg.price}</span>
+                    <span className="shrink-0 text-[14px] font-semibold text-[var(--ember-deep)]">
+                      {pkg.price}
+                    </span>
                   </div>
-                  <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--smoke)]">{pkg.desc}</p>
+                  <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--smoke)]">
+                    {pkg.desc}
+                  </p>
                 </div>
               ))}
             </div>
@@ -135,13 +188,24 @@ export function PartnerDetail({ partner }: Props) {
                 </a>
               ))}
             </div>
-            <Button asChild className="shadow-ember mt-4 h-11 w-full rounded-xl bg-[var(--ember)] text-[var(--cream)] hover:bg-[var(--ember-deep)]">
-              <a href={bookingUrl} target={bookingUrl.startsWith("http") ? "_blank" : undefined} rel={bookingUrl.startsWith("http") ? "noreferrer" : undefined}>
+            <Button
+              asChild
+              className="shadow-ember mt-4 h-11 w-full rounded-xl bg-[var(--ember)] text-[var(--cream)] hover:bg-[var(--ember-deep)]"
+            >
+              <a
+                href={bookingUrl}
+                target={bookingUrl.startsWith("http") ? "_blank" : undefined}
+                rel={bookingUrl.startsWith("http") ? "noreferrer" : undefined}
+              >
                 <CalendarCheck className="h-4 w-4" />
                 Gespräch anfragen
               </a>
             </Button>
-            <Button asChild variant="outline" className="mt-2 h-10 w-full rounded-xl border-[var(--ruled)] bg-white/50">
+            <Button
+              asChild
+              variant="outline"
+              className="mt-2 h-10 w-full rounded-xl border-[var(--ruled)] bg-white/50"
+            >
               <Link to="/co-pilot">
                 <MessageCircle className="h-4 w-4" />
                 Co-Pilot vorbereiten
@@ -163,7 +227,8 @@ export function PartnerDetail({ partner }: Props) {
             <div className="flex items-start gap-3 text-[12.5px] leading-relaxed text-[var(--smoke)]">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--ember)]" />
               <span>
-                Profil aus kuratierten Partnerdaten gebaut. Der Co-Pilot priorisiert Fit, Phase und nächste Aktion.
+                Profil aus kuratierten Partnerdaten gebaut. Der Co-Pilot priorisiert Fit, Phase und
+                nächste Aktion.
               </span>
             </div>
           </section>

@@ -21,7 +21,8 @@ Generierte TypeScript-Spiegel für die Website: `src/data/grants.generated.ts`, 
 
 **Automatisch:** GitHub Action `weekly-deals.yml` läuft **jeden Dienstag 07:00 UTC**, committet als `matchfoundr-bot` und legt bei Fehlern ein Issue an.
 **Manuell:** GitHub → Actions → *Weekly Deals* → **Run workflow**.
-**Partner → Supabase:** `scripts/build_partner_offers_sql.py` erzeugt aus dem aktuellen Katalog eine Upsert-Migration für `partner_offers` (die Tabelle, die die iOS-App liest). Zuletzt: `supabase/migrations/20260717103310_partner_offers_catalog.sql` (28 Partner).
+**Partner → Supabase:** `scripts/build_partner_offers_sql.py` erzeugt aus dem aktuellen Katalog eine Upsert-Migration für `partner_offers` (die Tabelle, die die iOS-App liest). Zuletzt: `supabase/migrations/20260717140000_partner_offers_catalog.sql` (28 Partner inkl. Logos).
+**Logos & Banner:** `scripts/fetch_logos.py` zieht pro Quelle das App-Icon (256×256-Quadrat-PNG → `public/logos/`) und das Social-Banner (`public/banners/`), schreibt `logoUrl`/`bannerUrl` (Partner) bzw. `logo_url`/`banner_url` (Deals) in die JSONs und läuft im Weekly-Job automatisch mit — vorhandene Dateien werden nie überschrieben (Admin-Uploads bleiben).
 **Pflege danach:** im Admin unter `/admin/partner` — anlegen, bearbeiten, deaktivieren, Fit-Score.
 **Auslieferung:** `deploy-tools.yml` deployt `public/` bei jedem Push nach Netlify; `docs/` liegt zusätzlich auf GitHub Pages.
 

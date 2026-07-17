@@ -16,6 +16,15 @@ PARTNERS_DIR = ROOT / "data" / "partners"
 # check-Constraint der Tabelle — cofounder läuft über Swipe, nicht über Partner.
 ALLOWED_SERVICES = {"capital", "growth", "mentor", "talent", "tax", "legal", "funding"}
 
+# iOS braucht absolute URLs — relative Pfade (/logos/…) auf den Repo-Stand zeigen lassen.
+ASSET_BASE = "https://raw.githubusercontent.com/SBS-Marketing/match-maker-for-founders/main/public"
+
+
+def absolutize(path: str | None) -> str | None:
+    if not path:
+        return None
+    return ASSET_BASE + path if path.startswith("/") else path
+
 
 def sql_str(value: str | None) -> str:
     if value is None or value == "":
@@ -38,7 +47,7 @@ def run() -> None:
 
     stamp = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
     default_out = ROOT / "supabase" / "migrations" / f"{stamp}_partner_offers_catalog.sql"
-    out = Path(sys.argv[1]) if len(sys.argv) > 1 else default_out
+    out = (Path(sys.argv[1]) if len(sys.argv) > 1 else default_out).resolve()
 
     rows = []
     for p in partners:
@@ -48,6 +57,7 @@ def run() -> None:
             f"  {sql_str(p['service'])}, {sql_str(p.get('city') or 'Remote')}, {sql_str(p.get('blurb') or '')},\n"
             f"  {int(p.get('fit') or 75)}, {sql_str(p.get('sourceUrl'))}, {sql_str(p.get('bookingUrl'))},\n"
             f"  {sql_str(p.get('scrapeStatus'))},\n"
+            f"  {sql_str(absolutize(p.get('logoUrl')))}, {sql_str(absolutize(p.get('bannerUrl')))},\n"
             f"  {sql_jsonb(p.get('specialties'))},\n"
             f"  {sql_jsonb(p.get('packages'))},\n"
             f"  {sql_jsonb(p.get('why'))},\n"
@@ -64,6 +74,7 @@ def run() -> None:
         + "\n\n"
         "insert into public.partner_offers (\n"
         "  slug, name, firm, service_id, city, blurb, fit, source_url, booking_url, scrape_status,\n"
+        "  logo_url, banner_url,\n"
         "  specialties, packages, why, vouches, is_active, updated_at\n"
         ") values\n"
         + ",\n".join(rows)
@@ -77,6 +88,8 @@ def run() -> None:
         "  source_url = excluded.source_url,\n"
         "  booking_url = excluded.booking_url,\n"
         "  scrape_status = excluded.scrape_status,\n"
+        "  logo_url = coalesce(excluded.logo_url, public.partner_offers.logo_url),\n"
+        "  banner_url = coalesce(excluded.banner_url, public.partner_offers.banner_url),\n"
         "  specialties = excluded.specialties,\n"
         "  packages = excluded.packages,\n"
         "  why = excluded.why,\n"

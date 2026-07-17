@@ -55,7 +55,8 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "bannerUrl": "/banners/angel-readiness.jpg"
   },
   {
     "slug": "buergschaftsbank-desk",
@@ -105,7 +106,9 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/buergschaftsbank-desk.png",
+    "bannerUrl": "/banners/buergschaftsbank-desk.jpg"
   },
   {
     "slug": "landesfoerderbank-check",
@@ -209,7 +212,9 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/kfw-finance-desk.png",
+    "bannerUrl": "/banners/kfw-finance-desk.jpg"
   },
   {
     "slug": "gruendungszuschuss-desk",
@@ -263,7 +268,8 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/gruendungszuschuss-desk.png"
   },
   {
     "slug": "mikrokreditfonds",
@@ -313,7 +319,8 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/mikrokreditfonds.png"
   },
   {
     "slug": "bafa-beratungsfoerderung",
@@ -467,7 +474,8 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/google-unternehmensprofil.png"
   },
   {
     "slug": "b2b-sales-motion",
@@ -521,7 +529,9 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/b2b-sales-motion.png",
+    "bannerUrl": "/banners/b2b-sales-motion.jpg"
   },
   {
     "slug": "launch-growth-sprint",
@@ -575,7 +585,8 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/launch-growth-sprint.png"
   },
   {
     "slug": "zukunftswerkstatt-marketing",
@@ -629,7 +640,9 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/zukunftswerkstatt-marketing.png",
+    "bannerUrl": "/banners/zukunftswerkstatt-marketing.jpg"
   },
   {
     "slug": "ihk-recht-erstberatung",
@@ -683,7 +696,8 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "bannerUrl": "/banners/ihk-recht-erstberatung.jpg"
   },
   {
     "slug": "anwalt-gruendungsrecht",
@@ -737,7 +751,8 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/anwalt-gruendungsrecht.png"
   },
   {
     "slug": "firma-de-gruendungsservice",
@@ -791,7 +806,8 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/firma-de-gruendungsservice.png"
   },
   {
     "slug": "existenzgruender-recht",
@@ -895,7 +911,8 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/gtm-mentor-circle.png"
   },
   {
     "slug": "operator-office-hours",
@@ -949,7 +966,8 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/operator-office-hours.png"
   },
   {
     "slug": "ihk-gruendungsberatung",
@@ -1057,7 +1075,8 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/senior-experten-service.png"
   },
   {
     "slug": "first-five-hires",
@@ -1111,7 +1130,8 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/first-five-hires.png"
   },
   {
     "slug": "junico-freelancer",
@@ -1165,7 +1185,9 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/junico-freelancer.png",
+    "bannerUrl": "/banners/junico-freelancer.jpg"
   },
   {
     "slug": "ihk-lehrstellenboerse",
@@ -1215,7 +1237,9 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/ihk-lehrstellenboerse.png",
+    "bannerUrl": "/banners/ihk-lehrstellenboerse.jpg"
   },
   {
     "slug": "fractional-talent",
@@ -1269,7 +1293,8 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/fractional-talent.png"
   },
   {
     "slug": "startup-tax-readiness",
@@ -1323,7 +1348,9 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/startup-tax-readiness.png",
+    "bannerUrl": "/banners/startup-tax-readiness.jpg"
   },
   {
     "slug": "research-allowance-desk",
@@ -1377,7 +1404,8 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/research-allowance-desk.png"
   },
   {
     "slug": "steuerberater-suchdienst",
@@ -1481,6 +1509,8 @@ export const GENERATED_PARTNERS = [
         "role": "Partner Research",
         "quote": "Kuratierter Eintrag aus der aktuellen Partner-Pipeline."
       }
-    ]
+    ],
+    "logoUrl": "/logos/sevdesk-gruender.png",
+    "bannerUrl": "/banners/sevdesk-gruender.jpg"
   }
 ] satisfies Partner[];
