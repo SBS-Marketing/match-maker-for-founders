@@ -767,7 +767,6 @@ export type Database = {
       }
       partner_offers: {
         Row: {
-          banner_url: string | null
           blurb: string
           booking_url: string | null
           city: string
@@ -775,7 +774,6 @@ export type Database = {
           firm: string
           fit: number
           is_active: boolean
-          logo_url: string | null
           name: string
           packages: Json
           scrape_status: string | null
@@ -788,7 +786,6 @@ export type Database = {
           why: Json
         }
         Insert: {
-          banner_url?: string | null
           blurb: string
           booking_url?: string | null
           city?: string
@@ -796,7 +793,6 @@ export type Database = {
           firm: string
           fit?: number
           is_active?: boolean
-          logo_url?: string | null
           name: string
           packages?: Json
           scrape_status?: string | null
@@ -809,7 +805,6 @@ export type Database = {
           why?: Json
         }
         Update: {
-          banner_url?: string | null
           blurb?: string
           booking_url?: string | null
           city?: string
@@ -817,7 +812,6 @@ export type Database = {
           firm?: string
           fit?: number
           is_active?: boolean
-          logo_url?: string | null
           name?: string
           packages?: Json
           scrape_status?: string | null
