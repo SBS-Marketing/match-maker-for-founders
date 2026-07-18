@@ -93,6 +93,42 @@ export type Database = {
           },
         ]
       }
+      ai_token_grants: {
+        Row: {
+          created_at: string
+          id: string
+          note: string
+          period: string
+          resets_at: string | null
+          token_limit: number
+          tokens_used: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string
+          period?: string
+          resets_at?: string | null
+          token_limit?: number
+          tokens_used?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string
+          period?: string
+          resets_at?: string | null
+          token_limit?: number
+          tokens_used?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_usage: {
         Row: {
           completion_tokens: number
@@ -255,6 +291,48 @@ export type Database = {
           name?: string
           published?: boolean
           slug?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      connected_accounts: {
+        Row: {
+          access_token: string | null
+          account_label: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          metadata: Json
+          provider: string
+          refresh_token: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          account_label?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          metadata?: Json
+          provider: string
+          refresh_token?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          account_label?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          metadata?: Json
+          provider?: string
+          refresh_token?: string | null
+          status?: string
           updated_at?: string
           user_id?: string
         }
@@ -456,6 +534,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      daily_reports: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          report_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          id?: string
+          report_date: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          report_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       daily_tasks: {
         Row: {
