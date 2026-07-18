@@ -25,8 +25,8 @@ const corsHeaders = {
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const KIMI_MODEL = "moonshotai/kimi-k3";
 const SONNET_MODEL = "anthropic/claude-sonnet-4-6";
-const KIMI_TIMEOUT_MS = 25_000;
-const SONNET_TIMEOUT_MS = 14_000;
+const KIMI_TIMEOUT_MS = 8_000;
+const SONNET_TIMEOUT_MS = 18_000;
 
 // ─── Token-Preise (USD pro 1M Tokens, Schätzwerte für Admin-Insights) ─
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
