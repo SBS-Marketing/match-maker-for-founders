@@ -25,8 +25,8 @@ const corsHeaders = {
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const KIMI_MODEL = "moonshotai/kimi-k3";
 const SONNET_MODEL = "anthropic/claude-sonnet-4-6";
-const KIMI_TIMEOUT_MS = 25_000;
-const SONNET_TIMEOUT_MS = 14_000;
+const KIMI_TIMEOUT_MS = 8_000;
+const SONNET_TIMEOUT_MS = 18_000;
 
 // ─── Token-Preise (USD pro 1M Tokens, Schätzwerte für Admin-Insights) ─
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
@@ -138,6 +138,21 @@ const callKimi = (prompt: string, sink?: UsageSink, maxTokens = 1024) =>
   callOpenRouter(KIMI_MODEL, prompt, maxTokens, KIMI_TIMEOUT_MS, sink);
 const callSonnet = (prompt: string, sink?: UsageSink, maxTokens = 420) =>
   callOpenRouter(SONNET_MODEL, prompt, maxTokens, SONNET_TIMEOUT_MS, sink);
+
+async function callKimiWithFallback(
+  prompt: string,
+  label: string,
+  sink?: UsageSink,
+  maxTokens = 1024,
+): Promise<string> {
+  try {
+    return await callKimi(prompt, sink, maxTokens);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn(`[KIMI ${label} fallback] ${message}`);
+    return callSonnet(prompt, sink, Math.max(700, maxTokens));
+  }
+}
 
 // ─── Strip markdown code fences ──────────────────────────────
 function stripFences(s: string): string {
@@ -558,7 +573,7 @@ Deno.serve(async (req) => {
     if (task === "context_parse") {
       // Kimi only — pure extraction
       const kimiPrompt = KIMI_PROMPTS.context_parse(ctx, message);
-      const kimiRaw = await callKimi(kimiPrompt, sink);
+      const kimiRaw = await callKimiWithFallback(kimiPrompt, "context_parse", sink);
       console.log("[KIMI context_parse]", kimiRaw.slice(0, 300));
       const parsed = parseJSON(kimiRaw);
 
@@ -642,7 +657,7 @@ Deno.serve(async (req) => {
         app: extra.app,
         webSources,
       });
-      const kimiRaw = await callKimi(kimiPrompt, sink);
+      const kimiRaw = await callKimiWithFallback(kimiPrompt, "chat", sink, 1200);
       console.log("[KIMI chat raw]", kimiRaw.slice(0, 300));
       const kimiData = parseJSON(kimiRaw);
 
@@ -839,7 +854,7 @@ Deno.serve(async (req) => {
       const authedUser = requireUser();
       // Kimi only — pure extraction
       const kimiPrompt = KIMI_PROMPTS.deadline_extract(ctx, message);
-      const kimiRaw = await callKimi(kimiPrompt, sink);
+      const kimiRaw = await callKimiWithFallback(kimiPrompt, "deadline_extract", sink);
       console.log("[KIMI deadline_extract]", kimiRaw.slice(0, 300));
       const data = parseJSON(kimiRaw);
 
@@ -862,7 +877,7 @@ Deno.serve(async (req) => {
       const authedUser = requireUser();
       // Stage 1: Kimi fills content from profile
       const kimiPrompt = KIMI_PROMPTS.document_exist_draft(ctx, message);
-      const kimiRaw = await callKimi(kimiPrompt, sink);
+      const kimiRaw = await callKimiWithFallback(kimiPrompt, "document_exist", sink);
       console.log("[KIMI document_exist]", kimiRaw.slice(0, 300));
 
       // Stage 2: Sonnet polishes every section
@@ -896,7 +911,7 @@ Deno.serve(async (req) => {
 
       // Stage 1: Kimi analyzes fit
       const kimiPrompt = KIMI_PROMPTS.advisor_reasons(ctx, advisorInfo);
-      const kimiRaw = await callKimi(kimiPrompt, sink);
+      const kimiRaw = await callKimiWithFallback(kimiPrompt, "advisor_reasons", sink);
       console.log("[KIMI advisor_reasons]", kimiRaw.slice(0, 300));
       const kimiData = parseJSON(kimiRaw);
 
@@ -924,7 +939,7 @@ Deno.serve(async (req) => {
 
       // Stage 1: Kimi structures the brief
       const kimiPrompt = KIMI_PROMPTS.daily_brief_draft(ctx, dailyData);
-      const kimiRaw = await callKimi(kimiPrompt, sink);
+      const kimiRaw = await callKimiWithFallback(kimiPrompt, "daily_brief", sink);
       console.log("[KIMI daily_brief]", kimiRaw.slice(0, 300));
 
       // Stage 2: Sonnet writes it naturally
@@ -939,7 +954,7 @@ Deno.serve(async (req) => {
       const authedUser = requireUser();
       // Stage 1: Kimi drafts structure
       const kimiPrompt = KIMI_PROMPTS.chat(ctx, `Erstelle einen Email-Entwurf für: ${message}`);
-      const kimiRaw = await callKimi(kimiPrompt, sink);
+      const kimiRaw = await callKimiWithFallback(kimiPrompt, "email_draft", sink);
       console.log("[KIMI email draft]", kimiRaw.slice(0, 300));
       const kimiData = parseJSON(kimiRaw);
 
@@ -965,7 +980,7 @@ Deno.serve(async (req) => {
     } else if (task === "match_explain") {
       const matchInfo = JSON.stringify(extra.match || {});
       const kimiPrompt = KIMI_PROMPTS.match_explain(ctx, matchInfo);
-      const kimiRaw = await callKimi(kimiPrompt, sink);
+      const kimiRaw = await callKimiWithFallback(kimiPrompt, "match_explain", sink);
       console.log("[KIMI match_explain]", kimiRaw.slice(0, 300));
       result = { explanation: parseJSON(kimiRaw) };
     }
