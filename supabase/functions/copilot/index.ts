@@ -34,7 +34,14 @@ const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   [SONNET_MODEL]: { input: 3.0, output: 15.0 },
 };
 
-type UsageEntry = { model: string; promptTokens: number; completionTokens: number };
+type UsageEntry = {
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+  latencyMs: number;
+  status: "ok" | "timeout" | "error";
+  fallback: boolean;
+};
 type UsageSink = (entry: UsageEntry) => void;
 type TokenGrant = {
   user_id: string;
