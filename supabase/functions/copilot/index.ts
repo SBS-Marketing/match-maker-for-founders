@@ -170,7 +170,10 @@ async function callKimiWithFallback(
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.warn(`[KIMI ${label} fallback] ${message}`);
-    return callSonnet(prompt, sink, Math.max(700, maxTokens));
+    const fallbackSink: UsageSink | undefined = sink
+      ? (entry) => sink({ ...entry, fallback: true })
+      : undefined;
+    return callSonnet(prompt, fallbackSink, Math.max(700, maxTokens));
   }
 }
 
