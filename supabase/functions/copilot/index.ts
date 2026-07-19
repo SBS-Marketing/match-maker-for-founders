@@ -34,7 +34,14 @@ const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   [SONNET_MODEL]: { input: 3.0, output: 15.0 },
 };
 
-type UsageEntry = { model: string; promptTokens: number; completionTokens: number };
+type UsageEntry = {
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+  latencyMs: number;
+  status: "ok" | "timeout" | "error";
+  fallback: boolean;
+};
 type UsageSink = (entry: UsageEntry) => void;
 type TokenGrant = {
   user_id: string;
@@ -94,6 +101,7 @@ async function callOpenRouter(
 ): Promise<string> {
   const controller = new AbortController();
   const timeoutID = setTimeout(() => controller.abort(), timeoutMs);
+  const startedAt = Date.now();
 
   try {
     const res = await fetch(OPENROUTER_URL, {
@@ -114,19 +122,31 @@ async function callOpenRouter(
     });
     const data = await res.json();
     if (!res.ok) throw new Error(`OpenRouter error (${model}): ${JSON.stringify(data)}`);
-    if (sink && data?.usage) {
+    if (sink) {
       sink({
         model,
-        promptTokens: Number(data.usage.prompt_tokens ?? 0),
-        completionTokens: Number(data.usage.completion_tokens ?? 0),
+        promptTokens: Number(data?.usage?.prompt_tokens ?? 0),
+        completionTokens: Number(data?.usage?.completion_tokens ?? 0),
+        latencyMs: Date.now() - startedAt,
+        status: "ok",
+        fallback: false,
       });
     }
     const content = data?.choices?.[0]?.message?.content;
     return typeof content === "string" ? content : content == null ? "" : JSON.stringify(content);
   } catch (err) {
-    if (err instanceof DOMException && err.name === "AbortError") {
-      throw new Error(`OpenRouter timeout (${model}) after ${timeoutMs}ms`);
+    const isTimeout = err instanceof DOMException && err.name === "AbortError";
+    if (sink) {
+      sink({
+        model,
+        promptTokens: 0,
+        completionTokens: 0,
+        latencyMs: Date.now() - startedAt,
+        status: isTimeout ? "timeout" : "error",
+        fallback: false,
+      });
     }
+    if (isTimeout) throw new Error(`OpenRouter timeout (${model}) after ${timeoutMs}ms`);
     throw err;
   } finally {
     clearTimeout(timeoutID);
@@ -150,7 +170,10 @@ async function callKimiWithFallback(
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.warn(`[KIMI ${label} fallback] ${message}`);
-    return callSonnet(prompt, sink, Math.max(700, maxTokens));
+    const fallbackSink: UsageSink | undefined = sink
+      ? (entry) => sink({ ...entry, fallback: true })
+      : undefined;
+    return callSonnet(prompt, fallbackSink, Math.max(700, maxTokens));
   }
 }
 
@@ -994,6 +1017,9 @@ Deno.serve(async (req) => {
         prompt_tokens: u.promptTokens,
         completion_tokens: u.completionTokens,
         cost_usd: costUsd(u),
+        latency_ms: u.latencyMs,
+        status: u.status,
+        fallback: u.fallback,
       }));
       supabase
         .from("ai_usage")

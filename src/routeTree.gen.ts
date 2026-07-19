@@ -60,6 +60,7 @@ import { Route as ApiSttRouteImport } from './routes/api/stt'
 import { Route as AdminPartnerRouteImport } from './routes/admin.partner'
 import { Route as AdminGuidesRouteImport } from './routes/admin.guides'
 import { Route as AdminEventsRouteImport } from './routes/admin.events'
+import { Route as AdminCopilotRouteImport } from './routes/admin.copilot'
 
 const UnterlagenRoute = UnterlagenRouteImport.update({
   id: '/unterlagen',
@@ -316,6 +317,11 @@ const AdminEventsRoute = AdminEventsRouteImport.update({
   path: '/events',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCopilotRoute = AdminCopilotRouteImport.update({
+  id: '/copilot',
+  path: '/copilot',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -342,6 +348,7 @@ export interface FileRoutesByFullPath {
   '/talent': typeof TalentRouteWithChildren
   '/team': typeof TeamRoute
   '/unterlagen': typeof UnterlagenRoute
+  '/admin/copilot': typeof AdminCopilotRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/guides': typeof AdminGuidesRoute
   '/admin/partner': typeof AdminPartnerRoute
@@ -389,6 +396,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/team': typeof TeamRoute
   '/unterlagen': typeof UnterlagenRoute
+  '/admin/copilot': typeof AdminCopilotRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/guides': typeof AdminGuidesRoute
   '/admin/partner': typeof AdminPartnerRoute
@@ -443,6 +451,7 @@ export interface FileRoutesById {
   '/talent': typeof TalentRouteWithChildren
   '/team': typeof TeamRoute
   '/unterlagen': typeof UnterlagenRoute
+  '/admin/copilot': typeof AdminCopilotRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/guides': typeof AdminGuidesRoute
   '/admin/partner': typeof AdminPartnerRoute
@@ -498,6 +507,7 @@ export interface FileRouteTypes {
     | '/talent'
     | '/team'
     | '/unterlagen'
+    | '/admin/copilot'
     | '/admin/events'
     | '/admin/guides'
     | '/admin/partner'
@@ -545,6 +555,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/team'
     | '/unterlagen'
+    | '/admin/copilot'
     | '/admin/events'
     | '/admin/guides'
     | '/admin/partner'
@@ -598,6 +609,7 @@ export interface FileRouteTypes {
     | '/talent'
     | '/team'
     | '/unterlagen'
+    | '/admin/copilot'
     | '/admin/events'
     | '/admin/guides'
     | '/admin/partner'
@@ -1023,10 +1035,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEventsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/copilot': {
+      id: '/admin/copilot'
+      path: '/copilot'
+      fullPath: '/admin/copilot'
+      preLoaderRoute: typeof AdminCopilotRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminCopilotRoute: typeof AdminCopilotRoute
   AdminEventsRoute: typeof AdminEventsRoute
   AdminGuidesRoute: typeof AdminGuidesRoute
   AdminPartnerRoute: typeof AdminPartnerRoute
@@ -1034,6 +1054,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminCopilotRoute: AdminCopilotRoute,
   AdminEventsRoute: AdminEventsRoute,
   AdminGuidesRoute: AdminGuidesRoute,
   AdminPartnerRoute: AdminPartnerRoute,

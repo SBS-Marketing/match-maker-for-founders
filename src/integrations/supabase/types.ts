@@ -134,9 +134,12 @@ export type Database = {
           completion_tokens: number
           cost_usd: number
           created_at: string
+          fallback: boolean
           id: string
+          latency_ms: number
           model: string
           prompt_tokens: number
+          status: string
           task: string
           user_id: string | null
         }
@@ -144,9 +147,12 @@ export type Database = {
           completion_tokens?: number
           cost_usd?: number
           created_at?: string
+          fallback?: boolean
           id?: string
+          latency_ms?: number
           model: string
           prompt_tokens?: number
+          status?: string
           task: string
           user_id?: string | null
         }
@@ -154,9 +160,12 @@ export type Database = {
           completion_tokens?: number
           cost_usd?: number
           created_at?: string
+          fallback?: boolean
           id?: string
+          latency_ms?: number
           model?: string
           prompt_tokens?: number
+          status?: string
           task?: string
           user_id?: string | null
         }
