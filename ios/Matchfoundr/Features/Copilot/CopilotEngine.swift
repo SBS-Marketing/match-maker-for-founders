@@ -1326,6 +1326,15 @@ enum CopilotEngine {
         return "\(memory.ventureName): \(String(clean.prefix(140)))"
     }
 
+    /// Kurzes Chip-Label — die Aktion, nicht der ganze Inhalt.
+    private static func chipLabel(_ prefix: String, _ detail: String, max: Int = 30) -> String {
+        let clean = detail.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty else { return prefix }
+        let combined = "\(prefix): \(clean)"
+        if combined.count <= max { return combined }
+        return String(combined.prefix(max - 1)).trimmingCharacters(in: .whitespaces) + "…"
+    }
+
     /// Backend-validierte App-Aktion → ausführbarer Chip.
     private static func structuredAction(from cloud: CopilotCloudAppAction) -> CopilotAction? {
         let title = (cloud.title ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1335,16 +1344,16 @@ enum CopilotEngine {
             guard !title.isEmpty else { return nil }
             let due = (cloud.due ?? "").isEmpty ? "Diese Woche" : cloud.due!
             return action(
-                "Termin: \(title)",
+                chipLabel("Termin", title),
                 "calendar.badge.plus",
                 .addPlannerItem(title: title, note: note, dueLabel: due, kind: .focus, target: nil)
             )
         case "add_kanban_card":
             guard !title.isEmpty else { return nil }
-            return action("Aufs Board: \(title)", "square.stack.3d.up.fill", .addKanbanCard(title: title, note: note))
+            return action(chipLabel("Aufs Board", title), "square.stack.3d.up.fill", .addKanbanCard(title: title, note: note))
         case "remember_fact":
             guard !title.isEmpty else { return nil }
-            return action("Merken: \(String(title.prefix(28)))…", "brain.head.profile", .rememberFact(title))
+            return action(chipLabel("Merken", title), "brain.head.profile", .rememberFact(title))
         case "open_screen":
             guard let screen = screenDestination(cloud.screen ?? "") else { return nil }
             return action(screenLabel(cloud.screen ?? ""), "arrow.up.right.square", .open(screen))

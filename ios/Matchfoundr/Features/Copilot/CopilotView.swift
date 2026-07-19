@@ -287,7 +287,10 @@ struct CopilotView: View {
                                             .font(.system(size: 11, weight: .bold))
                                         Text(action.label)
                                             .font(.system(size: 12.5, weight: .semibold))
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
                                     }
+                                    .frame(maxWidth: 250, alignment: .leading)
                                     .foregroundStyle(MF.indigoInk)
                                     .padding(.horizontal, 12).padding(.vertical, 8)
                                     .background(MF.indigoTint)
@@ -309,7 +312,9 @@ struct CopilotView: View {
                                         Text(reply)
                                             .font(.system(size: 12.5, weight: .semibold))
                                             .lineLimit(1)
+                                            .truncationMode(.tail)
                                     }
+                                    .frame(maxWidth: 250, alignment: .leading)
                                     .foregroundStyle(MF.indigoInk)
                                     .padding(.horizontal, 12).padding(.vertical, 8)
                                     .background(MF.indigoTint.opacity(0.65))
@@ -332,9 +337,12 @@ struct CopilotView: View {
                                     HStack(spacing: 5) {
                                         Text(nav.label)
                                             .font(.system(size: 12.5, weight: .semibold))
+                                            .lineLimit(1)
+                                            .truncationMode(.tail)
                                         Image(systemName: "arrow.right")
                                             .font(.system(size: 9, weight: .bold))
                                     }
+                                    .frame(maxWidth: 250, alignment: .leading)
                                     .foregroundStyle(MF.indigoInk)
                                     .padding(.horizontal, 13).padding(.vertical, 8)
                                     .background(MF.surfaceSoft)

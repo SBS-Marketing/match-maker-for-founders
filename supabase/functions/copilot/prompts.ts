@@ -17,6 +17,7 @@ export type FounderContext = {
   venture_term?: string; // e.g. "Betrieb", "Lokal", "Startup"
   partner_term?: string; // e.g. "Geschäftspartner", "Co-Founder"
   copilot_context?: string; // injected industry context hint
+  founder_type?: string; // "founder" = will/hat gegründet, "talent" = bietet Skills an
 };
 
 export type ChatTurn = { role: "user" | "assistant"; content: string };
@@ -331,6 +332,9 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
 
     FOUNDER-PROFIL:
     - Name: ${ctx.userName}
+    - Typ: ${ctx.founder_type === "talent"
+      ? "SKILL-ANBIETER — bietet Fähigkeiten an, will (noch) NICHT selbst gründen"
+      : "GRÜNDER — macht sich selbstständig oder führt schon ein Vorhaben"}
     - Branche: ${ctx.industry || "allgemein"} ${ctx.copilot_context ? `— ${ctx.copilot_context}` : ""}
     - ${ctx.venture_term || "Vorhaben"}: ${ctx.idea || "unbekannt"}
     - Rolle: ${ctx.role || "unbekannt"}
@@ -357,6 +361,37 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
     AKTUELLE WEB-RECHERCHE / SCRAPER-TREFFER:
     ${webSourcesBlock(input.webSources)}
 
+    PFLICHTEN-WISSEN DACH (nutze das AKTIV — nie nur "Gewerbe anmelden" sagen):
+    - Handwerk: Prüfe IMMER die Meisterpflicht! Zulassungspflichtige Gewerke (Anlage A HwO:
+      u.a. Elektro, SHK/Installateur, KFZ, Dachdecker, Maurer, Zimmerer, Maler nur eingeschränkt,
+      Friseur, Bäcker, Metzger, Augenoptiker) brauchen Meisterbrief ODER Alternativen:
+      angestellter Meister als Betriebsleiter, Altgesellenregelung (§7b HwO: 6 Jahre Berufserfahrung,
+      davon 4 in leitender Stellung) oder Ausnahmebewilligung (§8 HwO). Zulassungsfreie Gewerke
+      (Anlage B1: u.a. Fliesenleger, Gebäudereiniger, Fotograf, Uhrmacher) brauchen keinen Meister.
+      Pflicht: Eintrag Handwerksrolle bei der HWK VOR dem Start, dann Gewerbeamt.
+    - Für ALLE Gründungen gilt zusätzlich: Gewerbeanmeldung (außer Freiberufler → nur Finanzamt),
+      Fragebogen zur steuerlichen Erfassung (ELSTER, Frist 1 Monat), Berufsgenossenschaft
+      (Pflicht-Anmeldung binnen 1 Woche!), Pflichtmitgliedschaft IHK oder HWK,
+      Krankenversicherung selbst regeln (freiwillig gesetzlich oder privat).
+    - Versicherungen je nach Gewerk ansprechen: Betriebshaftpflicht (bei Handwerk faktisch Pflicht),
+      ggf. Berufshaftpflicht, Inhaltsversicherung, KFZ für Firmenwagen. Handwerker ohne Angestellte:
+      Rentenversicherungspflicht prüfen (§2 SGB VI gilt für einige Gewerke!).
+    - Gastro: Gaststättenerlaubnis/Konzession (bei Alkohol), Gesundheitszeugnis/Erstbelehrung
+      Gesundheitsamt, Hygieneschulung (HACCP), ggf. Sperrzeiten. Schankanlagen-Prüfung.
+    - Personenbeförderung, Pflege, Immobilienmakler, Finanzberatung, Bewachung: eigene
+      Erlaubnispflichten (§34c/d GewO etc.) — darauf hinweisen, wenn die Branche passt.
+    - Nenne bei "selbstständig machen" IMMER die VOLLSTÄNDIGE Checkliste der Branche in
+      logischer Reihenfolge (Zulassung → Kammer → Gewerbeamt → Finanzamt → BG → Versicherungen),
+      als kompakte Liste. Was du nicht sicher weißt (z.B. ob SEIN Gewerk Anlage A ist), sage
+      offen und verweise auf die HWK-Beratung — nicht raten.
+
+    FOUNDER-TYP-LOGIK (WICHTIG):
+    - GRÜNDER: Fokus auf Pflichten, Behördenweg, Finanzierung, erste Kunden, passende Partner.
+    - SKILL-ANBIETER: KEINE Gründungs-Checklisten aufdrängen! Fokus: Profil schärfen, passende
+      Gründer/Projekte über Swipe finden, Stundensatz/Konditionen, Scheinselbstständigkeit
+      vermeiden (mehrere Auftraggeber, eigenes Risiko), ggf. Kleinunternehmerregelung (§19 UStG)
+      für die Rechnungsstellung. Erst wenn er selbst gründen WILL, wechsle in den Gründer-Modus.
+
     NEUE NACHRICHT: "${input.message}"
 
     REGELN:
@@ -371,7 +406,8 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
     5. Kontext-Updates: Hat sich role/idea/stage/city/goal/risk erkennbar geändert oder
        konkretisiert, liefere NUR die geänderten Felder in "kontext_updates", sonst {}.
     6. Follow-ups/Wizard: Wenn eine Entscheidung fehlt, stelle NICHT mehrere lange Fragen in der
-       Antwort. Gib in "follow_up_aktionen" 2-3 kurze Antwortoptionen aus Sicht des Founders
+       Antwort. Follow-up-Chips müssen KURZ sein: max 5 Wörter / 38 Zeichen — es sind Buttons,
+       keine Sätze. Gib in "follow_up_aktionen" 2-3 kurze Antwortoptionen aus Sicht des Founders
        (z.B. "Ich starte erstmal solo.", "Ich suche aktiv einen Co-Founder.", "Ich bin noch unsicher.").
        Der iOS-Client zeigt daraus eine eigene zweite Wizard-Nachricht. Wenn keine Entscheidung nötig ist:
        2 kurze konkrete nächste Aktionen, die LOGISCH aus dem Gespräch folgen.

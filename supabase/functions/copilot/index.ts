@@ -542,12 +542,13 @@ Deno.serve(async (req) => {
             .order("updated_at", { ascending: false })
             .limit(1)
             .single(),
-          supabase.from("profiles").select("display_name").eq("id", user.id).single(),
+          supabase.from("profiles").select("display_name, founder_type").eq("id", user.id).single(),
         ])
       : [{ data: null }, { data: null }];
 
     const ctx: FounderContext = {
       userName: profile?.display_name || stringOrUndefined(onboarding?.userName) || "Founder",
+      founder_type: profile?.founder_type || undefined,
       role: contextData?.role,
       idea: contextData?.idea,
       stage: contextData?.stage,
@@ -557,6 +558,7 @@ Deno.serve(async (req) => {
     };
 
     if (onboarding) {
+      ctx.founder_type = ctx.founder_type || stringOrUndefined(onboarding.path);
       ctx.industry = ctx.industry || stringOrUndefined(onboarding.industry);
       ctx.venture_term = ctx.venture_term || stringOrUndefined(onboarding.ventureTerm);
       ctx.partner_term = ctx.partner_term || stringOrUndefined(onboarding.partnerTerm);
