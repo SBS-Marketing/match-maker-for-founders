@@ -58,6 +58,7 @@ function AdminGate({ children }: { children: ReactNode }) {
 
 const ADMIN_TABS = [
   { to: "/admin", label: "Insights", icon: BarChart3, exact: true },
+  { to: "/admin/copilot", label: "Co-Pilot", icon: Activity, exact: false },
   { to: "/admin/events", label: "Events", icon: CalendarDays, exact: false },
   { to: "/admin/guides", label: "Guides", icon: BookOpen, exact: false },
   { to: "/admin/partner", label: "Partner", icon: Store, exact: false },
