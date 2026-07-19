@@ -291,7 +291,20 @@ function mergeSources(...groups: WebSource[][]): WebSource[] {
   return merged.slice(0, 5);
 }
 
+function isFoundingDutiesQuestion(message: string): boolean {
+  const text = message.toLowerCase();
+  return [
+    "selbstständig", "selbststaendig", "selbständig",
+    "gründen", "gruenden", "gründung", "gruendung",
+    "was brauche ich", "voraussetzung", "meister", "meistertitel", "meisterpflicht",
+    "eintragen lassen", "netzbetreiber", "installateurverzeichnis",
+    "versicherung", "berufsgenossenschaft", "eröffnen", "eroeffnen",
+    "anmelden", "starten als", "loslegen",
+  ].some((needle) => text.includes(needle));
+}
+
 function needsWebResearch(_ctx: FounderContext, message: string): boolean {
+  if (isFoundingDutiesQuestion(message)) return true;
   // Nur die AKTUELLE Nachricht entscheidet — sonst feuert die Recherche bei
   // Foundern mit passendem Profil (z.B. Handwerk) auf jede Nachricht und
   // kostet Sekunden. Kurze Begriffe mit Wortgrenze, damit "gesamt" ≠ "amt".
@@ -357,6 +370,22 @@ function buildResearchQueries(ctx: FounderContext, message: string): string[] {
   }
   if (isHandwerk || text.includes("berufsgenossenschaft") || text.includes("versicherung") || text.includes("bg ")) {
     queries.push(`${ctx.idea || ctx.venture_term || ""} Berufsgenossenschaft Gründer anmelden`);
+  }
+
+  // Pflichten-Recherche bei "selbstständig machen"-Fragen: Meisterpflicht,
+  // Netzbetreiber-Eintragung (Elektro/SHK), Versicherungen, BG — echte Quellen
+  // statt Modellwissen.
+  if (isFoundingDutiesQuestion(message)) {
+    const trade = (ctx.idea || ctx.copilot_context || ctx.industry || "").split(/[,.—-]/)[0].trim().slice(0, 40);
+    if (isHandwerk) {
+      queries.push(`${trade || "Handwerk"} Meisterpflicht Anlage A Handwerksordnung`);
+      queries.push(`${place}Handwerksrolle eintragen Voraussetzungen HWK`);
+    }
+    if (/elektro|elektrik|elektroniker|shk|installateur|sanitär|sanitaer|heizung|klima|gas|wasser/.test(haystack)) {
+      queries.push(`${place}Installateurverzeichnis Netzbetreiber eintragen Elektro Voraussetzungen`);
+    }
+    queries.push(`${trade || ctx.venture_term || "Gründung"} selbstständig Pflichtversicherungen Betriebshaftpflicht`);
+    queries.push(`${trade || "Gründer"} Berufsgenossenschaft anmelden Pflicht`);
   }
 
   if (queries.length === 0) {
@@ -465,13 +494,15 @@ async function searchWeb(query: string): Promise<WebSource[]> {
 }
 
 const WEB_RESEARCH_BUDGET_MS = 2_800;
+const DUTIES_RESEARCH_BUDGET_MS = 3_500;
 
 async function findWebSources(ctx: FounderContext, message: string): Promise<WebSource[]> {
   if (!needsWebResearch(ctx, message)) return [];
-  const queries = buildResearchQueries(ctx, message).slice(0, 3);
+  const duties = isFoundingDutiesQuestion(message);
+  const queries = buildResearchQueries(ctx, message).slice(0, duties ? 4 : 3);
   // Hartes Zeitbudget: langsame Suchen liefern eben nichts — die Antwort wartet nicht.
   const timeout = new Promise<WebSource[]>((resolve) =>
-    setTimeout(() => resolve([]), WEB_RESEARCH_BUDGET_MS),
+    setTimeout(() => resolve([]), duties ? DUTIES_RESEARCH_BUDGET_MS : WEB_RESEARCH_BUDGET_MS),
   );
   const groups = await Promise.allSettled(
     queries.map((query) => Promise.race([searchWeb(query), timeout])),

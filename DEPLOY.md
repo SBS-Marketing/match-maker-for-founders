@@ -56,7 +56,8 @@ supabase functions deploy daily-digest
 ### Function-Secrets (Dashboard → Edge Functions → Secrets)
 | Secret | Genutzt von |
 |---|---|
-| `OPENROUTER_API_KEY` | copilot (Kimi + Sonnet via OpenRouter) |
+| `OPENROUTER_API_KEY` | copilot (Kimi + Sonnet via OpenRouter), morning-report |
+| `BRAVE_SEARCH_API_KEY` | copilot Web-Recherche (Pflichten/Ansprechpartner-Quellen). Ohne Key nur schwacher DuckDuckGo-Fallback — Key ist kostenlos: https://brave.com/search/api/ |
 | `RESEND_API_KEY` | resend-confirm, daily-digest |
 | `RESEND_FROM_EMAIL` (optional) | resend-confirm, daily-digest |
 | `APP_URL` (optional, Default matchfoundr.de) | resend-confirm, daily-digest |
