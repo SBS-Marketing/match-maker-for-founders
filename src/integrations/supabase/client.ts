@@ -5,14 +5,23 @@ import type { Database } from './types';
 // Browser: inlined at build time. SSR fallback to process.env so the Worker
 // runtime can construct the client even if Vite did not inline VITE_* for the
 // SSR target.
+// Hardcoded fallbacks (URL + anon key are public) so the browser bundle never
+// crashes with "supabaseUrl is required" when env inlining was skipped.
+const FALLBACK_URL = 'https://urjpyhyezrwhwgnkkxjv.supabase.co';
+const FALLBACK_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyanB5aHllenJ3aHdnbmtreGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTU3MTUsImV4cCI6MjA5NDUzMTcxNX0.WrORjtWlNkp3bJmMOeZYxZz2dfZ39ycNaywGIVpUIZY';
+
 const SUPABASE_URL =
   import.meta.env.VITE_SUPABASE_URL ||
-  (typeof process !== 'undefined' ? process.env?.SUPABASE_URL ?? process.env?.VITE_SUPABASE_URL : undefined);
+  (typeof process !== 'undefined' ? process.env?.SUPABASE_URL ?? process.env?.VITE_SUPABASE_URL : undefined) ||
+  FALLBACK_URL;
 const SUPABASE_PUBLISHABLE_KEY =
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   (typeof process !== 'undefined'
     ? process.env?.SUPABASE_PUBLISHABLE_KEY ?? process.env?.VITE_SUPABASE_PUBLISHABLE_KEY
-    : undefined);
+    : undefined) ||
+  FALLBACK_KEY;
+
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
