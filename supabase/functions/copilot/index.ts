@@ -1017,6 +1017,9 @@ Deno.serve(async (req) => {
         prompt_tokens: u.promptTokens,
         completion_tokens: u.completionTokens,
         cost_usd: costUsd(u),
+        latency_ms: u.latencyMs,
+        status: u.status,
+        fallback: u.fallback,
       }));
       supabase
         .from("ai_usage")
