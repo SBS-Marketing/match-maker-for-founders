@@ -10,16 +10,10 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Lockup } from "@/components/Logo";
 
-export const Route = createFileRoute("/auth")({
-  validateSearch: (s: Record<string, unknown>) => ({
-    next: typeof s.next === "string" ? s.next : undefined,
-  }),
-  component: AuthShell,
-});
+export const Route = createFileRoute("/auth")({ component: AuthShell });
 
-function safeNext(next: string | undefined): string | null {
+function safeNext(next: string | undefined | null): string | null {
   if (!next) return null;
-  // Same-origin relative path only.
   if (!next.startsWith("/") || next.startsWith("//")) return null;
   return next;
 }
