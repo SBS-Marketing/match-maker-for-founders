@@ -10,7 +10,19 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Lockup } from "@/components/Logo";
 
-export const Route = createFileRoute("/auth")({ component: AuthShell });
+export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" ? s.next : undefined,
+  }),
+  component: AuthShell,
+});
+
+function safeNext(next: string | undefined): string | null {
+  if (!next) return null;
+  // Same-origin relative path only.
+  if (!next.startsWith("/") || next.startsWith("//")) return null;
+  return next;
+}
 
 const emailSchema = z.string().trim().email("Bitte gültige E-Mail eingeben").max(255);
 const passwordSchema = z.string().min(8, "Mindestens 8 Zeichen").max(72);
