@@ -427,6 +427,15 @@ function AdminEvents() {
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
+                  {ev.recurrence_group_id && (
+                    <button
+                      onClick={() => removeSeries(ev.recurrence_group_id!)}
+                      className="rounded-lg border border-[var(--ruled)] px-2 py-1.5 text-[11px] font-semibold text-[var(--smoke)] hover:text-[var(--ember-deep)]"
+                      title="Ganze Serie löschen"
+                    >
+                      Serie löschen
+                    </button>
+                  )}
                 </div>
               </div>
               {regsFor === ev.id && (
