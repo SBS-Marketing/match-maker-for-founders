@@ -27,7 +27,21 @@ export default defineTool({
   handler: async (input, ctx) => {
     const gate = await requireAdmin(ctx);
     if (!gate.ok) return errorContent(gate.error);
+    const slugBase = input.title
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/ä/g, "ae")
+      .replace(/ö/g, "oe")
+      .replace(/ü/g, "ue")
+      .replace(/ß/g, "ss")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60) || "event";
+    const suffix = Math.random().toString(36).slice(2, 7);
+    const id = `${slugBase}-${suffix}`;
     const row = {
+      id,
       title: input.title,
       kind: input.kind ?? "Event",
       service_id: input.service_id ?? "growth",
@@ -44,6 +58,7 @@ export default defineTool({
       banner_image_url: input.banner_image_url ?? null,
       is_published: input.is_published ?? true,
     };
+
     const { data, error } = await gate.supabase
       .from("community_events")
       .insert(row)
