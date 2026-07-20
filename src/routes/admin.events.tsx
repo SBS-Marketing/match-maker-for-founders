@@ -35,6 +35,8 @@ type EventRow = {
   agenda: string[];
   banner_image_url: string | null;
   is_published: boolean;
+  recurrence_group_id?: string | null;
+  recurrence_rule?: string | null;
 };
 
 type Registration = {
@@ -46,6 +48,15 @@ type Registration = {
 };
 
 const EVENT_KINDS = ["Event", "Meetup", "Workshop", "Stammtisch", "Webinar"];
+
+type RecurrenceRule = "none" | "weekly" | "biweekly" | "monthly";
+
+const RECURRENCE_LABELS: Record<RecurrenceRule, string> = {
+  none: "Einmalig",
+  weekly: "Jede Woche",
+  biweekly: "Alle 2 Wochen",
+  monthly: "Jeden Monat",
+};
 
 const EMPTY_FORM: EventRow = {
   id: "",
@@ -64,6 +75,8 @@ const EMPTY_FORM: EventRow = {
   agenda: [],
   banner_image_url: null,
   is_published: true,
+  recurrence_group_id: null,
+  recurrence_rule: null,
 };
 
 const PREVIEW_EVENTS: EventRow[] = [
