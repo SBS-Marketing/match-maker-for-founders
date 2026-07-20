@@ -285,6 +285,24 @@ function AdminEvents() {
     }
   }
 
+  async function removeSeries(groupId: string) {
+    const count = (events ?? []).filter((e) => e.recurrence_group_id === groupId).length;
+    if (!window.confirm(`Ganze Serie mit ${count} Terminen löschen? Anmeldungen werden mit entfernt.`)) return;
+    if (isPreview) {
+      setEvents((prev) => (prev ?? []).filter((e) => e.recurrence_group_id !== groupId));
+      return;
+    }
+    const { error } = await supabase
+      .from("community_events")
+      .delete()
+      .eq("recurrence_group_id", groupId);
+    if (error) toast.error(`Löschen fehlgeschlagen: ${error.message}`);
+    else {
+      toast.success("Serie gelöscht.");
+      load();
+    }
+  }
+
   async function togglePublish(ev: EventRow) {
     if (isPreview) {
       setEvents((prev) =>
