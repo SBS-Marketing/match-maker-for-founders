@@ -81,11 +81,11 @@ function AuthPage() {
           password: password,
         });
         if (error) throw error;
-        navigate({ to: "/heute" });
+        navigate({ to: next ? next : "/heute" } as any);
       } else if (mode === "magic") {
         const { error } = await supabase.auth.signInWithOtp({
           email: eR.data,
-          options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+          options: { emailRedirectTo: postAuthRedirect },
         });
         if (error) throw error;
         toast.success("Magic Link gesendet. Check dein Postfach.");
@@ -100,7 +100,7 @@ function AuthPage() {
   const oauth = async (provider: "google" | "apple") => {
     const { lovable } = await import("@/integrations/lovable/index");
     const result = await lovable.auth.signInWithOAuth(provider, {
-      redirect_uri: `${window.location.origin}/auth/callback`,
+      redirect_uri: next ? `${window.location.origin}${next}` : `${window.location.origin}/auth/callback`,
     });
     if (result.error) {
       toast.error(result.error.message ?? "Login fehlgeschlagen");
