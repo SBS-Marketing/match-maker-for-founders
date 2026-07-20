@@ -14,17 +14,12 @@ struct TodayView: View {
                 todayTopBar
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        launchGuideCard
+                    VStack(alignment: .leading, spacing: 18) {
+                        greetingHeader
+                        deinTagCard
                         focalCard
-                        MSectionHead(text: "Heute", action: "Kalender") {
-                            state.todayPath.append(.calendar)
-                        }
-                        agendaStrip
-                        MSectionHead(text: "Aktivität", action: "Alle") {
-                            state.open(.screen(.chats))
-                        }
-                        activityFeed
+                        businessPulse
+                        launchGuideCard
                     }
                     .padding(20)
                     .padding(.bottom, 90)
@@ -110,6 +105,208 @@ struct TodayView: View {
         state.matches.reduce(0) { total, match in
             total + match.unread
         }
+    }
+
+    // ═══════════════════ Design mfx-heute: Begrüßung · Dein Tag · Business-Puls
+
+    private var greetingHeader: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide)))
+                .font(.system(size: 12.5, weight: .semibold))
+                .foregroundStyle(MF.faint)
+            Text(greetingLine)
+                .font(.system(size: 27, weight: .heavy))
+                .tracking(-0.8)
+                .foregroundStyle(MF.ink)
+        }
+        .padding(.top, 2)
+    }
+
+    private var greetingLine: String {
+        let hour = Calendar.current.component(.hour, from: .now)
+        let salut = hour < 11 ? "Guten Morgen" : hour < 18 ? "Hallo" : "Guten Abend"
+        let name = state.profile?.name.split(separator: " ").first.map(String.init) ?? "Founder"
+        return "\(salut), \(name)"
+    }
+
+    /// Die drei Dinge, die nur DU heute bewegen kannst: Termin · Antwort · Frist.
+    private struct AgendaRow: Identifiable {
+        let id: String
+        let kind: String
+        let when: String
+        let title: String
+        let sub: String
+        let cta: String
+        let hue: Color
+        let tint: Color
+        let action: () -> Void
+    }
+
+    private var agendaRows: [AgendaRow] {
+        var rows: [AgendaRow] = []
+        if let meeting = state.plannerItems.first(where: { !$0.done && $0.kind == .meeting }) {
+            rows.append(AgendaRow(
+                id: "meeting", kind: "Termin", when: meeting.dueLabel,
+                title: meeting.title, sub: meeting.note.isEmpty ? "Aus deinem Kalender" : meeting.note,
+                cta: "Öffnen", hue: MF.indigo, tint: MF.indigoTint
+            ) { state.todayPath.append(.calendar) })
+        }
+        if let waiting = state.matches.first(where: { $0.unread > 0 }) {
+            rows.append(AgendaRow(
+                id: "reply", kind: "Antwort", when: "Offen",
+                title: "\(waiting.card.name) wartet auf dich",
+                sub: waiting.messages.last?.text ?? "Neue Nachricht",
+                cta: "Antworten", hue: MF.ember, tint: MF.emberTint
+            ) { state.todayPath.append(.chat(waiting.id)) })
+        }
+        if let task = state.plannerItems.first(where: { !$0.done && $0.kind != .meeting }) {
+            rows.append(AgendaRow(
+                id: "frist", kind: "Frist", when: task.dueLabel,
+                title: task.title, sub: task.note.isEmpty ? "Nächster offener Schritt" : task.note,
+                cta: "Öffnen", hue: MF.emberDeep, tint: MF.emberTint
+            ) { state.todayPath.append(.calendar) })
+        }
+        return Array(rows.prefix(3))
+    }
+
+    @ViewBuilder
+    private var deinTagCard: some View {
+        let rows = agendaRows
+        if !rows.isEmpty {
+            VStack(spacing: 0) {
+                HStack(spacing: 9) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(MF.ink)
+                    Text("Dein Tag")
+                        .font(.system(size: 17.5, weight: .heavy))
+                        .tracking(-0.4)
+                        .foregroundStyle(MF.ink)
+                    Text("· \(rows.count) offen")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(MF.faint)
+                    Spacer()
+                    Button {
+                        Haptics.tap()
+                        state.todayPath.append(.calendar)
+                    } label: {
+                        Text("Kalender")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(MF.ember)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 12)
+
+                ForEach(rows) { row in
+                    Button {
+                        Haptics.tap()
+                        row.action()
+                    } label: {
+                        HStack(spacing: 13) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(row.kind.uppercased())
+                                    .font(.mfMono(9))
+                                    .tracking(1.1)
+                                    .foregroundStyle(row.hue)
+                                Text(row.when)
+                                    .font(.system(size: 15, weight: .bold))
+                                    .tracking(-0.3)
+                                    .foregroundStyle(MF.ink)
+                                    .lineLimit(1)
+                            }
+                            .frame(width: 62, alignment: .leading)
+                            Rectangle().fill(MF.borderSoft).frame(width: 1, height: 34)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(row.title)
+                                    .font(.system(size: 14.5, weight: .bold))
+                                    .foregroundStyle(MF.ink)
+                                    .lineLimit(1)
+                                Text(row.sub)
+                                    .font(.system(size: 12.5))
+                                    .foregroundStyle(MF.smoke)
+                                    .lineLimit(1)
+                            }
+                            Spacer(minLength: 0)
+                            Text(row.cta)
+                                .font(.system(size: 12.5, weight: .bold))
+                                .foregroundStyle(row.hue)
+                                .padding(.horizontal, 13)
+                                .padding(.vertical, 7)
+                                .background(row.tint)
+                                .clipShape(Capsule())
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 13)
+                        .overlay(alignment: .top) {
+                            Rectangle().fill(MF.borderSoft).frame(height: 1)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .background(MF.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 24).stroke(MF.border, lineWidth: 1))
+            .warmShadow()
+        }
+    }
+
+    /// Die Zahlen, die zählen — drei Kacheln.
+    private var businessPulse: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            MSectionHead(text: "Business-Puls", action: "Details") {
+                state.tab = .profile
+            }
+            HStack(spacing: 10) {
+                pulseTile("bubble.left.and.bubble.right.fill", "\(state.matches.count)", "Aktive Gespräche", MF.indigoTint, MF.indigo) {
+                    state.open(.screen(.chats))
+                }
+                pulseTile("eye.fill", "\(28 + state.matches.count * 5)", "Profil-Aufrufe", MF.surfaceSoft, MF.ink) {
+                    state.tab = .profile
+                }
+                pulseTile("checkmark.seal.fill", "3", "Förderungen passend", MF.emberTint, MF.emberDeep) {
+                    state.open(.screen(.documents))
+                }
+            }
+        }
+    }
+
+    private func pulseTile(_ icon: String, _ num: String, _ label: String, _ tint: Color, _ ink: Color, action: @escaping () -> Void) -> some View {
+        Button {
+            Haptics.tap()
+            action()
+        } label: {
+            VStack(alignment: .leading, spacing: 9) {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(ink)
+                    .frame(width: 30, height: 30)
+                    .background(tint)
+                    .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(num)
+                        .font(.system(size: 22, weight: .heavy))
+                        .tracking(-0.6)
+                        .foregroundStyle(MF.ink)
+                    Text(label)
+                        .font(.system(size: 11.5, weight: .medium))
+                        .foregroundStyle(MF.smoke)
+                        .lineLimit(2, reservesSpace: true)
+                        .multilineTextAlignment(.leading)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 13)
+            .background(MF.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(MF.border, lineWidth: 1))
+            .warmShadow()
+        }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder

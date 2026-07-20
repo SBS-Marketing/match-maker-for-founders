@@ -1,29 +1,513 @@
-// Onboarding — 3 Screens, unter 90 Sekunden, dann direkt ins Dashboard.
-// Dunkler Auftritt (Ink) mit Ember-Akzent — der erste Eindruck.
+// Onboarding — nach Design mfx-onboarding.jsx (Warm Signal, Ember, nativ):
+// Welcome (schwebende Founder-Blasen) → Was baust du → Wen suchst du
+// → Wo & Verfügbarkeit → Payoff mit echten Treffern.
+// Verkauft Nutzen, sammelt das Nötigste, endet mit einem greifbaren Ergebnis.
 
 import SwiftUI
 
 struct OnboardingView: View {
     @EnvironmentObject var state: AppState
     @State private var step = 0
-    @State private var buildingPlan = false
 
-    @State private var mode: FounderMode?
     @State private var industryId: String?
-    @State private var skills: Set<String> = []
+    @State private var roles: Set<String> = []
+    @State private var region = "Köln"
+    @State private var availability: Availability = .fulltime
     @State private var name = ""
-    @State private var role = ""
-    @State private var pitch = ""
-    @State private var plz = ""
-    @State private var availability: Availability?
-    @State private var selectedPlan: OnboardingPlan = .standard
+    @State private var poppedBubble: Int?
+
+    private let collectSteps = [1, 2, 3]
 
     private var canNext: Bool {
         switch step {
-        case 0: mode != nil
-        case 1: industryId != nil && !skills.isEmpty
-        case 2: name.count > 1 && role.count > 1 && availability != nil
+        case 1: industryId != nil
+        case 2: !roles.isEmpty
         default: true
+        }
+    }
+
+    var body: some View {
+        ZStack {
+            if step == 0 {
+                welcome.transition(.opacity)
+            } else if step == 4 {
+                payoff.transition(.opacity)
+            } else {
+                collect.transition(.opacity)
+            }
+        }
+        .animation(.easeOut(duration: 0.28), value: step)
+    }
+
+    private func next() {
+        Haptics.tap()
+        if step >= 4 { finish() } else { step += 1 }
+    }
+
+    private func back() {
+        Haptics.select()
+        if step > 0 { step -= 1 }
+    }
+
+    // ═══════════════════════════════════ STEP 0 — Welcome
+    // [x, y, größe, name, alter, gründet]
+    private let bubbles: [(CGFloat, CGFloat, CGFloat, String, Int, String)] = [
+        (30, 110, 60, "Lisa", 23, "ein Kosmetikstudio"),
+        (252, 158, 48, "Deniz", 29, "eine Buchungs-App"),
+        (286, 282, 66, "Jonas", 34, "einen Elektrobetrieb"),
+        (36, 340, 52, "Mara", 27, "ein Design-Studio"),
+        (240, 442, 56, "Tim", 31, "Büro-Bowls"),
+        (66, 505, 46, "Anna", 38, "eine Padelhalle"),
+    ]
+
+    private var welcome: some View {
+        ZStack {
+            MF.emberGrad.ignoresSafeArea()
+
+            // schwebende Founder-Blasen — antippbar, verraten was hier entsteht
+            ForEach(Array(bubbles.enumerated()), id: \.offset) { i, b in
+                let on = poppedBubble == i
+                FloatingBubble(index: i, size: b.2, initial: String(b.3.prefix(1)), active: on) {
+                    Haptics.select()
+                    withAnimation(.easeOut(duration: 0.18)) { poppedBubble = on ? nil : i }
+                }
+                .position(x: b.0 + b.2 / 2, y: b.1 + b.2 / 2)
+            }
+            if let i = poppedBubble {
+                let b = bubbles[i]
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("\(b.3), \(b.4)")
+                        .font(.system(size: 14.5, weight: .heavy))
+                        .foregroundStyle(Color(hex: 0x1A1A1A))
+                    Text("gründet \(b.5)")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(MF.emberDeep)
+                }
+                .padding(.horizontal, 13)
+                .padding(.vertical, 9)
+                .background(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                .shadow(color: .black.opacity(0.35), radius: 14, y: 8)
+                .fixedSize()
+                .position(x: min(max(b.0 + b.2 / 2, 90), 300), y: b.1 - 26)
+                .transition(.scale(scale: 0.85).combined(with: .opacity))
+            }
+
+            VStack(alignment: .leading, spacing: 0) {
+                Spacer()
+                HStack(spacing: 0) {
+                    Text("match").foregroundStyle(.white)
+                    Text("foundr").foregroundStyle(.white.opacity(0.6))
+                }
+                .font(.system(size: 26, weight: .heavy))
+                .tracking(-0.5)
+                .padding(.bottom, 18)
+
+                Text("Finde den Mitgründer, der wirklich passt.")
+                    .font(.system(size: 38, weight: .heavy))
+                    .tracking(-1)
+                    .foregroundStyle(.white)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text("Kein endloses Netzwerken — echte Treffer nach Skills, Vision und Werten. DACH-weit.")
+                    .font(.system(size: 16.5))
+                    .foregroundStyle(.white.opacity(0.9))
+                    .lineSpacing(4)
+                    .padding(.top, 16)
+                    .frame(maxWidth: 320, alignment: .leading)
+
+                Button {
+                    next()
+                } label: {
+                    HStack(spacing: 8) {
+                        Text("Los geht's").font(.system(size: 17, weight: .bold))
+                        Image(systemName: "arrow.right").font(.system(size: 15, weight: .heavy))
+                    }
+                    .foregroundStyle(MF.emberDeep)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 54)
+                    .background(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .shadow(color: .black.opacity(0.3), radius: 16, y: 10)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 26)
+
+                Button {
+                    finish()
+                } label: {
+                    Text("Ich habe schon ein Konto")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 14)
+            }
+            .padding(.horizontal, 30)
+            .padding(.bottom, 34)
+        }
+    }
+
+    // ═══════════════════════════════════ STEPS 1–3 — Collect
+    private struct RoleOption: Identifiable {
+        let id: String
+        let icon: String
+        let label: String
+    }
+
+    private let roleOptions: [RoleOption] = [
+        .init(id: "ops", icon: "bolt.fill", label: "Macher fürs Operative"),
+        .init(id: "sales", icon: "person.2.fill", label: "Vertrieb & Sales"),
+        .init(id: "tech", icon: "square.grid.2x2.fill", label: "Technik & Produkt"),
+        .init(id: "money", icon: "checkmark.seal.fill", label: "Finanzen & Zahlen"),
+        .init(id: "brand", icon: "star.fill", label: "Design & Marke"),
+        .init(id: "craft", icon: "book.fill", label: "Handwerk & Umsetzung"),
+    ]
+
+    private let regions = ["Köln", "Berlin", "München", "Hamburg", "Frankfurt", "Remote"]
+
+    private var stepHead: (eyebrow: String, title: String, sub: String) {
+        switch step {
+        case 1: ("Schritt 1 von 3", "Was baust du gerade?", "Damit wir dich den richtigen Leuten zeigen.")
+        case 2: ("Schritt 2 von 3", "Wen suchst du?", "Wähl bis zu drei — was deinem Team am meisten fehlt.")
+        default: ("Schritt 3 von 3", "Wo & wie viel?", "Region und dein Einsatz für das Projekt.")
+        }
+    }
+
+    private var collect: some View {
+        VStack(spacing: 0) {
+            topBar
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(stepHead.eyebrow)
+                        .font(.mfMono(10))
+                        .tracking(1.4)
+                        .textCase(.uppercase)
+                        .foregroundStyle(MF.ember)
+                    Text(stepHead.title)
+                        .font(.system(size: 27, weight: .heavy))
+                        .tracking(-0.8)
+                        .foregroundStyle(MF.ink)
+                        .padding(.top, 8)
+                    Text(stepHead.sub)
+                        .font(.system(size: 15))
+                        .foregroundStyle(MF.smoke)
+                        .lineSpacing(3)
+                        .padding(.top, 8)
+
+                    if step == 1 { industryGrid.padding(.top, 22) }
+                    if step == 2 { roleList.padding(.top, 22) }
+                    if step == 3 { regionAndEffort.padding(.top, 4) }
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 14)
+                .padding(.bottom, 40)
+            }
+            .scrollIndicators(.hidden)
+        }
+        .background(MF.canvas.ignoresSafeArea())
+        .safeAreaInset(edge: .bottom) { footer }
+    }
+
+    private var topBar: some View {
+        HStack(spacing: 12) {
+            Button { back() } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 19, weight: .bold))
+                    .foregroundStyle(MF.smoke)
+                    .frame(width: 32, height: 32)
+            }
+            .buttonStyle(.plain)
+
+            HStack(spacing: 6) {
+                ForEach(collectSteps, id: \.self) { s in
+                    Capsule()
+                        .fill(s <= step ? MF.ember : MF.border)
+                        .frame(height: 5)
+                }
+            }
+
+            if step == 3 {
+                Button { next() } label: {
+                    Text("Überspringen")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(MF.smoke)
+                }
+                .buttonStyle(.plain)
+            } else {
+                Color.clear.frame(width: 32, height: 32)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.top, 8)
+        .frame(minHeight: 44)
+    }
+
+    private var industryGrid: some View {
+        LazyVGrid(columns: [GridItem(.flexible(), spacing: 11), GridItem(.flexible())], spacing: 11) {
+            ForEach(industries) { ind in
+                let on = industryId == ind.id
+                Button {
+                    Haptics.select()
+                    industryId = ind.id
+                } label: {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(ind.emoji)
+                            .font(.system(size: 22))
+                            .frame(width: 42, height: 42)
+                            .background(on ? MF.surface : MF.canvas)
+                            .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                        Text(ind.label)
+                            .font(.system(size: 14.5, weight: .bold))
+                            .foregroundStyle(on ? MF.emberDeep : MF.ink)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(14)
+                    .background(on ? MF.emberTint : MF.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18)
+                            .stroke(on ? MF.ember : MF.border, lineWidth: 1.5)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var roleList: some View {
+        VStack(spacing: 10) {
+            ForEach(roleOptions) { r in
+                let on = roles.contains(r.id)
+                Button {
+                    Haptics.select()
+                    if on { roles.remove(r.id) } else if roles.count < 3 { roles.insert(r.id) }
+                } label: {
+                    HStack(spacing: 13) {
+                        Image(systemName: r.icon)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(on ? MF.emberDeep : MF.smoke)
+                            .frame(width: 40, height: 40)
+                            .background(on ? MF.surface : MF.canvas)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        Text(r.label)
+                            .font(.system(size: 15.5, weight: .bold))
+                            .foregroundStyle(on ? MF.emberDeep : MF.ink)
+                        Spacer(minLength: 0)
+                        ZStack {
+                            if on {
+                                Circle().fill(MF.ember).frame(width: 24, height: 24)
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 12, weight: .heavy))
+                                    .foregroundStyle(.white)
+                            } else {
+                                Circle().stroke(MF.border, lineWidth: 2).frame(width: 24, height: 24)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 15)
+                    .padding(.vertical, 13)
+                    .background(on ? MF.emberTint : MF.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(on ? MF.ember : MF.border, lineWidth: 1.5))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private var regionAndEffort: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionLabel("Dein Name")
+            TextField("Wie sollen wir dich nennen?", text: $name)
+                .font(.system(size: 15))
+                .padding(.horizontal, 15)
+                .frame(height: 48)
+                .background(MF.surface)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(MF.border, lineWidth: 1.5))
+
+            sectionLabel("Deine Region")
+            FlowLayout(spacing: 9) {
+                ForEach(regions, id: \.self) { r in
+                    let on = region == r
+                    Button {
+                        Haptics.select()
+                        region = r
+                    } label: {
+                        HStack(spacing: 6) {
+                            if on {
+                                Image(systemName: "mappin").font(.system(size: 12, weight: .bold))
+                            }
+                            Text(r).font(.system(size: 14.5, weight: .semibold))
+                        }
+                        .foregroundStyle(on ? .white : MF.ink)
+                        .padding(.horizontal, 17)
+                        .padding(.vertical, 10)
+                        .background(on ? AnyShapeStyle(MF.emberGrad) : AnyShapeStyle(MF.surface))
+                        .clipShape(Capsule())
+                        .overlay(Capsule().stroke(on ? Color.clear : MF.border, lineWidth: 1.5))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            sectionLabel("Dein Einsatz")
+            HStack(spacing: 9) {
+                effortChip("Vollzeit", .fulltime)
+                effortChip("Teilzeit", .parttime)
+                effortChip("Nebenbei", .weekend)
+            }
+        }
+    }
+
+    private func sectionLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 13, weight: .bold))
+            .foregroundStyle(MF.smoke)
+            .padding(.top, 26)
+            .padding(.bottom, 12)
+    }
+
+    private func effortChip(_ label: String, _ value: Availability) -> some View {
+        let on = availability == value
+        return Button {
+            Haptics.select()
+            availability = value
+        } label: {
+            Text(label)
+                .font(.system(size: 14.5, weight: .bold))
+                .foregroundStyle(on ? MF.ember : MF.ink)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(on ? MF.emberTint : MF.surface)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(on ? MF.ember : MF.border, lineWidth: 1.5))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var footer: some View {
+        Button {
+            next()
+        } label: {
+            HStack(spacing: 8) {
+                Text(step == 3 ? "Profil erstellen" : "Weiter")
+                    .font(.system(size: 17, weight: .bold))
+                if canNext {
+                    Image(systemName: "arrow.right").font(.system(size: 15, weight: .heavy))
+                }
+            }
+            .foregroundStyle(canNext ? .white : MF.faint)
+            .frame(maxWidth: .infinity)
+            .frame(height: 54)
+            .background(canNext ? AnyShapeStyle(MF.emberGrad) : AnyShapeStyle(MF.surfaceSoft))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .disabled(!canNext)
+        .padding(.horizontal, 22)
+        .padding(.top, 14)
+        .padding(.bottom, 8)
+        .background(
+            LinearGradient(colors: [MF.canvas.opacity(0), MF.canvas, MF.canvas],
+                           startPoint: .top, endPoint: .bottom)
+        )
+    }
+
+    // ═══════════════════════════════════ STEP 4 — Payoff
+    private var payoff: some View {
+        VStack(spacing: 0) {
+            topBar
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(MF.emberGrad)
+                            .frame(width: 64, height: 64)
+                            .emberGlow()
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 30, weight: .heavy))
+                            .foregroundStyle(.white)
+                    }
+
+                    Text("Dein Profil steht.\n\(payoffHits.count) passen schon zu dir.")
+                        .font(.system(size: 30, weight: .heavy))
+                        .tracking(-1)
+                        .foregroundStyle(MF.ink)
+                        .padding(.top, 20)
+
+                    Text("Basierend auf \(selectedIndustry?.label ?? "deiner Branche") in \(region). Schau sie dir an — der Rest kommt täglich dazu.")
+                        .font(.system(size: 15.5))
+                        .foregroundStyle(MF.smoke)
+                        .lineSpacing(3)
+                        .padding(.top, 12)
+
+                    VStack(spacing: 11) {
+                        ForEach(payoffHits) { card in
+                            HStack(spacing: 13) {
+                                MFAvatar(name: card.name, service: "cofounder", size: 48)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(card.name)
+                                        .font(.system(size: 15.5, weight: .bold))
+                                        .foregroundStyle(MF.ink)
+                                    Text("\(card.role) · \(card.city)")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(MF.smoke)
+                                        .lineLimit(1)
+                                }
+                                Spacer(minLength: 0)
+                                Text("\(card.matchPercent)%")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundStyle(MF.emberDeep)
+                                    .padding(.horizontal, 11)
+                                    .padding(.vertical, 6)
+                                    .background(MF.emberTint)
+                                    .clipShape(Capsule())
+                            }
+                            .padding(13)
+                            .background(MF.surface)
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 16).stroke(MF.border, lineWidth: 1))
+                            .warmShadow()
+                        }
+                    }
+                    .padding(.top, 24)
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
+                .padding(.bottom, 40)
+            }
+            .scrollIndicators(.hidden)
+        }
+        .background(MF.canvas.ignoresSafeArea())
+        .safeAreaInset(edge: .bottom) {
+            Button {
+                finish()
+            } label: {
+                HStack(spacing: 8) {
+                    Text("Zu meinen Treffern").font(.system(size: 17, weight: .bold))
+                    Image(systemName: "arrow.right").font(.system(size: 15, weight: .heavy))
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(MF.emberGrad)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .emberGlow()
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 22)
+            .padding(.vertical, 14)
+            .background(
+                LinearGradient(colors: [MF.canvas.opacity(0), MF.canvas, MF.canvas],
+                               startPoint: .top, endPoint: .bottom)
+            )
         }
     }
 
@@ -31,558 +515,69 @@ struct OnboardingView: View {
         industries.first { $0.id == industryId }
     }
 
-    var body: some View {
-        ZStack {
-            VStack(spacing: 0) {
-                header
-                TabView(selection: $step) {
-                    stepMode.tag(0)
-                    stepIndustry.tag(1)
-                    stepProfile.tag(2)
-                    stepPlan.tag(3)
-                }
-                .tabViewStyle(.page(indexDisplayMode: .never))
-                .animation(.easeOut(duration: 0.28), value: step)
-                footer
-            }
-            .disabled(buildingPlan)
-            .blur(radius: buildingPlan ? 2 : 0)
-
-            if buildingPlan {
-                planOverlay
-                    .transition(.scale(scale: 0.96).combined(with: .opacity))
-            }
-        }
-        .background(MF.ink.ignoresSafeArea())
-        .animation(.easeOut(duration: 0.25), value: buildingPlan)
+    private var payoffHits: [FounderCard] {
+        if !state.deck.isEmpty { return Array(state.deck.prefix(3)) }
+        // Deck kommt erst nach dem Onboarding — bis dahin passende Beispiel-Treffer.
+        return [
+            FounderCard(id: "onb-1", name: "Deniz Kaya", role: "Entwickler", city: "Frankfurt", pitch: "", skills: [], industryId: industryId ?? "agentur", availability: .fulltime, matchPercent: 91),
+            FounderCard(id: "onb-2", name: "Lena Hoffmann", role: "Vertrieb", city: region, pitch: "", skills: [], industryId: industryId ?? "handel", availability: .parttime, matchPercent: 87),
+            FounderCard(id: "onb-3", name: "Jonas Weber", role: "Meister im Betrieb", city: "Köln", pitch: "", skills: [], industryId: industryId ?? "handwerk", availability: .fulltime, matchPercent: 84),
+        ]
     }
 
-    // ─── Kopf: Marke + Fortschritt ───────────────────────────
-    private var header: some View {
-        HStack {
-            HStack(spacing: 2) {
-                Text("matchfoundr").font(.system(size: 17, weight: .bold)).foregroundStyle(.white)
-                Text(".").font(.system(size: 17, weight: .bold)).foregroundStyle(MF.ember)
-            }
-            Spacer()
-            HStack(spacing: 6) {
-                ForEach(0..<4) { i in
-                    Capsule()
-                        .fill(i <= step ? MF.ember : .white.opacity(0.2))
-                        .frame(width: i == step ? 22 : 8, height: 6)
-                        .animation(.easeOut(duration: 0.25), value: step)
-                }
-            }
-        }
-        .padding(.horizontal, 22)
-        .padding(.top, 10)
-    }
-
-    // ─── Schritt 1: Modus ────────────────────────────────────
-    private var stepMode: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            Spacer()
-            Text("Womit startest du?")
-                .font(.system(size: 30, weight: .bold))
-                .foregroundStyle(.white)
-            copilotBriefing
-            VStack(spacing: 12) {
-                modeCard(.skills, icon: "wrench.and.screwdriver.fill",
-                         title: "Ich biete Skills",
-                         sub: "Ich kann etwas — und suche Aufträge, Partner oder kleine Betriebe, die Hilfe brauchen.")
-                modeCard(.idea, icon: "lightbulb.fill",
-                         title: "Ich habe eine Idee",
-                         sub: "Ich will ein Geschäft starten — auch wenn ich von Business noch wenig Ahnung habe.")
-            }
-            Spacer()
-            Spacer()
-        }
-        .padding(.horizontal, 22)
-    }
-
-    private func modeCard(_ m: FounderMode, icon: String, title: String, sub: String) -> some View {
-        let active = mode == m
-        return Button {
-            Haptics.select()
-            mode = m
-        } label: {
-            HStack(alignment: .top, spacing: 16) {
-                Image(systemName: icon)
-                    .font(.system(size: 19, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 46, height: 46)
-                    .background(active ? AnyShapeStyle(MF.emberGrad) : AnyShapeStyle(.white.opacity(0.1)))
-                    .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title).font(.system(size: 17, weight: .semibold)).foregroundStyle(.white)
-                    Text(sub).font(.system(size: 13.5)).foregroundStyle(.white.opacity(0.6))
-                        .multilineTextAlignment(.leading)
-                }
-                Spacer(minLength: 0)
-            }
-            .padding(18)
-            .background(active ? MF.ember.opacity(0.16) : .white.opacity(0.05))
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(active ? MF.ember : .white.opacity(0.12), lineWidth: 1.5))
-            .scaleEffect(active ? 1.01 : 1)
-            .animation(.easeOut(duration: 0.2), value: active)
-        }
-        .buttonStyle(.plain)
-    }
-
-    // ─── Schritt 2: Branche & Skills ─────────────────────────
-    private var stepIndustry: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Deine Welt.")
-                    .font(.system(size: 30, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(.top, 24)
-
-                copilotBriefing
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Eyebrow(text: "Branche", color: .white.opacity(0.45))
-                    LazyVGrid(columns: [.init(.flexible(), spacing: 8), .init(.flexible())], spacing: 8) {
-                        ForEach(industries) { ind in
-                            darkChoice(active: industryId == ind.id, minHeight: 54) {
-                                Haptics.select(); industryId = ind.id
-                            } content: {
-                                HStack(spacing: 9) {
-                                    Text(ind.emoji).font(.system(size: 17))
-                                    Text(ind.label)
-                                        .font(.system(size: 12.5, weight: .semibold))
-                                        .foregroundStyle(.white)
-                                        .multilineTextAlignment(.leading)
-                                    Spacer(minLength: 0)
-                                }
-                            }
-                        }
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Eyebrow(text: mode == .skills ? "Das kann ich" : "Das brauche ich",
-                            color: .white.opacity(0.45))
-                    FlowLayout(spacing: 8) {
-                        ForEach(skillTags, id: \.self) { tag in
-                            let active = skills.contains(tag)
-                            Button {
-                                Haptics.select()
-                                if active { skills.remove(tag) } else { skills.insert(tag) }
-                            } label: {
-                                Text(tag)
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundStyle(active ? .white : .white.opacity(0.85))
-                                    .padding(.horizontal, 16)
-                                    .frame(height: 44)
-                                    .background(active ? AnyShapeStyle(MF.ember) : AnyShapeStyle(.white.opacity(0.05)))
-                                    .clipShape(Capsule())
-                                    .overlay(Capsule().stroke(active ? MF.ember : .white.opacity(0.14), lineWidth: 1))
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-                Spacer(minLength: 20)
-            }
-            .padding(.horizontal, 22)
-        }
-        .scrollIndicators(.hidden)
-    }
-
-    private func darkChoice<C: View>(active: Bool, minHeight: CGFloat,
-                                     action: @escaping () -> Void,
-                                     @ViewBuilder content: () -> C) -> some View {
-        Button(action: action) {
-            content()
-                .padding(.horizontal, 14)
-                .frame(maxWidth: .infinity, minHeight: minHeight)
-                .background(active ? MF.ember.opacity(0.16) : .white.opacity(0.05))
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(active ? MF.ember : .white.opacity(0.12), lineWidth: 1.2))
-        }
-        .buttonStyle(.plain)
-    }
-
-    // ─── Schritt 3: Kurzprofil ───────────────────────────────
-    private var stepProfile: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                Text("Fast geschafft.")
-                    .font(.system(size: 30, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(.top, 24)
-
-                copilotBriefing
-
-                field("Dein Name") {
-                    darkTextField("Vorname reicht", text: $name)
-                }
-                field(mode == .skills ? "Deine Rolle" : "Was bist du / willst du machen?") {
-                    darkTextField(mode == .skills ? "z.B. Elektriker, Designerin" : "z.B. Friseur, Händler, Handwerkerin", text: $role)
-                }
-                field("Deine Idee in einem Satz", hint: "\(pitch.count)/140") {
-                    darkTextField(mode == .skills
-                        ? "Ich helfe Handwerkern mit Website, Fotos und Google-Profil."
-                        : "Ich will einen Friseursalon, Online-Shop oder mobilen Service starten.", text: $pitch, axis: .vertical)
-                        .onChange(of: pitch) { _, v in if v.count > 140 { pitch = String(v.prefix(140)) } }
-                }
-                field("PLZ") {
-                    darkTextField("50667", text: $plz)
-                        .onChange(of: plz) { _, v in
-                            plz = String(v.filter(\.isNumber).prefix(5))
-                        }
-                }
-                field("Verfügbarkeit") {
-                    VStack(spacing: 8) {
-                        ForEach(Availability.allCases, id: \.self) { a in
-                            darkChoice(active: availability == a, minHeight: 54) {
-                                Haptics.select(); availability = a
-                            } content: {
-                                HStack {
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(a.label).font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
-                                        Text(a.sub).font(.system(size: 12)).foregroundStyle(.white.opacity(0.55))
-                                    }
-                                    Spacer()
-                                    if availability == a {
-                                        Image(systemName: "checkmark").font(.system(size: 13, weight: .bold))
-                                            .foregroundStyle(MF.ember)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                Spacer(minLength: 16)
-            }
-            .padding(.horizontal, 22)
-        }
-        .scrollIndicators(.hidden)
-        .scrollDismissesKeyboard(.interactively)
-    }
-
-    private var stepPlan: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                Text("Wie willst du starten?")
-                    .font(.system(size: 30, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(.top, 24)
-
-                copilotBriefing
-
-                VStack(spacing: 12) {
-                    planCard(
-                        plan: .standard,
-                        title: "Standard",
-                        price: "Kostenlos",
-                        subtitle: "Profil, Kontakte, Kalender und kleine KI-Hilfe für den Start.",
-                        bullets: ["2.000 KI-Tokens pro Tag", "8.000 KI-Tokens pro Woche", "Basis-Co-Pilot ohne tiefe Analyse"]
-                    )
-                    planCard(
-                        plan: .pro,
-                        title: "Pro",
-                        price: "3 Tage kostenlos testen",
-                        subtitle: "Tiefere Analyse für Kosten, Anmeldung, Kunden und nächste Schritte.",
-                        bullets: ["25.000 KI-Tokens pro Tag", "120.000 KI-Tokens pro Woche", "KI-Analyse direkt nach dem Onboarding"]
-                    )
-                }
-
-                aiAnalysisGate
-                Spacer(minLength: 16)
-            }
-            .padding(.horizontal, 22)
-        }
-        .scrollIndicators(.hidden)
-    }
-
-    private func planCard(
-        plan: OnboardingPlan,
-        title: String,
-        price: String,
-        subtitle: String,
-        bullets: [String]
-    ) -> some View {
-        let active = selectedPlan == plan
-        return Button {
-            Haptics.select()
-            selectedPlan = plan
-        } label: {
-            VStack(alignment: .leading, spacing: 13) {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(title)
-                            .font(.system(size: 18, weight: .heavy))
-                            .foregroundStyle(.white)
-                        Text(price)
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(plan == .pro ? MF.ember : .white.opacity(0.72))
-                    }
-                    Spacer()
-                    Image(systemName: active ? "checkmark.circle.fill" : "circle")
-                        .font(.system(size: 21, weight: .semibold))
-                        .foregroundStyle(active ? MF.ember : .white.opacity(0.42))
-                }
-
-                Text(subtitle)
-                    .font(.system(size: 13.5))
-                    .foregroundStyle(.white.opacity(0.66))
-                    .fixedSize(horizontal: false, vertical: true)
-
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(bullets, id: \.self) { bullet in
-                        HStack(spacing: 8) {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundStyle(plan == .pro ? MF.ember : .white.opacity(0.7))
-                                .frame(width: 18, height: 18)
-                                .background(.white.opacity(0.08))
-                                .clipShape(Circle())
-                            Text(bullet)
-                                .font(.system(size: 12.5, weight: .semibold))
-                                .foregroundStyle(.white.opacity(0.78))
-                        }
-                    }
-                }
-            }
-            .padding(17)
-            .background(active ? MF.ember.opacity(plan == .pro ? 0.18 : 0.11) : .white.opacity(0.05))
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 20).stroke(active ? MF.ember : .white.opacity(0.12), lineWidth: active ? 1.5 : 1))
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var aiAnalysisGate: some View {
-        let pro = selectedPlan == .pro
-        return HStack(alignment: .top, spacing: 12) {
-            Image(systemName: pro ? "sparkles" : "lock.fill")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(.white)
-                .frame(width: 36, height: 36)
-                .background(pro ? AnyShapeStyle(MF.indigoGrad) : AnyShapeStyle(.white.opacity(0.12)))
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            VStack(alignment: .leading, spacing: 5) {
-                Text("KI-Gründungscheck")
-                    .font(.system(size: 14.5, weight: .bold))
-                    .foregroundStyle(.white)
-                Text(pro
-                     ? "Nach dem Start prüfe ich Idee, Startkosten, Papierkram, Kundenweg und nächste App-Aktionen."
-                     : "Diese tiefere Analyse ist Pro. Standard startet ohne Analyse, du kannst später im Profil upgraden.")
-                    .font(.system(size: 12.5))
-                    .foregroundStyle(.white.opacity(0.64))
-                    .lineSpacing(2)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(14)
-        .background(.white.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18).stroke(.white.opacity(0.12), lineWidth: 1))
-    }
-
-    private func field<C: View>(_ label: String, hint: String? = nil, @ViewBuilder content: () -> C) -> some View {
-        VStack(alignment: .leading, spacing: 7) {
-            HStack {
-                Eyebrow(text: label, color: .white.opacity(0.45))
-                Spacer()
-                if let hint { Eyebrow(text: hint, color: .white.opacity(0.35)) }
-            }
-            content()
-        }
-    }
-
-    private func darkTextField(_ placeholder: String, text: Binding<String>, axis: Axis = .horizontal) -> some View {
-        TextField("", text: text, axis: axis)
-            .font(.system(size: 15))
-            .foregroundStyle(.white)
-            .tint(MF.ember)
-            .submitLabel(axis == .vertical ? .return : .done)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 13)
-            .background(.white.opacity(0.06))
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(.white.opacity(0.14), lineWidth: 1))
-            .overlay(alignment: axis == .vertical ? .topLeading : .leading) {
-                if text.wrappedValue.isEmpty {
-                    Text(placeholder)
-                        .font(.system(size: 15))
-                        .foregroundStyle(.white.opacity(0.35))
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, axis == .vertical ? 13 : 0)
-                        .allowsHitTesting(false)
-                }
-            }
-    }
-
-    private var copilotBriefing: some View {
-        let briefing = copilotBriefingCopy
-        return HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(.white)
-                .frame(width: 34, height: 34)
-                .background(MF.indigoGrad)
-                .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
-            VStack(alignment: .leading, spacing: 4) {
-                Text(briefing.title)
-                    .font(.system(size: 13.5, weight: .bold))
-                    .foregroundStyle(.white)
-                Text(briefing.text)
-                    .font(.system(size: 12.5))
-                    .foregroundStyle(.white.opacity(0.64))
-                    .lineSpacing(2)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(14)
-        .background(.white.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18).stroke(.white.opacity(0.12), lineWidth: 1))
-    }
-
-    private var copilotBriefingCopy: (title: String, text: String) {
-        switch step {
-        case 0:
-            let modeText = mode == .skills ? "Skills-Profil" : mode == .idea ? "Gründungsprofil" : "deinen Startpunkt"
-            return (
-                "Co-Pilot-Briefing",
-                "Ich merke mir \(modeText) und baue daraus nach dem Onboarding erste Schritte, Kontakte, Unterlagen und einen verständlichen Plan."
-            )
-        case 1:
-            if let selectedIndustry {
-                let skillText = skills.isEmpty ? "Wähle gleich noch deine stärksten Signale." : "\(skills.count) Skills fließen schon ein."
-                return (
-                    "\(selectedIndustry.ventureTerm)-Kontext",
-                    "\(selectedIndustry.copilotContext) \(skillText)"
-                )
-            }
-            return (
-                "Branche macht den Plan genauer",
-                "Je nach Feld spreche ich anders: Friseur, Online-Shop, Handwerk, Gastro und Agentur brauchen unterschiedliche erste Schritte."
-            )
-        case 2:
-            let idea = pitch.trimmingCharacters(in: .whitespacesAndNewlines)
-            return (
-                "Aus Antworten wird ein Plan",
-                idea.isEmpty
-                    ? "Name, Rolle, Ort und Verfügbarkeit werden gleich in Kalender, Business-Profil und Unterlagen übersetzt."
-                    : "Ich nutze „\(idea)” gleich als Kern für Business-Memory, Profil und erste Kalender-Schritte."
-            )
-        default:
-            return (
-                "Standard oder Pro",
-                "Standard begrenzt KI bewusst klein. Pro startet mit 3 Tagen kostenlos und schaltet den tieferen Gründungscheck plus höhere Limits frei."
-            )
-        }
-    }
-
-    private var planOverlay: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 26, weight: .bold))
-                .foregroundStyle(.white)
-                .frame(width: 68, height: 68)
-                .background(MF.indigoGrad)
-                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                .indigoGlow()
-            VStack(spacing: 7) {
-                Text(selectedPlan == .pro ? "Gründungscheck wird vorbereitet" : "Co-Pilot erstellt deinen Plan")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(MF.ink)
-                Text(selectedPlan == .pro
-                     ? "Dein Pro-Trial startet und der Co-Pilot prüft Kosten, Anmeldung, Angebot, Kundenweg und nächste Schritte."
-                     : "Business-Memory, Kalender, Profil und Unterlagen werden aus deinen Antworten vorbereitet.")
-                    .font(.system(size: 13.5))
-                    .foregroundStyle(MF.smoke)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(3)
-            }
-            ProgressView()
-                .tint(MF.indigo)
-                .padding(.top, 2)
-        }
-        .padding(22)
-        .frame(maxWidth: 320)
-        .background(MF.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 24).stroke(MF.border, lineWidth: 1))
-        .warmShadow(large: true)
-        .padding(24)
-    }
-
-    // ─── Fußzeile ────────────────────────────────────────────
-    private var footer: some View {
-        HStack(spacing: 12) {
-            if step > 0 {
-                Button {
-                    Haptics.tap()
-                    step -= 1
-                } label: {
-                    Image(systemName: "arrow.left")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.7))
-                        .frame(width: 50, height: 50)
-                        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(.white.opacity(0.15), lineWidth: 1))
-                }
-                .buttonStyle(.plain)
-            }
-            Button {
-                Haptics.tap()
-                if step < 3 { step += 1 } else { finish() }
-            } label: {
-                HStack(spacing: 8) {
-                    Text(step < 3 ? "Weiter" : selectedPlan == .pro ? "Analyse starten" : "Standard starten")
-                        .font(.system(size: 15.5, weight: .semibold))
-                    Image(systemName: "arrow.right").font(.system(size: 13, weight: .semibold))
-                }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background(MF.emberGrad)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .opacity(canNext && !buildingPlan ? 1 : 0.4)
-            }
-            .buttonStyle(.plain)
-            .disabled(!canNext || buildingPlan)
-            .emberGlow()
-        }
-        .padding(.horizontal, 22)
-        .padding(.bottom, 12)
-        .padding(.top, 8)
-    }
-
+    // ═══════════════════════════════════ Abschluss
     private func finish() {
-        guard let mode, let industryId, let availability else { return }
+        let roleLabels = roleOptions.filter { roles.contains($0.id) }.map(\.label)
         let profile = MyProfile(
-            mode: mode, industryId: industryId, skills: Array(skills),
-            name: name.trimmingCharacters(in: .whitespaces),
-            role: role.trimmingCharacters(in: .whitespaces),
-            pitch: pitch.trimmingCharacters(in: .whitespaces),
-            plz: plz, availability: availability)
-        buildingPlan = true
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(900))
-            if selectedPlan == .pro {
-                state.activateTrial(days: 3)
-            }
-            state.completeOnboarding(with: profile, launchAIAnalysis: selectedPlan == .pro)
-        }
+            mode: .idea,
+            industryId: industryId ?? industries[0].id,
+            skills: roleLabels.isEmpty ? ["Organisation"] : roleLabels,
+            name: name.trimmingCharacters(in: .whitespaces).isEmpty
+                ? "Founder"
+                : name.trimmingCharacters(in: .whitespaces),
+            role: "Gründer:in",
+            pitch: "",
+            plz: region,
+            availability: availability
+        )
+        Haptics.success()
+        state.completeOnboarding(with: profile, launchAIAnalysis: false)
     }
 }
 
-private enum OnboardingPlan {
-    case standard, pro
+// ─── Bausteine ───────────────────────────────────────────────
+
+/// Schwebende Founder-Blase auf dem Welcome-Screen.
+private struct FloatingBubble: View {
+    let index: Int
+    let size: CGFloat
+    let initial: String
+    let active: Bool
+    let onTap: () -> Void
+    @State private var drift = false
+
+    var body: some View {
+        Button(action: onTap) {
+            Text(initial)
+                .font(.system(size: size * 0.34, weight: .heavy))
+                .foregroundStyle(.white)
+                .frame(width: size, height: size)
+                .background(.white.opacity(active ? 0.32 : 0.16))
+                .clipShape(Circle())
+                .overlay(Circle().stroke(.white.opacity(active ? 0.85 : 0.4), lineWidth: 1.5))
+                .shadow(color: active ? .black.opacity(0.35) : .clear, radius: 12, y: 8)
+        }
+        .buttonStyle(.plain)
+        .offset(y: drift ? -10 : 4)
+        .animation(
+            .easeInOut(duration: 3.4 + Double(index) * 0.5).repeatForever(autoreverses: true),
+            value: drift
+        )
+        .onAppear { drift = true }
+    }
 }
 
-/// Einfaches Flow-Layout für Tag-Wolken.
+/// Einfaches Flow-Layout für Tag-Wolken (wird app-weit genutzt).
 struct FlowLayout: Layout {
     var spacing: CGFloat = 8
 

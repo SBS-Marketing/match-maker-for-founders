@@ -11,6 +11,8 @@ struct CopilotView: View {
     @State private var thinkingSessionID: UUID?
     @State private var thinkingPhrase = "Prüfe die KI-Verbindung..."
     @State private var showingSessions = false
+    @State private var showWorkspace = true
+    @State private var showMeeting = false
     @FocusState private var inputFocused: Bool
 
     private static let thinkingPhrases = [
@@ -42,39 +44,48 @@ struct CopilotView: View {
                 }
             }
 
-            sessionBar
+            if inWorkspace {
+                workspaceHome
+            } else {
+                sessionBar
 
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(spacing: 14) {
-                        if messages.isEmpty {
-                            memoryPanel
-                            welcome
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(spacing: 14) {
+                            if messages.isEmpty {
+                                memoryPanel
+                                welcome
+                            }
+                            ForEach(messages) { msg in
+                                bubble(msg).id(msg.id)
+                            }
+                            if isThinkingForCurrentSession { thinkingBubble }
                         }
-                        ForEach(messages) { msg in
-                            bubble(msg).id(msg.id)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 16)
+                    }
+                    .scrollIndicators(.hidden)
+                    .scrollDismissesKeyboard(.interactively)
+                    .simultaneousGesture(TapGesture().onEnded {
+                        inputFocused = false
+                    })
+                    .onChange(of: messages.count) { _, _ in
+                        if let last = messages.last {
+                            withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
                         }
-                        if isThinkingForCurrentSession { thinkingBubble }
-                    }
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 16)
-                }
-                .scrollIndicators(.hidden)
-                .scrollDismissesKeyboard(.interactively)
-                .simultaneousGesture(TapGesture().onEnded {
-                    inputFocused = false
-                })
-                .onChange(of: messages.count) { _, _ in
-                    if let last = messages.last {
-                        withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
                     }
                 }
+
+                promptChips
+                inputDock
             }
-
-            promptChips
-            inputDock
         }
         .background(MF.canvas.ignoresSafeArea())
+        .sheet(isPresented: $showMeeting) {
+            NavigationStack { MeetingView() }
+                .presentationDetents([.large])
+                .presentationCornerRadius(26)
+        }
         .onAppear {
             loadActiveSession()
             runPendingCopilotPrompt()
@@ -109,6 +120,265 @@ struct CopilotView: View {
 
     private var isThinkingForCurrentSession: Bool {
         thinkingSessionID == state.activeCopilotSessionID
+    }
+
+    // ═══════════════════════════════════ WORKSPACE (Design mfx-copilot)
+    // Landing: Was kann ich erledigen · laufende Aufgaben · Meeting · weiter im Gespräch.
+
+    private var inWorkspace: Bool {
+        showWorkspace && messages.isEmpty && !isThinkingForCurrentSession
+            && state.pendingCopilotPrompt == nil
+    }
+
+    private struct PilotSkill: Identifiable {
+        let id: String
+        let icon: String
+        let label: String
+        let desc: String
+        let prompt: String
+    }
+
+    private static let pilotSkills: [PilotSkill] = [
+        .init(id: "fund", icon: "checkmark.seal.fill", label: "Förderung finden", desc: "Passende Töpfe",
+              prompt: "Welche Förderprogramme passen zu meinem Vorhaben? Prüfe meine Branche und Region."),
+        .init(id: "plan", icon: "book.fill", label: "Businessplan", desc: "Entwurf in 1 Std",
+              prompt: "Hilf mir, einen Businessplan-Entwurf für mein Vorhaben zu erstellen."),
+        .init(id: "legal", icon: "lock.fill", label: "Rechtsform", desc: "GmbH vs. Einzel",
+              prompt: "Welche Rechtsform passt zu mir — GmbH oder Einzelunternehmen?"),
+        .init(id: "hire", icon: "person.2.fill", label: "Ersten Hire", desc: "Finden & einstellen",
+              prompt: "Was fehlt meinem Team am meisten und wie finde ich den ersten Mitstreiter?"),
+        .init(id: "cost", icon: "bolt.fill", label: "Finanzplan", desc: "Start-Budget",
+              prompt: "Rechne meine Startkosten durch und baue einen ersten Finanzplan."),
+        .init(id: "msg", icon: "arrowshape.turn.up.left.fill", label: "Nachricht", desc: "Match anschreiben",
+              prompt: "Schreib mir einen starken ersten Aufschlag für mein bestes Match."),
+    ]
+
+    private var lastSessionWithContent: CopilotSession? {
+        state.copilotSessions.first { !$0.messages.isEmpty }
+    }
+
+    private var workspaceHome: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                // Hero: direkte Frage + Eingabe
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "sparkles").font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
+                        Text("Womit kann ich helfen")
+                            .font(.mfMono(10)).tracking(1.4).textCase(.uppercase)
+                            .foregroundStyle(.white.opacity(0.85))
+                    }
+                    Text("Erledige heute einen echten Schritt deiner Gründung.")
+                        .font(.system(size: 23, weight: .heavy)).tracking(-0.6)
+                        .foregroundStyle(.white)
+                        .padding(.top, 12)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button {
+                        Haptics.tap()
+                        showWorkspace = false
+                        inputFocused = true
+                    } label: {
+                        HStack(spacing: 10) {
+                            Text("Frag mich alles…")
+                                .font(.system(size: 14.5))
+                                .foregroundStyle(.white.opacity(0.8))
+                            Spacer(minLength: 0)
+                            Image(systemName: "arrow.up")
+                                .font(.system(size: 15, weight: .heavy))
+                                .foregroundStyle(MF.indigo)
+                                .frame(width: 34, height: 34)
+                                .background(.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        }
+                        .padding(.leading, 15)
+                        .padding(.vertical, 7)
+                        .padding(.trailing, 7)
+                        .background(.white.opacity(0.16))
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(.white.opacity(0.28), lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 16)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(20)
+                .background(MF.indigoGrad)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .indigoGlow()
+
+                // Schnell erledigt
+                VStack(alignment: .leading, spacing: 13) {
+                    Text("Schnell erledigt")
+                        .font(.system(size: 16, weight: .heavy)).tracking(-0.3)
+                        .foregroundStyle(MF.ink)
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 11), GridItem(.flexible())], spacing: 11) {
+                        ForEach(Self.pilotSkills) { s in
+                            Button {
+                                Haptics.tap()
+                                showWorkspace = false
+                                send(s.prompt)
+                            } label: {
+                                VStack(alignment: .leading, spacing: 11) {
+                                    Image(systemName: s.icon)
+                                        .font(.system(size: 18, weight: .semibold))
+                                        .foregroundStyle(MF.indigoInk)
+                                        .frame(width: 40, height: 40)
+                                        .background(MF.indigoTint)
+                                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(s.label)
+                                            .font(.system(size: 14.5, weight: .bold))
+                                            .foregroundStyle(MF.ink)
+                                        Text(s.desc)
+                                            .font(.system(size: 12))
+                                            .foregroundStyle(MF.smoke)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(14)
+                                .background(MF.surface)
+                                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                                .overlay(RoundedRectangle(cornerRadius: 18).stroke(MF.border, lineWidth: 1))
+                                .warmShadow()
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+
+                // Woran wir arbeiten — Board-Karten in Arbeit
+                let working = KanbanStore.shared.cards(in: .doing).prefix(2)
+                if !working.isEmpty {
+                    VStack(alignment: .leading, spacing: 13) {
+                        HStack {
+                            Text("Woran wir arbeiten")
+                                .font(.system(size: 16, weight: .heavy)).tracking(-0.3)
+                                .foregroundStyle(MF.ink)
+                            Spacer()
+                            Button {
+                                state.open(.screen(.kanban))
+                                state.minimizeCopilot()
+                            } label: {
+                                Text("Alle").font(.system(size: 13.5, weight: .semibold)).foregroundStyle(MF.emberDeep)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        ForEach(Array(working)) { card in
+                            Button {
+                                state.open(.screen(.kanban))
+                                state.minimizeCopilot()
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "book.fill")
+                                        .font(.system(size: 17, weight: .semibold))
+                                        .foregroundStyle(MF.emberDeep)
+                                        .frame(width: 40, height: 40)
+                                        .background(MF.emberTint)
+                                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text(card.title)
+                                            .font(.system(size: 15, weight: .bold))
+                                            .foregroundStyle(MF.ink)
+                                            .lineLimit(1)
+                                        Text("In Arbeit auf deinem Board")
+                                            .font(.system(size: 12.5))
+                                            .foregroundStyle(MF.smoke)
+                                    }
+                                    Spacer(minLength: 0)
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 13, weight: .bold))
+                                        .foregroundStyle(MF.faint)
+                                }
+                                .padding(14)
+                                .background(MF.surface)
+                                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                .overlay(RoundedRectangle(cornerRadius: 16).stroke(MF.border, lineWidth: 1))
+                                .warmShadow()
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+
+                // Extras — Meeting aufnehmen
+                VStack(alignment: .leading, spacing: 13) {
+                    Text("Extras")
+                        .font(.system(size: 16, weight: .heavy)).tracking(-0.3)
+                        .foregroundStyle(MF.ink)
+                    Button {
+                        Haptics.tap()
+                        showMeeting = true
+                    } label: {
+                        HStack(spacing: 14) {
+                            Image(systemName: "mic.fill")
+                                .font(.system(size: 21, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .frame(width: 48, height: 48)
+                                .background(MF.indigoGrad)
+                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .indigoGlow()
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Meeting aufnehmen")
+                                    .font(.system(size: 15.5, weight: .bold))
+                                    .foregroundStyle(MF.ink)
+                                Text("Ich fasse zusammen & mache Aufgaben daraus")
+                                    .font(.system(size: 12.5))
+                                    .foregroundStyle(MF.smoke)
+                            }
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(MF.faint)
+                        }
+                        .padding(16)
+                        .background(MF.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 18).stroke(MF.border, lineWidth: 1))
+                        .warmShadow()
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                // Weiter im Gespräch
+                if let session = lastSessionWithContent {
+                    Button {
+                        Haptics.tap()
+                        showWorkspace = false
+                        openSession(session.id)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "arrowshape.turn.up.left.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .frame(width: 38, height: 38)
+                                .background(MF.indigoGrad)
+                                .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Weiter im Gespräch")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundStyle(MF.indigoInk)
+                                Text(session.title)
+                                    .font(.system(size: 13.5))
+                                    .foregroundStyle(MF.inkSoft)
+                                    .lineLimit(1)
+                            }
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(MF.indigoInk)
+                        }
+                        .padding(14)
+                        .background(MF.indigoTint)
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
+            .padding(.bottom, 30)
+        }
+        .scrollIndicators(.hidden)
     }
 
     private var sessionBar: some View {
