@@ -154,7 +154,7 @@ function AdminEvents() {
     supabase
       .from("community_events")
       .select(
-        "id,title,kind,service_id,starts_at,date_label,time_label,city,venue,spots,taken,host,blurb,agenda,banner_image_url,is_published",
+        "id,title,kind,service_id,starts_at,date_label,time_label,city,venue,spots,taken,host,blurb,agenda,banner_image_url,is_published,recurrence_group_id,recurrence_rule",
       )
       .order("starts_at", { ascending: true, nullsFirst: false })
       .then(({ data, error }) => {
