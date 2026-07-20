@@ -631,6 +631,58 @@ function AdminEvents() {
                 </div>
               </Field>
 
+              {isNew && (
+                <div className="rounded-2xl border border-[var(--ruled)] bg-[var(--canvas)] p-3 space-y-2.5">
+                  <p className="text-[13px] font-bold text-[var(--ink)]">Wiederholung</p>
+                  <p className="text-[12px] text-[var(--smoke)]">
+                    Legt beim Speichern alle Termine der Serie auf einmal an (z. B. jeden Dienstag).
+                    Basiert auf dem oben gewählten Start-Datum & Uhrzeit.
+                  </p>
+                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+                    <Field label="Rhythmus">
+                      <select
+                        value={recurrence}
+                        onChange={(e) => setRecurrence(e.target.value as RecurrenceRule)}
+                        className={inputCls}
+                      >
+                        {(["none", "weekly", "biweekly", "monthly"] as RecurrenceRule[]).map((r) => (
+                          <option key={r} value={r}>
+                            {RECURRENCE_LABELS[r]}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    {recurrence !== "none" && (
+                      <>
+                        <Field label="Endet spätestens am">
+                          <input
+                            type="date"
+                            value={recurrenceUntil}
+                            onChange={(e) => setRecurrenceUntil(e.target.value)}
+                            className={inputCls}
+                          />
+                        </Field>
+                        <Field label="Max. Termine">
+                          <input
+                            type="number"
+                            min={1}
+                            max={52}
+                            value={recurrenceCount}
+                            onChange={(e) => setRecurrenceCount(Math.max(1, Math.min(52, Number(e.target.value) || 1)))}
+                            className={inputCls}
+                          />
+                        </Field>
+                      </>
+                    )}
+                  </div>
+                  {recurrence !== "none" && !editing.starts_at && (
+                    <p className="text-[12px] text-[var(--ember-deep)]">
+                      Bitte oben ein Start-Datum & Uhrzeit setzen.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className="rounded-2xl border border-[var(--ruled)] bg-[var(--canvas)] p-3">
                 <label className="flex items-center gap-2 text-[13px] font-semibold text-[var(--ink)]">
                   <input
