@@ -35,6 +35,8 @@ type EventRow = {
   agenda: string[];
   banner_image_url: string | null;
   is_published: boolean;
+  recurrence_group_id?: string | null;
+  recurrence_rule?: string | null;
 };
 
 type Registration = {
@@ -46,6 +48,15 @@ type Registration = {
 };
 
 const EVENT_KINDS = ["Event", "Meetup", "Workshop", "Stammtisch", "Webinar"];
+
+type RecurrenceRule = "none" | "weekly" | "biweekly" | "monthly";
+
+const RECURRENCE_LABELS: Record<RecurrenceRule, string> = {
+  none: "Einmalig",
+  weekly: "Jede Woche",
+  biweekly: "Alle 2 Wochen",
+  monthly: "Jeden Monat",
+};
 
 const EMPTY_FORM: EventRow = {
   id: "",
@@ -64,6 +75,8 @@ const EMPTY_FORM: EventRow = {
   agenda: [],
   banner_image_url: null,
   is_published: true,
+  recurrence_group_id: null,
+  recurrence_rule: null,
 };
 
 const PREVIEW_EVENTS: EventRow[] = [
@@ -110,6 +123,9 @@ function AdminEvents() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [regsFor, setRegsFor] = useState<string | null>(null);
+  const [recurrence, setRecurrence] = useState<RecurrenceRule>("none");
+  const [recurrenceUntil, setRecurrenceUntil] = useState<string>("");
+  const [recurrenceCount, setRecurrenceCount] = useState<number>(8);
 
   const load = () => {
     // Warten bis der Admin-Check durch ist, damit Echt- und Demo-Laden
@@ -138,7 +154,7 @@ function AdminEvents() {
     supabase
       .from("community_events")
       .select(
-        "id,title,kind,service_id,starts_at,date_label,time_label,city,venue,spots,taken,host,blurb,agenda,banner_image_url,is_published",
+        "id,title,kind,service_id,starts_at,date_label,time_label,city,venue,spots,taken,host,blurb,agenda,banner_image_url,is_published,recurrence_group_id,recurrence_rule",
       )
       .order("starts_at", { ascending: true, nullsFirst: false })
       .then(({ data, error }) => {
@@ -160,6 +176,36 @@ function AdminEvents() {
     return m;
   }, [registrations]);
 
+  function buildOccurrences(base: EventRow): EventRow[] {
+    const startsBase = base.starts_at ? new Date(base.starts_at) : null;
+    if (!startsBase || recurrence === "none") return [base];
+
+    const untilDate = recurrenceUntil ? new Date(recurrenceUntil + "T23:59:59") : null;
+    const maxCount = Math.max(1, Math.min(52, recurrenceCount || 8));
+    const groupId = base.recurrence_group_id || `grp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    const stepDays = recurrence === "weekly" ? 7 : recurrence === "biweekly" ? 14 : 0;
+    const out: EventRow[] = [];
+    for (let i = 0; i < maxCount; i++) {
+      const d = new Date(startsBase);
+      if (recurrence === "monthly") d.setMonth(d.getMonth() + i);
+      else d.setDate(d.getDate() + stepDays * i);
+      if (untilDate && d > untilDate) break;
+
+      const iso = d.toISOString();
+      out.push({
+        ...base,
+        id: i === 0 ? base.id : `${base.id}-${i + 1}`,
+        starts_at: iso,
+        date_label: d.toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "long" }),
+        time_label: d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }),
+        recurrence_group_id: groupId,
+        recurrence_rule: recurrence,
+      });
+    }
+    return out;
+  }
+
   async function save() {
     if (!editing) return;
     const title = editing.title.trim();
@@ -169,11 +215,10 @@ function AdminEvents() {
     }
     const id = isNew ? slugify(title) : editing.id;
     const starts = editing.starts_at ? new Date(editing.starts_at) : null;
-    const row = {
+    const baseRow: EventRow = {
       ...editing,
       id,
       title,
-      // Labels fürs schnelle Rendern in der App aus dem Datum ableiten, wenn leer.
       date_label:
         editing.date_label?.trim() ||
         (starts
@@ -187,31 +232,40 @@ function AdminEvents() {
       agenda: editing.agenda.map((a) => a.trim()).filter(Boolean),
     };
 
+    const isRecurringNew = isNew && recurrence !== "none" && !!starts;
+    const rows = isRecurringNew ? buildOccurrences(baseRow) : [baseRow];
+
     if (isPreview) {
       setEvents((prev) => {
-        const rest = (prev ?? []).filter((e) => e.id !== id);
-        return [...rest, row];
+        const rest = (prev ?? []).filter((e) => !rows.some((r) => r.id === e.id));
+        return [...rest, ...rows];
       });
       setEditing(null);
-      toast.success("Demo: Event nur lokal gespeichert.");
+      toast.success(
+        isRecurringNew
+          ? `Demo: ${rows.length} Termine lokal angelegt.`
+          : "Demo: Event nur lokal gespeichert.",
+      );
       return;
     }
 
     setSaving(true);
-    const { error } = await supabase.from("community_events").upsert(row, { onConflict: "id" });
+    const { error } = await supabase.from("community_events").upsert(rows, { onConflict: "id" });
     setSaving(false);
     if (error) {
       toast.error(`Speichern fehlgeschlagen: ${error.message}`);
       return;
     }
     toast.success(
-      row.is_published
-        ? isNew
-          ? "Event veröffentlicht und in der App sichtbar."
-          : "Event gespeichert und in der App sichtbar."
-        : isNew
-          ? "Event als Entwurf angelegt."
-          : "Event als Entwurf gespeichert.",
+      isRecurringNew
+        ? `Serie angelegt: ${rows.length} Termine ${baseRow.is_published ? "live" : "als Entwurf"}.`
+        : baseRow.is_published
+          ? isNew
+            ? "Event veröffentlicht und in der App sichtbar."
+            : "Event gespeichert und in der App sichtbar."
+          : isNew
+            ? "Event als Entwurf angelegt."
+            : "Event als Entwurf gespeichert.",
     );
     setEditing(null);
     load();
@@ -227,6 +281,24 @@ function AdminEvents() {
     if (error) toast.error(`Löschen fehlgeschlagen: ${error.message}`);
     else {
       toast.success("Event gelöscht.");
+      load();
+    }
+  }
+
+  async function removeSeries(groupId: string) {
+    const count = (events ?? []).filter((e) => e.recurrence_group_id === groupId).length;
+    if (!window.confirm(`Ganze Serie mit ${count} Terminen löschen? Anmeldungen werden mit entfernt.`)) return;
+    if (isPreview) {
+      setEvents((prev) => (prev ?? []).filter((e) => e.recurrence_group_id !== groupId));
+      return;
+    }
+    const { error } = await supabase
+      .from("community_events")
+      .delete()
+      .eq("recurrence_group_id", groupId);
+    if (error) toast.error(`Löschen fehlgeschlagen: ${error.message}`);
+    else {
+      toast.success("Serie gelöscht.");
       load();
     }
   }
@@ -271,6 +343,9 @@ function AdminEvents() {
           onClick={() => {
             setEditing({ ...EMPTY_FORM });
             setIsNew(true);
+            setRecurrence("none");
+            setRecurrenceUntil("");
+            setRecurrenceCount(8);
           }}
           className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[var(--ink)] px-3.5 py-2 text-[13px] font-semibold text-white"
         >
@@ -310,6 +385,11 @@ function AdminEvents() {
                     >
                       {ev.is_published ? "Live" : "Entwurf"}
                     </span>
+                    {ev.recurrence_group_id && (
+                      <span className="rounded-full border border-[var(--ruled)] px-2 py-0.5 text-[11px] font-bold text-[var(--smoke)]">
+                        Serie · {RECURRENCE_LABELS[(ev.recurrence_rule as RecurrenceRule) || "weekly"]}
+                      </span>
+                    )}
                   </div>
                   <p className="mt-0.5 text-[12px] text-[var(--smoke)]">
                     {[ev.kind, ev.date_label, ev.time_label && `${ev.time_label} Uhr`, ev.city]
@@ -347,6 +427,15 @@ function AdminEvents() {
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
+                  {ev.recurrence_group_id && (
+                    <button
+                      onClick={() => removeSeries(ev.recurrence_group_id!)}
+                      className="rounded-lg border border-[var(--ruled)] px-2 py-1.5 text-[11px] font-semibold text-[var(--smoke)] hover:text-[var(--ember-deep)]"
+                      title="Ganze Serie löschen"
+                    >
+                      Serie löschen
+                    </button>
+                  )}
                 </div>
               </div>
               {regsFor === ev.id && (
@@ -541,6 +630,58 @@ function AdminEvents() {
                   )}
                 </div>
               </Field>
+
+              {isNew && (
+                <div className="rounded-2xl border border-[var(--ruled)] bg-[var(--canvas)] p-3 space-y-2.5">
+                  <p className="text-[13px] font-bold text-[var(--ink)]">Wiederholung</p>
+                  <p className="text-[12px] text-[var(--smoke)]">
+                    Legt beim Speichern alle Termine der Serie auf einmal an (z. B. jeden Dienstag).
+                    Basiert auf dem oben gewählten Start-Datum & Uhrzeit.
+                  </p>
+                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+                    <Field label="Rhythmus">
+                      <select
+                        value={recurrence}
+                        onChange={(e) => setRecurrence(e.target.value as RecurrenceRule)}
+                        className={inputCls}
+                      >
+                        {(["none", "weekly", "biweekly", "monthly"] as RecurrenceRule[]).map((r) => (
+                          <option key={r} value={r}>
+                            {RECURRENCE_LABELS[r]}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    {recurrence !== "none" && (
+                      <>
+                        <Field label="Endet spätestens am">
+                          <input
+                            type="date"
+                            value={recurrenceUntil}
+                            onChange={(e) => setRecurrenceUntil(e.target.value)}
+                            className={inputCls}
+                          />
+                        </Field>
+                        <Field label="Max. Termine">
+                          <input
+                            type="number"
+                            min={1}
+                            max={52}
+                            value={recurrenceCount}
+                            onChange={(e) => setRecurrenceCount(Math.max(1, Math.min(52, Number(e.target.value) || 1)))}
+                            className={inputCls}
+                          />
+                        </Field>
+                      </>
+                    )}
+                  </div>
+                  {recurrence !== "none" && !editing.starts_at && (
+                    <p className="text-[12px] text-[var(--ember-deep)]">
+                      Bitte oben ein Start-Datum & Uhrzeit setzen.
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="rounded-2xl border border-[var(--ruled)] bg-[var(--canvas)] p-3">
                 <label className="flex items-center gap-2 text-[13px] font-semibold text-[var(--ink)]">
