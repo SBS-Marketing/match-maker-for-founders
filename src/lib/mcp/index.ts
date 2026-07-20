@@ -37,5 +37,6 @@ export default defineMcp({
     adminAiUsage,
     adminListProfiles,
     adminPublishEvent,
+    adminCreateEvent,
   ],
 });
