@@ -135,6 +135,130 @@
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
+      },
+      {
+        "name": "admin_stats",
+        "title": "Admin: Plattform-Statistiken",
+        "description": "Liefert Zählwerte für Profile, Matches, Events, Registrierungen und Guides. Nur für Admins.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "admin_list_events",
+        "title": "Admin: Alle Events auflisten",
+        "description": "Listet alle Community-Events (auch unveröffentlichte / vergangene). Nur für Admins.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            },
+            "only_unpublished": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "admin_ai_usage",
+        "title": "Admin: KI-Verbrauch & Latenzen",
+        "description": "Liefert die letzten Copilot-Aufrufe (Task, Modell, Tokens, Kosten, Latenz, Status). Nur für Admins.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            },
+            "task": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "admin_list_profiles",
+        "title": "Admin: Profile auflisten",
+        "description": "Listet User-Profile (id, display_name, founder_type, industry, updated_at). Nur für Admins.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500
+            },
+            "search": {
+              "type": "string",
+              "description": "Filter auf display_name (ilike)"
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "admin_publish_event",
+        "title": "Admin: Event veröffentlichen/verstecken",
+        "description": "Setzt is_published für ein Community-Event. Nur für Admins.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "event_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "is_published": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "event_id",
+            "is_published"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
       }
     ]
   }
