@@ -219,6 +219,8 @@ export type Database = {
           image_url: string | null
           is_published: boolean
           kind: string
+          recurrence_group_id: string | null
+          recurrence_rule: string | null
           service_id: string
           spots: number
           starts_at: string | null
@@ -240,6 +242,8 @@ export type Database = {
           image_url?: string | null
           is_published?: boolean
           kind?: string
+          recurrence_group_id?: string | null
+          recurrence_rule?: string | null
           service_id?: string
           spots?: number
           starts_at?: string | null
@@ -261,6 +265,8 @@ export type Database = {
           image_url?: string | null
           is_published?: boolean
           kind?: string
+          recurrence_group_id?: string | null
+          recurrence_rule?: string | null
           service_id?: string
           spots?: number
           starts_at?: string | null
