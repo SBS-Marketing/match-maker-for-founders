@@ -9,6 +9,7 @@ import adminListEvents from "./tools/admin_list_events";
 import adminAiUsage from "./tools/admin_ai_usage";
 import adminListProfiles from "./tools/admin_list_profiles";
 import adminPublishEvent from "./tools/admin_publish_event";
+import adminCreateEvent from "./tools/admin_create_event";
 
 // Direct Supabase issuer (project ref), inlined at build time by Vite.
 // Never use the .lovable.cloud proxy URL — the discovery document publishes
@@ -36,5 +37,6 @@ export default defineMcp({
     adminAiUsage,
     adminListProfiles,
     adminPublishEvent,
+    adminCreateEvent,
   ],
 });

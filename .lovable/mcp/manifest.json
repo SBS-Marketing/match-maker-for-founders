@@ -259,6 +259,97 @@
           "$schema": "http://json-schema.org/draft-07/schema#"
         },
         "outputSchema": null
+      },
+      {
+        "name": "admin_create_event",
+        "title": "Admin: Event anlegen",
+        "description": "Legt ein neues Community-Event an (Workshop, Meetup, Webinar, …). Nur für Admins. Setze is_published=true, um sofort zu veröffentlichen.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "Event",
+                "Meetup",
+                "Workshop",
+                "Stammtisch",
+                "Webinar"
+              ]
+            },
+            "service_id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Service-Slug (z. B. 'growth', 'talent'). Default: 'growth'."
+            },
+            "starts_at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO-Zeitstempel, z. B. 2026-08-01T18:00:00Z"
+            },
+            "date_label": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "time_label": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "city": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "venue": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "spots": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "host": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "blurb": {
+              "type": "string",
+              "maxLength": 2000
+            },
+            "agenda": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 300
+              },
+              "maxItems": 50
+            },
+            "banner_image_url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "is_published": {
+              "type": "boolean",
+              "description": "Standard: true"
+            }
+          },
+          "required": [
+            "title"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
       }
     ]
   }
