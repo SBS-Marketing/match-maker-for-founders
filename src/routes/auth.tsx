@@ -12,6 +12,12 @@ import { Lockup } from "@/components/Logo";
 
 export const Route = createFileRoute("/auth")({ component: AuthShell });
 
+function safeNext(next: string | undefined | null): string | null {
+  if (!next) return null;
+  if (!next.startsWith("/") || next.startsWith("//")) return null;
+  return next;
+}
+
 const emailSchema = z.string().trim().email("Bitte gültige E-Mail eingeben").max(255);
 const passwordSchema = z.string().min(8, "Mindestens 8 Zeichen").max(72);
 
@@ -24,14 +30,22 @@ function AuthShell() {
 function AuthPage() {
   const { user, enterDemo } = useAuth();
   const navigate = useNavigate();
+  const next = safeNext(
+    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("next") : null,
+  );
   const [mode, setMode] = useState<"signin" | "signup" | "magic">("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user) navigate({ to: "/heute" });
-  }, [user, navigate]);
+    if (user) {
+      if (next) window.location.replace(next);
+      else navigate({ to: "/heute" });
+    }
+  }, [user, navigate, next]);
+
+  const postAuthRedirect = next ?? `${window.location.origin}/auth/callback`;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +61,11 @@ function AuthPage() {
         const { error } = await supabase.auth.signUp({
           email: eR.data,
           password: password,
-          options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+          options: {
+            emailRedirectTo: next
+              ? `${window.location.origin}${next}`
+              : `${window.location.origin}/auth/callback`,
+          },
         });
         if (error) throw error;
         toast.success("Konto erstellt. Bestätige deine E-Mail.");
@@ -58,11 +76,11 @@ function AuthPage() {
           password: password,
         });
         if (error) throw error;
-        navigate({ to: "/heute" });
+        navigate({ to: next ? next : "/heute" } as any);
       } else if (mode === "magic") {
         const { error } = await supabase.auth.signInWithOtp({
           email: eR.data,
-          options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+          options: { emailRedirectTo: postAuthRedirect },
         });
         if (error) throw error;
         toast.success("Magic Link gesendet. Check dein Postfach.");
@@ -77,7 +95,7 @@ function AuthPage() {
   const oauth = async (provider: "google" | "apple") => {
     const { lovable } = await import("@/integrations/lovable/index");
     const result = await lovable.auth.signInWithOAuth(provider, {
-      redirect_uri: `${window.location.origin}/auth/callback`,
+      redirect_uri: next ? `${window.location.origin}${next}` : `${window.location.origin}/auth/callback`,
     });
     if (result.error) {
       toast.error(result.error.message ?? "Login fehlgeschlagen");
