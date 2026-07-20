@@ -123,6 +123,9 @@ function AdminEvents() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [regsFor, setRegsFor] = useState<string | null>(null);
+  const [recurrence, setRecurrence] = useState<RecurrenceRule>("none");
+  const [recurrenceUntil, setRecurrenceUntil] = useState<string>("");
+  const [recurrenceCount, setRecurrenceCount] = useState<number>(8);
 
   const load = () => {
     // Warten bis der Admin-Check durch ist, damit Echt- und Demo-Laden
