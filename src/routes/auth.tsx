@@ -36,14 +36,21 @@ function AuthShell() {
 function AuthPage() {
   const { user, enterDemo } = useAuth();
   const navigate = useNavigate();
+  const search = Route.useSearch();
+  const next = safeNext(search.next);
   const [mode, setMode] = useState<"signin" | "signup" | "magic">("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user) navigate({ to: "/heute" });
-  }, [user, navigate]);
+    if (user) {
+      if (next) window.location.replace(next);
+      else navigate({ to: "/heute" });
+    }
+  }, [user, navigate, next]);
+
+  const postAuthRedirect = next ?? `${window.location.origin}/auth/callback`;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +66,11 @@ function AuthPage() {
         const { error } = await supabase.auth.signUp({
           email: eR.data,
           password: password,
-          options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+          options: {
+            emailRedirectTo: next
+              ? `${window.location.origin}${next}`
+              : `${window.location.origin}/auth/callback`,
+          },
         });
         if (error) throw error;
         toast.success("Konto erstellt. Bestätige deine E-Mail.");
