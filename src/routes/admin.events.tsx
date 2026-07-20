@@ -176,6 +176,36 @@ function AdminEvents() {
     return m;
   }, [registrations]);
 
+  function buildOccurrences(base: EventRow): EventRow[] {
+    const startsBase = base.starts_at ? new Date(base.starts_at) : null;
+    if (!startsBase || recurrence === "none") return [base];
+
+    const untilDate = recurrenceUntil ? new Date(recurrenceUntil + "T23:59:59") : null;
+    const maxCount = Math.max(1, Math.min(52, recurrenceCount || 8));
+    const groupId = base.recurrence_group_id || `grp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    const stepDays = recurrence === "weekly" ? 7 : recurrence === "biweekly" ? 14 : 0;
+    const out: EventRow[] = [];
+    for (let i = 0; i < maxCount; i++) {
+      const d = new Date(startsBase);
+      if (recurrence === "monthly") d.setMonth(d.getMonth() + i);
+      else d.setDate(d.getDate() + stepDays * i);
+      if (untilDate && d > untilDate) break;
+
+      const iso = d.toISOString();
+      out.push({
+        ...base,
+        id: i === 0 ? base.id : `${base.id}-${i + 1}`,
+        starts_at: iso,
+        date_label: d.toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "long" }),
+        time_label: d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }),
+        recurrence_group_id: groupId,
+        recurrence_rule: recurrence,
+      });
+    }
+    return out;
+  }
+
   async function save() {
     if (!editing) return;
     const title = editing.title.trim();
@@ -185,11 +215,10 @@ function AdminEvents() {
     }
     const id = isNew ? slugify(title) : editing.id;
     const starts = editing.starts_at ? new Date(editing.starts_at) : null;
-    const row = {
+    const baseRow: EventRow = {
       ...editing,
       id,
       title,
-      // Labels fürs schnelle Rendern in der App aus dem Datum ableiten, wenn leer.
       date_label:
         editing.date_label?.trim() ||
         (starts
@@ -203,31 +232,40 @@ function AdminEvents() {
       agenda: editing.agenda.map((a) => a.trim()).filter(Boolean),
     };
 
+    const isRecurringNew = isNew && recurrence !== "none" && !!starts;
+    const rows = isRecurringNew ? buildOccurrences(baseRow) : [baseRow];
+
     if (isPreview) {
       setEvents((prev) => {
-        const rest = (prev ?? []).filter((e) => e.id !== id);
-        return [...rest, row];
+        const rest = (prev ?? []).filter((e) => !rows.some((r) => r.id === e.id));
+        return [...rest, ...rows];
       });
       setEditing(null);
-      toast.success("Demo: Event nur lokal gespeichert.");
+      toast.success(
+        isRecurringNew
+          ? `Demo: ${rows.length} Termine lokal angelegt.`
+          : "Demo: Event nur lokal gespeichert.",
+      );
       return;
     }
 
     setSaving(true);
-    const { error } = await supabase.from("community_events").upsert(row, { onConflict: "id" });
+    const { error } = await supabase.from("community_events").upsert(rows, { onConflict: "id" });
     setSaving(false);
     if (error) {
       toast.error(`Speichern fehlgeschlagen: ${error.message}`);
       return;
     }
     toast.success(
-      row.is_published
-        ? isNew
-          ? "Event veröffentlicht und in der App sichtbar."
-          : "Event gespeichert und in der App sichtbar."
-        : isNew
-          ? "Event als Entwurf angelegt."
-          : "Event als Entwurf gespeichert.",
+      isRecurringNew
+        ? `Serie angelegt: ${rows.length} Termine ${baseRow.is_published ? "live" : "als Entwurf"}.`
+        : baseRow.is_published
+          ? isNew
+            ? "Event veröffentlicht und in der App sichtbar."
+            : "Event gespeichert und in der App sichtbar."
+          : isNew
+            ? "Event als Entwurf angelegt."
+            : "Event als Entwurf gespeichert.",
     );
     setEditing(null);
     load();
