@@ -4,6 +4,11 @@ import listEvents from "./tools/list_events";
 import getMyProfile from "./tools/get_my_profile";
 import listMyTasks from "./tools/list_my_tasks";
 import createTask from "./tools/create_task";
+import adminStats from "./tools/admin_stats";
+import adminListEvents from "./tools/admin_list_events";
+import adminAiUsage from "./tools/admin_ai_usage";
+import adminListProfiles from "./tools/admin_list_profiles";
+import adminPublishEvent from "./tools/admin_publish_event";
 
 // Direct Supabase issuer (project ref), inlined at build time by Vite.
 // Never use the .lovable.cloud proxy URL — the discovery document publishes
