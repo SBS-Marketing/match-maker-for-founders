@@ -30,8 +30,9 @@ function AuthShell() {
 function AuthPage() {
   const { user, enterDemo } = useAuth();
   const navigate = useNavigate();
-  const search = Route.useSearch();
-  const next = safeNext(search.next);
+  const next = safeNext(
+    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("next") : null,
+  );
   const [mode, setMode] = useState<"signin" | "signup" | "magic">("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
