@@ -385,6 +385,11 @@ function AdminEvents() {
                     >
                       {ev.is_published ? "Live" : "Entwurf"}
                     </span>
+                    {ev.recurrence_group_id && (
+                      <span className="rounded-full border border-[var(--ruled)] px-2 py-0.5 text-[11px] font-bold text-[var(--smoke)]">
+                        Serie · {RECURRENCE_LABELS[(ev.recurrence_rule as RecurrenceRule) || "weekly"]}
+                      </span>
+                    )}
                   </div>
                   <p className="mt-0.5 text-[12px] text-[var(--smoke)]">
                     {[ev.kind, ev.date_label, ev.time_label && `${ev.time_label} Uhr`, ev.city]
