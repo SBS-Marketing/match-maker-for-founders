@@ -325,6 +325,9 @@ function AdminEvents() {
           onClick={() => {
             setEditing({ ...EMPTY_FORM });
             setIsNew(true);
+            setRecurrence("none");
+            setRecurrenceUntil("");
+            setRecurrenceCount(8);
           }}
           className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[var(--ink)] px-3.5 py-2 text-[13px] font-semibold text-white"
         >
