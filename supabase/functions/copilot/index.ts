@@ -13,6 +13,7 @@ import {
   buildChatPrompt,
   type ChatTurn,
   type FounderContext,
+  type MCPConnector,
   type TaskType,
   type WebSource,
 } from "./prompts.ts";
@@ -260,7 +261,10 @@ function normalizeSearchURL(raw: string): string | null {
 }
 
 function sourceKey(source: WebSource): string {
-  return source.url.replace(/^https?:\/\//, "").replace(/\/$/, "").toLowerCase();
+  return source.url
+    .replace(/^https?:\/\//, "")
+    .replace(/\/$/, "")
+    .toLowerCase();
 }
 
 function normalizeSource(value: unknown): WebSource | null {
@@ -294,12 +298,28 @@ function mergeSources(...groups: WebSource[][]): WebSource[] {
 function isFoundingDutiesQuestion(message: string): boolean {
   const text = message.toLowerCase();
   return [
-    "selbstständig", "selbststaendig", "selbständig",
-    "gründen", "gruenden", "gründung", "gruendung",
-    "was brauche ich", "voraussetzung", "meister", "meistertitel", "meisterpflicht",
-    "eintragen lassen", "netzbetreiber", "installateurverzeichnis",
-    "versicherung", "berufsgenossenschaft", "eröffnen", "eroeffnen",
-    "anmelden", "starten als", "loslegen",
+    "selbstständig",
+    "selbststaendig",
+    "selbständig",
+    "gründen",
+    "gruenden",
+    "gründung",
+    "gruendung",
+    "was brauche ich",
+    "voraussetzung",
+    "meister",
+    "meistertitel",
+    "meisterpflicht",
+    "eintragen lassen",
+    "netzbetreiber",
+    "installateurverzeichnis",
+    "versicherung",
+    "berufsgenossenschaft",
+    "eröffnen",
+    "eroeffnen",
+    "anmelden",
+    "starten als",
+    "loslegen",
   ].some((needle) => text.includes(needle));
 }
 
@@ -339,36 +359,79 @@ function buildResearchQueries(ctx: FounderContext, message: string): string[] {
   const haystack = [text, industry, idea, venture, ctx.copilot_context || ""].join(" ");
   const place = city ? `${city} ` : "";
   const queries: string[] = [];
-  const wantsAuthorities = /kammer|amt|ämter|aemter|behörde|behoerde|gewerbe|anmeld|zulassung/.test(text);
+  const wantsAuthorities = /kammer|amt|ämter|aemter|behörde|behoerde|gewerbe|anmeld|zulassung/.test(
+    text,
+  );
   const isHandwerk =
-    /handwerk|hwk|handwerkskammer|friseur|kosmetik|elektriker|elektroniker|installateur|maler|bäcker|baecker|metzger|tischler|schreiner|dachdecker|kfz|meister/.test(haystack);
+    /handwerk|hwk|handwerkskammer|friseur|kosmetik|elektriker|elektroniker|installateur|maler|bäcker|baecker|metzger|tischler|schreiner|dachdecker|kfz|meister/.test(
+      haystack,
+    );
 
-  if (isHandwerk || text.includes("handwerkskammer") || text.includes("hwk") || (wantsAuthorities && text.includes("kammer"))) {
+  if (
+    isHandwerk ||
+    text.includes("handwerkskammer") ||
+    text.includes("hwk") ||
+    (wantsAuthorities && text.includes("kammer"))
+  ) {
     queries.push(`${place}Handwerkskammer Existenzgründung Ansprechpartner`);
     queries.push(`${place}HWK Betriebsberatung Gründer Kontakt`);
     queries.push(`${place}Innung ${ctx.idea || ""} Ansprechpartner`);
   }
-  if (haystack.includes("gastro") || haystack.includes("restaurant") || text.includes("hygiene") || text.includes("konzession")) {
+  if (
+    haystack.includes("gastro") ||
+    haystack.includes("restaurant") ||
+    text.includes("hygiene") ||
+    text.includes("konzession")
+  ) {
     queries.push(`${place}Gewerbeamt Gaststätte Konzession Ansprechpartner`);
     queries.push(`${place}Gesundheitsamt Hygiene Belehrung Lebensmittel Ansprechpartner`);
     queries.push(`${place}IHK Gastronomie Gründung Beratung`);
   }
-  if (haystack.includes("beauty") || haystack.includes("friseur") || haystack.includes("kosmetik")) {
+  if (
+    haystack.includes("beauty") ||
+    haystack.includes("friseur") ||
+    haystack.includes("kosmetik")
+  ) {
     queries.push(`${place}Handwerkskammer Friseur Gründung Ansprechpartner`);
     queries.push(`${place}Gewerbeamt Friseursalon anmelden`);
   }
-  if (text.includes("ihk") || haystack.includes("handel") || haystack.includes("agentur") || haystack.includes("beratung") || (wantsAuthorities && !isHandwerk)) {
+  if (
+    text.includes("ihk") ||
+    haystack.includes("handel") ||
+    haystack.includes("agentur") ||
+    haystack.includes("beratung") ||
+    (wantsAuthorities && !isHandwerk)
+  ) {
     queries.push(`${place}IHK Existenzgründung Ansprechpartner`);
     queries.push(`${place}IHK Gründungsberatung Kontakt`);
   }
-  if (wantsAuthorities || text.includes("gewerbe") || text.includes("anmeld") || text.includes("amt") || text.includes("ämter") || text.includes("aemter") || text.includes("behörde") || text.includes("behoerde")) {
+  if (
+    wantsAuthorities ||
+    text.includes("gewerbe") ||
+    text.includes("anmeld") ||
+    text.includes("amt") ||
+    text.includes("ämter") ||
+    text.includes("aemter") ||
+    text.includes("behörde") ||
+    text.includes("behoerde")
+  ) {
     queries.push(`${place}Gewerbeamt Gewerbeanmeldung Ansprechpartner`);
     queries.push(`${place}Stadt Gewerbe anmelden Kontakt`);
   }
-  if (wantsAuthorities || text.includes("finanzamt") || text.includes("steuernummer") || text.includes("steuer")) {
+  if (
+    wantsAuthorities ||
+    text.includes("finanzamt") ||
+    text.includes("steuernummer") ||
+    text.includes("steuer")
+  ) {
     queries.push(`${place}Finanzamt Existenzgründung steuerliche Erfassung Ansprechpartner`);
   }
-  if (isHandwerk || text.includes("berufsgenossenschaft") || text.includes("versicherung") || text.includes("bg ")) {
+  if (
+    isHandwerk ||
+    text.includes("berufsgenossenschaft") ||
+    text.includes("versicherung") ||
+    text.includes("bg ")
+  ) {
     queries.push(`${ctx.idea || ctx.venture_term || ""} Berufsgenossenschaft Gründer anmelden`);
   }
 
@@ -376,15 +439,26 @@ function buildResearchQueries(ctx: FounderContext, message: string): string[] {
   // Netzbetreiber-Eintragung (Elektro/SHK), Versicherungen, BG — echte Quellen
   // statt Modellwissen.
   if (isFoundingDutiesQuestion(message)) {
-    const trade = (ctx.idea || ctx.copilot_context || ctx.industry || "").split(/[,.—-]/)[0].trim().slice(0, 40);
+    const trade = (ctx.idea || ctx.copilot_context || ctx.industry || "")
+      .split(/[,.—-]/)[0]
+      .trim()
+      .slice(0, 40);
     if (isHandwerk) {
       queries.push(`${trade || "Handwerk"} Meisterpflicht Anlage A Handwerksordnung`);
       queries.push(`${place}Handwerksrolle eintragen Voraussetzungen HWK`);
     }
-    if (/elektro|elektrik|elektroniker|shk|installateur|sanitär|sanitaer|heizung|klima|gas|wasser/.test(haystack)) {
-      queries.push(`${place}Installateurverzeichnis Netzbetreiber eintragen Elektro Voraussetzungen`);
+    if (
+      /elektro|elektrik|elektroniker|shk|installateur|sanitär|sanitaer|heizung|klima|gas|wasser/.test(
+        haystack,
+      )
+    ) {
+      queries.push(
+        `${place}Installateurverzeichnis Netzbetreiber eintragen Elektro Voraussetzungen`,
+      );
     }
-    queries.push(`${trade || ctx.venture_term || "Gründung"} selbstständig Pflichtversicherungen Betriebshaftpflicht`);
+    queries.push(
+      `${trade || ctx.venture_term || "Gründung"} selbstständig Pflichtversicherungen Betriebshaftpflicht`,
+    );
     queries.push(`${trade || "Gründer"} Berufsgenossenschaft anmelden Pflicht`);
   }
 
@@ -392,7 +466,10 @@ function buildResearchQueries(ctx: FounderContext, message: string): string[] {
     queries.push(`${place}${ctx.venture_term || "Gründung"} anmelden Ansprechpartner`);
   }
 
-  return [...new Set(queries.map((q) => q.replace(/\s+/g, " ").trim()).filter(Boolean))].slice(0, 5);
+  return [...new Set(queries.map((q) => q.replace(/\s+/g, " ").trim()).filter(Boolean))].slice(
+    0,
+    5,
+  );
 }
 
 function sourceScore(source: WebSource): number {
@@ -401,9 +478,17 @@ function sourceScore(source: WebSource): number {
   let score = 0;
   if (url.includes(".de")) score += 1;
   if (url.includes("ihk.de") || title.includes("ihk")) score += 5;
-  if (url.includes("handwerkskammer") || url.includes("hwk") || title.includes("handwerkskammer") || title.includes("hwk")) score += 5;
-  if (url.includes("stadt") || url.includes("serviceportal") || title.includes("gewerbeamt")) score += 4;
-  if (title.includes("ansprechpartner") || title.includes("kontakt") || title.includes("beratung")) score += 2;
+  if (
+    url.includes("handwerkskammer") ||
+    url.includes("hwk") ||
+    title.includes("handwerkskammer") ||
+    title.includes("hwk")
+  )
+    score += 5;
+  if (url.includes("stadt") || url.includes("serviceportal") || title.includes("gewerbeamt"))
+    score += 4;
+  if (title.includes("ansprechpartner") || title.includes("kontakt") || title.includes("beratung"))
+    score += 2;
   if (url.includes("facebook") || url.includes("instagram") || url.includes("youtube")) score -= 5;
   return score;
 }
@@ -416,19 +501,21 @@ async function searchWeb(query: string): Promise<WebSource[]> {
     url.searchParams.set("count", "5");
     const res = await fetch(url, {
       headers: {
-        "Accept": "application/json",
+        Accept: "application/json",
         "X-Subscription-Token": braveKey,
       },
     });
     if (res.ok) {
       const data = await res.json();
       return ((data?.web?.results ?? []) as Array<Record<string, unknown>>)
-        .map((item) => normalizeSource({
-          type: "Web",
-          title: item.title,
-          url: item.url,
-          snippet: item.description,
-        }))
+        .map((item) =>
+          normalizeSource({
+            type: "Web",
+            title: item.title,
+            url: item.url,
+            snippet: item.description,
+          }),
+        )
         .filter((item): item is WebSource => Boolean(item));
     }
   }
@@ -480,7 +567,8 @@ async function searchWeb(query: string): Promise<WebSource[]> {
   if (!htmlRes.ok) return [];
   const html = await htmlRes.text();
   const results: WebSource[] = [];
-  const re = /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?(?:<a[^>]+class="result__snippet"[^>]*>([\s\S]*?)<\/a>|<div[^>]+class="result__snippet"[^>]*>([\s\S]*?)<\/div>)?/gi;
+  const re =
+    /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?(?:<a[^>]+class="result__snippet"[^>]*>([\s\S]*?)<\/a>|<div[^>]+class="result__snippet"[^>]*>([\s\S]*?)<\/div>)?/gi;
   for (const match of html.matchAll(re)) {
     const url = normalizeSearchURL(match[1]);
     const title = cleanHTML(match[2] || "");
@@ -508,7 +596,7 @@ async function findWebSources(ctx: FounderContext, message: string): Promise<Web
     queries.map((query) => Promise.race([searchWeb(query), timeout])),
   );
   const sources = groups
-    .flatMap((group) => group.status === "fulfilled" ? group.value : [])
+    .flatMap((group) => (group.status === "fulfilled" ? group.value : []))
     .sort((a, b) => sourceScore(b) - sourceScore(a));
   return mergeSources(sources);
 }
@@ -563,8 +651,8 @@ Deno.serve(async (req) => {
         ? (onboarding.skills as Record<string, unknown>)
         : null;
 
-    // Load founder context — beide Queries parallel (spart einen Roundtrip)
-    const [{ data: contextData }, { data: profile }] = user
+    // Load founder context + Profil + Session-Zusammenfassung parallel (spart Roundtrips)
+    const [{ data: contextData }, { data: profile }, { data: sessionRow }] = user
       ? await Promise.all([
           supabase
             .from("copilot_context")
@@ -574,8 +662,11 @@ Deno.serve(async (req) => {
             .limit(1)
             .single(),
           supabase.from("profiles").select("display_name, founder_type").eq("id", user.id).single(),
+          session_id
+            ? supabase.from("copilot_sessions").select("summary").eq("id", session_id).maybeSingle()
+            : Promise.resolve({ data: null }),
         ])
-      : [{ data: null }, { data: null }];
+      : [{ data: null }, { data: null }, { data: null }];
 
     const ctx: FounderContext = {
       userName: profile?.display_name || stringOrUndefined(onboarding?.userName) || "Founder",
@@ -679,8 +770,14 @@ Deno.serve(async (req) => {
               .select("role, content")
               .eq("session_id", session_id)
               .order("created_at", { ascending: false })
-              .limit(12)
+              .limit(16)
               .then(({ data }) => ((data ?? []) as ChatTurn[]).reverse());
+
+      // Rolling Summary: server-persistiert (Web) oder vom Client mitgeschickt (iOS).
+      const priorSummary =
+        (typeof sessionRow?.summary === "string" && sessionRow.summary) ||
+        (typeof extra.conversation_summary === "string" ? extra.conversation_summary : "") ||
+        "";
 
       // Gemerkte Fakten: serverseitig (raw_context.facts) + clientseitig (extra.memory)
       const serverFacts = Array.isArray(
@@ -690,6 +787,11 @@ Deno.serve(async (req) => {
         : [];
       const clientFacts = Array.isArray(extra.memory) ? (extra.memory as string[]) : [];
       const memory = [...new Set([...serverFacts, ...clientFacts])].slice(0, 20);
+      const mcpConnectors: MCPConnector[] = Array.isArray(extra.mcp_connectors)
+        ? (extra.mcp_connectors as MCPConnector[]).filter(
+            (connector) => connector && typeof connector === "object",
+          )
+        : [];
 
       const surface = typeof extra.surface === "string" ? extra.surface : undefined;
       const [recentCount, history, webSources] = await Promise.all([
@@ -709,9 +811,11 @@ Deno.serve(async (req) => {
         message,
         history,
         memory,
+        priorSummary,
         surface,
         app: extra.app,
         webSources,
+        mcpConnectors,
       });
       const kimiRaw = await callKimiWithFallback(kimiPrompt, "chat", sink, 1200);
       console.log("[KIMI chat raw]", kimiRaw.slice(0, 300));
@@ -735,6 +839,14 @@ Deno.serve(async (req) => {
       const newFacts = (Array.isArray(kimiData.neue_fakten) ? kimiData.neue_fakten : [])
         .filter((f: unknown): f is string => typeof f === "string" && f.trim().length > 3)
         .slice(0, 3);
+
+      // Rolling Summary des Modells übernehmen (Fallback: bisherige behalten).
+      const rawSummary =
+        typeof kimiData.gespraechs_zusammenfassung === "string"
+          ? kimiData.gespraechs_zusammenfassung.trim()
+          : "";
+      const conversationSummary = rawSummary.length > 20 ? rawSummary.slice(0, 1500) : priorSummary;
+
       const sources = mergeSources(
         Array.isArray(kimiData.quellen)
           ? (kimiData.quellen.map(normalizeSource).filter(Boolean) as WebSource[])
@@ -745,7 +857,7 @@ Deno.serve(async (req) => {
       // Persistenz (Kontext, Nachricht, Deadline) läuft NACH der Antwort im
       // Hintergrund — spart 2-3 DB-Roundtrips Wartezeit pro Chat-Nachricht.
       const persistChat = async () => {
-      // Memory-Merge: neue Fakten + Kontext-Updates non-destruktiv persistieren
+        // Memory-Merge: neue Fakten + Kontext-Updates non-destruktiv persistieren
         const ctxUpdates =
           kimiData.kontext_updates && typeof kimiData.kontext_updates === "object"
             ? (kimiData.kontext_updates as Record<string, unknown>)
@@ -776,6 +888,14 @@ Deno.serve(async (req) => {
           });
         }
 
+        // Rolling Summary der Session aktualisieren (Web-Persistenz).
+        if (user && session_id && rawSummary.length > 20 && rawSummary !== priorSummary) {
+          await supabase
+            .from("copilot_sessions")
+            .update({ summary: conversationSummary, summary_updated_at: new Date().toISOString() })
+            .eq("id", session_id);
+        }
+
         // Save assistant message to DB (nur mit User + Session)
         if (user && session_id) {
           await supabase.from("copilot_messages").insert({
@@ -803,8 +923,9 @@ Deno.serve(async (req) => {
       const persistPromise = persistChat().catch((err) =>
         console.error("chat persist failed:", err instanceof Error ? err.message : err),
       );
-      // deno-lint-ignore no-explicit-any
-      const runtime = globalThis as any;
+      const runtime = globalThis as typeof globalThis & {
+        EdgeRuntime?: { waitUntil?: (promise: Promise<unknown>) => void };
+      };
       if (typeof runtime.EdgeRuntime?.waitUntil === "function") {
         runtime.EdgeRuntime.waitUntil(persistPromise);
       }
@@ -817,8 +938,17 @@ Deno.serve(async (req) => {
         "open_screen",
       ]);
       const ALLOWED_SCREENS = new Set([
-        "kanban", "calendar", "swipe", "chats", "documents", "company",
-        "startup", "radar", "events", "guides", "copilot",
+        "kanban",
+        "calendar",
+        "swipe",
+        "chats",
+        "documents",
+        "company",
+        "startup",
+        "radar",
+        "events",
+        "guides",
+        "copilot",
       ]);
       const appActions = (Array.isArray(kimiData.app_aktionen) ? kimiData.app_aktionen : [])
         .filter((a: Record<string, unknown>) => {
@@ -847,6 +977,7 @@ Deno.serve(async (req) => {
         navigation,
         app_actions: appActions,
         new_facts: newFacts,
+        conversation_summary: conversationSummary,
       };
     } else if (task === "plan_generate") {
       const authedUser = requireUser();
@@ -1017,7 +1148,10 @@ Deno.serve(async (req) => {
       // Stage 2: Sonnet writes the actual email
       const sonnetKey = task as keyof typeof SONNET_PROMPTS;
       const sonnetPromptFn = SONNET_PROMPTS[sonnetKey] || SONNET_PROMPTS.chat;
-      const email = await callSonnet(sonnetPromptFn(ctx, String(kimiData.antwort || kimiRaw)), sink);
+      const email = await callSonnet(
+        sonnetPromptFn(ctx, String(kimiData.antwort || kimiRaw)),
+        sink,
+      );
 
       // Save as document
       await supabase.from("copilot_documents").insert({

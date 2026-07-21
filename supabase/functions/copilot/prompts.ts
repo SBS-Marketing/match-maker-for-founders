@@ -27,11 +27,22 @@ export type WebSource = {
   url: string;
   snippet?: string;
 };
+export type MCPConnector = {
+  id?: string;
+  label?: string;
+  category?: string;
+  status?: string;
+  tools?: string[];
+  use_case?: string;
+};
 
 // Plattform-Bereiche, auf die der Co-Pilot aktiv verweisen darf.
 export const ROUTE_CATALOG = [
   { to: "/heute", label: "Heute (Tagesplan)" },
-  { to: "/guides", label: "Guides (Schritt-für-Schritt-Anleitungen für Gründung und Selbstständigkeit)" },
+  {
+    to: "/guides",
+    label: "Guides (Schritt-für-Schritt-Anleitungen für Gründung und Selbstständigkeit)",
+  },
   { to: "/plan", label: "Persönlicher Plan" },
   { to: "/discover", label: "Entdecken (Kontakte, Partner, Deals, lokale Chancen)" },
   { to: "/marketplace", label: "Partner-Marktplatz (Services, Kammern, Berater, Anbieter)" },
@@ -91,13 +102,26 @@ export function webSourcesBlock(sources: WebSource[] = []): string {
     .join("\n");
 }
 
+export function mcpConnectorsBlock(connectors: MCPConnector[] = []): string {
+  if (!connectors.length) return "(keine aktiven MCP-Werkzeuge vom iOS-Client mitgeschickt)";
+  return connectors
+    .slice(0, 10)
+    .map((connector, index) => {
+      const tools = Array.isArray(connector.tools) ? connector.tools.slice(0, 6).join(", ") : "";
+      return `${index + 1}. ${connector.label || connector.id || "MCP-Werkzeug"} (${connector.status || "aktiv"})\n  Kategorie: ${connector.category || "unbekannt"}\n  Tools: ${tools || "nicht angegeben"}\n  Nutzung: ${connector.use_case || "als Kontext-Werkzeug nutzen"}`;
+    })
+    .join("\n");
+}
+
 export type ChatPromptInput = {
   message: string;
   history: ChatTurn[];
   memory: string[];
+  priorSummary?: string; // verdichtete Zusammenfassung älterer Nachrichten dieser Session
   surface?: string; // aktuelle Seite, z.B. "/foerderung/exist-gruenderstipendium"
   app?: unknown;
   webSources?: WebSource[];
+  mcpConnectors?: MCPConnector[];
 };
 
 export type TaskType =
@@ -332,9 +356,11 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
 
     FOUNDER-PROFIL:
     - Name: ${ctx.userName}
-    - Typ: ${ctx.founder_type === "talent"
-      ? "SKILL-ANBIETER — bietet Fähigkeiten an, will (noch) NICHT selbst gründen"
-      : "GRÜNDER — macht sich selbstständig oder führt schon ein Vorhaben"}
+    - Typ: ${
+      ctx.founder_type === "talent"
+        ? "SKILL-ANBIETER — bietet Fähigkeiten an, will (noch) NICHT selbst gründen"
+        : "GRÜNDER — macht sich selbstständig oder führt schon ein Vorhaben"
+    }
     - Branche: ${ctx.industry || "allgemein"} ${ctx.copilot_context ? `— ${ctx.copilot_context}` : ""}
     - ${ctx.venture_term || "Vorhaben"}: ${ctx.idea || "unbekannt"}
     - Rolle: ${ctx.role || "unbekannt"}
@@ -346,7 +372,15 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
     GEMERKTE FAKTEN (aus früheren Gesprächen):
     ${memoryBlock(input.memory)}
 
-    GESPRÄCHSVERLAUF (älteste zuerst):
+    ${
+      input.priorSummary && input.priorSummary.trim()
+        ? `BISHERIGER GESPRÄCHSVERLAUF (verdichtet — der Anfang dieser Session, damit du den
+    ganzen Faden kennst; die letzten Nachrichten stehen unten wörtlich):
+    ${input.priorSummary.trim()}`
+        : ""
+    }
+
+    GESPRÄCHSVERLAUF (letzte Nachrichten wörtlich, älteste zuerst):
     ${historyBlock(input.history)}
 
     AKTUELLE SEITE DES FOUNDERS: ${input.surface || "unbekannt"}
@@ -360,6 +394,21 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
 
     AKTUELLE WEB-RECHERCHE / SCRAPER-TREFFER:
     ${webSourcesBlock(input.webSources)}
+
+    MCP-WERKZEUGE (Profil > MCP-Werkzeuge):
+    ${mcpConnectorsBlock(input.mcpConnectors)}
+
+    - Der native Client schickt aktive MCP-Werkzeuge als Memory-Fakten, z.B. "Aktive MCP-Werkzeuge: ...".
+    - Nutze aktive Werkzeuge konkret in deiner Antwort: sage, welches Werkzeug du als naechstes lesen,
+      durchsuchen, vorbereiten oder aktualisieren wuerdest.
+    - Behaupte niemals, du haettest ein externes Tool wirklich gelesen oder beschrieben, wenn dir kein
+      Ergebnis im Memory, Verlauf oder in Web-Treffern vorliegt. Formuliere dann: "Ich wuerde als
+      naechstes ... pruefen" und fuehre den Founder zur Bestaetigung.
+    - Ist ein noetiges Werkzeug nicht aktiv, gib eine kurze app_aktion open_screen mit screen "profile"
+      oder eine knappe Follow-up-Aktion wie "MCP aktivieren" aus.
+    - Externe Schreibaktionen (Mail senden, Datei aendern, Slack posten, Buchhaltung buchen,
+      Shop aktualisieren, Kalender extern schreiben) IMMER erst bestaetigen lassen. In der Antwort
+      den geplanten Schritt klar benennen, nicht so tun als sei er schon erledigt.
 
     PFLICHTEN-WISSEN DACH (nutze das AKTIV — nie nur "Gewerbe anmelden" sagen):
     - Handwerk: Prüfe IMMER die Meisterpflicht! Zulassungspflichtige Gewerke (Anlage A HwO:
@@ -418,7 +467,7 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
        - {"aktion": "add_calendar_item", "titel": "…", "notiz": "…", "faellig": "z.B. Fr oder 24.07."}
        - {"aktion": "add_kanban_card", "titel": "…", "notiz": "…"}  (legt eine Karte aufs Board)
        - {"aktion": "remember_fact", "titel": "der Fakt als Satz"}
-       - {"aktion": "open_screen", "screen": "kanban|calendar|swipe|chats|documents|company|startup|radar|events|guides|copilot"}
+       - {"aktion": "open_screen", "screen": "kanban|calendar|swipe|chats|documents|company|startup|radar|events|guides|copilot|profile"}
        Der Client zeigt daraus tippbare Aktions-Chips — nichts wird ungefragt ausgeführt.
        Keine Funktionen erfinden, keine anderen Aktions-Namen.
     8. Web-Recherche & NICHT HALLUZINIEREN (höchste Priorität):
@@ -438,6 +487,15 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
     9. Quellen: Wenn du Web-Treffer verwendest, gib in "quellen" NUR Quellen aus der
        Web-Recherche zurück, exakt mit Titel und URL. Keine erfundenen URLs, keine allgemeinen
        Quellen ohne Treffer. Max 5 Quellen.
+    10. Kontinuität & Gedächtnis (WICHTIG — du sollst dich wie ein fester Begleiter anfühlen):
+       - Nutze BISHERIGER GESPRÄCHSVERLAUF + GEMERKTE FAKTEN aktiv. Wiederhole keine Frage, deren
+         Antwort schon im Verlauf oder in den Fakten steht. Beziehe dich auf frühere Entscheidungen
+         ("Du hattest dich für die GmbH entschieden — dann ist der nächste Schritt …").
+       - Aktualisiere in "gespraechs_zusammenfassung" eine fortlaufende Verdichtung des GANZEN
+         Gesprächs: die getroffenen Entscheidungen, offenen Fäden, wichtigen Zahlen/Namen und das
+         aktuelle Ziel. Baue die bisherige verdichtete Zusammenfassung ein und ergänze das Neue.
+         Max ~120 Wörter, Stichpunkt-Stil, faktisch — kein Smalltalk. Diese Zusammenfassung ersetzt
+         später die alten Nachrichten, also muss alles Wichtige darin überleben.
 
     Antworte NUR mit validem JSON:
     {
@@ -449,6 +507,7 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
       "app_aktionen": [{"aktion": "add_calendar_item", "titel": "…", "notiz": "…", "faellig": "Fr"}],
       "neue_fakten": ["Kurzer Fakt 1"],
       "kontext_updates": {},
+      "gespraechs_zusammenfassung": "Fortlaufende Verdichtung des ganzen Gesprächs, max 120 Wörter",
       "neue_deadline_erkannt": null
     }
   `;
