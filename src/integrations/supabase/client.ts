@@ -2,34 +2,16 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// Browser: inlined at build time. SSR fallback to process.env so the Worker
-// runtime can construct the client even if Vite did not inline VITE_* for the
-// SSR target.
-// Hardcoded fallbacks (URL + anon key are public) so the browser bundle never
-// crashes with "supabaseUrl is required" when env inlining was skipped.
-const FALLBACK_URL = 'https://urjpyhyezrwhwgnkkxjv.supabase.co';
-const FALLBACK_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyanB5aHllenJ3aHdnbmtreGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTU3MTUsImV4cCI6MjA5NDUzMTcxNX0.WrORjtWlNkp3bJmMOeZYxZz2dfZ39ycNaywGIVpUIZY';
-
-const SUPABASE_URL =
-  import.meta.env.VITE_SUPABASE_URL ||
-  (typeof process !== 'undefined' ? process.env?.SUPABASE_URL ?? process.env?.VITE_SUPABASE_URL : undefined) ||
-  FALLBACK_URL;
-const SUPABASE_PUBLISHABLE_KEY =
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  (typeof process !== 'undefined'
-    ? process.env?.SUPABASE_PUBLISHABLE_KEY ?? process.env?.VITE_SUPABASE_PUBLISHABLE_KEY
-    : undefined) ||
-  FALLBACK_KEY;
-
+const SUPABASE_URL = "https://rzmcoxnfcpqqyxgkafwk.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6bWNveG5mY3BxcXl4Z2thZndrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2NTk1MzAsImV4cCI6MjEwMDIzNTUzMH0.9hT70TrLAQks_m3ZUmoH8daRRhHyZ-kP50_-5kIgea0";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL as string, SUPABASE_PUBLISHABLE_KEY as string, {
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-    persistSession: typeof window !== 'undefined',
+    storage: typeof window !== 'undefined' ? localStorage : undefined,
+    persistSession: true,
     autoRefreshToken: true,
   }
 });
