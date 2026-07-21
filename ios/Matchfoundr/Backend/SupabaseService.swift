@@ -4,8 +4,10 @@
 import Foundation
 
 enum SupabaseConfig {
-    static let projectURL = URL(string: "https://urjpyhyezrwhwgnkkxjv.supabase.co")!
-    static let anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyanB5aHllenJ3aHdnbmtreGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTU3MTUsImV4cCI6MjA5NDUzMTcxNX0.WrORjtWlNkp3bJmMOeZYxZz2dfZ39ycNaywGIVpUIZY"
+    // Supabase-Projekt „Matchfoundr" (rzmcoxnfcpqqyxgkafwk, eu-central-1).
+    // Umzug von der Lovable-Cloud-Instanz am 21.07.2026.
+    static let projectURL = URL(string: "https://rzmcoxnfcpqqyxgkafwk.supabase.co")!
+    static let anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6bWNveG5mY3BxcXl4Z2thZndrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2NTk1MzAsImV4cCI6MjEwMDIzNTUzMH0.9hT70TrLAQks_m3ZUmoH8daRRhHyZ-kP50_-5kIgea0"
 
     static var restURL: URL {
         projectURL.appending(path: "rest/v1")
@@ -298,6 +300,48 @@ struct BackendRequestError: LocalizedError {
     }
 }
 
+private struct IntegrationConnectRequest: Encodable {
+    let provider: String
+    let returnTo: String
+}
+
+struct IntegrationConnectResponse: Decodable {
+    let url: URL
+}
+
+private struct IntegrationDisconnectRequest: Encodable {
+    let provider: String
+    let action: String = "disconnect"
+}
+
+struct IntegrationDisconnectResponse: Decodable {
+    let ok: Bool
+}
+
+private struct SupabaseConnectedAccountUpsert: Encodable {
+    let userID: String
+    let provider: String
+    let status: String
+    let accountLabel: String?
+
+    enum CodingKeys: String, CodingKey {
+        case userID = "user_id"
+        case provider
+        case status
+        case accountLabel = "account_label"
+    }
+}
+
+private struct MorningReportRunRequest: Encodable {
+    let force: Bool
+}
+
+struct MorningReportRunResponse: Decodable {
+    let ok: Bool
+    let users: Int
+    let results: [String: String]?
+}
+
 struct SupabaseService {
     private static let liveSession: URLSession = {
         let configuration = URLSessionConfiguration.default
@@ -395,6 +439,59 @@ struct SupabaseService {
             accessToken: SupabaseConfig.anonKey
         )
         return rows.map { $0.toEvent() }
+    }
+
+    func fetchConnectedAccounts() async throws -> [ConnectedAccount] {
+        try await rest(
+            "connected_accounts",
+            query: [
+                URLQueryItem(name: "select", value: "provider,status,account_label,updated_at"),
+                URLQueryItem(name: "order", value: "updated_at.desc")
+            ]
+        )
+    }
+
+    func connectIntegration(provider: IntegrationProvider) async throws -> IntegrationConnectResponse {
+        try await invokeFunction(
+            "connect-google",
+            body: IntegrationConnectRequest(
+                provider: provider.rawValue,
+                returnTo: "matchfoundr://integration-callback"
+            )
+        )
+    }
+
+    func requestWhatsAppConnection(userID: String) async throws {
+        let body = SupabaseConnectedAccountUpsert(
+            userID: userID,
+            provider: IntegrationProvider.whatsapp.rawValue,
+            status: "pending",
+            accountLabel: "Gateway angefragt"
+        )
+        try await upsert("connected_accounts", body: body, onConflict: "user_id,provider")
+    }
+
+    func disconnectIntegration(provider: IntegrationProvider) async throws -> IntegrationDisconnectResponse {
+        try await invokeFunction(
+            "connect-google",
+            body: IntegrationDisconnectRequest(provider: provider.rawValue)
+        )
+    }
+
+    func fetchTodayMorningReport() async throws -> MorningReport? {
+        let rows: [MorningReport] = try await rest(
+            "daily_reports",
+            query: [
+                URLQueryItem(name: "select", value: "id,report_date,content,created_at"),
+                URLQueryItem(name: "report_date", value: "eq.\(Self.todayKey)"),
+                URLQueryItem(name: "limit", value: "1")
+            ]
+        )
+        return rows.first
+    }
+
+    func runMorningReportNow(force: Bool = true) async throws -> MorningReportRunResponse {
+        try await invokeFunction("morning-report", body: MorningReportRunRequest(force: force))
     }
 
     func fetchProfile(userID: String) async throws -> SupabaseProfileRow? {
@@ -594,6 +691,15 @@ struct SupabaseService {
             .split(separator: " ")
             .joined(separator: " ")
         return String(compact.prefix(320))
+    }
+
+    private static var todayKey: String {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "de_DE")
+        formatter.timeZone = TimeZone(identifier: "Europe/Berlin")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: .now)
     }
 }
 
