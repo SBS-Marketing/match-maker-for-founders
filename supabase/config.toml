@@ -1,1 +1,7 @@
 project_id = "rzmcoxnfcpqqyxgkafwk"
+
+[functions.copilot]
+verify_jwt = false
+
+[functions.migrate-helper]
+verify_jwt = false
