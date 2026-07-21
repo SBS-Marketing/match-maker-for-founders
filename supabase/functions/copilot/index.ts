@@ -847,12 +847,9 @@ Deno.serve(async (req) => {
           : "";
       const conversationSummary = rawSummary.length > 20 ? rawSummary.slice(0, 1500) : priorSummary;
 
-      const sources = mergeSources(
-        Array.isArray(kimiData.quellen)
-          ? (kimiData.quellen.map(normalizeSource).filter(Boolean) as WebSource[])
-          : [],
-        webSources,
-      );
+      const sources = Array.isArray(kimiData.quellen)
+        ? mergeSources(kimiData.quellen.map(normalizeSource).filter(Boolean) as WebSource[])
+        : [];
 
       // Persistenz (Kontext, Nachricht, Deadline) läuft NACH der Antwort im
       // Hintergrund — spart 2-3 DB-Roundtrips Wartezeit pro Chat-Nachricht.

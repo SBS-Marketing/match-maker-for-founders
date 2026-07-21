@@ -660,7 +660,7 @@ final class AppState: ObservableObject {
         let activeLinks = mcpConnectorLinks.filter(\.isConnected)
         guard !activeLinks.isEmpty else {
             return [
-                "MCP-Werkzeuge: noch keine aktiv. Empfohlen im Profil: Web/Kammern & Aemter, Google Drive, Buchhaltung, Google Business, Shop, Notion, Slack, GitHub."
+                "MCP-Werkzeuge existieren im Profil, aber es ist noch keines aktiv. Erwaehne sie nur, wenn eine konkrete externe Verbindung fuer die aktuelle Aufgabe wirklich hilft oder fehlt."
             ]
         }
 
@@ -668,8 +668,8 @@ final class AppState: ObservableObject {
             "\(link.connectorID.label) -> \(link.connectorID.copilotUseCase)"
         }.joined(separator: "; ")
         return [
-            "Aktive MCP-Werkzeuge: \(active). Nutze diese Werkzeuge fuer Kontext, Quellen, Unterlagen und konkrete Vorbereitung.",
-            "MCP-Sicherheitsregel: Lesen/Recherchieren darf vorgeschlagen werden; externe Schreibaktionen, Sends, Posts, Datei-Aenderungen und Buchungen immer erst als bestaetigungspflichtige Aktion formulieren."
+            "Aktive MCP-Werkzeuge als stiller Kontext: \(active). Nutze sie nur sichtbar, wenn sie fuer die konkrete Frage echten Mehrwert liefern.",
+            "MCP-Chip-Regel: Keine Connector-, Quellen- oder Aktions-Chips nur weil Werkzeuge existieren. Chips nur bei konkreter Entscheidung, Bestaetigung, Navigation oder Quellenbezug. Externe Schreibaktionen immer bestaetigen lassen."
         ]
     }
 

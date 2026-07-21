@@ -71,7 +71,7 @@ struct CopilotAppContext: Encodable {
             "web_research_sources", "find_authority_contacts",
             "use_mcp_connector", "mcp_read_context", "mcp_prepare_action", "mcp_request_confirmation"
         ],
-        rule: "Wenn eine Antwort eine App-Aktion braucht, formuliere sie konkret und gib passende navigation/follow_up_aktionen. Bei Fragen zu Kammer, Amt, Genehmigung oder Ansprechpartnern nutze Web-Recherche und gib sources zurueck; der native Client zeigt daraus Quellen-Chips. MCP-Werkzeuge stehen im Memory als aktiv oder inaktiv: nutze nur aktive Werkzeuge konkret, nenne bei fehlendem Werkzeug Profil > MCP-Werkzeuge, und verlange vor externen Schreibaktionen immer eine Bestaetigung."
+        rule: "Wenn eine Antwort eine App-Aktion braucht, formuliere sie konkret und gib passende navigation/follow_up_aktionen nur dann, wenn sie jetzt wirklich helfen. Bei Fragen zu Kammer, Amt, Genehmigung oder Ansprechpartnern nutze Web-Recherche und gib sources zurueck, wenn die Quellen konkret verwendet wurden. MCP-Werkzeuge sind stille Faehigkeiten: nutze sie nur bei echtem Kontextnutzen, nenne fehlende Verknuepfungen nur bei Bedarf, und verlange vor externen Schreibaktionen immer eine Bestaetigung."
     )
 }
 

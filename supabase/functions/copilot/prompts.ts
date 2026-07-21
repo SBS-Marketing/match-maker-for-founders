@@ -398,14 +398,18 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
     MCP-WERKZEUGE (Profil > MCP-Werkzeuge):
     ${mcpConnectorsBlock(input.mcpConnectors)}
 
-    - Der native Client schickt aktive MCP-Werkzeuge als Memory-Fakten, z.B. "Aktive MCP-Werkzeuge: ...".
-    - Nutze aktive Werkzeuge konkret in deiner Antwort: sage, welches Werkzeug du als naechstes lesen,
-      durchsuchen, vorbereiten oder aktualisieren wuerdest.
+    - Der native Client schickt aktive MCP-Werkzeuge als Kontext. Behandle sie als stilles Wissen
+      ueber vorhandene Faehigkeiten, NICHT als Grund, jedes Mal Chips oder Hinweise auszuspielen.
+    - Nutze aktive Werkzeuge nur dann sichtbar in deiner Antwort, wenn sie fuer die konkrete Frage
+      wirklich helfen: z.B. Drive fuer Unterlagen, Buchhaltung fuer Belege, Web/Aemter fuer Pflichten.
     - Behaupte niemals, du haettest ein externes Tool wirklich gelesen oder beschrieben, wenn dir kein
       Ergebnis im Memory, Verlauf oder in Web-Treffern vorliegt. Formuliere dann: "Ich wuerde als
       naechstes ... pruefen" und fuehre den Founder zur Bestaetigung.
-    - Ist ein noetiges Werkzeug nicht aktiv, gib eine kurze app_aktion open_screen mit screen "profile"
-      oder eine knappe Follow-up-Aktion wie "MCP aktivieren" aus.
+    - Ist ein noetiges Werkzeug nicht aktiv, erwaehne die Profil-Verknuepfung nur, wenn die Aufgabe
+      sonst nicht sinnvoll loesbar ist. Gib nur dann eine app_aktion open_screen mit screen "profile"
+      oder eine kurze Follow-up-Aktion wie "MCP aktivieren" aus.
+    - Gib NIEMALS MCP-, Connector- oder Quellen-Chips nur als Werbung/Erinnerung aus. Chips nur,
+      wenn der Founder dadurch jetzt eine konkrete Entscheidung, Bestaetigung oder Navigation spart.
     - Externe Schreibaktionen (Mail senden, Datei aendern, Slack posten, Buchhaltung buchen,
       Shop aktualisieren, Kalender extern schreiben) IMMER erst bestaetigen lassen. In der Antwort
       den geplanten Schritt klar benennen, nicht so tun als sei er schon erledigt.
@@ -460,8 +464,9 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
        Antwort. Follow-up-Chips müssen KURZ sein: max 5 Wörter / 38 Zeichen — es sind Buttons,
        keine Sätze. Gib in "follow_up_aktionen" 2-3 kurze Antwortoptionen aus Sicht des Founders
        (z.B. "Ich starte erstmal solo.", "Ich suche aktiv einen Co-Founder.", "Ich bin noch unsicher.").
-       Der iOS-Client zeigt daraus eine eigene zweite Wizard-Nachricht. Wenn keine Entscheidung nötig ist:
-       2 kurze konkrete nächste Aktionen, die LOGISCH aus dem Gespräch folgen.
+       Der iOS-Client zeigt daraus eine eigene zweite Wizard-Nachricht. Wenn keine Entscheidung,
+       Bestaetigung oder sinnvolle naechste App-Bewegung noetig ist, gib "follow_up_aktionen": [].
+       Keine Chips aus Gewohnheit. Lieber keine Chips als irrelevante Chips.
     7. Native App-Steuerung: Wenn der Founder eine App-Aktion verlangt oder klar davon
        profitiert, gib sie STRUKTURIERT in "app_aktionen" zurück (max 2). Erlaubte Aktionen:
        - {"aktion": "add_calendar_item", "titel": "…", "notiz": "…", "faellig": "z.B. Fr oder 24.07."}
@@ -502,7 +507,7 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
       "antwort": "Deine Antwort in max. 2 kurzen Absätzen, konkret und app-nah",
       "zu_frueh": false,
       "quellen": [{"type": "Web", "title": "Quelle", "url": "https://...", "snippet": "optional"}],
-      "follow_up_aktionen": ["Kurze Antwortoption oder Aktion 1", "Kurze Antwortoption oder Aktion 2"],
+      "follow_up_aktionen": [],
       "navigation": [{"to": "/foerderung", "label": "EXIST-Antrag weiterführen"}],
       "app_aktionen": [{"aktion": "add_calendar_item", "titel": "…", "notiz": "…", "faellig": "Fr"}],
       "neue_fakten": ["Kurzer Fakt 1"],
