@@ -318,6 +318,25 @@ struct IntegrationDisconnectResponse: Decodable {
     let ok: Bool
 }
 
+private struct MCPConnectorRequest: Encodable {
+    let connectorID: String
+    let action: String
+    let returnTo: String?
+
+    enum CodingKeys: String, CodingKey {
+        case connectorID = "connector_id"
+        case action
+        case returnTo
+    }
+}
+
+struct MCPConnectorResponse: Decodable {
+    let ok: Bool?
+    let url: URL?
+    let status: String?
+    let message: String?
+}
+
 private struct SupabaseConnectedAccountUpsert: Encodable {
     let userID: String
     let provider: String
@@ -448,6 +467,38 @@ struct SupabaseService {
                 URLQueryItem(name: "select", value: "provider,status,account_label,updated_at"),
                 URLQueryItem(name: "order", value: "updated_at.desc")
             ]
+        )
+    }
+
+    func fetchMCPConnections() async throws -> [MCPConnectorLink] {
+        try await rest(
+            "mcp_connections",
+            query: [
+                URLQueryItem(name: "select", value: "connector_id,status,account_label,connected_at,updated_at,note:metadata->>note"),
+                URLQueryItem(name: "order", value: "updated_at.desc")
+            ]
+        )
+    }
+
+    func connectMCPConnector(_ connector: MCPConnectorID) async throws -> MCPConnectorResponse {
+        try await invokeFunction(
+            "mcp-connect",
+            body: MCPConnectorRequest(
+                connectorID: connector.rawValue,
+                action: "connect",
+                returnTo: "matchfoundr://integration-callback"
+            )
+        )
+    }
+
+    func disconnectMCPConnector(_ connector: MCPConnectorID) async throws -> MCPConnectorResponse {
+        try await invokeFunction(
+            "mcp-connect",
+            body: MCPConnectorRequest(
+                connectorID: connector.rawValue,
+                action: "disconnect",
+                returnTo: nil
+            )
         )
     }
 

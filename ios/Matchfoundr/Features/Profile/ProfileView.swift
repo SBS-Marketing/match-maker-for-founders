@@ -44,6 +44,7 @@ struct ProfileView: View {
                         MSectionHead(text: "Verknüpfungen", action: "Aktualisieren") {
                             Task {
                                 await state.refreshConnectedAccounts()
+                                await state.refreshMCPConnectors()
                                 await state.refreshMorningReport()
                             }
                         }
@@ -82,6 +83,7 @@ struct ProfileView: View {
         .tint(MF.emberDeep)
         .task {
             await state.refreshConnectedAccounts(showLoading: false)
+            await state.refreshMCPConnectors(showLoading: false)
             await state.refreshMorningReport(showLoading: false)
         }
         .confirmationDialog("Abmelden?", isPresented: $confirmingSignOut, titleVisibility: .visible) {
@@ -554,6 +556,7 @@ struct ProfileView: View {
     private func mcpConnectorRow(_ connector: MCPConnectorID) -> some View {
         let link = state.mcpLink(for: connector)
         let isActive = link?.isConnected == true
+        let isBusy = state.mcpBusyConnector == connector
         let hue = MF.services[connector.tintKey] ?? MF.services["capital"]!
         return HStack(alignment: .top, spacing: 12) {
             Image(systemName: connector.icon)
@@ -569,7 +572,7 @@ struct ProfileView: View {
                         .font(.system(size: 14.3, weight: .bold))
                         .foregroundStyle(MF.ink)
                         .lineLimit(1)
-                    Text(isActive ? "aktiv" : connector.category)
+                    Text(link?.statusLabel ?? connector.category)
                         .font(.system(size: 10.5, weight: .bold))
                         .foregroundStyle(isActive ? hue.ink : MF.faint)
                         .padding(.horizontal, 7)
@@ -578,7 +581,7 @@ struct ProfileView: View {
                         .clipShape(Capsule())
                 }
 
-                Text(connector.detail)
+                Text(link?.displayLabel ?? connector.detail)
                     .font(.system(size: 12.2, weight: .medium))
                     .foregroundStyle(MF.smoke)
                     .lineLimit(2)
@@ -599,17 +602,32 @@ struct ProfileView: View {
             Spacer(minLength: 8)
             Button {
                 Haptics.tap()
-                state.toggleMCPConnector(connector)
+                Task {
+                    if link != nil {
+                        await state.disconnectMCPConnector(connector)
+                    } else if let url = await state.mcpConnectURL(for: connector) {
+                        openURL(url)
+                    }
+                }
             } label: {
-                Image(systemName: isActive ? "xmark" : "plus")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(isActive ? hue.ink : .white)
-                    .frame(width: 34, height: 34)
-                    .background(isActive ? AnyShapeStyle(hue.tint) : AnyShapeStyle(hue.hue))
-                    .clipShape(Capsule())
+                Group {
+                    if isBusy {
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(link == nil ? .white : hue.ink)
+                    } else {
+                        Image(systemName: link != nil ? "xmark" : "link")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                }
+                .foregroundStyle(link != nil ? hue.ink : .white)
+                .frame(width: 34, height: 34)
+                .background(link != nil ? AnyShapeStyle(hue.tint) : AnyShapeStyle(hue.hue))
+                .clipShape(Capsule())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(isActive ? "\(connector.label) trennen" : "\(connector.label) aktivieren")
+            .disabled(isBusy)
+            .accessibilityLabel(link != nil ? "\(connector.label) trennen" : "\(connector.label) verbinden")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 12)

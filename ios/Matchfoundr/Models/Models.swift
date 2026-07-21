@@ -1135,13 +1135,74 @@ enum MCPConnectorID: String, Codable, CaseIterable, Identifiable, Hashable {
 struct MCPConnectorLink: Identifiable, Codable, Hashable {
     let connectorID: MCPConnectorID
     var status: String
+    var accountLabel: String?
     var connectedAt: Date?
+    var updatedAt: Date?
     var note: String?
 
     var id: String { connectorID.id }
     var isConnected: Bool { status == "connected" }
+    var isPending: Bool { status == "pending" || status == "setup_required" }
     var statusLabel: String {
-        isConnected ? "aktiv" : status
+        if isConnected { return "aktiv" }
+        if status == "setup_required" { return "Setup fehlt" }
+        if status == "pending" { return "wartet" }
+        if status == "error" { return "Fehler" }
+        return status
+    }
+
+    var displayLabel: String {
+        let label = accountLabel?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !label.isEmpty { return label }
+        let note = note?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return note.isEmpty ? connectorID.detail : note
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case connectorID = "connector_id"
+        case legacyConnectorID = "connectorID"
+        case status
+        case accountLabel = "account_label"
+        case connectedAt = "connected_at"
+        case updatedAt = "updated_at"
+        case note
+    }
+
+    init(
+        connectorID: MCPConnectorID,
+        status: String,
+        accountLabel: String? = nil,
+        connectedAt: Date? = nil,
+        updatedAt: Date? = nil,
+        note: String? = nil
+    ) {
+        self.connectorID = connectorID
+        self.status = status
+        self.accountLabel = accountLabel
+        self.connectedAt = connectedAt
+        self.updatedAt = updatedAt
+        self.note = note
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        connectorID = try container.decodeIfPresent(MCPConnectorID.self, forKey: .connectorID)
+            ?? container.decode(MCPConnectorID.self, forKey: .legacyConnectorID)
+        status = try container.decode(String.self, forKey: .status)
+        accountLabel = try container.decodeIfPresent(String.self, forKey: .accountLabel)
+        connectedAt = try container.decodeIfPresent(Date.self, forKey: .connectedAt)
+        updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt)
+        note = try container.decodeIfPresent(String.self, forKey: .note)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(connectorID, forKey: .connectorID)
+        try container.encode(status, forKey: .status)
+        try container.encodeIfPresent(accountLabel, forKey: .accountLabel)
+        try container.encodeIfPresent(connectedAt, forKey: .connectedAt)
+        try container.encodeIfPresent(updatedAt, forKey: .updatedAt)
+        try container.encodeIfPresent(note, forKey: .note)
     }
 }
 

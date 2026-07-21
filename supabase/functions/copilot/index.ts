@@ -14,6 +14,7 @@ import {
   type ChatTurn,
   type FounderContext,
   type MCPConnector,
+  type MCPLiveContext,
   type TaskType,
   type WebSource,
 } from "./prompts.ts";
@@ -601,6 +602,495 @@ async function findWebSources(ctx: FounderContext, message: string): Promise<Web
   return mergeSources(sources);
 }
 
+type MCPConnectionRow = {
+  connector_id: string;
+  status: string;
+  account_label?: string | null;
+  metadata?: Record<string, unknown> | null;
+};
+
+type MCPTokenRow = {
+  connector_id: string;
+  access_token: string;
+  refresh_token?: string | null;
+  token_type?: string | null;
+  scope?: string | null;
+  expires_at?: string | null;
+  metadata?: Record<string, unknown> | null;
+};
+
+const MCP_LIVE_FETCH_MS = 2_200;
+const MCP_LIVE_BUDGET_MS = 4_800;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function hasAny(text: string, needles: string[]): boolean {
+  return needles.some((needle) => text.includes(needle));
+}
+
+function connectorLabel(connectorID: string): string {
+  const labels: Record<string, string> = {
+    authorities: "Kammern & Aemter",
+    google_drive: "Google Drive",
+    notion: "Notion",
+    slack: "Slack",
+    github: "GitHub",
+    commerce: "Shop/Commerce",
+    accounting: "Buchhaltung",
+    google_business: "Google Business",
+  };
+  return labels[connectorID] ?? connectorID;
+}
+
+function isConnectorRelevant(connectorID: string, ctx: FounderContext, message: string): boolean {
+  const text = ` ${(message || "").toLowerCase()} `;
+  switch (connectorID) {
+    case "authorities":
+      return needsWebResearch(ctx, message);
+    case "google_drive":
+      return hasAny(text, [
+        "drive",
+        "datei",
+        "dateien",
+        "dokument",
+        "dokumente",
+        "unterlage",
+        "unterlagen",
+        "pdf",
+        "businessplan",
+        "finanzplan",
+        "pitch",
+        "vertrag",
+        "angebot",
+      ]);
+    case "notion":
+      return hasAny(text, ["notion", "wiki", "notiz", "notizen", "checkliste", "doku", "roadmap"]);
+    case "slack":
+      return hasAny(text, [
+        "slack",
+        "team",
+        "channel",
+        "broadcast",
+        "nachricht",
+        "nachrichten",
+        "briefing",
+        "standup",
+      ]);
+    case "github":
+      return hasAny(text, [
+        "github",
+        "repo",
+        "repository",
+        "issue",
+        "code",
+        "website",
+        "deploy",
+        "bug",
+        "fehler",
+        "commit",
+        "pull request",
+      ]);
+    case "commerce":
+      return hasAny(text, [
+        "shop",
+        "shopify",
+        "woocommerce",
+        "produkt",
+        "produkte",
+        "bestellung",
+        "umsatz",
+        "kunde",
+      ]);
+    case "accounting":
+      return hasAny(text, [
+        "buchhaltung",
+        "rechnung",
+        "rechnungen",
+        "beleg",
+        "belege",
+        "lexoffice",
+        "sevdesk",
+        "datev",
+        "steuer",
+        "ust",
+        "cashflow",
+      ]);
+    case "google_business":
+      return hasAny(text, [
+        "google business",
+        "business profile",
+        "maps",
+        "bewertung",
+        "bewertungen",
+        "rezension",
+        "rezensionen",
+        "oeffnungszeiten",
+        "öffnungszeiten",
+        "lokal",
+        "standort",
+      ]);
+    default:
+      return false;
+  }
+}
+
+function shortDate(value: unknown): string {
+  if (typeof value !== "string" || !value) return "unbekannt";
+  return value.slice(0, 10);
+}
+
+function tokenExpired(token: MCPTokenRow): boolean {
+  if (!token.expires_at) return false;
+  return new Date(token.expires_at).getTime() <= Date.now() + 60_000;
+}
+
+async function fetchJSON(
+  url: string | URL,
+  init: RequestInit = {},
+  timeoutMs = MCP_LIVE_FETCH_MS,
+): Promise<unknown> {
+  const controller = new AbortController();
+  const timeoutID = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...init, signal: controller.signal });
+    const text = await res.text();
+    const data = text ? parseJSONLoose(text) : null;
+    if (!res.ok) throw new Error(`${res.status}: ${text.slice(0, 180)}`);
+    return data;
+  } finally {
+    clearTimeout(timeoutID);
+  }
+}
+
+async function refreshGoogleToken(
+  supabase: ReturnType<typeof createClient>,
+  userID: string,
+  token: MCPTokenRow,
+): Promise<MCPTokenRow | null> {
+  if (!token.refresh_token) return null;
+  const clientID = Deno.env.get("GOOGLE_CLIENT_ID");
+  const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET");
+  if (!clientID || !clientSecret) return null;
+
+  try {
+    const data = await fetchJSON(
+      "https://oauth2.googleapis.com/token",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: clientID,
+          client_secret: clientSecret,
+          refresh_token: token.refresh_token,
+          grant_type: "refresh_token",
+        }),
+      },
+      3_000,
+    );
+    if (!isRecord(data) || typeof data.access_token !== "string") return null;
+    const expiresAt =
+      typeof data.expires_in === "number"
+        ? new Date(Date.now() + data.expires_in * 1000).toISOString()
+        : (token.expires_at ?? null);
+    const refreshed: MCPTokenRow = {
+      ...token,
+      access_token: data.access_token,
+      token_type: typeof data.token_type === "string" ? data.token_type : token.token_type,
+      scope: typeof data.scope === "string" ? data.scope : token.scope,
+      expires_at: expiresAt,
+    };
+    await supabase
+      .from("mcp_oauth_tokens")
+      .update({
+        access_token: refreshed.access_token,
+        token_type: refreshed.token_type,
+        scope: refreshed.scope,
+        expires_at: refreshed.expires_at,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", userID)
+      .eq("connector_id", token.connector_id);
+    return refreshed;
+  } catch (err) {
+    console.error("mcp google token refresh failed:", err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
+async function usableToken(
+  supabase: ReturnType<typeof createClient>,
+  userID: string,
+  token: MCPTokenRow | undefined,
+): Promise<MCPTokenRow | null> {
+  if (!token) return null;
+  if (!tokenExpired(token)) return token;
+  if (token.connector_id === "google_drive" || token.connector_id === "google_business") {
+    return await refreshGoogleToken(supabase, userID, token);
+  }
+  return null;
+}
+
+async function loadGoogleDriveContext(accessToken: string): Promise<MCPLiveContext> {
+  const url = new URL("https://www.googleapis.com/drive/v3/files");
+  url.searchParams.set("pageSize", "6");
+  url.searchParams.set("fields", "files(id,name,mimeType,webViewLink,modifiedTime)");
+  url.searchParams.set("q", "trashed=false");
+  url.searchParams.set("orderBy", "modifiedTime desc");
+  const data = await fetchJSON(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  const files = Array.isArray((data as Record<string, unknown> | null)?.files)
+    ? ((data as Record<string, unknown>).files as Record<string, unknown>[])
+    : [];
+  const sources: WebSource[] = [];
+  const facts = files.slice(0, 6).flatMap((file) => {
+    const name = typeof file.name === "string" ? file.name : "";
+    if (!name) return [];
+    const link = typeof file.webViewLink === "string" ? file.webViewLink : "";
+    const source = normalizeSource({ type: "Drive", title: name, url: link });
+    if (source) sources.push(source);
+    return `Datei "${name}" (${typeof file.mimeType === "string" ? file.mimeType : "Datei"}), zuletzt geaendert ${shortDate(file.modifiedTime)}${link ? `. Link: ${link}` : ""}`;
+  });
+  return { connector_id: "google_drive", label: "Google Drive", facts, sources };
+}
+
+async function loadGitHubContext(accessToken: string): Promise<MCPLiveContext> {
+  const data = await fetchJSON("https://api.github.com/user/repos?per_page=6&sort=updated", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/vnd.github+json",
+      "User-Agent": "matchfoundr",
+    },
+  });
+  const repos = Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
+  const sources: WebSource[] = [];
+  const facts = repos.slice(0, 6).flatMap((repo) => {
+    const name = typeof repo.full_name === "string" ? repo.full_name : "";
+    if (!name) return [];
+    const url = typeof repo.html_url === "string" ? repo.html_url : "";
+    const source = normalizeSource({ type: "GitHub", title: name, url });
+    if (source) sources.push(source);
+    const language = typeof repo.language === "string" ? `, Sprache ${repo.language}` : "";
+    return `Repo "${name}"${repo.private === true ? " privat" : ""}, zuletzt ${shortDate(repo.updated_at)}${language}, offene Issues ${Number(repo.open_issues_count ?? 0)}${url ? `. Link: ${url}` : ""}`;
+  });
+  return { connector_id: "github", label: "GitHub", facts, sources };
+}
+
+function notionTitle(page: Record<string, unknown>): string {
+  const properties = isRecord(page.properties) ? page.properties : {};
+  for (const value of Object.values(properties)) {
+    if (!isRecord(value) || !Array.isArray(value.title)) continue;
+    const title = value.title
+      .map((part) => (isRecord(part) && typeof part.plain_text === "string" ? part.plain_text : ""))
+      .join("")
+      .trim();
+    if (title) return title;
+  }
+  return typeof page.object === "string" ? `Notion ${page.object}` : "Notion Treffer";
+}
+
+async function loadNotionContext(accessToken: string): Promise<MCPLiveContext> {
+  const data = await fetchJSON(
+    "https://api.notion.com/v1/search",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+        "Notion-Version": "2022-06-28",
+      },
+      body: JSON.stringify({ page_size: 6 }),
+    },
+    3_000,
+  );
+  const results = Array.isArray((data as Record<string, unknown> | null)?.results)
+    ? ((data as Record<string, unknown>).results as Record<string, unknown>[])
+    : [];
+  const sources: WebSource[] = [];
+  const facts = results.slice(0, 6).flatMap((page) => {
+    const title = notionTitle(page);
+    const url = typeof page.url === "string" ? page.url : "";
+    const source = normalizeSource({ type: "Notion", title, url });
+    if (source) sources.push(source);
+    return `${title}, zuletzt geaendert ${shortDate(page.last_edited_time)}${url ? `. Link: ${url}` : ""}`;
+  });
+  return { connector_id: "notion", label: "Notion", facts, sources };
+}
+
+async function loadSlackContext(accessToken: string): Promise<MCPLiveContext> {
+  const auth = await fetchJSON("https://slack.com/api/auth.test", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  const authData = isRecord(auth) ? auth : {};
+  const facts: string[] = [];
+  if (authData.ok === true) {
+    const team = typeof authData.team === "string" ? authData.team : "Slack Workspace";
+    const user = typeof authData.user === "string" ? authData.user : "verbundener User";
+    facts.push(`Workspace "${team}" ist als ${user} verbunden.`);
+  }
+
+  try {
+    const url = new URL("https://slack.com/api/conversations.list");
+    url.searchParams.set("limit", "6");
+    url.searchParams.set("types", "public_channel");
+    const channels = await fetchJSON(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const names = Array.isArray((channels as Record<string, unknown> | null)?.channels)
+      ? ((channels as Record<string, unknown>).channels as Record<string, unknown>[])
+          .map((channel) => (typeof channel.name === "string" ? `#${channel.name}` : ""))
+          .filter(Boolean)
+      : [];
+    if (names.length) facts.push(`Sichtbare Channels: ${names.slice(0, 6).join(", ")}.`);
+  } catch {
+    // Channel listing is optional; auth.test is enough to prove the connector is live.
+  }
+
+  return { connector_id: "slack", label: "Slack", facts };
+}
+
+async function loadGoogleBusinessContext(accessToken: string): Promise<MCPLiveContext> {
+  try {
+    const data = await fetchJSON("https://mybusinessaccountmanagement.googleapis.com/v1/accounts", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const accounts = Array.isArray((data as Record<string, unknown> | null)?.accounts)
+      ? ((data as Record<string, unknown>).accounts as Record<string, unknown>[])
+      : [];
+    const facts = accounts.slice(0, 5).flatMap((account) => {
+      const name = typeof account.accountName === "string" ? account.accountName : "";
+      const type = typeof account.type === "string" ? account.type : "Google Business Konto";
+      return name ? [`${name} (${type}) ist als Business-Konto verbunden.`] : [];
+    });
+    return {
+      connector_id: "google_business",
+      label: "Google Business",
+      facts: facts.length
+        ? facts
+        : ["Google Business ist verbunden; keine Business-Konten gefunden."],
+    };
+  } catch {
+    return {
+      connector_id: "google_business",
+      label: "Google Business",
+      facts: [
+        "Google Business ist verbunden, aber die Kontodaten konnten gerade nicht gelesen werden.",
+      ],
+    };
+  }
+}
+
+async function loadConnectorContext(
+  supabase: ReturnType<typeof createClient>,
+  userID: string,
+  connection: MCPConnectionRow,
+  token: MCPTokenRow | undefined,
+): Promise<MCPLiveContext | null> {
+  const connectorID = connection.connector_id;
+  if (connectorID === "authorities") {
+    return {
+      connector_id: "authorities",
+      label: "Kammern & Aemter",
+      facts: [
+        "Oeffentliche Kammer-/Aemter-Recherche ist aktiv. Nutze die Web-Treffer als Quellen.",
+      ],
+    };
+  }
+
+  if (connection.status !== "connected") {
+    return {
+      connector_id: connectorID,
+      label: connectorLabel(connectorID),
+      facts: [
+        `${connectorLabel(connectorID)} ist noch nicht live verbunden (${connection.status}).`,
+      ],
+    };
+  }
+
+  const liveToken = await usableToken(supabase, userID, token);
+  if (!liveToken) {
+    return {
+      connector_id: connectorID,
+      label: connectorLabel(connectorID),
+      facts: [
+        `${connectorLabel(connectorID)} ist verbunden, aber der Zugriff muss neu bestaetigt werden.`,
+      ],
+    };
+  }
+
+  switch (connectorID) {
+    case "google_drive":
+      return await loadGoogleDriveContext(liveToken.access_token);
+    case "github":
+      return await loadGitHubContext(liveToken.access_token);
+    case "notion":
+      return await loadNotionContext(liveToken.access_token);
+    case "slack":
+      return await loadSlackContext(liveToken.access_token);
+    case "google_business":
+      return await loadGoogleBusinessContext(liveToken.access_token);
+    default:
+      return null;
+  }
+}
+
+async function loadMCPLiveContext(
+  supabase: ReturnType<typeof createClient>,
+  userID: string | undefined,
+  ctx: FounderContext,
+  message: string,
+): Promise<MCPLiveContext[]> {
+  if (!userID) return [];
+
+  const work = async () => {
+    const { data, error } = await supabase
+      .from("mcp_connections")
+      .select("connector_id,status,account_label,metadata")
+      .eq("user_id", userID)
+      .order("updated_at", { ascending: false });
+    if (error) {
+      console.error("mcp connections load failed:", error.message);
+      return [];
+    }
+
+    const relevant = ((data ?? []) as MCPConnectionRow[])
+      .filter((row) => row && isConnectorRelevant(row.connector_id, ctx, message))
+      .slice(0, 3);
+    if (!relevant.length) return [];
+
+    const idsNeedingTokens = relevant
+      .map((row) => row.connector_id)
+      .filter((id) => id !== "authorities" && id !== "commerce" && id !== "accounting");
+    const tokenMap = new Map<string, MCPTokenRow>();
+    if (idsNeedingTokens.length) {
+      const { data: tokens, error: tokenError } = await supabase
+        .from("mcp_oauth_tokens")
+        .select("connector_id,access_token,refresh_token,token_type,scope,expires_at,metadata")
+        .eq("user_id", userID)
+        .in("connector_id", idsNeedingTokens);
+      if (tokenError) {
+        console.error("mcp token load failed:", tokenError.message);
+      }
+      for (const token of (tokens ?? []) as MCPTokenRow[]) tokenMap.set(token.connector_id, token);
+    }
+
+    const settled = await Promise.allSettled(
+      relevant.map((connection) =>
+        loadConnectorContext(supabase, userID, connection, tokenMap.get(connection.connector_id)),
+      ),
+    );
+    return settled
+      .flatMap((item) => (item.status === "fulfilled" && item.value ? [item.value] : []))
+      .filter((item) => Array.isArray(item.facts) && item.facts.length > 0)
+      .slice(0, 3);
+  };
+
+  return await Promise.race([
+    work(),
+    new Promise<MCPLiveContext[]>((resolve) => setTimeout(() => resolve([]), MCP_LIVE_BUDGET_MS)),
+  ]);
+}
+
 // ─── Main handler ────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -794,10 +1284,11 @@ Deno.serve(async (req) => {
         : [];
 
       const surface = typeof extra.surface === "string" ? extra.surface : undefined;
-      const [recentCount, history, webSources] = await Promise.all([
+      const [recentCount, history, webSources, mcpLiveContext] = await Promise.all([
         rateLimitPromise,
         historyPromise,
         findWebSources(ctx, message),
+        loadMCPLiveContext(supabase, user?.id, ctx, message),
       ]);
       if (recentCount >= 80) {
         return new Response(
@@ -816,6 +1307,7 @@ Deno.serve(async (req) => {
         app: extra.app,
         webSources,
         mcpConnectors,
+        mcpLiveContext,
       });
       const kimiRaw = await callKimiWithFallback(kimiPrompt, "chat", sink, 1200);
       console.log("[KIMI chat raw]", kimiRaw.slice(0, 300));
@@ -847,9 +1339,13 @@ Deno.serve(async (req) => {
           : "";
       const conversationSummary = rawSummary.length > 20 ? rawSummary.slice(0, 1500) : priorSummary;
 
-      const sources = Array.isArray(kimiData.quellen)
+      const modelSources = Array.isArray(kimiData.quellen)
         ? mergeSources(kimiData.quellen.map(normalizeSource).filter(Boolean) as WebSource[])
         : [];
+      const mcpSources = mergeSources(
+        mcpLiveContext.flatMap((item) => (Array.isArray(item.sources) ? item.sources : [])),
+      );
+      const sources = mergeSources(modelSources, mcpSources);
 
       // Persistenz (Kontext, Nachricht, Deadline) läuft NACH der Antwort im
       // Hintergrund — spart 2-3 DB-Roundtrips Wartezeit pro Chat-Nachricht.
@@ -946,6 +1442,7 @@ Deno.serve(async (req) => {
         "events",
         "guides",
         "copilot",
+        "profile",
       ]);
       const appActions = (Array.isArray(kimiData.app_aktionen) ? kimiData.app_aktionen : [])
         .filter((a: Record<string, unknown>) => {

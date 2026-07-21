@@ -35,6 +35,12 @@ export type MCPConnector = {
   tools?: string[];
   use_case?: string;
 };
+export type MCPLiveContext = {
+  connector_id?: string;
+  label?: string;
+  facts?: string[];
+  sources?: WebSource[];
+};
 
 // Plattform-Bereiche, auf die der Co-Pilot aktiv verweisen darf.
 export const ROUTE_CATALOG = [
@@ -60,6 +66,7 @@ export const ROUTE_CATALOG = [
   { to: "/kalender", label: "Kalender" },
   { to: "/unterlagen", label: "Unterlagen & Dokumente" },
   { to: "/matches", label: "Matches & Chats" },
+  { to: "/profile", label: "Profil, Einstellungen & Verknüpfungen" },
 ] as const;
 
 export function historyBlock(history: ChatTurn[]): string {
@@ -113,6 +120,18 @@ export function mcpConnectorsBlock(connectors: MCPConnector[] = []): string {
     .join("\n");
 }
 
+export function mcpLiveContextBlock(context: MCPLiveContext[] = []): string {
+  const facts = context
+    .flatMap((item) =>
+      (Array.isArray(item.facts) ? item.facts : [])
+        .filter((fact): fact is string => typeof fact === "string" && fact.trim().length > 0)
+        .map((fact) => `${item.label || item.connector_id || "Connector"}: ${fact.trim()}`),
+    )
+    .slice(0, 10);
+  if (!facts.length) return "(kein Connector musste fuer diese Nachricht live abgefragt werden)";
+  return facts.map((fact, index) => `${index + 1}. ${fact.slice(0, 520)}`).join("\n");
+}
+
 export type ChatPromptInput = {
   message: string;
   history: ChatTurn[];
@@ -122,6 +141,7 @@ export type ChatPromptInput = {
   app?: unknown;
   webSources?: WebSource[];
   mcpConnectors?: MCPConnector[];
+  mcpLiveContext?: MCPLiveContext[];
 };
 
 export type TaskType =
@@ -398,13 +418,19 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
     MCP-WERKZEUGE (Profil > MCP-Werkzeuge):
     ${mcpConnectorsBlock(input.mcpConnectors)}
 
+    AKTUELLER MCP-LIVE-KONTEXT (nur wenn konkret passend geladen):
+    ${mcpLiveContextBlock(input.mcpLiveContext)}
+
     - Der native Client schickt aktive MCP-Werkzeuge als Kontext. Behandle sie als stilles Wissen
       ueber vorhandene Faehigkeiten, NICHT als Grund, jedes Mal Chips oder Hinweise auszuspielen.
     - Nutze aktive Werkzeuge nur dann sichtbar in deiner Antwort, wenn sie fuer die konkrete Frage
       wirklich helfen: z.B. Drive fuer Unterlagen, Buchhaltung fuer Belege, Web/Aemter fuer Pflichten.
     - Behaupte niemals, du haettest ein externes Tool wirklich gelesen oder beschrieben, wenn dir kein
-      Ergebnis im Memory, Verlauf oder in Web-Treffern vorliegt. Formuliere dann: "Ich wuerde als
-      naechstes ... pruefen" und fuehre den Founder zur Bestaetigung.
+      Ergebnis im Memory, Verlauf, in Web-Treffern oder im MCP-Live-Kontext vorliegt. Formuliere dann:
+      "Ich wuerde als naechstes ... pruefen" und fuehre den Founder zur Bestaetigung.
+    - Wenn MCP-Live-Kontext vorhanden ist, darfst du die konkreten Treffer nutzen und als Grundlage
+      nennen. Erfinde keine weiteren externen Treffer. Bei Links nur kurze sprechende Chips/Titel
+      vorschlagen, niemals lange Roh-URLs.
     - Ist ein noetiges Werkzeug nicht aktiv, erwaehne die Profil-Verknuepfung nur, wenn die Aufgabe
       sonst nicht sinnvoll loesbar ist. Gib nur dann eine app_aktion open_screen mit screen "profile"
       oder eine kurze Follow-up-Aktion wie "MCP aktivieren" aus.

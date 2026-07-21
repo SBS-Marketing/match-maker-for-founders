@@ -50,6 +50,7 @@ struct RootView: View {
             Task {
                 await state.refreshCommunityEvents(showLoading: false)
                 await state.refreshConnectedAccounts(showLoading: false)
+                await state.refreshMCPConnectors(showLoading: false)
                 await state.refreshMorningReport(showLoading: false)
             }
         }

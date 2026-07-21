@@ -80,6 +80,7 @@ final class AppState: ObservableObject {
         didSet { persist(mcpConnectorLinks, key: "mf.mcp.connector.links") }
     }
     @Published var mcpConnectorMessage: String?
+    @Published var mcpBusyConnector: MCPConnectorID?
     @Published var integrationLoadState: LiveDataState = .idle
     @Published var integrationBusyProvider: IntegrationProvider?
     @Published var integrationMessage: String?
@@ -612,23 +613,50 @@ final class AppState: ObservableObject {
         return connected.joined(separator: " · ")
     }
 
-    func toggleMCPConnector(_ connector: MCPConnectorID) {
-        if let index = mcpConnectorLinks.firstIndex(where: { $0.connectorID == connector }) {
-            let removed = mcpConnectorLinks.remove(at: index)
-            mcpConnectorMessage = "\(removed.connectorID.label) getrennt. Der Co-Pilot nutzt dieses Werkzeug nicht mehr im Kontext."
-            Haptics.tap()
+    func refreshMCPConnectors(showLoading: Bool = true) async {
+        guard isAuthenticated else {
+            mcpConnectorLinks = []
             return
         }
+        if showLoading { mcpConnectorMessage = nil }
+        do {
+            mcpConnectorLinks = try await SupabaseService.shared.fetchMCPConnections()
+        } catch {
+            mcpConnectorMessage = "MCP-Status konnte nicht geladen werden: \(error.localizedDescription)"
+        }
+    }
 
-        let link = MCPConnectorLink(
-            connectorID: connector,
-            status: "connected",
-            connectedAt: .now,
-            note: connector.copilotUseCase
-        )
-        mcpConnectorLinks.append(link)
-        mcpConnectorMessage = "\(connector.label) aktiviert. Der Co-Pilot bekommt dieses Werkzeug ab jetzt als nutzbaren Kontext."
-        Haptics.success()
+    func mcpConnectURL(for connector: MCPConnectorID) async -> URL? {
+        mcpBusyConnector = connector
+        mcpConnectorMessage = nil
+        defer { mcpBusyConnector = nil }
+        do {
+            let response = try await SupabaseService.shared.connectMCPConnector(connector)
+            await refreshMCPConnectors(showLoading: false)
+            if let url = response.url { return url }
+            mcpConnectorMessage = response.message ?? "\(connector.label) ist vorbereitet."
+            Haptics.success()
+            return nil
+        } catch {
+            mcpConnectorMessage = "\(connector.label) konnte nicht verbunden werden: \(error.localizedDescription)"
+            Haptics.heavy()
+            return nil
+        }
+    }
+
+    func disconnectMCPConnector(_ connector: MCPConnectorID) async {
+        mcpBusyConnector = connector
+        mcpConnectorMessage = nil
+        defer { mcpBusyConnector = nil }
+        do {
+            _ = try await SupabaseService.shared.disconnectMCPConnector(connector)
+            await refreshMCPConnectors(showLoading: false)
+            mcpConnectorMessage = "\(connector.label) getrennt."
+            Haptics.success()
+        } catch {
+            mcpConnectorMessage = "\(connector.label) konnte nicht getrennt werden: \(error.localizedDescription)"
+            Haptics.heavy()
+        }
     }
 
     func openMCPSetupInCopilot() {
@@ -817,6 +845,21 @@ final class AppState: ObservableObject {
         let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         let outcome = items.first(where: { $0.name == "connect" })?.value
         let providerValue = items.first(where: { $0.name == "provider" })?.value
+        let kind = items.first(where: { $0.name == "kind" })?.value
+
+        if kind == "mcp" || providerValue.flatMap(MCPConnectorID.init(rawValue:)) != nil {
+            let connector = providerValue.flatMap(MCPConnectorID.init(rawValue:))
+            if outcome == "ok" {
+                mcpConnectorMessage = "\(connector?.label ?? "MCP-Werkzeug") verbunden. Der Co-Pilot kann es jetzt nutzen, wenn es zur Aufgabe passt."
+                Haptics.success()
+            } else {
+                mcpConnectorMessage = "\(connector?.label ?? "MCP-Werkzeug") konnte nicht verbunden werden."
+                Haptics.heavy()
+            }
+            await refreshMCPConnectors(showLoading: false)
+            return
+        }
+
         let provider = providerValue.flatMap(IntegrationProvider.init(rawValue:))
 
         if outcome == "ok" {
@@ -937,6 +980,7 @@ final class AppState: ObservableObject {
                 }
                 await refreshSwipeDeck()
                 await refreshConnectedAccounts(showLoading: false)
+                await refreshMCPConnectors(showLoading: false)
                 await refreshMorningReport(showLoading: false)
             } else {
                 profile = nil
@@ -982,6 +1026,7 @@ final class AppState: ObservableObject {
         integrationMessage = nil
         mcpConnectorLinks = []
         mcpConnectorMessage = nil
+        mcpBusyConnector = nil
         morningReport = nil
         morningReportState = .idle
     }
