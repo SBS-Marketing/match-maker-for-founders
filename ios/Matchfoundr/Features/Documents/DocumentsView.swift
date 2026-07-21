@@ -3,6 +3,9 @@
 
 import SwiftUI
 import UniformTypeIdentifiers
+#if canImport(UIKit)
+import UIKit
+#endif
 #if canImport(QuickLook)
 import QuickLook
 #endif
@@ -12,6 +15,8 @@ struct DocumentsView: View {
     @State private var panel: Panel = .workspace
     @State private var showingImporter = false
     @State private var preview: DocumentPreview?
+    @State private var handoffShare: HandoffShare?
+    @State private var handoffError: String?
 
     private enum Panel: String, CaseIterable, Identifiable {
         case workspace, files, draft, checklist
@@ -38,6 +43,9 @@ struct DocumentsView: View {
                 HStack(spacing: 8) {
                     headerButton("tray.and.arrow.up.fill") {
                         showingImporter = true
+                    }
+                    headerButton("shippingbox.fill") {
+                        createAIHandoff()
                     }
                     headerButton("sparkles") {
                         state.startDocumentCopilot(task: "Unterlagen prüfen")
@@ -89,6 +97,16 @@ struct DocumentsView: View {
                 .ignoresSafeArea()
             #else
             Text(preview.url.lastPathComponent)
+                .font(.system(size: 15, weight: .semibold))
+                .padding()
+            #endif
+        }
+        .sheet(item: $handoffShare) { share in
+            #if canImport(UIKit)
+            ActivityShareSheet(items: share.urls)
+                .ignoresSafeArea()
+            #else
+            Text("AI-Handoff erstellt: \(share.urls.count) Dateien")
                 .font(.system(size: 15, weight: .semibold))
                 .padding()
             #endif
@@ -166,6 +184,18 @@ struct DocumentsView: View {
                         panel = .draft
                     }
                 }
+                compactAction("Handoff", "shippingbox.fill") {
+                    createAIHandoff()
+                }
+            }
+
+            if let handoffError {
+                Text(handoffError)
+                    .font(.system(size: 12.5, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.82))
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 2)
             }
         }
         .padding(18)
@@ -224,6 +254,15 @@ struct DocumentsView: View {
                 actionTitle: "Zum Entwurf"
             ) {
                 panel = .draft
+            }
+            workflowRow(
+                number: "4",
+                title: "An eigene KI übergeben",
+                text: "Erstellt ein MCP-kompatibles Paket mit Manifest, Prompt, Entwurf und deinen Dateien.",
+                icon: "shippingbox.fill",
+                actionTitle: "Handoff"
+            ) {
+                createAIHandoff()
             }
         }
     }
@@ -476,12 +515,38 @@ struct DocumentsView: View {
             }
         }
     }
+
+    private func createAIHandoff() {
+        do {
+            handoffError = nil
+            handoffShare = HandoffShare(urls: try state.createAIHandoffPackage())
+        } catch {
+            handoffError = "Handoff konnte nicht erstellt werden: \(error.localizedDescription)"
+        }
+    }
 }
 
 private struct DocumentPreview: Identifiable {
     let url: URL
     var id: String { url.absoluteString }
 }
+
+private struct HandoffShare: Identifiable {
+    let id = UUID()
+    let urls: [URL]
+}
+
+#if canImport(UIKit)
+private struct ActivityShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
+}
+#endif
 
 #if canImport(QuickLook)
 private struct QuickLookPreview: UIViewControllerRepresentable {

@@ -75,6 +75,16 @@ final class AppState: ObservableObject {
     @Published var partners: [PartnerOffer] = []
     @Published var partnerLoadState: LiveDataState = .idle
     @Published var eventLoadState: LiveDataState = .idle
+    @Published var connectedAccounts: [ConnectedAccount] = []
+    @Published var mcpConnectorLinks: [MCPConnectorLink] = [] {
+        didSet { persist(mcpConnectorLinks, key: "mf.mcp.connector.links") }
+    }
+    @Published var mcpConnectorMessage: String?
+    @Published var integrationLoadState: LiveDataState = .idle
+    @Published var integrationBusyProvider: IntegrationProvider?
+    @Published var integrationMessage: String?
+    @Published var morningReport: MorningReport?
+    @Published var morningReportState: LiveDataState = .idle
     @Published var founderRadarBrief: FounderRadarBrief? {
         didSet { persist(founderRadarBrief, key: "mf.founder.radar.brief") }
     }
@@ -139,6 +149,23 @@ final class AppState: ObservableObject {
         let partnerSummary = partners.prefix(5).map { "\($0.name) (\($0.serviceLabel), \($0.fit)% Fit)" }
         if !partnerSummary.isEmpty {
             facts.append("Live-Partner verfügbar: \(partnerSummary.joined(separator: "; "))")
+        }
+
+        let connected = connectedAccounts
+            .filter(\.isConnected)
+            .map { "\($0.provider.label)\($0.accountLabel.map { " (\($0))" } ?? "")" }
+        if !connected.isEmpty {
+            facts.append("Verknuepfte Konten fuer Automationen: \(connected.joined(separator: "; ")). Nutze sie fuer Morgenbriefing, Mail-Entwuerfe und Kalender-Kontext.")
+        }
+
+        facts.append(contentsOf: mcpConnectorFacts())
+
+        if let morningReport {
+            facts.append("Heutiges Morgenbriefing (\(morningReport.formattedDate)): \(morningReport.content.safeFocus)")
+            let mailCount = morningReport.content.wichtigeMails?.count ?? 0
+            let draftCount = morningReport.content.draftVorschlaege?.count ?? 0
+            let eventCount = morningReport.content.erkannteTermine?.count ?? 0
+            facts.append("Briefing-Signale: \(mailCount) wichtige Mails, \(draftCount) Gmail-Entwuerfe, \(eventCount) erkannte Termine.")
         }
 
         let eventSummary = events
@@ -563,6 +590,246 @@ final class AppState: ObservableObject {
         }
     }
 
+    func connectedAccount(for provider: IntegrationProvider) -> ConnectedAccount? {
+        connectedAccounts.first { $0.provider == provider }
+    }
+
+    var connectedIntegrationSummary: String {
+        let connected = connectedAccounts.filter(\.isConnected).map(\.provider.shortLabel)
+        guard !connected.isEmpty else { return "Noch keine Konten verbunden" }
+        return connected.joined(separator: " · ")
+    }
+
+    func mcpLink(for connector: MCPConnectorID) -> MCPConnectorLink? {
+        mcpConnectorLinks.first { $0.connectorID == connector }
+    }
+
+    var connectedMCPConnectorSummary: String {
+        let connected = mcpConnectorLinks
+            .filter(\.isConnected)
+            .map(\.connectorID.shortLabel)
+        guard !connected.isEmpty else { return "Noch keine MCP-Werkzeuge aktiv" }
+        return connected.joined(separator: " · ")
+    }
+
+    func toggleMCPConnector(_ connector: MCPConnectorID) {
+        if let index = mcpConnectorLinks.firstIndex(where: { $0.connectorID == connector }) {
+            let removed = mcpConnectorLinks.remove(at: index)
+            mcpConnectorMessage = "\(removed.connectorID.label) getrennt. Der Co-Pilot nutzt dieses Werkzeug nicht mehr im Kontext."
+            Haptics.tap()
+            return
+        }
+
+        let link = MCPConnectorLink(
+            connectorID: connector,
+            status: "connected",
+            connectedAt: .now,
+            note: connector.copilotUseCase
+        )
+        mcpConnectorLinks.append(link)
+        mcpConnectorMessage = "\(connector.label) aktiviert. Der Co-Pilot bekommt dieses Werkzeug ab jetzt als nutzbaren Kontext."
+        Haptics.success()
+    }
+
+    func openMCPSetupInCopilot() {
+        let active = mcpConnectorLinks
+            .filter(\.isConnected)
+            .map { "- \($0.connectorID.label): \($0.connectorID.copilotUseCase)" }
+            .joined(separator: "\n")
+        let missing = MCPConnectorID.recommended
+            .filter { connector in !mcpConnectorLinks.contains(where: { $0.connectorID == connector && $0.isConnected }) }
+            .prefix(4)
+            .map { "- \($0.label): \($0.detail)" }
+            .joined(separator: "\n")
+
+        let prompt = """
+        MCP-WERKZEUGE PRUEFEN
+        Aktive Werkzeuge:
+        \(active.isEmpty ? "- noch keine MCP-Werkzeuge aktiv" : active)
+
+        Sinnvolle naechste Werkzeuge:
+        \(missing.isEmpty ? "- alle empfohlenen Werkzeuge sind aktiv" : missing)
+
+        Erklaere mir knapp, welche 2 Verknuepfungen fuer mein Vorhaben den groessten Hebel haetten. Wenn ein Werkzeug aktiv ist, nutze es konkret in deinem Vorschlag. Externe Schreibaktionen immer erst bestaetigen lassen.
+        """
+        queueCopilotPrompt(prompt, title: "MCP-Werkzeuge")
+        open(.screen(.copilot))
+    }
+
+    private func mcpConnectorFacts() -> [String] {
+        let activeLinks = mcpConnectorLinks.filter(\.isConnected)
+        guard !activeLinks.isEmpty else {
+            return [
+                "MCP-Werkzeuge: noch keine aktiv. Empfohlen im Profil: Web/Kammern & Aemter, Google Drive, Buchhaltung, Google Business, Shop, Notion, Slack, GitHub."
+            ]
+        }
+
+        let active = activeLinks.map { link in
+            "\(link.connectorID.label) -> \(link.connectorID.copilotUseCase)"
+        }.joined(separator: "; ")
+        return [
+            "Aktive MCP-Werkzeuge: \(active). Nutze diese Werkzeuge fuer Kontext, Quellen, Unterlagen und konkrete Vorbereitung.",
+            "MCP-Sicherheitsregel: Lesen/Recherchieren darf vorgeschlagen werden; externe Schreibaktionen, Sends, Posts, Datei-Aenderungen und Buchungen immer erst als bestaetigungspflichtige Aktion formulieren."
+        ]
+    }
+
+    func refreshConnectedAccounts(showLoading: Bool = true) async {
+        guard isAuthenticated else {
+            connectedAccounts = []
+            integrationLoadState = .idle
+            return
+        }
+        if showLoading { integrationLoadState = .loading }
+        do {
+            connectedAccounts = try await SupabaseService.shared.fetchConnectedAccounts()
+            integrationLoadState = .loaded
+        } catch {
+            integrationLoadState = .failed(error.localizedDescription)
+        }
+    }
+
+    func integrationConnectURL(for provider: IntegrationProvider) async -> URL? {
+        guard provider.usesOAuth else {
+            await requestWhatsAppIntegration()
+            return nil
+        }
+        integrationBusyProvider = provider
+        integrationMessage = nil
+        defer { integrationBusyProvider = nil }
+        do {
+            let response = try await SupabaseService.shared.connectIntegration(provider: provider)
+            return response.url
+        } catch {
+            integrationLoadState = .failed(error.localizedDescription)
+            integrationMessage = "Verknuepfung fehlgeschlagen: \(error.localizedDescription)"
+            Haptics.heavy()
+            return nil
+        }
+    }
+
+    func requestWhatsAppIntegration() async {
+        guard let userID = authUser?.userID else { return }
+        integrationBusyProvider = .whatsapp
+        integrationMessage = nil
+        defer { integrationBusyProvider = nil }
+        do {
+            try await SupabaseService.shared.requestWhatsAppConnection(userID: userID)
+            await refreshConnectedAccounts(showLoading: false)
+            integrationMessage = "WhatsApp-Gateway angefragt. Sobald das Gateway verbunden ist, tauchen Signale im Morgenbriefing auf."
+            Haptics.success()
+        } catch {
+            integrationLoadState = .failed(error.localizedDescription)
+            integrationMessage = "WhatsApp konnte nicht vorgemerkt werden: \(error.localizedDescription)"
+            Haptics.heavy()
+        }
+    }
+
+    func disconnectIntegration(_ provider: IntegrationProvider) async {
+        integrationBusyProvider = provider
+        integrationMessage = nil
+        defer { integrationBusyProvider = nil }
+        do {
+            _ = try await SupabaseService.shared.disconnectIntegration(provider: provider)
+            await refreshConnectedAccounts(showLoading: false)
+            integrationMessage = "\(provider.label) getrennt."
+            Haptics.success()
+        } catch {
+            integrationLoadState = .failed(error.localizedDescription)
+            integrationMessage = "Trennen fehlgeschlagen: \(error.localizedDescription)"
+            Haptics.heavy()
+        }
+    }
+
+    func refreshMorningReport(showLoading: Bool = true) async {
+        guard isAuthenticated else {
+            morningReport = nil
+            morningReportState = .idle
+            return
+        }
+        if showLoading { morningReportState = .loading }
+        do {
+            morningReport = try await SupabaseService.shared.fetchTodayMorningReport()
+            morningReportState = .loaded
+        } catch {
+            morningReportState = .failed(error.localizedDescription)
+        }
+    }
+
+    func runMorningReportNow() async {
+        guard isAuthenticated else { return }
+        morningReportState = .loading
+        integrationMessage = nil
+        do {
+            _ = try await SupabaseService.shared.runMorningReportNow(force: true)
+            await refreshMorningReport(showLoading: false)
+            integrationMessage = "Morgenbriefing aktualisiert."
+            Haptics.success()
+        } catch {
+            morningReportState = .failed(error.localizedDescription)
+            integrationMessage = "Briefing fehlgeschlagen: \(error.localizedDescription)"
+            Haptics.heavy()
+        }
+    }
+
+    func openMorningReportInCopilot() {
+        let reportText: String
+        if let morningReport {
+            let mails = morningReport.content.wichtigeMails?.prefix(4).map {
+                "- \($0.betreff) von \($0.von): \($0.warum)"
+            }.joined(separator: "\n") ?? "- keine wichtigen Mails erkannt"
+            let drafts = morningReport.content.draftVorschlaege?.prefix(2).map {
+                "- An \($0.an): \($0.betreff)"
+            }.joined(separator: "\n") ?? "- keine Entwuerfe"
+            let events = morningReport.content.erkannteTermine?.prefix(3).map {
+                "- \($0.titel) am \($0.datum)\($0.zeit.map { " \($0)" } ?? "")"
+            }.joined(separator: "\n") ?? "- keine Termine"
+            reportText = """
+            MORGENBRIEFING DURCHGEHEN
+            Fokus: \(morningReport.content.safeFocus)
+            Verbundene Konten: \(morningReport.content.connectedAccountLabels.joined(separator: ", "))
+
+            Wichtige Mails:
+            \(mails)
+
+            Gmail-Entwuerfe:
+            \(drafts)
+
+            Erkannte Termine:
+            \(events)
+
+            Bitte fuehre mich interaktiv durch den Tag: Was zuerst, welche Mail beantworten, welche Termine bestaetigen und welche App-Aktionen du danach ausfuehren solltest.
+            """
+        } else {
+            reportText = """
+            MORGENBRIEFING EINRICHTEN
+            Pruefe meine verbundenen Konten, mein Profil, Kalenderpunkte und Unterlagen. Sag mir kurz, was fuer ein gutes taegliches Briefing noch fehlt, und fuehre mich dann Schritt fuer Schritt durch die Einrichtung.
+            """
+        }
+        queueCopilotPrompt(reportText, title: "Morgenbriefing")
+        open(.screen(.copilot))
+    }
+
+    private func isIntegrationCallback(_ url: URL) -> Bool {
+        url.host == "integration-callback" || url.path.contains("integration-callback")
+    }
+
+    private func handleIntegrationCallback(_ url: URL) async {
+        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        let outcome = items.first(where: { $0.name == "connect" })?.value
+        let providerValue = items.first(where: { $0.name == "provider" })?.value
+        let provider = providerValue.flatMap(IntegrationProvider.init(rawValue:))
+
+        if outcome == "ok" {
+            integrationMessage = "\(provider?.label ?? "Konto") verbunden. Das Morgenbriefing kann es ab jetzt nutzen."
+            Haptics.success()
+        } else {
+            integrationMessage = "Verknuepfung fehlgeschlagen. Bitte pruefe Google-OAuth und versuche es erneut."
+            Haptics.heavy()
+        }
+        await refreshConnectedAccounts(showLoading: false)
+        await refreshMorningReport(showLoading: false)
+    }
+
     private func startCommunityEventPolling() {
         eventRefreshTask?.cancel()
         eventRefreshTask = Task { [weak self] in
@@ -669,6 +936,8 @@ final class AppState: ObservableObject {
                     plannerItems = personalizedPlannerItems()
                 }
                 await refreshSwipeDeck()
+                await refreshConnectedAccounts(showLoading: false)
+                await refreshMorningReport(showLoading: false)
             } else {
                 profile = nil
                 profileExtras = .empty(for: nil)
@@ -678,6 +947,8 @@ final class AppState: ObservableObject {
                 plannerItems = []
                 deck = []
                 matches = []
+                connectedAccounts = []
+                morningReport = nil
             }
         } catch {
             backendStatus = .offline(error.localizedDescription)
@@ -689,6 +960,8 @@ final class AppState: ObservableObject {
             plannerItems = []
             deck = []
             matches = []
+            connectedAccounts = []
+            morningReport = nil
         }
     }
 
@@ -703,6 +976,14 @@ final class AppState: ObservableObject {
         deck = []
         matches = []
         registeredEvents = []
+        connectedAccounts = []
+        integrationLoadState = .idle
+        integrationBusyProvider = nil
+        integrationMessage = nil
+        mcpConnectorLinks = []
+        mcpConnectorMessage = nil
+        morningReport = nil
+        morningReportState = .idle
     }
 
     func signIn(email: String, password: String) async throws {
@@ -734,6 +1015,10 @@ final class AppState: ObservableObject {
     }
 
     func handleAuthCallback(_ url: URL) async {
+        if isIntegrationCallback(url) {
+            await handleIntegrationCallback(url)
+            return
+        }
         do {
             try await Backend.handleAuthCallback(url)
             await refreshAuthSession()
@@ -1175,6 +1460,103 @@ final class AppState: ObservableObject {
         return FileManager.default.fileExists(atPath: url.path) ? url : nil
     }
 
+    func createAIHandoffPackage() throws -> [URL] {
+        let fileManager = FileManager.default
+        let exportID = UUID().uuidString.prefix(8).lowercased()
+        let directory = fileManager
+            .urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("MatchfoundrAIHandoff-\(exportID)", isDirectory: true)
+        try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+
+        let exportedAt = ISO8601DateFormatter().string(from: .now)
+        let attachedAssets = documentAssets.compactMap { asset -> (AIHandoffFileRef, URL)? in
+            guard let url = documentAssetURL(asset) else { return nil }
+            return (
+                AIHandoffFileRef(
+                    id: asset.id.uuidString,
+                    title: asset.title,
+                    fileName: url.lastPathComponent,
+                    kind: asset.kind.label,
+                    fileExtension: asset.fileExtension,
+                    sizeBytes: asset.sizeBytes,
+                    textPreview: asset.textPreview
+                ),
+                url
+            )
+        }
+
+        let promptURL = directory.appendingPathComponent("matchfoundr-handoff-prompt.md")
+        let manifestURL = directory.appendingPathComponent("matchfoundr-mcp-context.json")
+        let draftURL = directory.appendingPathComponent("matchfoundr-arbeitsentwurf.md")
+
+        let prompt = aiHandoffPrompt(exportedAt: exportedAt, files: attachedAssets.map(\.0))
+        try prompt.write(to: promptURL, atomically: true, encoding: .utf8)
+
+        let draft = documentDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        try aiHandoffDraftMarkdown(draft.isEmpty ? "Noch kein Entwurf vorhanden." : draft, exportedAt: exportedAt)
+            .write(to: draftURL, atomically: true, encoding: .utf8)
+
+        let memory = founderMemory
+        let manifest = AIHandoffManifest(
+            schema: "matchfoundr_mcp_handoff_v1",
+            sourceApp: "matchfoundr iOS",
+            exportedAt: exportedAt,
+            intent: "handoff_files_to_user_owned_ai",
+            instructions: [
+                "Nutze dieses Paket als Arbeitskontext fuer eine eigene KI oder MCP-Bridge.",
+                "Arbeite dateibasiert: nenne bei jedem Befund den Dateinamen oder das Manifest-Feld.",
+                "Wenn Informationen fehlen, formuliere Rueckfragen statt Annahmen als Fakten auszugeben.",
+                "Gib am Ende konkrete naechste App-Schritte fuer Unterlagen, Kalender, Profil oder Co-Pilot aus."
+            ],
+            memory: AIHandoffMemoryRef(
+                founderName: memory.founderName,
+                role: memory.role,
+                ventureName: memory.ventureName,
+                industry: memory.industry,
+                stage: memory.stage,
+                location: memory.location,
+                idea: memory.idea,
+                partnerTerm: memory.partnerTerm,
+                headline: memory.headline,
+                about: memory.about,
+                documentProgress: memory.documentProgress,
+                openDocuments: memory.openDocuments,
+                registeredEvents: memory.registeredEvents,
+                openPlannerItems: memory.openPlannerItems,
+                bestMatches: memory.bestMatches
+            ),
+            liveContextFacts: copilotLiveContextFacts(),
+            profile: profile,
+            profileExtras: profileExtras,
+            companyProfile: companyProfile,
+            documentChecklist: documents,
+            files: attachedAssets.map(\.0),
+            draftFileName: draftURL.lastPathComponent,
+            openPlannerItems: plannerItems
+                .filter { !$0.done }
+                .prefix(12)
+                .map {
+                    AIHandoffPlannerRef(
+                        title: $0.title,
+                        note: $0.note,
+                        dueLabel: $0.dueLabel,
+                        kind: $0.kind.label,
+                        target: $0.target?.title,
+                        assigneeName: $0.assigneeName
+                    )
+                }
+        )
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+        encoder.dateEncodingStrategy = .iso8601
+        try encoder.encode(manifest).write(to: manifestURL, options: .atomic)
+
+        rememberCopilotFact("AI-Handoff erstellt: \(attachedAssets.count) Dateien plus MCP-Kontext.")
+        Haptics.success()
+        return [promptURL, manifestURL, draftURL] + attachedAssets.map(\.1)
+    }
+
     func deleteDocumentAsset(_ id: UUID) {
         guard let asset = documentAssets.first(where: { $0.id == id }) else { return }
         if let url = documentAssetURL(asset) {
@@ -1217,6 +1599,50 @@ final class AppState: ObservableObject {
         2. Was soll ich in dieser Unterlagen-Seite als Nächstes tun?
         3. Wenn sinnvoll: gib mir direkt eine überarbeitete Passage.
         4. Schlage maximal drei App-Aktionen vor: Unterlagen öffnen, PDF erstellen/prüfen, Kalenderblock setzen oder Memory speichern.
+        """
+    }
+
+    private func aiHandoffPrompt(exportedAt: String, files: [AIHandoffFileRef]) -> String {
+        let memory = founderMemory
+        let fileList = files.isEmpty
+            ? "- Keine Datei-Anhänge. Nutze Manifest und Arbeitsentwurf."
+            : files.map { "- \($0.fileName) · \($0.title) · \($0.kind) · \($0.fileExtension)" }.joined(separator: "\n")
+
+        return """
+        # matchfoundr AI-Handoff
+
+        Export: \(exportedAt)
+        Vorhaben: \(memory.ventureName)
+        Gründer: \(memory.founderName)
+
+        ## Rolle für die übernehmende KI
+        Du bist eine externe Arbeits-KI für dieses kleine Unternehmen. Nutze die beigefügten Dateien und `matchfoundr-mcp-context.json` als verbindlichen Kontext. Arbeite nicht generisch.
+
+        ## Auftrag
+        1. Lies zuerst `matchfoundr-mcp-context.json`.
+        2. Prüfe die angehängten Dateien und den Arbeitsentwurf.
+        3. Erstelle eine knappe Bestandsaufnahme: was ist brauchbar, was fehlt, was ist riskant?
+        4. Liefere konkrete nächste Schritte für Unterlagen, Kalender, Profil oder Kontaktaufnahme.
+        5. Wenn du Inhalte umschreibst, liefere direkt kopierfähige Abschnitte.
+
+        ## Regeln
+        - Antworte auf Deutsch.
+        - Beziehe dich auf Dateinamen statt auf vage Quellen.
+        - Markiere Annahmen klar.
+        - Stelle maximal drei Rückfragen, wenn etwas für den nächsten Schritt wirklich fehlt.
+
+        ## Anhänge
+        \(fileList)
+        """
+    }
+
+    private func aiHandoffDraftMarkdown(_ draft: String, exportedAt: String) -> String {
+        """
+        # matchfoundr Arbeitsentwurf
+
+        Export: \(exportedAt)
+
+        \(draft)
         """
     }
 
@@ -1894,7 +2320,8 @@ final class AppState: ObservableObject {
             "mf.startup.team",
             "mf.documents.draft",
             "mf.events.registered",
-            "mf.founder.radar.brief"
+            "mf.founder.radar.brief",
+            "mf.mcp.connector.links"
         ].forEach { defaults.removeObject(forKey: $0) }
         defaults.set(false, forKey: "mf.startup.activated")
         defaults.set(Self.liveDataGeneration, forKey: "mf.liveDataGeneration")
@@ -1908,6 +2335,7 @@ final class AppState: ObservableObject {
         plannerItems = load([PlannerItem].self, key: "mf.planner.items") ?? []
         founderRadarBrief = load(FounderRadarBrief.self, key: "mf.founder.radar.brief")
         startupTeamMembers = load([StartupTeamMember].self, key: "mf.startup.team") ?? []
+        mcpConnectorLinks = load([MCPConnectorLink].self, key: "mf.mcp.connector.links") ?? []
         startupWorkspaceActivated = defaults.bool(forKey: "mf.startup.activated")
         copilotFacts = defaults.stringArray(forKey: "mf.copilot.facts") ?? []
         copilotSessions = compactCopilotSessions(load([CopilotSession].self, key: "mf.copilot.sessions") ?? [])
@@ -2123,6 +2551,60 @@ final class AppState: ObservableObject {
             .joined(separator: "-")
         return raw.isEmpty ? "business" : String(raw.prefix(48))
     }
+}
+
+private struct AIHandoffManifest: Encodable {
+    let schema: String
+    let sourceApp: String
+    let exportedAt: String
+    let intent: String
+    let instructions: [String]
+    let memory: AIHandoffMemoryRef
+    let liveContextFacts: [String]
+    let profile: MyProfile?
+    let profileExtras: ProfileExtras
+    let companyProfile: CompanyProfile
+    let documentChecklist: [FounderDocument]
+    let files: [AIHandoffFileRef]
+    let draftFileName: String
+    let openPlannerItems: [AIHandoffPlannerRef]
+}
+
+private struct AIHandoffMemoryRef: Encodable {
+    let founderName: String
+    let role: String
+    let ventureName: String
+    let industry: String
+    let stage: String
+    let location: String
+    let idea: String
+    let partnerTerm: String
+    let headline: String
+    let about: String
+    let documentProgress: String
+    let openDocuments: [String]
+    let registeredEvents: [String]
+    let openPlannerItems: [String]
+    let bestMatches: [String]
+}
+
+private struct AIHandoffFileRef: Encodable {
+    let id: String
+    let title: String
+    let fileName: String
+    let kind: String
+    let fileExtension: String
+    let sizeBytes: Int64
+    let textPreview: String
+}
+
+private struct AIHandoffPlannerRef: Encodable {
+    let title: String
+    let note: String
+    let dueLabel: String
+    let kind: String
+    let target: String?
+    let assigneeName: String?
 }
 
 struct AIUsageSnapshot {

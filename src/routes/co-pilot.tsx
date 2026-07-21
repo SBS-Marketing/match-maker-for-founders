@@ -616,15 +616,57 @@ function Field({ label, value }: { label: string; value?: string | null }) {
 
 function SourcePill({ source }: { source: Source }) {
   const typ = (source.typ || source.type || "Intern").toString();
+  const label = sourceLabel(source);
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-white/70"
+      className="inline-flex max-w-[230px] items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-white/70"
       title={source.url}
     >
       <SourceIcon source={source} />
-      {typ} · {source.titel || source.title}
+      <span className="min-w-0 truncate">
+        {typ} · {label}
+      </span>
     </span>
   );
+}
+
+function sourceLabel(source: Source) {
+  const title = (source.titel || source.title || "").trim();
+  if (title && !looksLikeUrl(title)) return shorten(title, 34);
+
+  const rawUrl = (source.url || title).trim();
+  const compact = compactUrlLabel(rawUrl);
+  return compact || shorten(title || "Quelle", 34);
+}
+
+function compactUrlLabel(raw: string) {
+  if (!raw) return "";
+  try {
+    const parsed = new URL(raw.includes("://") ? raw : `https://${raw}`);
+    const host = parsed.hostname.replace(/^www\./, "");
+    const segments = parsed.pathname.split("/").filter(Boolean);
+    if (segments.length === 0) return shorten(host, 30);
+    return `${shorten(host, 22)}/.../${shorten(segments[segments.length - 1], 14)}`;
+  } catch {
+    return "";
+  }
+}
+
+function looksLikeUrl(value: string) {
+  const lower = value.toLowerCase();
+  return (
+    lower.startsWith("http://") ||
+    lower.startsWith("https://") ||
+    lower.startsWith("www.") ||
+    lower.includes(".de/") ||
+    lower.includes(".com/") ||
+    lower.includes(".org/") ||
+    lower.includes(".net/")
+  );
+}
+
+function shorten(value: string, maxLength: number) {
+  return value.length > maxLength ? `${value.slice(0, maxLength - 3)}...` : value;
 }
 
 function SourceIcon({ source }: { source: Source }) {

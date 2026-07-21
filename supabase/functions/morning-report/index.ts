@@ -10,8 +10,9 @@
 //  5. Ergebnis → daily_reports (App + Web zeigen ihn auf „Heute“)
 //
 // Auch OHNE Verknüpfungen entsteht ein Report aus App-Daten
-// (Deadlines, Events, Matches). Aufruf: POST mit Service-Role-Key,
-// optional {"user_id": "..."} für einen einzelnen Nutzer (Test).
+// (Deadlines, Events, Matches). Aufruf: POST mit Service-Role-Key
+// fuer Cron/Admin, oder mit Nutzer-JWT fuer den eigenen Report.
+// Optional {"user_id": "...", "force": true} fuer Tests/Refresh.
 //
 // Secrets: OPENROUTER_API_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 // ─────────────────────────────────────────────────────────────
@@ -60,11 +61,15 @@ async function freshAccessToken(
   const tokens = await res.json();
   if (!res.ok || !tokens.access_token) return null;
 
-  await supabase.from("account_tokens").update({
-    access_token: tokens.access_token,
-    expires_at: new Date(Date.now() + (tokens.expires_in ?? 3600) * 1000).toISOString(),
-    updated_at: new Date().toISOString(),
-  }).eq("user_id", userId).eq("provider", provider);
+  await supabase
+    .from("account_tokens")
+    .update({
+      access_token: tokens.access_token,
+      expires_at: new Date(Date.now() + (tokens.expires_in ?? 3600) * 1000).toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", userId)
+    .eq("provider", provider);
 
   return tokens.access_token;
 }
@@ -104,10 +109,14 @@ async function createGmailDraft(
   body: string,
 ): Promise<string | null> {
   const raw = btoa(
-    unescape(encodeURIComponent(
-      `To: ${to}\r\nSubject: ${subject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${body}`,
-    )),
-  ).replace(/\+/g, "-").replace(/\//g, "_");
+    unescape(
+      encodeURIComponent(
+        `To: ${to}\r\nSubject: ${subject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${body}`,
+      ),
+    ),
+  )
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
   const res = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/drafts", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -133,14 +142,11 @@ async function createCalendarEvent(
         end: { dateTime: `${datum}T${addHour(zeit!)}:00`, timeZone: "Europe/Berlin" },
       }
     : { summary: titel, start: { date: datum }, end: { date: datum } };
-  const res = await fetch(
-    "https://www.googleapis.com/calendar/v3/calendars/primary/events",
-    {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify(event),
-    },
-  );
+  const res = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify(event),
+  });
   const data = await res.json();
   return res.ok ? (data.id ?? null) : null;
 }
@@ -207,12 +213,21 @@ Tagesablauf: 3-5 realistische Blöcke aus Deadlines + Events + Mail-Followups.`;
   const data = await res.json();
   if (!res.ok) throw new Error(`OpenRouter: ${JSON.stringify(data).slice(0, 200)}`);
   const content: string = data?.choices?.[0]?.message?.content ?? "{}";
-  const cleaned = content.replace(/^\s*```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
+  const cleaned = content
+    .replace(/^\s*```(?:json)?\s*/i, "")
+    .replace(/```\s*$/, "")
+    .trim();
   const match = cleaned.match(/\{[\s\S]*\}/);
   try {
     return JSON.parse(match ? match[0] : cleaned);
   } catch {
-    return { fokus: cleaned.slice(0, 200), tagesablauf: [], wichtige_mails: [], draft_vorschlaege: [], erkannte_termine: [] };
+    return {
+      fokus: cleaned.slice(0, 200),
+      tagesablauf: [],
+      wichtige_mails: [],
+      draft_vorschlaege: [],
+      erkannte_termine: [],
+    };
   }
 }
 
@@ -221,6 +236,7 @@ Tagesablauf: 3-5 realistische Blöcke aus Deadlines + Events + Mail-Followups.`;
 async function buildReportForUser(
   supabase: SupabaseClient,
   userId: string,
+  options: { force?: boolean } = {},
 ): Promise<{ ok: boolean; detail: string }> {
   const today = new Date().toISOString().slice(0, 10);
   const { data: existing } = await supabase
@@ -229,7 +245,7 @@ async function buildReportForUser(
     .eq("user_id", userId)
     .eq("report_date", today)
     .maybeSingle();
-  if (existing) return { ok: true, detail: "schon vorhanden" };
+  if (existing && !options.force) return { ok: true, detail: "schon vorhanden" };
 
   const [{ data: profile }, { data: connections }, { data: deadlines }, { data: events }] =
     await Promise.all([
@@ -325,11 +341,16 @@ async function buildReportForUser(
   };
   report.verbundene_konten = [...connected];
 
-  await supabase.from("daily_reports").upsert(
-    { user_id: userId, report_date: today, content: report },
-    { onConflict: "user_id,report_date" },
-  );
-  return { ok: true, detail: `${mails.length} Mails, ${(report.erkannte_termine as unknown[])?.length ?? 0} Termine` };
+  await supabase
+    .from("daily_reports")
+    .upsert(
+      { user_id: userId, report_date: today, content: report },
+      { onConflict: "user_id,report_date" },
+    );
+  return {
+    ok: true,
+    detail: `${mails.length} Mails, ${(report.erkannte_termine as unknown[])?.length ?? 0} Termine`,
+  };
 }
 
 // ── Handler ──────────────────────────────────────────────────
@@ -342,31 +363,41 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // Nur Service Role darf den Report-Lauf starten (Cron / manueller Test).
-  const authHeader = req.headers.get("Authorization")?.replace("Bearer ", "") ?? "";
-  if (authHeader !== Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
-    return new Response("Unauthorized", { status: 401, headers: corsHeaders });
-  }
-
   try {
-    const body = (await req.json().catch(() => ({}))) as { user_id?: string };
+    const body = (await req.json().catch(() => ({}))) as { user_id?: string; force?: boolean };
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const authHeader = req.headers.get("Authorization")?.replace("Bearer ", "") ?? "";
+    const isServiceRole = authHeader === serviceRoleKey;
 
     let userIds: string[];
-    if (body.user_id) {
-      userIds = [body.user_id];
+    if (isServiceRole) {
+      if (body.user_id) {
+        userIds = [body.user_id];
+      } else {
+        const { data: users } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("is_onboarded", true)
+          .limit(500);
+        userIds = (users ?? []).map((u) => u.id);
+      }
     } else {
-      const { data: users } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("is_onboarded", true)
-        .limit(500);
-      userIds = (users ?? []).map((u) => u.id);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser(authHeader);
+      if (!user) {
+        return new Response("Unauthorized", { status: 401, headers: corsHeaders });
+      }
+      if (body.user_id && body.user_id !== user.id) {
+        return new Response("Forbidden", { status: 403, headers: corsHeaders });
+      }
+      userIds = [user.id];
     }
 
     const results: Record<string, string> = {};
     for (const id of userIds) {
       try {
-        const { detail } = await buildReportForUser(supabase, id);
+        const { detail } = await buildReportForUser(supabase, id, { force: body.force === true });
         results[id] = detail;
       } catch (err) {
         results[id] = `Fehler: ${err instanceof Error ? err.message : "unbekannt"}`;

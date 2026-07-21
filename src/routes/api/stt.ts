@@ -44,7 +44,7 @@ export const Route = createFileRoute("/api/stt")({
         apiForm.append("model_id", "scribe_v2");
         apiForm.append("language_code", "deu");
         apiForm.append("tag_audio_events", "false");
-        apiForm.append("diarize", "false");
+        apiForm.append("diarize", "true");
 
         const res = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
           method: "POST",
@@ -61,10 +61,17 @@ export const Route = createFileRoute("/api/stt")({
         }
 
         const data = await res.json();
-        return new Response(JSON.stringify({ text: data.text ?? "" }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({
+            text: data.text ?? "",
+            words: data.words ?? [],
+            speakers: data.speakers ?? [],
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
       },
     },
   },

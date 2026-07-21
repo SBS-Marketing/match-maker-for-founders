@@ -11,6 +11,7 @@ enum ProfileRoute: Hashable {
 
 struct ProfileView: View {
     @EnvironmentObject var state: AppState
+    @Environment(\.openURL) private var openURL
     @State private var editing = false
     @State private var confirmingSignOut = false
     @State private var path: [ProfileRoute] = []
@@ -40,6 +41,18 @@ struct ProfileView: View {
                         workspaceRows
                         MSectionHead(text: "Meine Events")
                         myEvents
+                        MSectionHead(text: "Verknüpfungen", action: "Aktualisieren") {
+                            Task {
+                                await state.refreshConnectedAccounts()
+                                await state.refreshMorningReport()
+                            }
+                        }
+                        integrationsCard
+                        morningBriefingCard
+                        MSectionHead(text: "MCP-Werkzeuge", action: "Co-Pilot") {
+                            state.openMCPSetupInCopilot()
+                        }
+                        mcpConnectorsCard
                         MSectionHead(text: "KI-Nutzung")
                         aiUsageCard
                         memoryAccessCard
@@ -67,6 +80,10 @@ struct ProfileView: View {
             }
         }
         .tint(MF.emberDeep)
+        .task {
+            await state.refreshConnectedAccounts(showLoading: false)
+            await state.refreshMorningReport(showLoading: false)
+        }
         .confirmationDialog("Abmelden?", isPresented: $confirmingSignOut, titleVisibility: .visible) {
             Button("Abmelden", role: .destructive) {
                 Task { await state.signOut() }
@@ -256,6 +273,361 @@ struct ProfileView: View {
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 18).stroke(MF.border, lineWidth: 1))
         .warmShadow()
+    }
+
+    // ─── Verknüpfungen & Morgenbriefing ──────────────────────
+    private var integrationsCard: some View {
+        VStack(spacing: 0) {
+            ForEach(IntegrationProvider.allCases) { provider in
+                integrationRow(provider)
+                if provider != .whatsapp {
+                    Divider().overlay(MF.borderSoft).padding(.leading, 58)
+                }
+            }
+
+            if let message = state.integrationMessage {
+                HStack(alignment: .top, spacing: 9) {
+                    Image(systemName: message.contains("fehl") || message.contains("konnte") ? "exclamationmark.triangle.fill" : "checkmark.seal.fill")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(message.contains("fehl") || message.contains("konnte") ? MF.emberDeep : Color.green)
+                    Text(message)
+                        .font(.system(size: 12.2, weight: .semibold))
+                        .foregroundStyle(MF.smoke)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                }
+                .padding(12)
+                .background(MF.surfaceSoft)
+                .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                .padding(.horizontal, 12)
+                .padding(.bottom, 12)
+            }
+        }
+        .background(MF.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(MF.border, lineWidth: 1))
+        .warmShadow()
+    }
+
+    private func integrationRow(_ provider: IntegrationProvider) -> some View {
+        let connection = state.connectedAccount(for: provider)
+        let hue = MF.services[provider.tintKey] ?? MF.services["capital"]!
+        let isBusy = state.integrationBusyProvider == provider
+        let isActive = connection?.isConnected == true
+        let isPending = connection?.isPending == true
+        return HStack(alignment: .center, spacing: 12) {
+            Image(systemName: provider.icon)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(hue.ink)
+                .frame(width: 36, height: 36)
+                .background(hue.tint)
+                .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 7) {
+                    Text(provider.label)
+                        .font(.system(size: 14.5, weight: .bold))
+                        .foregroundStyle(MF.ink)
+                    if let connection {
+                        Text(connection.statusLabel)
+                            .font(.system(size: 10.5, weight: .bold))
+                            .foregroundStyle(isActive ? hue.ink : MF.faint)
+                            .padding(.horizontal, 7)
+                            .frame(height: 20)
+                            .background(isActive ? hue.tint : MF.surfaceSoft)
+                            .clipShape(Capsule())
+                    }
+                }
+                Text(connection?.displayLabel ?? provider.detail)
+                    .font(.system(size: 12.3, weight: .medium))
+                    .foregroundStyle(MF.smoke)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 8)
+            Button {
+                if connection != nil {
+                    Task { await state.disconnectIntegration(provider) }
+                } else {
+                    Task {
+                        if let url = await state.integrationConnectURL(for: provider) {
+                            openURL(url)
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    if isBusy {
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(connection == nil ? .white : hue.ink)
+                    } else {
+                        Image(systemName: connection == nil ? "link" : "xmark")
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    Text(connection == nil ? (provider == .whatsapp ? "Anfragen" : "Verbinden") : "Trennen")
+                        .font(.system(size: 12.3, weight: .bold))
+                }
+                .foregroundStyle(connection == nil ? .white : hue.ink)
+                .padding(.horizontal, 11)
+                .frame(height: 34)
+                .background(connection == nil ? AnyShapeStyle(hue.hue) : AnyShapeStyle(hue.tint))
+                .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .disabled(isBusy)
+        }
+        .padding(.horizontal, 15)
+        .padding(.vertical, 13)
+        .opacity(isPending ? 0.92 : 1)
+    }
+
+    private var morningBriefingCard: some View {
+        let report = state.morningReport
+        let isLoading = state.morningReportState == .loading
+        return VStack(alignment: .leading, spacing: 13) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "sunrise.fill")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(MF.emberDeep)
+                    .frame(width: 42, height: 42)
+                    .background(MF.emberTint)
+                    .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Morgenbriefing")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(MF.ink)
+                    Text(report?.formattedDate ?? "Taeglich um 8:00 · \(state.connectedIntegrationSummary)")
+                        .font(.system(size: 12.5, weight: .semibold))
+                        .foregroundStyle(MF.smoke)
+                        .lineLimit(1)
+                }
+                Spacer()
+                if isLoading {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(MF.ember)
+                        .padding(.top, 9)
+                }
+            }
+
+            Text(report?.content.safeFocus ?? "Verbinde Gmail und Kalender, dann bereitet der Co-Pilot morgens Mails, Antwortentwuerfe, Termine und deine naechsten Schritte vor.")
+                .font(.system(size: 13.6, weight: .medium))
+                .foregroundStyle(MF.inkSoft)
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let report {
+                HStack(spacing: 8) {
+                    briefingMetric("\(report.content.wichtigeMails?.count ?? 0)", "Mails")
+                    briefingMetric("\(report.content.draftVorschlaege?.count ?? 0)", "Entwürfe")
+                    briefingMetric("\(report.content.erkannteTermine?.count ?? 0)", "Termine")
+                }
+            }
+
+            if case .failed(let message) = state.morningReportState {
+                Text(message)
+                    .font(.system(size: 12.1, weight: .semibold))
+                    .foregroundStyle(MF.emberDeep)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(MF.emberTint)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+
+            HStack(spacing: 8) {
+                Button {
+                    Task { await state.runMorningReportNow() }
+                } label: {
+                    HStack(spacing: 7) {
+                        Image(systemName: "wand.and.stars")
+                            .font(.system(size: 11, weight: .bold))
+                        Text(report == nil ? "Jetzt erstellen" : "Neu erstellen")
+                            .font(.system(size: 12.5, weight: .bold))
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 38)
+                    .background(MF.emberGrad)
+                    .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .disabled(isLoading)
+
+                Button {
+                    Haptics.tap()
+                    state.openMorningReportInCopilot()
+                } label: {
+                    HStack(spacing: 7) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 11, weight: .bold))
+                        Text("Durchgehen")
+                            .font(.system(size: 12.5, weight: .bold))
+                    }
+                    .foregroundStyle(MF.indigoInk)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 38)
+                    .background(MF.indigoTint)
+                    .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(15)
+        .background(MF.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(MF.border, lineWidth: 1))
+        .warmShadow()
+    }
+
+    private var mcpConnectorsCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "point.3.connected.trianglepath.dotted")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 42, height: 42)
+                    .background(MF.indigoGrad)
+                    .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Co-Pilot Werkzeugkasten")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(MF.ink)
+                    Text(state.connectedMCPConnectorSummary)
+                        .font(.system(size: 12.5, weight: .semibold))
+                        .foregroundStyle(MF.smoke)
+                        .lineLimit(1)
+                }
+                Spacer()
+                Text("\(state.mcpConnectorLinks.filter(\.isConnected).count)/\(MCPConnectorID.recommended.count)")
+                    .font(.system(size: 12, weight: .heavy))
+                    .foregroundStyle(MF.indigoInk)
+                    .padding(.horizontal, 9)
+                    .frame(height: 28)
+                    .background(MF.indigoTint)
+                    .clipShape(Capsule())
+            }
+
+            Text("Aktiviere die Werkzeuge, die der Co-Pilot bei Recherche, Unterlagen, Team, Shop, Buchhaltung oder lokaler Sichtbarkeit einplanen darf.")
+                .font(.system(size: 13.2, weight: .medium))
+                .foregroundStyle(MF.inkSoft)
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+
+            VStack(spacing: 0) {
+                ForEach(Array(MCPConnectorID.recommended.enumerated()), id: \.element.id) { index, connector in
+                    mcpConnectorRow(connector)
+                    if index < MCPConnectorID.recommended.count - 1 {
+                        Divider().overlay(MF.borderSoft).padding(.leading, 58)
+                    }
+                }
+            }
+            .background(MF.surfaceSoft)
+            .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+
+            if let message = state.mcpConnectorMessage {
+                HStack(alignment: .top, spacing: 9) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(MF.indigoInk)
+                    Text(message)
+                        .font(.system(size: 12.2, weight: .semibold))
+                        .foregroundStyle(MF.smoke)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                }
+                .padding(12)
+                .background(MF.indigoTint.opacity(0.7))
+                .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+            }
+        }
+        .padding(15)
+        .background(MF.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(MF.border, lineWidth: 1))
+        .warmShadow()
+    }
+
+    private func mcpConnectorRow(_ connector: MCPConnectorID) -> some View {
+        let link = state.mcpLink(for: connector)
+        let isActive = link?.isConnected == true
+        let hue = MF.services[connector.tintKey] ?? MF.services["capital"]!
+        return HStack(alignment: .top, spacing: 12) {
+            Image(systemName: connector.icon)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(hue.ink)
+                .frame(width: 36, height: 36)
+                .background(hue.tint)
+                .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 7) {
+                    Text(connector.label)
+                        .font(.system(size: 14.3, weight: .bold))
+                        .foregroundStyle(MF.ink)
+                        .lineLimit(1)
+                    Text(isActive ? "aktiv" : connector.category)
+                        .font(.system(size: 10.5, weight: .bold))
+                        .foregroundStyle(isActive ? hue.ink : MF.faint)
+                        .padding(.horizontal, 7)
+                        .frame(height: 20)
+                        .background(isActive ? hue.tint : MF.surface)
+                        .clipShape(Capsule())
+                }
+
+                Text(connector.detail)
+                    .font(.system(size: 12.2, weight: .medium))
+                    .foregroundStyle(MF.smoke)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                FlowLayout(spacing: 6) {
+                    ForEach(connector.tools, id: \.self) { tool in
+                        Text(tool)
+                            .font(.system(size: 10.8, weight: .bold))
+                            .foregroundStyle(hue.ink)
+                            .padding(.horizontal, 8)
+                            .frame(height: 24)
+                            .background(hue.tint.opacity(isActive ? 1 : 0.55))
+                            .clipShape(Capsule())
+                    }
+                }
+            }
+            Spacer(minLength: 8)
+            Button {
+                Haptics.tap()
+                state.toggleMCPConnector(connector)
+            } label: {
+                Image(systemName: isActive ? "xmark" : "plus")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(isActive ? hue.ink : .white)
+                    .frame(width: 34, height: 34)
+                    .background(isActive ? AnyShapeStyle(hue.tint) : AnyShapeStyle(hue.hue))
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isActive ? "\(connector.label) trennen" : "\(connector.label) aktivieren")
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
+    }
+
+    private func briefingMetric(_ value: String, _ label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.system(size: 15, weight: .heavy))
+                .foregroundStyle(MF.ink)
+            Text(label)
+                .font(.system(size: 10.5, weight: .semibold))
+                .foregroundStyle(MF.faint)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 9)
+        .background(MF.surfaceSoft)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private var aiUsageCard: some View {

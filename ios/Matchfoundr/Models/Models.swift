@@ -690,6 +690,7 @@ struct CopilotMessage: Identifiable, Codable {
     var navigation: [CopilotNav] = []
     var actions: [CopilotAction] = []
     var quickReplies: [String] = []
+    var choices: [CopilotChoice] = []
     var sources: [CopilotSource] = []
     var memory: FounderMemorySnapshot?
     var source: CopilotAnswerSource = .local
@@ -702,6 +703,7 @@ struct CopilotMessage: Identifiable, Codable {
         actions: [CopilotAction] = [],
         navigation: [CopilotNav] = [],
         quickReplies: [String] = [],
+        choices: [CopilotChoice] = [],
         sources: [CopilotSource] = [],
         memory: FounderMemorySnapshot? = nil,
         source: CopilotAnswerSource = .local,
@@ -713,6 +715,7 @@ struct CopilotMessage: Identifiable, Codable {
         self.actions = actions
         self.navigation = navigation
         self.quickReplies = quickReplies
+        self.choices = choices
         self.sources = sources
         self.memory = memory
         self.source = source
@@ -720,7 +723,7 @@ struct CopilotMessage: Identifiable, Codable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, mine, text, quickReplies, sources, source, createdAt
+        case id, mine, text, quickReplies, choices, sources, source, createdAt
     }
 
     init(from decoder: Decoder) throws {
@@ -729,12 +732,35 @@ struct CopilotMessage: Identifiable, Codable {
         mine = try container.decode(Bool.self, forKey: .mine)
         text = try container.decode(String.self, forKey: .text)
         quickReplies = try container.decodeIfPresent([String].self, forKey: .quickReplies) ?? []
+        choices = try container.decodeIfPresent([CopilotChoice].self, forKey: .choices) ?? []
         sources = try container.decodeIfPresent([CopilotSource].self, forKey: .sources) ?? []
         source = try container.decodeIfPresent(CopilotAnswerSource.self, forKey: .source) ?? .local
         createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? .now
         navigation = []
         actions = []
         memory = nil
+    }
+}
+
+struct CopilotChoice: Identifiable, Codable, Hashable {
+    let id: String
+    let label: String
+    let detail: String?
+    let prompt: String
+    let icon: String
+
+    init(
+        id: String,
+        label: String,
+        detail: String? = nil,
+        prompt: String,
+        icon: String = "circle"
+    ) {
+        self.id = id
+        self.label = label
+        self.detail = detail
+        self.prompt = prompt
+        self.icon = icon
     }
 }
 
@@ -875,6 +901,435 @@ enum AppScreen: Hashable {
     case cofounderDesk, swipe, chats, guides, events, company, documents, calendar, kanban, startup, radar, copilot
     case partners(String)
     case partner(String)
+}
+
+enum IntegrationProvider: String, Codable, CaseIterable, Identifiable, Hashable {
+    case gmail
+    case googleCalendar = "google_calendar"
+    case whatsapp
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .gmail: "Gmail"
+        case .googleCalendar: "Google Kalender"
+        case .whatsapp: "WhatsApp"
+        }
+    }
+
+    var shortLabel: String {
+        switch self {
+        case .gmail: "Mail"
+        case .googleCalendar: "Kalender"
+        case .whatsapp: "WhatsApp"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .gmail:
+            "Wichtige Mails, Antwortentwuerfe und Rueckfragen im Morgenbriefing."
+        case .googleCalendar:
+            "Termine erkennen, vorbereiten und bei Bestaetigung in den Kalender legen."
+        case .whatsapp:
+            "Gateway fuer Nachrichten-Signale aus echten Kunden- und Team-Chats."
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .gmail: "envelope.fill"
+        case .googleCalendar: "calendar.badge.clock"
+        case .whatsapp: "message.fill"
+        }
+    }
+
+    var tintKey: String {
+        switch self {
+        case .gmail: "growth"
+        case .googleCalendar: "capital"
+        case .whatsapp: "talent"
+        }
+    }
+
+    var usesOAuth: Bool {
+        self == .gmail || self == .googleCalendar
+    }
+}
+
+struct ConnectedAccount: Identifiable, Codable, Hashable {
+    let provider: IntegrationProvider
+    let status: String
+    let accountLabel: String?
+    let updatedAt: Date?
+
+    var id: String { provider.id }
+    var isConnected: Bool { status == "connected" }
+    var isPending: Bool { status == "pending" }
+
+    var statusLabel: String {
+        if isConnected { return "verbunden" }
+        if isPending { return "wartet" }
+        if status == "error" { return "Fehler" }
+        return status
+    }
+
+    var displayLabel: String {
+        let trimmed = accountLabel?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmed.isEmpty ? provider.detail : trimmed
+    }
+}
+
+enum MCPConnectorID: String, Codable, CaseIterable, Identifiable, Hashable {
+    case authorities = "authorities"
+    case googleDrive = "google_drive"
+    case notion = "notion"
+    case slack = "slack"
+    case github = "github"
+    case commerce = "commerce"
+    case accounting = "accounting"
+    case googleBusiness = "google_business"
+
+    var id: String { rawValue }
+
+    static let recommended: [MCPConnectorID] = [
+        .authorities,
+        .googleDrive,
+        .accounting,
+        .googleBusiness,
+        .commerce,
+        .notion,
+        .slack,
+        .github,
+    ]
+
+    var label: String {
+        switch self {
+        case .authorities: "Web, Kammern & Aemter"
+        case .googleDrive: "Google Drive & Docs"
+        case .notion: "Notion Wissen"
+        case .slack: "Slack Team"
+        case .github: "GitHub & Website-Code"
+        case .commerce: "Shopify/WooCommerce"
+        case .accounting: "Buchhaltung"
+        case .googleBusiness: "Google Business"
+        }
+    }
+
+    var shortLabel: String {
+        switch self {
+        case .authorities: "Aemter"
+        case .googleDrive: "Drive"
+        case .notion: "Notion"
+        case .slack: "Slack"
+        case .github: "GitHub"
+        case .commerce: "Shop"
+        case .accounting: "Buchhaltung"
+        case .googleBusiness: "Maps"
+        }
+    }
+
+    var category: String {
+        switch self {
+        case .authorities: "Recherche"
+        case .googleDrive, .notion: "Unterlagen"
+        case .slack: "Team"
+        case .github: "Tech"
+        case .commerce: "Vertrieb"
+        case .accounting: "Finanzen"
+        case .googleBusiness: "Lokal"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .authorities:
+            "Findet HWK/IHK, Gewerbeamt, Foerderstellen und Quellen als Chips."
+        case .googleDrive:
+            "Liest Gruenderordner, PDFs, Businessplaene und Entwuerfe fuer Unterlagen."
+        case .notion:
+            "Nutzt Wikis, Checklisten und Projektseiten als lebendes Vorhaben-Gedaechtnis."
+        case .slack:
+            "Bereitet Team-Updates, Broadcasts und offene Fragen fuer kleine Teams vor."
+        case .github:
+            "Hilft bei Website, Shop-Code, Issues und technischen Aufgaben."
+        case .commerce:
+            "Analysiert Produkte, Bestellungen, Warenkorb-Signale und erste Kunden."
+        case .accounting:
+            "Versteht Belege, Rechnungen, USt., DATEV/Lexoffice-Signale und Cash-Fragen."
+        case .googleBusiness:
+            "Optimiert lokale Sichtbarkeit, Bewertungen, Fotos, Oeffnungszeiten und Leads."
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .authorities: "building.columns.fill"
+        case .googleDrive: "folder.fill"
+        case .notion: "doc.text.fill"
+        case .slack: "bubble.left.and.bubble.right.fill"
+        case .github: "chevron.left.forwardslash.chevron.right"
+        case .commerce: "cart.fill"
+        case .accounting: "banknote.fill"
+        case .googleBusiness: "mappin.and.ellipse"
+        }
+    }
+
+    var tintKey: String {
+        switch self {
+        case .authorities: "mentor"
+        case .googleDrive: "capital"
+        case .notion: "legal"
+        case .slack: "talent"
+        case .github: "cofounder"
+        case .commerce: "growth"
+        case .accounting: "tax"
+        case .googleBusiness: "funding"
+        }
+    }
+
+    var tools: [String] {
+        switch self {
+        case .authorities:
+            ["Quellen", "Kontakte", "Pflichten"]
+        case .googleDrive:
+            ["PDFs", "Docs", "Uploads"]
+        case .notion:
+            ["Wikis", "Checklisten", "Notizen"]
+        case .slack:
+            ["Team", "Broadcast", "Briefing"]
+        case .github:
+            ["Repo", "Issues", "Deploy"]
+        case .commerce:
+            ["Produkte", "Orders", "Kunden"]
+        case .accounting:
+            ["Belege", "USt.", "DATEV"]
+        case .googleBusiness:
+            ["Profil", "Bewertungen", "Lokal"]
+        }
+    }
+
+    var copilotUseCase: String {
+        switch self {
+        case .authorities:
+            "nutzt Web-/Behoerdenrecherche fuer belastbare Pflichten, Ansprechpartner und Quellenchips"
+        case .googleDrive:
+            "zieht relevante Unterlagen heran, erstellt Versionen und kann fehlende Dokumente erkennen"
+        case .notion:
+            "liest Wissensseiten und haelt Aufgaben, Entscheidungen und offene Fragen zusammen"
+        case .slack:
+            "bereitet Team-Broadcasts, Zusammenfassungen und Entscheidungsfragen vor"
+        case .github:
+            "analysiert Website-/Shop-Code, Issues und technische TODOs fuer umsetzbare Schritte"
+        case .commerce:
+            "liest Shop-Signale und schlaegt konkrete Growth-/Operations-Massnahmen vor"
+        case .accounting:
+            "bereitet Rechnungs-, Steuer- und Cashflow-Fragen mit vorhandenen Belegen vor"
+        case .googleBusiness:
+            "verbessert lokales Profil, Rezensionen, Bilder, Oeffnungszeiten und Suchbarkeit"
+        }
+    }
+}
+
+struct MCPConnectorLink: Identifiable, Codable, Hashable {
+    let connectorID: MCPConnectorID
+    var status: String
+    var connectedAt: Date?
+    var note: String?
+
+    var id: String { connectorID.id }
+    var isConnected: Bool { status == "connected" }
+    var statusLabel: String {
+        isConnected ? "aktiv" : status
+    }
+}
+
+struct MorningReport: Identifiable, Codable, Hashable {
+    let id: UUID
+    let reportDate: String
+    let content: MorningReportContent
+    let createdAt: Date?
+
+    var formattedDate: String {
+        Self.dateFormatter.string(from: reportDateDate ?? .now)
+    }
+
+    private var reportDateDate: Date? {
+        Self.storageDateFormatter.date(from: reportDate)
+    }
+
+    private static let storageDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "de_DE")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "de_DE")
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }()
+}
+
+struct MorningReportContent: Codable, Hashable {
+    var fokus: String?
+    var hinweis: String?
+    var tagesablauf: [MorningScheduleBlock]?
+    var wichtigeMails: [MorningMail]?
+    var draftVorschlaege: [MorningDraft]?
+    var erkannteTermine: [MorningDetectedEvent]?
+    var whatsapp: MorningWhatsApp?
+    var verbundeneKonten: [String]?
+
+    var safeFocus: String {
+        clean(fokus) ?? "Noch kein Briefing fuer heute."
+    }
+
+    var connectedAccountLabels: [String] {
+        (verbundeneKonten ?? [])
+            .compactMap { IntegrationProvider(rawValue: $0)?.shortLabel }
+    }
+
+    private func clean(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+}
+
+struct MorningScheduleBlock: Codable, Hashable, Identifiable {
+    var id: String { "\(zeit)-\(titel)" }
+    let zeit: String
+    let titel: String
+
+    enum CodingKeys: String, CodingKey {
+        case zeit, titel, title
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        zeit = try container.decodeIfPresent(String.self, forKey: .zeit) ?? ""
+        titel = try container.decodeIfPresent(String.self, forKey: .titel)
+            ?? container.decodeIfPresent(String.self, forKey: .title)
+            ?? "Block"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(zeit, forKey: .zeit)
+        try container.encode(titel, forKey: .titel)
+    }
+}
+
+struct MorningMail: Codable, Hashable, Identifiable {
+    var id: String { "\(von)-\(betreff)" }
+    let von: String
+    let betreff: String
+    let warum: String
+
+    enum CodingKeys: String, CodingKey {
+        case von, from, betreff, subject, warum, reason
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        von = try container.decodeIfPresent(String.self, forKey: .von)
+            ?? container.decodeIfPresent(String.self, forKey: .from)
+            ?? "Unbekannt"
+        betreff = try container.decodeIfPresent(String.self, forKey: .betreff)
+            ?? container.decodeIfPresent(String.self, forKey: .subject)
+            ?? "Ohne Betreff"
+        warum = try container.decodeIfPresent(String.self, forKey: .warum)
+            ?? container.decodeIfPresent(String.self, forKey: .reason)
+            ?? "Der Co-Pilot hat diese Mail als relevant markiert."
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(von, forKey: .von)
+        try container.encode(betreff, forKey: .betreff)
+        try container.encode(warum, forKey: .warum)
+    }
+}
+
+struct MorningDraft: Codable, Hashable, Identifiable {
+    var id: String { "\(an)-\(betreff)-\(gmailDraftId ?? "")" }
+    let an: String
+    let betreff: String
+    let entwurf: String
+    let gmailDraftId: String?
+
+    enum CodingKeys: String, CodingKey {
+        case an, to, betreff, subject, entwurf, body, gmailDraftId
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        an = try container.decodeIfPresent(String.self, forKey: .an)
+            ?? container.decodeIfPresent(String.self, forKey: .to)
+            ?? ""
+        betreff = try container.decodeIfPresent(String.self, forKey: .betreff)
+            ?? container.decodeIfPresent(String.self, forKey: .subject)
+            ?? "Antwort"
+        entwurf = try container.decodeIfPresent(String.self, forKey: .entwurf)
+            ?? container.decodeIfPresent(String.self, forKey: .body)
+            ?? ""
+        gmailDraftId = try container.decodeIfPresent(String.self, forKey: .gmailDraftId)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(an, forKey: .an)
+        try container.encode(betreff, forKey: .betreff)
+        try container.encode(entwurf, forKey: .entwurf)
+        try container.encodeIfPresent(gmailDraftId, forKey: .gmailDraftId)
+    }
+}
+
+struct MorningDetectedEvent: Codable, Hashable, Identifiable {
+    var id: String { "\(titel)-\(datum)-\(zeit ?? "")" }
+    let titel: String
+    let datum: String
+    let zeit: String?
+    let quelle: String?
+    let calendarEventId: String?
+
+    enum CodingKeys: String, CodingKey {
+        case titel, title, datum, date, zeit, time, quelle, source, calendarEventId
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        titel = try container.decodeIfPresent(String.self, forKey: .titel)
+            ?? container.decodeIfPresent(String.self, forKey: .title)
+            ?? "Termin"
+        datum = try container.decodeIfPresent(String.self, forKey: .datum)
+            ?? container.decodeIfPresent(String.self, forKey: .date)
+            ?? ""
+        zeit = try container.decodeIfPresent(String.self, forKey: .zeit)
+            ?? container.decodeIfPresent(String.self, forKey: .time)
+        quelle = try container.decodeIfPresent(String.self, forKey: .quelle)
+            ?? container.decodeIfPresent(String.self, forKey: .source)
+        calendarEventId = try container.decodeIfPresent(String.self, forKey: .calendarEventId)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(titel, forKey: .titel)
+        try container.encode(datum, forKey: .datum)
+        try container.encodeIfPresent(zeit, forKey: .zeit)
+        try container.encodeIfPresent(quelle, forKey: .quelle)
+        try container.encodeIfPresent(calendarEventId, forKey: .calendarEventId)
+    }
+}
+
+struct MorningWhatsApp: Codable, Hashable {
+    let neue: Int?
+    let verbunden: Bool?
 }
 
 struct StartupTeamMember: Identifiable, Codable, Hashable {

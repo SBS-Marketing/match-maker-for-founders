@@ -13,12 +13,37 @@ struct CopilotCloudExtra: Encodable {
     let memory: [String]
     let history: [CopilotCloudTurn]
     let onboarding: CopilotOnboardingContext?
+    let mcpConnectors: [CopilotCloudMCPConnector]
     let app = CopilotAppContext.matchfoundr
     let mobileClient = true
 
     enum CodingKeys: String, CodingKey {
         case surface, memory, history, onboarding, app
+        case mcpConnectors = "mcp_connectors"
         case mobileClient = "mobile_client"
+    }
+}
+
+struct CopilotCloudMCPConnector: Encodable {
+    let id: String
+    let label: String
+    let category: String
+    let status: String
+    let tools: [String]
+    let useCase: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, label, category, status, tools
+        case useCase = "use_case"
+    }
+
+    init(link: MCPConnectorLink) {
+        id = link.connectorID.id
+        label = link.connectorID.label
+        category = link.connectorID.category
+        status = link.status
+        tools = link.connectorID.tools
+        useCase = link.connectorID.copilotUseCase
     }
 }
 
@@ -35,7 +60,7 @@ struct CopilotAppContext: Encodable {
             .init(id: "discover", label: "Entdecken", purpose: "Kontakte, Guides, Business-Profil, Unterlagen, Partner, Deals"),
             .init(id: "community", label: "Community", purpose: "Events, Gründerkreis, lokale Kontakte, RSVP"),
             .init(id: "startup", label: "Business", purpose: "Workspace für kleine Gründung, Angebot, Kosten, Anmeldung, Team, Plan, Akten"),
-            .init(id: "profile", label: "Profil", purpose: "Nutzung, Onboarding, App-Tour, Einstellungen"),
+            .init(id: "profile", label: "Profil", purpose: "Nutzung, Onboarding, App-Tour, Integrationen, MCP-Werkzeuge, Einstellungen"),
             .init(id: "copilot", label: "Co-Pilot", purpose: "Live-KI, gespeicherte Sessions, Memory, App-Aktionen"),
         ],
         actions: [
@@ -43,9 +68,10 @@ struct CopilotAppContext: Encodable {
             "open_business", "found_business",
             "open_company_profile", "publish_company_profile", "open_documents",
             "open_matches", "draft_match_message", "remember_fact", "refresh_live_data",
-            "web_research_sources", "find_authority_contacts"
+            "web_research_sources", "find_authority_contacts",
+            "use_mcp_connector", "mcp_read_context", "mcp_prepare_action", "mcp_request_confirmation"
         ],
-        rule: "Wenn eine Antwort eine App-Aktion braucht, formuliere sie konkret und gib passende navigation/follow_up_aktionen. Bei Fragen zu Kammer, Amt, Genehmigung oder Ansprechpartnern nutze Web-Recherche und gib sources zurueck; der native Client zeigt daraus Quellen-Chips."
+        rule: "Wenn eine Antwort eine App-Aktion braucht, formuliere sie konkret und gib passende navigation/follow_up_aktionen. Bei Fragen zu Kammer, Amt, Genehmigung oder Ansprechpartnern nutze Web-Recherche und gib sources zurueck; der native Client zeigt daraus Quellen-Chips. MCP-Werkzeuge stehen im Memory als aktiv oder inaktiv: nutze nur aktive Werkzeuge konkret, nenne bei fehlendem Werkzeug Profil > MCP-Werkzeuge, und verlange vor externen Schreibaktionen immer eine Bestaetigung."
     )
 }
 

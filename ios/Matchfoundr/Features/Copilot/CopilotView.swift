@@ -135,22 +135,67 @@ struct CopilotView: View {
         let icon: String
         let label: String
         let desc: String
+        let question: String
         let prompt: String
+        let choices: [CopilotChoice]
     }
 
     private static let pilotSkills: [PilotSkill] = [
         .init(id: "fund", icon: "checkmark.seal.fill", label: "Förderung finden", desc: "Passende Töpfe",
-              prompt: "Welche Förderprogramme passen zu meinem Vorhaben? Prüfe meine Branche und Region."),
+              question: "Welche Art von Förderung sollen wir zuerst prüfen?",
+              prompt: "Welche Förderprogramme passen zu meinem Vorhaben? Prüfe meine Branche und Region.",
+              choices: [
+                .init(id: "fund-start", label: "Gründungszuschuss", detail: "Agentur, Einstieg, Voraussetzungen", prompt: "Prüfe für mein Vorhaben Gründungszuschuss, Einstiegsgeld und regionale Start-Hilfen. Sag mir konkret, was ich als Erstes tun muss.", icon: "person.crop.circle.badge.checkmark"),
+                .init(id: "fund-region", label: "Regionale Förderung", detail: "Land, Kommune, Kammer", prompt: "Suche passende regionale Förderungen für meine Branche und PLZ. Gib mir Quellen und nächste Schritte.", icon: "mappin.and.ellipse"),
+                .init(id: "fund-invest", label: "Investition & Kredit", detail: "KfW, Bank, Mikrokredit", prompt: "Prüfe, welche Kredit- oder Investitionsförderung zu meinem Vorhaben passt und welche Unterlagen die Bank sehen will.", icon: "banknote.fill"),
+              ]),
         .init(id: "plan", icon: "book.fill", label: "Businessplan", desc: "Entwurf in 1 Std",
-              prompt: "Hilf mir, einen Businessplan-Entwurf für mein Vorhaben zu erstellen."),
+              question: "Wofür brauchst du den Businessplan?",
+              prompt: "Hilf mir, einen Businessplan-Entwurf für mein Vorhaben zu erstellen.",
+              choices: [
+                .init(id: "plan-bank", label: "Für Bank & Förderung", detail: "Tragfähigkeit, Zahlen, Nachweise", prompt: "Erstelle mit mir einen bankfähigen Businessplan für mein Vorhaben. Starte mit den fehlenden Pflichtteilen und frage mich Schritt für Schritt ab.", icon: "building.columns.fill"),
+                .init(id: "plan-self", label: "Als Fahrplan für mich", detail: "klarer 30-Tage-Plan", prompt: "Baue mir aus meiner Idee einen einfachen Businessplan als persönlichen Fahrplan. Fokus: Angebot, Zielkunden, erste Einnahmen, nächste 30 Tage.", icon: "map.fill"),
+                .init(id: "plan-invest", label: "Für Investoren", detail: "Pitch, Wachstum, Markt", prompt: "Bereite meinen Businessplan investorentauglich vor: Problem, Lösung, Markt, Geschäftsmodell, Wachstum und offene Risiken.", icon: "chart.line.uptrend.xyaxis"),
+              ]),
         .init(id: "legal", icon: "lock.fill", label: "Rechtsform", desc: "GmbH vs. Einzel",
-              prompt: "Welche Rechtsform passt zu mir — GmbH oder Einzelunternehmen?"),
-        .init(id: "hire", icon: "person.2.fill", label: "Ersten Hire", desc: "Finden & einstellen",
-              prompt: "Was fehlt meinem Team am meisten und wie finde ich den ersten Mitstreiter?"),
+              question: "Was willst du gerade entscheiden?",
+              prompt: "Welche Rechtsform passt zu mir — GmbH oder Einzelunternehmen?",
+              choices: [
+                .init(id: "legal-solo", label: "Einzelunternehmen prüfen", detail: "schnell starten, einfache Pflichten", prompt: "Prüfe, ob ein Einzelunternehmen für mein Vorhaben reicht. Erkläre Risiken, Anmeldung, Steuern und wann ich wechseln sollte.", icon: "person.fill"),
+                .init(id: "legal-gbr", label: "Mit Partner gründen", detail: "GbR, Verträge, Rollen", prompt: "Ich gründe mit mindestens einer weiteren Person. Vergleiche GbR, UG und GmbH für uns und nenne die wichtigsten Vertragsregeln.", icon: "person.2.fill"),
+                .init(id: "legal-risk", label: "Haftung minimieren", detail: "UG/GmbH sinnvoll?", prompt: "Bewerte mein Haftungsrisiko und sag mir, ob UG oder GmbH sinnvoll ist. Berücksichtige kleine Unternehmen und Kosten.", icon: "shield.fill"),
+              ]),
+        .init(id: "hire", icon: "person.2.fill", label: "Hilfe finden", desc: "Partner & erste Hilfe",
+              question: "Welche Unterstützung suchst du?",
+              prompt: "Was fehlt meinem Team am meisten und wie finde ich den ersten Mitstreiter?",
+              choices: [
+                .init(id: "help-cofounder", label: "Co-Founder", detail: "langfristig mitgründen", prompt: "Hilf mir zu entscheiden, ob ich wirklich einen Co-Founder brauche. Frag mich 3 Dinge ab und gib dann ein Suchprofil aus.", icon: "person.2.fill"),
+                .init(id: "help-service", label: "Dienstleister", detail: "Website, Buchhaltung, Design", prompt: "Welche Dienstleister brauche ich zuerst und woran erkenne ich gute Angebote? Priorisiere nach Nutzen und Kosten.", icon: "wrench.and.screwdriver.fill"),
+                .init(id: "help-chamber", label: "Kammer/Beratung", detail: "IHK/HWK/Ansprechpartner", prompt: "Finde heraus, welche Kammer oder Beratungsstelle für mein Vorhaben zuständig ist und welche Fragen ich dort stellen soll.", icon: "building.2.fill"),
+              ]),
         .init(id: "cost", icon: "bolt.fill", label: "Finanzplan", desc: "Start-Budget",
-              prompt: "Rechne meine Startkosten durch und baue einen ersten Finanzplan."),
+              question: "Was sollen wir zuerst rechnen?",
+              prompt: "Rechne meine Startkosten durch und baue einen ersten Finanzplan.",
+              choices: [
+                .init(id: "cost-start", label: "Gründungskosten", detail: "einmalige Kosten", prompt: "Erstelle eine realistische Gründungskostenliste für mein Vorhaben und frage fehlende Kostenpositionen Schritt für Schritt ab.", icon: "receipt.fill"),
+                .init(id: "cost-month", label: "Monatliche Fixkosten", detail: "Miete, Tools, Personal", prompt: "Baue mir eine monatliche Fixkostenübersicht und sag mir, ab welchem Umsatz mein Geschäft tragfähig wird.", icon: "calendar"),
+                .init(id: "cost-price", label: "Preise kalkulieren", detail: "Stundensatz oder Paketpreis", prompt: "Hilf mir, meine Preise zu kalkulieren. Nutze Kosten, Zeitaufwand, Marge und Zielkunden.", icon: "tag.fill"),
+              ]),
         .init(id: "msg", icon: "arrowshape.turn.up.left.fill", label: "Nachricht", desc: "Match anschreiben",
-              prompt: "Schreib mir einen starken ersten Aufschlag für mein bestes Match."),
+              question: "Wen willst du anschreiben?",
+              prompt: "Schreib mir einen starken ersten Aufschlag für mein bestes Match.",
+              choices: [
+                .init(id: "msg-match", label: "Ein Match", detail: "persönlicher Einstieg", prompt: "Hilf mir, eine konkrete Nachricht an ein Match zu schreiben. Zeige mir erst passende Matches zur Auswahl, falls mehrere da sind.", icon: "bubble.left.and.bubble.right.fill"),
+                .init(id: "msg-partner", label: "Partner/Ansprechpartner", detail: "IHK, HWK, Dienstleister", prompt: "Formuliere eine kurze, professionelle Anfrage an einen Ansprechpartner oder Partner. Frag mich vorher, an wen sie geht.", icon: "paperplane.fill"),
+                .init(id: "msg-followup", label: "Follow-up", detail: "nach Meeting oder Erstkontakt", prompt: "Schreibe ein Follow-up nach einem Gespräch. Frag mich nach Kontext, Ziel und gewünschtem nächsten Schritt.", icon: "arrowshape.turn.up.left.fill"),
+              ]),
+    ]
+
+    private static let readyPrompts: [(label: String, prompt: String)] = [
+        ("Was kostet die Gründung?", "Schätze meine Gründungskosten und frage nur die fehlenden Zahlen ab."),
+        ("Welche Förderung passt?", "Prüfe Förderungen für mein Vorhaben, meine Region und meine Branche."),
+        ("Was fehlt als Nächstes?", "Analysiere mein Profil, Unterlagen und Kalender und gib mir den sinnvollsten nächsten Schritt."),
+        ("Nachricht schreiben", "Hilf mir, eine Nachricht an ein Match oder einen Ansprechpartner zu schreiben.")
     ]
 
     private var lastSessionWithContent: CopilotSession? {
@@ -206,17 +251,16 @@ struct CopilotView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                 .indigoGlow()
 
-                // Schnell erledigt
+                // Start-Assistent
                 VStack(alignment: .leading, spacing: 13) {
-                    Text("Schnell erledigt")
+                    Text("Start-Assistent")
                         .font(.system(size: 16, weight: .heavy)).tracking(-0.3)
                         .foregroundStyle(MF.ink)
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 11), GridItem(.flexible())], spacing: 11) {
                         ForEach(Self.pilotSkills) { s in
                             Button {
                                 Haptics.tap()
-                                showWorkspace = false
-                                send(s.prompt)
+                                startAssistantFlow(s)
                             } label: {
                                 VStack(alignment: .leading, spacing: 11) {
                                     Image(systemName: s.icon)
@@ -503,16 +547,34 @@ struct CopilotView: View {
         if msg.mine {
             HStack {
                 Spacer(minLength: 60)
-                Text(msg.text)
-                    .font(.system(size: 14.5))
-                    .foregroundStyle(.white)
-                    .lineSpacing(3)
-                    .padding(.horizontal, 15).padding(.vertical, 11)
+                if let skill = Self.pilotSkills.first(where: { $0.label == msg.text }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: skill.icon)
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(.white.opacity(0.85))
+                            .frame(width: 24, height: 24)
+                            .background(.white.opacity(0.18))
+                            .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                        Text(msg.text)
+                            .font(.system(size: 14.5, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
+                    .padding(.horizontal, 13).padding(.vertical, 9)
                     .background(MF.indigoGrad)
-                    .clipShape(UnevenRoundedRectangle(
-                        topLeadingRadius: 18, bottomLeadingRadius: 18,
-                        bottomTrailingRadius: 5, topTrailingRadius: 18))
+                    .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
                     .indigoGlow()
+                } else {
+                    Text(msg.text)
+                        .font(.system(size: 14.5))
+                        .foregroundStyle(.white)
+                        .lineSpacing(3)
+                        .padding(.horizontal, 15).padding(.vertical, 11)
+                        .background(MF.indigoGrad)
+                        .clipShape(UnevenRoundedRectangle(
+                            topLeadingRadius: 18, bottomLeadingRadius: 18,
+                            bottomTrailingRadius: 5, topTrailingRadius: 18))
+                        .indigoGlow()
+                }
             }
         } else {
             VStack(alignment: .leading, spacing: 6) {
@@ -570,29 +632,13 @@ struct CopilotView: View {
                             }
                         }
                     }
-                    if !msg.quickReplies.isEmpty {
-                        FlowLayout(spacing: 7) {
-                            ForEach(msg.quickReplies, id: \.self) { reply in
-                                Button {
-                                    send(reply)
-                                } label: {
-                                    HStack(spacing: 5) {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .font(.system(size: 10, weight: .bold))
-                                        Text(reply)
-                                            .font(.system(size: 12.5, weight: .semibold))
-                                            .lineLimit(1)
-                                            .truncationMode(.tail)
-                                    }
-                                    .frame(maxWidth: 250, alignment: .leading)
-                                    .foregroundStyle(MF.indigoInk)
-                                    .padding(.horizontal, 12).padding(.vertical, 8)
-                                    .background(MF.indigoTint.opacity(0.65))
-                                    .clipShape(Capsule())
-                                }
-                                .buttonStyle(.plain)
-                            }
+                    let displayChoices = msg.choices.isEmpty
+                        ? msg.quickReplies.map {
+                            CopilotChoice(id: $0, label: $0, prompt: $0, icon: "circle")
                         }
+                        : msg.choices
+                    if !displayChoices.isEmpty {
+                        choiceList(displayChoices)
                     }
                     if !msg.navigation.isEmpty {
                         FlowLayout(spacing: 7) {
@@ -692,6 +738,47 @@ struct CopilotView: View {
         .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
     }
 
+    private func choiceList(_ choices: [CopilotChoice]) -> some View {
+        VStack(spacing: 8) {
+            ForEach(choices) { choice in
+                Button {
+                    Haptics.select()
+                    send(choice.prompt, displayText: choice.label)
+                } label: {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .stroke(MF.faint.opacity(0.7), lineWidth: 2)
+                                .frame(width: 22, height: 22)
+                            Image(systemName: choice.icon)
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(MF.indigoInk.opacity(0.85))
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(choice.label)
+                                .font(.system(size: 14.5, weight: .bold))
+                                .foregroundStyle(MF.ink)
+                                .fixedSize(horizontal: false, vertical: true)
+                            if let detail = choice.detail, !detail.isEmpty {
+                                Text(detail)
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(MF.smoke)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                    .background(MF.surfaceSoft)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(MF.border, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
     private func sourceChips(_ sources: [CopilotSource]) -> some View {
         FlowLayout(spacing: 7) {
             ForEach(sources.prefix(5)) { source in
@@ -711,28 +798,80 @@ struct CopilotView: View {
         HStack(spacing: 6) {
             Image(systemName: source.type.localizedCaseInsensitiveContains("web") ? "globe" : "doc.text.fill")
                 .font(.system(size: 10.5, weight: .bold))
-            Text(source.title)
+            Text(sourceDisplayTitle(source))
                 .font(.system(size: 11.5, weight: .bold))
                 .lineLimit(1)
+                .truncationMode(.tail)
                 .minimumScaleFactor(0.75)
         }
         .foregroundStyle(MF.smoke)
         .padding(.horizontal, 10)
+        .frame(maxWidth: 230, alignment: .leading)
         .frame(height: 30)
         .background(Color(hex: 0xEFE6D6))
         .overlay(Capsule().stroke(Color(hex: 0xD9CBB6), lineWidth: 1))
         .clipShape(Capsule())
     }
 
+    private func sourceDisplayTitle(_ source: CopilotSource) -> String {
+        let title = source.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !title.isEmpty, !looksLikeURL(title) {
+            return shortened(title, maxLength: 34)
+        }
+
+        let rawURL = (source.url ?? title).trimmingCharacters(in: .whitespacesAndNewlines)
+        if let compact = compactURLLabel(rawURL) {
+            return compact
+        }
+        return shortened(title.isEmpty ? "Quelle" : title, maxLength: 34)
+    }
+
+    private func compactURLLabel(_ raw: String) -> String? {
+        guard !raw.isEmpty else { return nil }
+        let normalized = raw.contains("://") ? raw : "https://\(raw)"
+        guard let components = URLComponents(string: normalized),
+              let host = components.host?.replacingOccurrences(of: "www.", with: ""),
+              !host.isEmpty
+        else { return nil }
+
+        let cleanSegments = components.path
+            .split(separator: "/")
+            .map(String.init)
+            .filter { !$0.isEmpty }
+        guard let last = cleanSegments.last else {
+            return shortened(host, maxLength: 30)
+        }
+
+        let shortHost = shortened(host, maxLength: 22)
+        let shortLast = shortened(last, maxLength: 14)
+        return "\(shortHost)/.../\(shortLast)"
+    }
+
+    private func looksLikeURL(_ value: String) -> Bool {
+        let lower = value.lowercased()
+        return lower.hasPrefix("http://")
+            || lower.hasPrefix("https://")
+            || lower.hasPrefix("www.")
+            || lower.contains(".de/")
+            || lower.contains(".com/")
+            || lower.contains(".org/")
+            || lower.contains(".net/")
+    }
+
+    private func shortened(_ value: String, maxLength: Int) -> String {
+        guard value.count > maxLength, maxLength > 3 else { return value }
+        return "\(value.prefix(maxLength - 3))..."
+    }
+
     // ─── Prompt-Chips (Spec: IndigoTint-Pillen) ───────────────
     private var promptChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                ForEach(CopilotEngine.quickPrompts, id: \.self) { prompt in
+                ForEach(Self.readyPrompts, id: \.label) { item in
                     Button {
-                        send(prompt)
+                        send(item.prompt, displayText: item.label)
                     } label: {
-                        Text(prompt)
+                        Text(item.label)
                             .font(.system(size: 12.5, weight: .semibold))
                             .foregroundStyle(MF.indigoInk)
                             .padding(.horizontal, 13).padding(.vertical, 8)
@@ -778,8 +917,34 @@ struct CopilotView: View {
         .padding(.bottom, 10)
     }
 
-    private func send(_ preset: String?) {
+    private func startAssistantFlow(_ skill: PilotSkill) {
+        inputFocused = false
+        showWorkspace = false
+        let sessionID = state.ensureCopilotSession()
+        if state.activeCopilotSessionID != sessionID {
+            state.switchCopilotSession(sessionID)
+        }
+
+        let userMessage = CopilotMessage(mine: true, text: skill.label)
+        state.appendCopilotMessage(userMessage, to: sessionID)
+
+        let assistantMessage = CopilotMessage(
+            mine: false,
+            text: skill.question,
+            choices: skill.choices,
+            memory: state.founderMemory,
+            source: .local
+        )
+        state.appendCopilotMessage(assistantMessage, to: sessionID)
+
+        withAnimation(.easeOut(duration: 0.25)) {
+            messages = state.copilotMessages(for: sessionID)
+        }
+    }
+
+    private func send(_ preset: String?, displayText: String? = nil) {
         let text = (preset ?? input).trimmingCharacters(in: .whitespaces)
+        let visibleText = (displayText ?? text).trimmingCharacters(in: .whitespacesAndNewlines)
         inputFocused = false
         guard !text.isEmpty, thinkingSessionID == nil else { return }
         Haptics.tap()
@@ -796,7 +961,7 @@ struct CopilotView: View {
             return
         }
         input = ""
-        let userMessage = CopilotMessage(mine: true, text: text)
+        let userMessage = CopilotMessage(mine: true, text: visibleText.isEmpty ? text : visibleText)
         messages.append(userMessage)
         state.appendCopilotMessage(userMessage, to: sessionID)
         let history = state.copilotMessages(for: sessionID)
@@ -829,7 +994,7 @@ struct CopilotView: View {
         let wizard = CopilotMessage(
             mine: false,
             text: wizardPrompt(for: answer.text, replies: replies),
-            quickReplies: replies,
+            choices: replies.map { CopilotChoice(id: $0, label: $0, prompt: $0, icon: "circle") },
             memory: answer.memory,
             source: answer.source,
             createdAt: .now

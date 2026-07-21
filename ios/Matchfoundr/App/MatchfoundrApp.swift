@@ -49,6 +49,8 @@ struct RootView: View {
             guard phase == .active else { return }
             Task {
                 await state.refreshCommunityEvents(showLoading: false)
+                await state.refreshConnectedAccounts(showLoading: false)
+                await state.refreshMorningReport(showLoading: false)
             }
         }
         .animation(.easeOut(duration: 0.3), value: state.authIsLoading)

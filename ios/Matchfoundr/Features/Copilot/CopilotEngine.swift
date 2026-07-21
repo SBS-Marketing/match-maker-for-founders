@@ -23,7 +23,10 @@ enum CopilotEngine {
                     history: history.suffix(6).map {
                         CopilotCloudTurn(role: $0.mine ? "user" : "assistant", content: $0.text)
                     },
-                    onboarding: state.copilotOnboardingContext()
+                    onboarding: state.copilotOnboardingContext(),
+                    mcpConnectors: state.mcpConnectorLinks
+                        .filter(\.isConnected)
+                        .map(CopilotCloudMCPConnector.init(link:))
                 )
             )
             let response: CopilotCloudResponse = try await SupabaseService.shared.invokeFunction(
@@ -1375,6 +1378,7 @@ enum CopilotEngine {
         case "events": .screen(.events)
         case "guides": .screen(.guides)
         case "copilot": .screen(.copilot)
+        case "profile": .tab(.profile)
         default: nil
         }
     }
@@ -1391,6 +1395,7 @@ enum CopilotEngine {
         case "radar": "Radar öffnen"
         case "events": "Events öffnen"
         case "guides": "Guides öffnen"
+        case "profile": "Profil öffnen"
         default: "Öffnen"
         }
     }

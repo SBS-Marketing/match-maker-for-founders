@@ -9,25 +9,161 @@ import SwiftUI
 
 // MARK: - Transkription
 
+enum MeetingRole: String, CaseIterable, Identifiable {
+    case founder = "Inhaber"
+    case customer = "Kunde/Partner"
+    case advisor = "Beratung"
+    case finance = "Finanzen"
+    case legal = "Recht"
+    case tech = "Tech/Web"
+    case marketing = "Marketing"
+    case operations = "Betrieb"
+    case task = "Aufgabe"
+    case unknown = "Gespräch"
+
+    var id: String { rawValue }
+
+    var icon: String {
+        switch self {
+        case .founder: "person.crop.circle"
+        case .customer: "person.2.fill"
+        case .advisor: "lightbulb.fill"
+        case .finance: "banknote.fill"
+        case .legal: "checkmark.seal.fill"
+        case .tech: "network"
+        case .marketing: "megaphone.fill"
+        case .operations: "wrench.and.screwdriver.fill"
+        case .task: "checklist"
+        case .unknown: "quote.bubble.fill"
+        }
+    }
+
+    var tint: Color {
+        switch self {
+        case .founder: MF.indigoTint
+        case .customer: Color(hex: 0xE9F7EF)
+        case .advisor: Color(hex: 0xFFF3D8)
+        case .finance: Color(hex: 0xEAF3FF)
+        case .legal: Color(hex: 0xF4ECFF)
+        case .tech: Color(hex: 0xEAF8F7)
+        case .marketing: Color(hex: 0xFEEAF3)
+        case .operations: MF.emberTint
+        case .task: Color(hex: 0xEAF4EE)
+        case .unknown: MF.surfaceSoft
+        }
+    }
+
+    var ink: Color {
+        switch self {
+        case .founder: MF.indigoInk
+        case .customer: Color(hex: 0x26734D)
+        case .advisor: Color(hex: 0x986900)
+        case .finance: Color(hex: 0x245B9E)
+        case .legal: Color(hex: 0x6B3FA0)
+        case .tech: Color(hex: 0x1E7771)
+        case .marketing: Color(hex: 0xB4376C)
+        case .operations: MF.emberDeep
+        case .task: Color(hex: 0x2E7D5B)
+        case .unknown: MF.smoke
+        }
+    }
+
+    static func infer(from text: String) -> MeetingRole {
+        let lower = text
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "de-DE"))
+            .lowercased()
+
+        if lower.containsAny("ich uebernehme", "ich ubernehme", "du machst", "wir sollten", "bis morgen", "bis naechste", "bis nachste", "todo", "aufgabe", "naechster schritt", "nachster schritt", "next step") {
+            return .task
+        }
+        if lower.containsAny("steuer", "finanzamt", "buchhaltung", "umsatzsteuer", "ust", "datev", "kredit", "foerder", "forderung", "bank", "liquiditaet", "liquiditat", "rechnung") {
+            return .finance
+        }
+        if lower.containsAny("vertrag", "agb", "datenschutz", "impressum", "haftung", "recht", "anwalt", "marke anmelden", "gewerbeanmeldung", "genehmigung") {
+            return .legal
+        }
+        if lower.containsAny("website", "online shop", "onlineshop", "software", "app", "domain", "hosting", "seo", "automatisierung", "schnittstelle", "api") {
+            return .tech
+        }
+        if lower.containsAny("instagram", "tiktok", "kampagne", "kunden gewinnen", "werbung", "flyer", "angebot", "vertrieb", "preis", "positionierung") {
+            return .marketing
+        }
+        if lower.containsAny("terminplan", "lieferant", "lager", "einkauf", "material", "werkstatt", "betrieb", "prozess", "ablauf", "mitarbeiter") {
+            return .operations
+        }
+        if lower.containsAny("beratung", "ich empfehle", "mein rat", "gruendungsberatung", "ihk", "hwk", "handwerkskammer", "mentor") {
+            return .advisor
+        }
+        if lower.containsAny("kunde", "auftraggeber", "partner", "kooperation", "zusammenarbeiten", "interessent") {
+            return .customer
+        }
+        if lower.containsAny("meine idee", "mein laden", "mein geschaeft", "mein geschaft", "ich gruende", "ich grunde", "ich moechte", "ich mochte", "ich will", "wir gruenden", "wir grunden") {
+            return .founder
+        }
+        return .unknown
+    }
+}
+
+private extension String {
+    func containsAny(_ needles: String...) -> Bool {
+        needles.contains { contains($0) }
+    }
+}
+
+struct MeetingTranscriptSegment: Identifiable, Equatable {
+    let id: UUID
+    var text: String
+    var role: MeetingRole
+    var isPartial: Bool
+    var timestamp: Date
+
+    init(id: UUID = UUID(), text: String, role: MeetingRole, isPartial: Bool = false, timestamp: Date = .now) {
+        self.id = id
+        self.text = text
+        self.role = role
+        self.isPartial = isPartial
+        self.timestamp = timestamp
+    }
+}
+
 @MainActor
 final class MeetingRecorder: NSObject, ObservableObject {
     @Published var elapsed = 0
     @Published var paused = false
-    @Published var lines: [String] = []
+    @Published var segments: [MeetingTranscriptSegment] = []
+    @Published var currentPartial = ""
+    @Published var currentRole: MeetingRole = .unknown
     @Published var permissionDenied = false
+    @Published var recognitionWarning: String?
 
     private let engine = AVAudioEngine()
     private let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "de-DE"))
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var task: SFSpeechRecognitionTask?
     private var timer: Timer?
-    private var committed: [String] = []
+    private var rotationTimer: Timer?
+    private var tapInstalled = false
+    private var stopping = false
+    private var recognitionGeneration = 0
+    private var lastRestartAt = Date.distantPast
+    private let rotationInterval: TimeInterval = 52
 
     var transcript: String {
-        (committed + (lines.count > committed.count ? [lines.last ?? ""] : [])).joined(separator: " ")
+        visibleSegments.map(\.text).joined(separator: "\n\n")
+    }
+
+    var visibleSegments: [MeetingTranscriptSegment] {
+        var all = segments
+        let partial = cleanTranscript(currentPartial)
+        if !partial.isEmpty {
+            all.append(MeetingTranscriptSegment(text: partial, role: currentRole, isPartial: true))
+        }
+        return all
     }
 
     func start() {
+        permissionDenied = false
+        recognitionWarning = nil
         SFSpeechRecognizer.requestAuthorization { auth in
             AVAudioApplication.requestRecordPermission { granted in
                 Task { @MainActor in
@@ -43,38 +179,14 @@ final class MeetingRecorder: NSObject, ObservableObject {
 
     private func beginSession() {
         do {
+            resetState()
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.record, mode: .measurement, options: .duckOthers)
             try session.setActive(true, options: .notifyOthersOnDeactivation)
 
-            let request = SFSpeechAudioBufferRecognitionRequest()
-            request.shouldReportPartialResults = true
-            if recognizer?.supportsOnDeviceRecognition == true {
-                request.requiresOnDeviceRecognition = true
-            }
-            self.request = request
-
-            task = recognizer?.recognitionTask(with: request) { [weak self] result, _ in
-                guard let self, let result else { return }
-                Task { @MainActor in
-                    let text = result.bestTranscription.formattedString
-                    if self.lines.isEmpty {
-                        self.lines = [text]
-                    } else {
-                        self.lines[self.lines.count - 1] = text
-                    }
-                    if result.isFinal {
-                        self.committed.append(text)
-                        self.lines.append("")
-                    }
-                }
-            }
-
-            let input = engine.inputNode
-            let format = input.outputFormat(forBus: 0)
-            input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
-                self?.request?.append(buffer)
-            }
+            recognizer?.defaultTaskHint = .dictation
+            try installTapIfNeeded()
+            startRecognitionTask()
             engine.prepare()
             try engine.start()
 
@@ -84,23 +196,163 @@ final class MeetingRecorder: NSObject, ObservableObject {
                     self.elapsed += 1
                 }
             }
+            rotationTimer = Timer.scheduledTimer(withTimeInterval: rotationInterval, repeats: true) { [weak self] _ in
+                Task { @MainActor in
+                    guard let self, !self.paused, !self.stopping else { return }
+                    self.rotateRecognitionTask()
+                }
+            }
         } catch {
+            recognitionWarning = "Aufnahme konnte nicht gestartet werden: \(error.localizedDescription)"
             permissionDenied = true
         }
     }
 
+    private func resetState() {
+        elapsed = 0
+        paused = false
+        segments = []
+        currentPartial = ""
+        currentRole = .unknown
+        stopping = false
+        recognitionGeneration += 1
+    }
+
+    private func installTapIfNeeded() throws {
+        guard !tapInstalled else { return }
+        let input = engine.inputNode
+        let format = input.outputFormat(forBus: 0)
+        input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
+            self?.request?.append(buffer)
+        }
+        tapInstalled = true
+    }
+
+    private func startRecognitionTask() {
+        recognitionGeneration += 1
+        let generation = recognitionGeneration
+
+        if request != nil {
+            request?.endAudio()
+        }
+        task?.cancel()
+
+        let request = SFSpeechAudioBufferRecognitionRequest()
+        request.shouldReportPartialResults = true
+        request.taskHint = .dictation
+        if #available(iOS 16.0, *) {
+            request.addsPunctuation = true
+        }
+        if recognizer?.supportsOnDeviceRecognition == true {
+            request.requiresOnDeviceRecognition = true
+        }
+        self.request = request
+
+        task = recognizer?.recognitionTask(with: request) { [weak self] result, error in
+            guard let self else { return }
+            Task { @MainActor in
+                guard generation == self.recognitionGeneration else { return }
+                if let result {
+                    self.handle(result)
+                }
+                if let error, !self.stopping {
+                    self.recognitionWarning = "Spracherkennung wurde neu verbunden: \(error.localizedDescription)"
+                    self.commitCurrentPartial()
+                    if Date().timeIntervalSince(self.lastRestartAt) > 1.5 {
+                        self.lastRestartAt = .now
+                        self.startRecognitionTask()
+                    }
+                }
+            }
+        }
+    }
+
+    private func handle(_ result: SFSpeechRecognitionResult) {
+        let text = cleanTranscript(result.bestTranscription.formattedString)
+        guard !text.isEmpty else { return }
+        currentPartial = text
+        currentRole = MeetingRole.infer(from: text)
+
+        if result.isFinal {
+            commitCurrentPartial()
+            if !stopping {
+                startRecognitionTask()
+            }
+        }
+    }
+
+    private func rotateRecognitionTask() {
+        commitCurrentPartial()
+        startRecognitionTask()
+    }
+
+    private func cleanTranscript(_ text: String) -> String {
+        text.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func normalized(_ text: String) -> String {
+        cleanTranscript(text)
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "de-DE"))
+            .lowercased()
+    }
+
+    private func commitCurrentPartial() {
+        let text = cleanTranscript(currentPartial)
+        guard !text.isEmpty else { return }
+        let norm = normalized(text)
+        if let last = segments.last, normalized(last.text) == norm {
+            currentPartial = ""
+            currentRole = .unknown
+            return
+        }
+        segments.append(MeetingTranscriptSegment(text: text, role: MeetingRole.infer(from: text)))
+        currentPartial = ""
+        currentRole = .unknown
+    }
+
+    func snapshotSegments() -> [MeetingTranscriptSegment] {
+        commitCurrentPartial()
+        return segments
+    }
+
     func togglePause() {
         paused.toggle()
-        if paused { engine.pause() } else { try? engine.start() }
+        if paused {
+            commitCurrentPartial()
+            engine.pause()
+        } else {
+            try? engine.start()
+            startRecognitionTask()
+        }
     }
 
     func stop() {
+        stopping = true
+        commitCurrentPartial()
         timer?.invalidate()
+        rotationTimer?.invalidate()
+        timer = nil
+        rotationTimer = nil
         engine.stop()
-        engine.inputNode.removeTap(onBus: 0)
+        if tapInstalled {
+            engine.inputNode.removeTap(onBus: 0)
+            tapInstalled = false
+        }
         request?.endAudio()
         task?.cancel()
+        request = nil
+        task = nil
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
+    deinit {
+        timer?.invalidate()
+        rotationTimer?.invalidate()
+        engine.stop()
+        if tapInstalled {
+            engine.inputNode.removeTap(onBus: 0)
+        }
     }
 }
 
@@ -115,6 +367,8 @@ struct MeetingView: View {
     @State private var phase: Phase = .intro
     @State private var applied: Set<String> = []
     @State private var finalTranscript = ""
+    @State private var finalSegments: [MeetingTranscriptSegment] = []
+    @State private var showFullTranscript = false
 
     private let rec = Color(hex: 0xD64545)
 
@@ -269,18 +523,30 @@ struct MeetingView: View {
                             .background(MF.emberTint)
                             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }
-                    ForEach(Array(recorder.lines.enumerated()), id: \.offset) { _, line in
-                        if !line.isEmpty {
-                            Text(line)
-                                .font(.system(size: 14))
-                                .foregroundStyle(MF.inkSoft)
-                                .lineSpacing(3)
-                                .padding(.horizontal, 13)
-                                .padding(.vertical, 10)
-                                .background(MF.surface)
-                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                                .overlay(RoundedRectangle(cornerRadius: 14).stroke(MF.border, lineWidth: 1))
+                    if let warning = recorder.recognitionWarning {
+                        HStack(spacing: 9) {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                                .font(.system(size: 13, weight: .bold))
+                            Text(warning)
+                                .font(.system(size: 12.5, weight: .semibold))
                         }
+                        .foregroundStyle(MF.indigoInk)
+                        .padding(12)
+                        .background(MF.indigoTint)
+                        .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    }
+                    if recorder.visibleSegments.isEmpty && !recorder.permissionDenied {
+                        Text("Sprich los — ich speichere laufend mit und sichere Zwischenergebnisse automatisch.")
+                            .font(.system(size: 13.5, weight: .semibold))
+                            .foregroundStyle(MF.smoke)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(14)
+                            .background(MF.surface)
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 14).stroke(MF.border, lineWidth: 1))
+                    }
+                    ForEach(recorder.visibleSegments) { segment in
+                        MeetingTranscriptBubble(segment: segment)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -308,7 +574,9 @@ struct MeetingView: View {
 
                 Button {
                     Haptics.success()
-                    finalTranscript = recorder.transcript
+                    let snapshot = recorder.snapshotSegments()
+                    finalSegments = snapshot
+                    finalTranscript = snapshot.map { "[\($0.role.rawValue)] \($0.text)" }.joined(separator: "\n\n")
                     recorder.stop()
                     phase = .processing
                     Task {
@@ -406,14 +674,31 @@ struct MeetingView: View {
         ]
     }
 
+    private var plainTranscript: String {
+        let segmentText = finalSegments.map(\.text).joined(separator: "\n\n")
+        return segmentText.isEmpty ? finalTranscript : segmentText
+    }
+
+    private var roleSummary: [(role: MeetingRole, count: Int)] {
+        let counts = Dictionary(grouping: finalSegments, by: \.role)
+            .mapValues(\.count)
+            .filter { $0.key != .unknown }
+        return counts
+            .map { (role: $0.key, count: $0.value) }
+            .sorted { lhs, rhs in
+                if lhs.count == rhs.count { return lhs.role.rawValue < rhs.role.rawValue }
+                return lhs.count > rhs.count
+            }
+    }
+
     private var summaryLead: String {
-        let clean = finalTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
+        let clean = plainTranscript.trimmingCharacters(in: .whitespacesAndNewlines)
         if clean.isEmpty { return "Gespräch vom \(Date.now.formatted(date: .abbreviated, time: .shortened))" }
         return String(clean.prefix(160))
     }
 
     private var keypoints: [String] {
-        let sentences = finalTranscript
+        let sentences = plainTranscript
             .components(separatedBy: CharacterSet(charactersIn: ".!?"))
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { $0.count > 24 }
@@ -446,6 +731,38 @@ struct MeetingView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .indigoGlow()
 
+                    if !roleSummary.isEmpty {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Erkannte Rollen")
+                                .font(.system(size: 15, weight: .heavy)).foregroundStyle(MF.ink)
+                            FlowLayout(spacing: 8) {
+                                ForEach(roleSummary, id: \.role) { item in
+                                    HStack(spacing: 7) {
+                                        Image(systemName: item.role.icon)
+                                            .font(.system(size: 12, weight: .bold))
+                                        Text(item.role.rawValue)
+                                            .font(.system(size: 12.5, weight: .bold))
+                                        Text("\(item.count)")
+                                            .font(.mfMono(11))
+                                            .foregroundStyle(item.role.ink.opacity(0.72))
+                                    }
+                                    .foregroundStyle(item.role.ink)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 7)
+                                    .background(item.role.tint)
+                                    .clipShape(Capsule())
+                                }
+                            }
+                            Text("Die Rollen werden aus dem Inhalt abgeleitet. Für echte Sprecher-Trennung braucht die Cloud-STT Diarization.")
+                                .font(.system(size: 12))
+                                .foregroundStyle(MF.faint)
+                        }
+                        .padding(14)
+                        .background(MF.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(MF.border, lineWidth: 1))
+                    }
+
                     // Kernpunkte
                     VStack(alignment: .leading, spacing: 0) {
                         Text("Kernpunkte")
@@ -468,6 +785,31 @@ struct MeetingView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                         .overlay(RoundedRectangle(cornerRadius: 16).stroke(MF.border, lineWidth: 1))
                         .warmShadow()
+                    }
+
+                    if !finalSegments.isEmpty {
+                        DisclosureGroup(isExpanded: $showFullTranscript) {
+                            VStack(alignment: .leading, spacing: 10) {
+                                ForEach(finalSegments) { segment in
+                                    MeetingTranscriptBubble(segment: segment, compact: true)
+                                }
+                            }
+                            .padding(.top, 10)
+                        } label: {
+                            HStack {
+                                Text("Vollständiges Transkript")
+                                    .font(.system(size: 15, weight: .heavy))
+                                Spacer()
+                                Text("\(finalSegments.count) Abschnitte")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(MF.faint)
+                            }
+                            .foregroundStyle(MF.ink)
+                        }
+                        .padding(14)
+                        .background(MF.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(MF.border, lineWidth: 1))
                     }
 
                     // In der App übernehmen
@@ -553,7 +895,19 @@ struct MeetingView: View {
 
                 Button {
                     // Transkript an den Co-Pilot übergeben — der echte KI-Weg.
-                    let prompt = "Fasse dieses Meeting zusammen und leite konkrete Aufgaben ab:\n\n\(finalTranscript.isEmpty ? summaryLead : finalTranscript)"
+                    let roles = roleSummary
+                        .map { "- \($0.role.rawValue): \($0.count) Abschnitt(e)" }
+                        .joined(separator: "\n")
+                    let prompt = """
+                    Fasse dieses Meeting zusammen und leite konkrete Aufgaben ab.
+                    Nutze die Rollenhinweise, aber korrigiere sie, falls der Inhalt etwas anderes zeigt.
+
+                    Erkannte Rollen:
+                    \(roles.isEmpty ? "- keine eindeutigen Rollen erkannt" : roles)
+
+                    Transkript:
+                    \(finalTranscript.isEmpty ? summaryLead : finalTranscript)
+                    """
                     state.queueCopilotPrompt(prompt, title: "Meeting-Zusammenfassung")
                     dismiss()
                 } label: {
@@ -568,6 +922,46 @@ struct MeetingView: View {
         }
         .navigationTitle("Zusammenfassung")
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+private struct MeetingTranscriptBubble: View {
+    let segment: MeetingTranscriptSegment
+    var compact = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: compact ? 6 : 8) {
+            HStack(spacing: 7) {
+                Image(systemName: segment.role.icon)
+                    .font(.system(size: compact ? 10 : 11, weight: .bold))
+                Text(segment.role.rawValue)
+                    .font(.system(size: compact ? 11 : 12, weight: .bold))
+                if segment.isPartial {
+                    Text("live")
+                        .font(.mfMono(9))
+                        .padding(.horizontal, 6)
+                        .frame(height: 17)
+                        .background(segment.role.ink.opacity(0.12))
+                        .clipShape(Capsule())
+                }
+            }
+            .foregroundStyle(segment.role.ink)
+
+            Text(segment.text)
+                .font(.system(size: compact ? 13.5 : 14.5))
+                .foregroundStyle(MF.inkSoft)
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, compact ? 12 : 13)
+        .padding(.vertical, compact ? 10 : 11)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(segment.role.tint.opacity(segment.isPartial ? 0.75 : 1))
+        .clipShape(RoundedRectangle(cornerRadius: compact ? 13 : 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: compact ? 13 : 14)
+                .stroke(segment.role.ink.opacity(segment.isPartial ? 0.28 : 0.18), lineWidth: 1)
+        )
     }
 }
 

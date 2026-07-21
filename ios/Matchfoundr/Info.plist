@@ -31,6 +31,10 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>matchfoundr nimmt dein Meeting nur auf, wenn du die Aufnahme startest — für die Co-Pilot-Zusammenfassung.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Die Spracherkennung läuft auf deinem Gerät und erstellt das Transkript deines Meetings.</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

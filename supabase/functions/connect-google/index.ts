@@ -19,15 +19,56 @@ const corsHeaders = {
 
 const SCOPES: Record<string, string> = {
   gmail: [
+    "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/gmail.readonly",
     "https://www.googleapis.com/auth/gmail.compose",
   ].join(" "),
-  google_calendar: "https://www.googleapis.com/auth/calendar.events",
+  google_calendar: [
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/calendar.events",
+  ].join(" "),
 };
 
 function functionURL(): string {
   const base = Deno.env.get("SUPABASE_URL")!;
   return `${base}/functions/v1/connect-google`;
+}
+
+function defaultReturnTo(appURL: string): string {
+  return `${appURL.replace(/\/$/, "")}/profile`;
+}
+
+function safeReturnTo(value: string | null | undefined, appURL: string): string {
+  if (!value) return defaultReturnTo(appURL);
+  try {
+    const url = new URL(value);
+    if (url.protocol === "matchfoundr:" && url.host === "integration-callback") {
+      return "matchfoundr://integration-callback";
+    }
+
+    const app = new URL(appURL);
+    const allowedWebOrigins = new Set([
+      app.origin,
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+    ]);
+    if (
+      (url.protocol === "https:" || url.protocol === "http:") &&
+      allowedWebOrigins.has(url.origin)
+    ) {
+      return url.toString();
+    }
+  } catch {
+    /* Ungueltige Redirects fallen auf APP_URL zurueck. */
+  }
+  return defaultReturnTo(appURL);
+}
+
+function redirectWithOutcome(returnTo: string, outcome: string, provider?: string): Response {
+  const target = new URL(returnTo);
+  target.searchParams.set("connect", outcome);
+  if (provider) target.searchParams.set("provider", provider);
+  return Response.redirect(target.toString(), 302);
 }
 
 // state = base64(json) + HMAC, damit der Callback ohne DB verifizierbar ist.
@@ -80,8 +121,9 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   if (req.method === "GET" && url.searchParams.has("code")) {
     const state = await verifyState(url.searchParams.get("state") || "");
+    const returnTo = safeReturnTo(state?.return_to, appURL);
     if (!state?.user_id || !state?.provider) {
-      return Response.redirect(`${appURL}/profile?connect=invalid`, 302);
+      return redirectWithOutcome(defaultReturnTo(appURL), "invalid");
     }
     try {
       const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -135,40 +177,41 @@ Deno.serve(async (req) => {
         { onConflict: "user_id,provider" },
       );
 
-      return Response.redirect(`${appURL}/profile?connect=ok&provider=${state.provider}`, 302);
+      return redirectWithOutcome(returnTo, "ok", state.provider);
     } catch (err) {
       console.error("connect-google callback:", err);
-      return Response.redirect(`${appURL}/profile?connect=error`, 302);
+      return redirectWithOutcome(returnTo, "error", state.provider);
     }
   }
 
   // ── Start (POST mit JWT): OAuth-URL bauen ──────────────────
   if (req.method === "POST") {
-    if (!clientId || !clientSecret) {
-      return new Response(
-        JSON.stringify({
-          error: "setup_missing",
-          message: "GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET sind noch nicht gesetzt — siehe INTEGRATIONS.md.",
-        }),
-        { status: 501, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
     const authHeader = req.headers.get("Authorization") || "";
-    const { data: { user } } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+    const {
+      data: { user },
+    } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
     if (!user) {
       return new Response("Unauthorized", { status: 401, headers: corsHeaders });
     }
 
-    const { provider, action } = (await req.json().catch(() => ({}))) as {
+    const { provider, action, return_to, returnTo, redirect_to } = (await req
+      .json()
+      .catch(() => ({}))) as {
       provider?: string;
       action?: string;
+      return_to?: string;
+      returnTo?: string;
+      redirect_to?: string;
     };
 
     // Trennen: Verbindung + Tokens löschen (Tokens sind nur per Service Role erreichbar).
     if (action === "disconnect" && provider) {
       await Promise.all([
-        supabase.from("connected_accounts").delete().eq("user_id", user.id).eq("provider", provider),
+        supabase
+          .from("connected_accounts")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("provider", provider),
         supabase.from("account_tokens").delete().eq("user_id", user.id).eq("provider", provider),
       ]);
       return new Response(JSON.stringify({ ok: true }), {
@@ -176,14 +219,34 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!provider || !SCOPES[provider]) {
-      return new Response(JSON.stringify({ error: "provider muss gmail oder google_calendar sein" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!clientId || !clientSecret) {
+      return new Response(
+        JSON.stringify({
+          error: "setup_missing",
+          message:
+            "GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET sind noch nicht gesetzt — siehe INTEGRATIONS.md.",
+        }),
+        { status: 501, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
-    const state = await signState({ user_id: user.id, provider, ts: String(Date.now()) });
+    if (!provider || !SCOPES[provider]) {
+      return new Response(
+        JSON.stringify({ error: "provider muss gmail oder google_calendar sein" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const returnTo = safeReturnTo(return_to || returnTo || redirect_to, appURL);
+    const state = await signState({
+      user_id: user.id,
+      provider,
+      ts: String(Date.now()),
+      return_to: returnTo,
+    });
     const oauth = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     oauth.searchParams.set("client_id", clientId);
     oauth.searchParams.set("redirect_uri", functionURL());
