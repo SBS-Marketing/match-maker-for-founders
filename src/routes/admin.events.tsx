@@ -6,7 +6,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { CalendarDays, ImagePlus, Pencil, Plus, Trash2, Users, X } from "lucide-react";
+import {
+  CalendarDays,
+  ExternalLink,
+  ImagePlus,
+  Pencil,
+  Plus,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,6 +43,8 @@ type EventRow = {
   blurb: string | null;
   agenda: string[];
   banner_image_url: string | null;
+  source_url: string | null;
+  booking_url: string | null;
   is_published: boolean;
   recurrence_group_id?: string | null;
   recurrence_rule?: string | null;
@@ -74,6 +85,8 @@ const EMPTY_FORM: EventRow = {
   blurb: null,
   agenda: [],
   banner_image_url: null,
+  source_url: null,
+  booking_url: null,
   is_published: true,
   recurrence_group_id: null,
   recurrence_rule: null,
@@ -94,6 +107,7 @@ const PREVIEW_EVENTS: EventRow[] = [
     host: "matchfoundr Team",
     blurb: "Lockerer Austausch für kleine Gründer — Padelhalle bis Webdesign-Agentur.",
     agenda: ["Ankommen & Kennenlernen", "3 Kurz-Pitches", "Offenes Netzwerken"],
+    booking_url: "https://www.startplatz.de/events/",
     is_published: true,
   },
   {
@@ -154,7 +168,7 @@ function AdminEvents() {
     supabase
       .from("community_events")
       .select(
-        "id,title,kind,service_id,starts_at,date_label,time_label,city,venue,spots,taken,host,blurb,agenda,banner_image_url,is_published,recurrence_group_id,recurrence_rule",
+        "id,title,kind,service_id,starts_at,date_label,time_label,city,venue,spots,taken,host,blurb,agenda,banner_image_url,source_url,booking_url,is_published,recurrence_group_id,recurrence_rule",
       )
       .order("starts_at", { ascending: true, nullsFirst: false })
       .then(({ data, error }) => {
@@ -182,7 +196,8 @@ function AdminEvents() {
 
     const untilDate = recurrenceUntil ? new Date(recurrenceUntil + "T23:59:59") : null;
     const maxCount = Math.max(1, Math.min(52, recurrenceCount || 8));
-    const groupId = base.recurrence_group_id || `grp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const groupId =
+      base.recurrence_group_id || `grp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     const stepDays = recurrence === "weekly" ? 7 : recurrence === "biweekly" ? 14 : 0;
     const out: EventRow[] = [];
@@ -197,7 +212,11 @@ function AdminEvents() {
         ...base,
         id: i === 0 ? base.id : `${base.id}-${i + 1}`,
         starts_at: iso,
-        date_label: d.toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "long" }),
+        date_label: d.toLocaleDateString("de-DE", {
+          weekday: "short",
+          day: "numeric",
+          month: "long",
+        }),
         time_label: d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }),
         recurrence_group_id: groupId,
         recurrence_rule: recurrence,
@@ -219,6 +238,8 @@ function AdminEvents() {
       ...editing,
       id,
       title,
+      source_url: editing.source_url?.trim() || null,
+      booking_url: editing.booking_url?.trim() || null,
       date_label:
         editing.date_label?.trim() ||
         (starts
@@ -287,7 +308,10 @@ function AdminEvents() {
 
   async function removeSeries(groupId: string) {
     const count = (events ?? []).filter((e) => e.recurrence_group_id === groupId).length;
-    if (!window.confirm(`Ganze Serie mit ${count} Terminen löschen? Anmeldungen werden mit entfernt.`)) return;
+    if (
+      !window.confirm(`Ganze Serie mit ${count} Terminen löschen? Anmeldungen werden mit entfernt.`)
+    )
+      return;
     if (isPreview) {
       setEvents((prev) => (prev ?? []).filter((e) => e.recurrence_group_id !== groupId));
       return;
@@ -387,7 +411,13 @@ function AdminEvents() {
                     </span>
                     {ev.recurrence_group_id && (
                       <span className="rounded-full border border-[var(--ruled)] px-2 py-0.5 text-[11px] font-bold text-[var(--smoke)]">
-                        Serie · {RECURRENCE_LABELS[(ev.recurrence_rule as RecurrenceRule) || "weekly"]}
+                        Serie ·{" "}
+                        {RECURRENCE_LABELS[(ev.recurrence_rule as RecurrenceRule) || "weekly"]}
+                      </span>
+                    )}
+                    {(ev.booking_url || ev.source_url) && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-[var(--ruled)] px-2 py-0.5 text-[11px] font-bold text-[var(--smoke)]">
+                        <ExternalLink className="h-3 w-3" /> extern
                       </span>
                     )}
                   </div>
@@ -594,6 +624,29 @@ function AdminEvents() {
                 />
               </Field>
 
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                <Field label="Buchungs-URL">
+                  <input
+                    type="url"
+                    value={editing.booking_url ?? ""}
+                    onChange={(e) =>
+                      setEditing({ ...editing, booking_url: e.target.value || null })
+                    }
+                    className={inputCls}
+                    placeholder="https://anbieter.de/anmelden"
+                  />
+                </Field>
+                <Field label="Quellen-URL">
+                  <input
+                    type="url"
+                    value={editing.source_url ?? ""}
+                    onChange={(e) => setEditing({ ...editing, source_url: e.target.value || null })}
+                    className={inputCls}
+                    placeholder="https://anbieter.de/event"
+                  />
+                </Field>
+              </div>
+
               <Field label="Banner">
                 <div className="flex items-center gap-2.5">
                   {editing.banner_image_url ? (
@@ -645,11 +698,13 @@ function AdminEvents() {
                         onChange={(e) => setRecurrence(e.target.value as RecurrenceRule)}
                         className={inputCls}
                       >
-                        {(["none", "weekly", "biweekly", "monthly"] as RecurrenceRule[]).map((r) => (
-                          <option key={r} value={r}>
-                            {RECURRENCE_LABELS[r]}
-                          </option>
-                        ))}
+                        {(["none", "weekly", "biweekly", "monthly"] as RecurrenceRule[]).map(
+                          (r) => (
+                            <option key={r} value={r}>
+                              {RECURRENCE_LABELS[r]}
+                            </option>
+                          ),
+                        )}
                       </select>
                     </Field>
                     {recurrence !== "none" && (
@@ -668,7 +723,11 @@ function AdminEvents() {
                             min={1}
                             max={52}
                             value={recurrenceCount}
-                            onChange={(e) => setRecurrenceCount(Math.max(1, Math.min(52, Number(e.target.value) || 1)))}
+                            onChange={(e) =>
+                              setRecurrenceCount(
+                                Math.max(1, Math.min(52, Number(e.target.value) || 1)),
+                              )
+                            }
                             className={inputCls}
                           />
                         </Field>

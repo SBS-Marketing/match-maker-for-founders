@@ -10,8 +10,16 @@ export default defineTool({
   inputSchema: {
     title: z.string().min(1).max(200),
     kind: z.enum(["Event", "Meetup", "Workshop", "Stammtisch", "Webinar"]).optional(),
-    service_id: z.string().min(1).optional().describe("Service-Slug (z. B. 'growth', 'talent'). Default: 'growth'."),
-    starts_at: z.string().datetime().optional().describe("ISO-Zeitstempel, z. B. 2026-08-01T18:00:00Z"),
+    service_id: z
+      .string()
+      .min(1)
+      .optional()
+      .describe("Service-Slug (z. B. 'growth', 'talent'). Default: 'growth'."),
+    starts_at: z
+      .string()
+      .datetime()
+      .optional()
+      .describe("ISO-Zeitstempel, z. B. 2026-08-01T18:00:00Z"),
     date_label: z.string().max(80).optional(),
     time_label: z.string().max(80).optional(),
     city: z.string().max(120).optional(),
@@ -21,23 +29,26 @@ export default defineTool({
     blurb: z.string().max(2000).optional(),
     agenda: z.array(z.string().max(300)).max(50).optional(),
     banner_image_url: z.string().url().optional(),
+    source_url: z.string().url().optional(),
+    booking_url: z.string().url().optional(),
     is_published: z.boolean().optional().describe("Standard: true"),
   },
   annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
   handler: async (input, ctx) => {
     const gate = await requireAdmin(ctx);
     if (!gate.ok) return errorContent(gate.error);
-    const slugBase = input.title
-      .toLowerCase()
-      .normalize("NFKD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/ä/g, "ae")
-      .replace(/ö/g, "oe")
-      .replace(/ü/g, "ue")
-      .replace(/ß/g, "ss")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 60) || "event";
+    const slugBase =
+      input.title
+        .toLowerCase()
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/ä/g, "ae")
+        .replace(/ö/g, "oe")
+        .replace(/ü/g, "ue")
+        .replace(/ß/g, "ss")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 60) || "event";
     const suffix = Math.random().toString(36).slice(2, 7);
     const id = `${slugBase}-${suffix}`;
     const row = {
@@ -56,6 +67,8 @@ export default defineTool({
       blurb: input.blurb ?? null,
       agenda: input.agenda ?? [],
       banner_image_url: input.banner_image_url ?? null,
+      source_url: input.source_url ?? null,
+      booking_url: input.booking_url ?? null,
       is_published: input.is_published ?? true,
     };
 

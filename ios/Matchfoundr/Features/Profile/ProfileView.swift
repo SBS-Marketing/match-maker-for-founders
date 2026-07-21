@@ -770,7 +770,7 @@ struct ProfileView: View {
 
     // ─── Angemeldete Events ───────────────────────────────────
     private var myEvents: some View {
-        let mine = state.events.filter { state.registeredEvents.contains($0.id) }
+        let mine = state.events.filter { state.registeredEvents.contains($0.id) && !$0.hasExternalRegistration }
         return Group {
             if mine.isEmpty {
                 Button {

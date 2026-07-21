@@ -225,6 +225,8 @@ struct SupabaseCommunityEventRow: Decodable {
     let blurb: String?
     let agenda: [String]?
     let bannerImageUrl: String?
+    let sourceUrl: String?
+    let bookingUrl: String?
 
     func toEvent() -> CommunityEvent {
         CommunityEvent(
@@ -241,7 +243,9 @@ struct SupabaseCommunityEventRow: Decodable {
             host: clean(host) ?? "matchfoundr",
             blurb: clean(blurb) ?? "",
             agenda: agenda?.filter { clean($0) != nil } ?? [],
-            bannerImageURL: clean(bannerImageUrl)
+            bannerImageURL: clean(bannerImageUrl),
+            sourceURL: url(sourceUrl),
+            bookingURL: url(bookingUrl)
         )
     }
 
@@ -261,6 +265,10 @@ struct SupabaseCommunityEventRow: Decodable {
         guard let value else { return nil }
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private func url(_ value: String?) -> URL? {
+        clean(value).flatMap(URL.init(string:))
     }
 }
 
@@ -450,7 +458,7 @@ struct SupabaseService {
         let rows: [SupabaseCommunityEventRow] = try await rest(
             "community_events",
             query: [
-                URLQueryItem(name: "select", value: "id,title,kind,service_id,date_label,time_label,starts_at,city,venue,spots,taken,host,blurb,agenda,banner_image_url"),
+                URLQueryItem(name: "select", value: "id,title,kind,service_id,date_label,time_label,starts_at,city,venue,spots,taken,host,blurb,agenda,banner_image_url,source_url,booking_url"),
                 URLQueryItem(name: "is_published", value: "eq.true"),
                 URLQueryItem(name: "order", value: "starts_at.asc"),
                 URLQueryItem(name: "limit", value: "\(limit)")

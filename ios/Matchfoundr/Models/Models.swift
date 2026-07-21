@@ -1441,8 +1441,12 @@ struct CommunityEvent: Identifiable, Hashable {
     let blurb: String
     let agenda: [String]
     let bannerImageURL: String?
+    let sourceURL: URL?
+    let bookingURL: URL?
 
     var spotsLeft: Int { max(0, spots - taken) }
+    var registrationURL: URL? { bookingURL ?? sourceURL }
+    var hasExternalRegistration: Bool { registrationURL != nil }
 
     var bannerURL: URL? {
         guard let bannerImageURL else { return nil }

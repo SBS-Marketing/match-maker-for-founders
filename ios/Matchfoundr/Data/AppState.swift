@@ -98,7 +98,7 @@ final class AppState: ObservableObject {
             extras: profileExtras,
             company: companyProfile,
             documents: documents,
-            registeredEvents: events.filter { registeredEvents.contains($0.id) },
+            registeredEvents: events.filter { registeredEvents.contains($0.id) && !$0.hasExternalRegistration },
             plannerItems: plannerItems,
             matches: matches
         )
@@ -170,7 +170,7 @@ final class AppState: ObservableObject {
         }
 
         let eventSummary = events
-            .filter { registeredEvents.contains($0.id) }
+            .filter { registeredEvents.contains($0.id) && !$0.hasExternalRegistration }
             .prefix(3)
             .map { "\($0.title) am \($0.dateLabel) \($0.timeLabel)" }
         if !eventSummary.isEmpty {
@@ -261,6 +261,7 @@ final class AppState: ObservableObject {
     }
 
     func toggleRegistration(for event: CommunityEvent) {
+        guard !event.hasExternalRegistration else { return }
         if registeredEvents.contains(event.id) {
             registeredEvents.remove(event.id)
             Haptics.tap()

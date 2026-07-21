@@ -353,7 +353,7 @@ struct DiscoverView: View {
                         Haptics.tap()
                         state.discoverPath.append(.event(event.id))
                     } label: {
-                        EventCard(event: event, registered: state.registeredEvents.contains(event.id))
+                        EventCard(event: event, registered: state.registeredEvents.contains(event.id) && !event.hasExternalRegistration)
                     }
                     .buttonStyle(.plain)
                 }
@@ -2226,6 +2226,12 @@ struct EventCard: View {
                             Text("Angemeldet").font(.system(size: 11, weight: .bold))
                         }
                         .foregroundStyle(Color(hex: 0x1C7038))
+                    } else if event.hasExternalRegistration {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.up.right.square").font(.system(size: 10))
+                            Text("Extern anmelden").font(.system(size: 11, weight: .bold))
+                        }
+                        .foregroundStyle(hue.ink)
                     } else {
                         Text("\(event.spotsLeft) Plätze frei")
                             .font(.system(size: 11, weight: .semibold))
@@ -2315,10 +2321,14 @@ private struct EventBannerView: View {
 
 struct EventDetailView: View {
     @EnvironmentObject var state: AppState
+    @Environment(\.openURL) private var openURL
     let eventId: String
 
     private var event: CommunityEvent? { state.events.first { $0.id == eventId } }
-    private var registered: Bool { state.registeredEvents.contains(eventId) }
+    private var registered: Bool {
+        guard let event, !event.hasExternalRegistration else { return false }
+        return state.registeredEvents.contains(eventId)
+    }
 
     var body: some View {
         if let event {
@@ -2405,19 +2415,25 @@ struct EventDetailView: View {
 
                 // Sticky CTA in Service-Farbe (Design: MAdvisor-CTA)
                 Button {
-                    state.toggleRegistration(for: event)
+                    Haptics.tap()
+                    if let url = event.registrationURL {
+                        openURL(url)
+                    } else {
+                        state.toggleRegistration(for: event)
+                    }
                 } label: {
+                    let external = event.hasExternalRegistration
                     HStack(spacing: 9) {
-                        Image(systemName: registered ? "xmark.circle" : "calendar.badge.plus")
+                        Image(systemName: external ? "arrow.up.right.square" : (registered ? "xmark.circle" : "calendar.badge.plus"))
                             .font(.system(size: 15, weight: .semibold))
-                        Text(registered ? "Abmelden" : "Jetzt anmelden")
+                        Text(registered && !external ? "Abmelden" : "Jetzt anmelden")
                             .font(.system(size: 16, weight: .bold))
                     }
-                    .foregroundStyle(registered ? MF.smoke : .white)
+                    .foregroundStyle(registered && !external ? MF.smoke : .white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 54)
                     .background {
-                        if registered {
+                        if registered && !external {
                             AnyView(MF.surface)
                         } else {
                             AnyView(LinearGradient(colors: [hue.hue, hue.ink],
@@ -2426,8 +2442,8 @@ struct EventDetailView: View {
                     }
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 16)
-                        .stroke(registered ? MF.border : .clear, lineWidth: 1))
-                    .shadow(color: registered ? .clear : hue.hue.opacity(0.5), radius: 13, y: 6)
+                        .stroke(registered && !external ? MF.border : .clear, lineWidth: 1))
+                    .shadow(color: registered && !external ? .clear : hue.hue.opacity(0.5), radius: 13, y: 6)
                 }
                 .buttonStyle(.plain)
                 .padding(.horizontal, 20)

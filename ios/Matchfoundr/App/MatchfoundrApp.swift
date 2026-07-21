@@ -264,7 +264,7 @@ struct CommunityTabView: View {
                                     Haptics.tap()
                                     state.communityPath.append(.event(event.id))
                                 } label: {
-                                    EventCard(event: event, registered: state.registeredEvents.contains(event.id))
+                                    EventCard(event: event, registered: state.registeredEvents.contains(event.id) && !event.hasExternalRegistration)
                                 }
                                 .buttonStyle(.plain)
                             }

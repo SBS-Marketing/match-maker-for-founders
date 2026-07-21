@@ -211,6 +211,7 @@ export type Database = {
           agenda: string[]
           banner_image_url: string | null
           blurb: string | null
+          booking_url: string | null
           city: string | null
           created_at: string
           date_label: string | null
@@ -222,6 +223,7 @@ export type Database = {
           recurrence_group_id: string | null
           recurrence_rule: string | null
           service_id: string
+          source_url: string | null
           spots: number
           starts_at: string | null
           taken: number
@@ -234,6 +236,7 @@ export type Database = {
           agenda?: string[]
           banner_image_url?: string | null
           blurb?: string | null
+          booking_url?: string | null
           city?: string | null
           created_at?: string
           date_label?: string | null
@@ -245,6 +248,7 @@ export type Database = {
           recurrence_group_id?: string | null
           recurrence_rule?: string | null
           service_id?: string
+          source_url?: string | null
           spots?: number
           starts_at?: string | null
           taken?: number
@@ -257,6 +261,7 @@ export type Database = {
           agenda?: string[]
           banner_image_url?: string | null
           blurb?: string | null
+          booking_url?: string | null
           city?: string | null
           created_at?: string
           date_label?: string | null
@@ -268,6 +273,7 @@ export type Database = {
           recurrence_group_id?: string | null
           recurrence_rule?: string | null
           service_id?: string
+          source_url?: string | null
           spots?: number
           starts_at?: string | null
           taken?: number
