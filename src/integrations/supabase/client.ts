@@ -7,9 +7,9 @@ import type { Database } from './types';
 // SSR target.
 // Hardcoded fallbacks (URL + anon key are public) so the browser bundle never
 // crashes with "supabaseUrl is required" when env inlining was skipped.
-const FALLBACK_URL = 'https://urjpyhyezrwhwgnkkxjv.supabase.co';
+const FALLBACK_URL = 'https://rzmcoxnfcpqqyxgkafwk.supabase.co';
 const FALLBACK_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVyanB5aHllenJ3aHdnbmtreGp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTU3MTUsImV4cCI6MjA5NDUzMTcxNX0.WrORjtWlNkp3bJmMOeZYxZz2dfZ39ycNaywGIVpUIZY';
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6bWNveG5mY3BxcXl4Z2thZndrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2NTk1MzAsImV4cCI6MjEwMDIzNTUzMH0.9hT70TrLAQks_m3ZUmoH8daRRhHyZ-kP50_-5kIgea0';
 
 const SUPABASE_URL =
   import.meta.env.VITE_SUPABASE_URL ||
