@@ -40,6 +40,7 @@ const NAV_CORE: NavItem[] = [
 ];
 
 const NAV_TOOLS: NavItem[] = [
+  { to: "/events", label: "Events", short: "Events", icon: CalendarDays },
   { to: "/firma", label: "Firmenprofil", short: "Firma", icon: Building2 },
   { to: "/foerderung", label: "Förderung", short: "Förder", icon: Landmark },
   { to: "/aufgaben", label: "Aufgaben", short: "Tasks", icon: ListChecks },
@@ -71,6 +72,7 @@ const TITLES: { match: (p: string) => boolean; title: string }[] = [
   { match: (p) => p.startsWith("/co-pilot"), title: "Co-Pilot" },
   { match: (p) => p.startsWith("/matches"), title: "Matches" },
   { match: (p) => p.startsWith("/firma"), title: "Firmenprofil" },
+  { match: (p) => p.startsWith("/events"), title: "Events" },
   { match: (p) => p.startsWith("/kalender"), title: "Kalender" },
   { match: (p) => p.startsWith("/unterlagen"), title: "Unterlagen" },
   { match: (p) => p.startsWith("/aufgaben"), title: "Aufgaben" },

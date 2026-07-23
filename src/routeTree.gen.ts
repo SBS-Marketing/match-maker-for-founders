@@ -25,6 +25,7 @@ import { Route as KalenderRouteImport } from './routes/kalender'
 import { Route as HeuteRouteImport } from './routes/heute'
 import { Route as GrowthRouteImport } from './routes/growth'
 import { Route as FirmaRouteImport } from './routes/firma'
+import { Route as EventsRouteImport } from './routes/events'
 import { Route as EntdeckenRouteImport } from './routes/entdecken'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as DealsRouteImport } from './routes/deals'
@@ -145,6 +146,11 @@ const GrowthRoute = GrowthRouteImport.update({
 const FirmaRoute = FirmaRouteImport.update({
   id: '/firma',
   path: '/firma',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventsRoute = EventsRouteImport.update({
+  id: '/events',
+  path: '/events',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EntdeckenRoute = EntdeckenRouteImport.update({
@@ -366,6 +372,7 @@ export interface FileRoutesByFullPath {
   '/deals': typeof DealsRoute
   '/discover': typeof DiscoverRoute
   '/entdecken': typeof EntdeckenRoute
+  '/events': typeof EventsRoute
   '/firma': typeof FirmaRoute
   '/growth': typeof GrowthRouteWithChildren
   '/heute': typeof HeuteRoute
@@ -424,6 +431,7 @@ export interface FileRoutesByTo {
   '/deals': typeof DealsRoute
   '/discover': typeof DiscoverRoute
   '/entdecken': typeof EntdeckenRoute
+  '/events': typeof EventsRoute
   '/firma': typeof FirmaRoute
   '/heute': typeof HeuteRoute
   '/kalender': typeof KalenderRoute
@@ -479,6 +487,7 @@ export interface FileRoutesById {
   '/deals': typeof DealsRoute
   '/discover': typeof DiscoverRoute
   '/entdecken': typeof EntdeckenRoute
+  '/events': typeof EventsRoute
   '/firma': typeof FirmaRoute
   '/growth': typeof GrowthRouteWithChildren
   '/heute': typeof HeuteRoute
@@ -540,6 +549,7 @@ export interface FileRouteTypes {
     | '/deals'
     | '/discover'
     | '/entdecken'
+    | '/events'
     | '/firma'
     | '/growth'
     | '/heute'
@@ -598,6 +608,7 @@ export interface FileRouteTypes {
     | '/deals'
     | '/discover'
     | '/entdecken'
+    | '/events'
     | '/firma'
     | '/heute'
     | '/kalender'
@@ -652,6 +663,7 @@ export interface FileRouteTypes {
     | '/deals'
     | '/discover'
     | '/entdecken'
+    | '/events'
     | '/firma'
     | '/growth'
     | '/heute'
@@ -712,6 +724,7 @@ export interface RootRouteChildren {
   DealsRoute: typeof DealsRoute
   DiscoverRoute: typeof DiscoverRoute
   EntdeckenRoute: typeof EntdeckenRoute
+  EventsRoute: typeof EventsRoute
   FirmaRoute: typeof FirmaRoute
   GrowthRoute: typeof GrowthRouteWithChildren
   HeuteRoute: typeof HeuteRoute
@@ -856,6 +869,13 @@ declare module '@tanstack/react-router' {
       path: '/firma'
       fullPath: '/firma'
       preLoaderRoute: typeof FirmaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/events': {
+      id: '/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof EventsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/entdecken': {
@@ -1256,6 +1276,7 @@ const rootRouteChildren: RootRouteChildren = {
   DealsRoute: DealsRoute,
   DiscoverRoute: DiscoverRoute,
   EntdeckenRoute: EntdeckenRoute,
+  EventsRoute: EventsRoute,
   FirmaRoute: FirmaRoute,
   GrowthRoute: GrowthRouteWithChildren,
   HeuteRoute: HeuteRoute,

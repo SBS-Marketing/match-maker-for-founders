@@ -229,6 +229,8 @@ private struct FloatingCopilotDock: View {
 
 struct CommunityTabView: View {
     @EnvironmentObject var state: AppState
+    @State private var eventsMapView = true
+    @State private var selectedEventCity: String?
 
     var body: some View {
         NavigationStack(path: $state.communityPath) {
@@ -252,27 +254,47 @@ struct CommunityTabView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         communityPulse
-                        MSectionHead(text: "Live-Events", action: "Kalender") {
-                            state.open(.screen(.calendar))
+
+                        HStack {
+                            Text("Live-Events")
+                                .font(.system(size: 17, weight: .heavy))
+                                .tracking(-0.3)
+                                .foregroundStyle(MF.ink)
+                            Spacer()
+                            eventsViewToggle
                         }
-                        VStack(spacing: 12) {
-                            if state.events.isEmpty {
-                                emptyCommunityEvents
-                            } else {
-                                ForEach(state.events) { event in
-                                Button {
-                                    Haptics.tap()
-                                    state.communityPath.append(.event(event.id))
-                                } label: {
-                                    EventCard(event: event, registered: state.registeredEvents.contains(event.id) && !event.hasExternalRegistration)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                            }
+
+                        if state.events.isEmpty {
+                            emptyCommunityEvents
                         }
                     }
                     .padding(20)
-                    .padding(.bottom, 90)
+                    .padding(.bottom, state.events.isEmpty ? 90 : 6)
+
+                    if !state.events.isEmpty {
+                        if eventsMapView {
+                            CommunityMapView(
+                                events: state.events,
+                                selectedCity: $selectedEventCity,
+                                onOpenEvent: { state.communityPath.append(.event($0.id)) }
+                            )
+                            .padding(.bottom, 90)
+                        } else {
+                            VStack(spacing: 12) {
+                                ForEach(state.events) { event in
+                                    Button {
+                                        Haptics.tap()
+                                        state.communityPath.append(.event(event.id))
+                                    } label: {
+                                        EventCard(event: event, registered: state.registeredEvents.contains(event.id) && !event.hasExternalRegistration)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 90)
+                        }
+                    }
                 }
                 .scrollIndicators(.hidden)
                 .refreshable {
@@ -303,6 +325,34 @@ struct CommunityTabView: View {
         .task {
             await state.refreshCommunityEvents(showLoading: false)
         }
+    }
+
+    private var eventsViewToggle: some View {
+        HStack(spacing: 0) {
+            ForEach([true, false], id: \.self) { isMap in
+                Button {
+                    Haptics.select()
+                    eventsMapView = isMap
+                } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: isMap ? "map.fill" : "list.bullet")
+                            .font(.system(size: 11, weight: .bold))
+                        Text(isMap ? "Karte" : "Liste")
+                            .font(.system(size: 12.5, weight: .bold))
+                    }
+                    .foregroundStyle(eventsMapView == isMap ? .white : MF.smoke)
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 7)
+                    .background(eventsMapView == isMap ? AnyShapeStyle(MF.ink) : AnyShapeStyle(Color.clear))
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(2)
+        .background(MF.surface)
+        .clipShape(Capsule())
+        .overlay(Capsule().stroke(MF.border, lineWidth: 1))
     }
 
     private var emptyCommunityEvents: some View {

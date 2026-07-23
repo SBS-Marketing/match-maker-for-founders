@@ -1,7 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { EventsMapCanvas } from "@/components/EventsMapCanvas";
+import { type CommunityEvent, clusterByCity, eventDateLabel } from "@/lib/events-geo";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -1830,6 +1833,246 @@ function LHowItWorks() {
             <StepMini kind={s.mini} />
           </div>
         ))}
+      </div>
+    </Section>
+  );
+}
+
+const LANDING_MAP_COLORS = {
+  surface: M.surface,
+  surfaceSoft: M.surfaceSoft,
+  ink: M.ink,
+  smoke: M.smoke,
+  faint: M.faint,
+  ember: M.ember,
+  emberDeep: M.emberDeep,
+  border: M.border,
+};
+
+const LANDING_DEMO_EVENTS = [
+  {
+    id: "d1",
+    title: "Gründerstammtisch Köln",
+    kind: "Stammtisch",
+    city: "Köln",
+    date_label: "Do, 24. Juli",
+    time_label: "19:00",
+  },
+  {
+    id: "d2",
+    title: "Förder-Workshop Berlin",
+    kind: "Workshop",
+    city: "Berlin",
+    date_label: "Di, 5. August",
+    time_label: "17:30",
+  },
+  {
+    id: "d3",
+    title: "Handwerk & KI Meetup",
+    kind: "Meetup",
+    city: "München",
+    date_label: "Mi, 13. August",
+    time_label: "18:00",
+  },
+  {
+    id: "d4",
+    title: "Gründer-Frühstück Hamburg",
+    kind: "Meetup",
+    city: "Hamburg",
+    date_label: "Fr, 15. August",
+    time_label: "09:00",
+  },
+  {
+    id: "d5",
+    title: "Start-up-Abend Wien",
+    kind: "Meetup",
+    city: "Wien",
+    date_label: "Do, 21. August",
+    time_label: "18:30",
+  },
+] as unknown as CommunityEvent[];
+
+function LEventsMap() {
+  const [events, setEvents] = useState<CommunityEvent[]>(LANDING_DEMO_EVENTS);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from("community_events")
+      .select("id,title,kind,city,date_label,time_label,starts_at,is_published")
+      .eq("is_published", true)
+      .order("starts_at", { ascending: true, nullsFirst: false })
+      .limit(40)
+      .then(({ data }) => {
+        const rows = (data as CommunityEvent[]) ?? [];
+        if (rows.length >= 3) setEvents(rows);
+      });
+  }, []);
+
+  const { clusters } = clusterByCity(events);
+  const shown = selectedCity
+    ? (clusters.find((c) => c.city === selectedCity)?.events ?? [])
+    : events;
+
+  return (
+    <Section tone="cream" pad="120px 0" id="events">
+      <div style={{ maxWidth: 640, marginBottom: 48 }}>
+        <Eyebrow>Community · Events in ganz DACH</Eyebrow>
+        <h2
+          style={{
+            margin: "20px 0 0",
+            fontWeight: 600,
+            fontSize: "clamp(40px, 4.5vw, 64px)",
+            lineHeight: 1,
+            letterSpacing: "-0.035em",
+            color: M.ink,
+          }}
+        >
+          Triff die anderen<span style={{ color: M.ember }}>.</span>
+          <br />
+          <span
+            style={{
+              fontFamily: M.fontSerif,
+              fontStyle: "italic",
+              fontWeight: 400,
+              color: M.smoke,
+            }}
+          >
+            In echt, in deiner Stadt.
+          </span>
+        </h2>
+        <p
+          style={{
+            margin: "18px 0 0",
+            fontSize: 15.5,
+            lineHeight: 1.6,
+            color: M.smoke,
+            maxWidth: 460,
+          }}
+        >
+          Stammtische, Workshops und Meetups für kleine Gründer — von der Padelhalle bis zur
+          Webdesign-Agentur. Such dir eine Stadt auf der Karte und sei dabei.
+        </p>
+      </div>
+
+      <div
+        className="landing-events-grid"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1.35fr 1fr",
+          gap: 24,
+          alignItems: "stretch",
+        }}
+      >
+        <EventsMapCanvas
+          clusters={clusters}
+          colors={LANDING_MAP_COLORS}
+          selectedCity={selectedCity}
+          onSelectCity={setSelectedCity}
+          height={440}
+        />
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 0 }}>
+          <div
+            style={{
+              fontFamily: M.fontMono,
+              fontSize: 11,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: M.faint,
+            }}
+          >
+            {selectedCity ? `${selectedCity} · ${shown.length} Events` : "Kommende Events"}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+              overflowY: "auto",
+              maxHeight: 360,
+            }}
+          >
+            {shown.slice(0, 6).map((ev) => (
+              <div
+                key={ev.id}
+                style={{
+                  ...GLASS.paneSoft,
+                  padding: 14,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 13,
+                }}
+              >
+                <div
+                  style={{
+                    width: 46,
+                    height: 46,
+                    borderRadius: 12,
+                    background: M.emberTint,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    color: M.emberDeep,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 9,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    {eventDateLabel(ev).split(",")[0]}
+                  </span>
+                  <span style={{ fontSize: 16, fontWeight: 800, lineHeight: 1 }}>
+                    {(eventDateLabel(ev).match(/\d+/) || [""])[0]}
+                  </span>
+                </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 700,
+                      color: M.ink,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {ev.title}
+                  </div>
+                  <div style={{ fontSize: 12, color: M.smoke, marginTop: 1 }}>
+                    {ev.kind} · {ev.city ?? "Online"}
+                    {ev.time_label ? ` · ${ev.time_label}` : ""}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Link
+            to="/events"
+            style={{
+              marginTop: 4,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              height: 48,
+              borderRadius: 14,
+              background: M.emberGrad,
+              color: "#fff",
+              fontSize: 15,
+              fontWeight: 700,
+              textDecoration: "none",
+              boxShadow: M.shadow,
+            }}
+          >
+            Alle Events auf der Karte
+          </Link>
+        </div>
       </div>
     </Section>
   );
@@ -3900,6 +4143,12 @@ const RESPONSIVE_CSS = `
     gap: 12px !important;
   }
 
+  /* Events-Karte + Liste nebeneinander → gestapelt */
+  .landing-events-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
   /* Hero stats 4-col → 2-col */
   .landing-hero-stats {
     grid-template-columns: 1fr 1fr !important;
@@ -4199,6 +4448,7 @@ function Landing() {
       <LProblem />
       <LHowItWorks />
       <LMarketplace />
+      <LEventsMap />
       <LCoPilotMoment />
       <LFunding />
       <LCompare />
