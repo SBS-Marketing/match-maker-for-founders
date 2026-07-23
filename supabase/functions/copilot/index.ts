@@ -630,6 +630,115 @@ function hasAny(text: string, needles: string[]): boolean {
   return needles.some((needle) => text.includes(needle));
 }
 
+const CONNECTOR_QUERY_STOPWORDS = new Set([
+  "aber",
+  "alle",
+  "alles",
+  "also",
+  "auch",
+  "auf",
+  "aus",
+  "bei",
+  "bitte",
+  "dann",
+  "das",
+  "dein",
+  "deine",
+  "dem",
+  "den",
+  "der",
+  "die",
+  "dies",
+  "diese",
+  "dir",
+  "doch",
+  "drive",
+  "ein",
+  "eine",
+  "einen",
+  "einer",
+  "find",
+  "finde",
+  "fuer",
+  "für",
+  "google",
+  "hab",
+  "habe",
+  "ich",
+  "im",
+  "in",
+  "ist",
+  "mal",
+  "mir",
+  "mit",
+  "nach",
+  "noch",
+  "notion",
+  "oder",
+  "schau",
+  "such",
+  "suche",
+  "und",
+  "vom",
+  "von",
+  "was",
+  "wenn",
+  "wie",
+  "wir",
+  "zu",
+  "zum",
+]);
+
+function normalizeSearchText(value: string): string {
+  return value
+    .toLowerCase()
+    .replaceAll("ä", "ae")
+    .replaceAll("ö", "oe")
+    .replaceAll("ü", "ue")
+    .replaceAll("ß", "ss")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function connectorQueryTokens(text: string): string[] {
+  return normalizeSearchText(text)
+    .split(/[^a-z0-9]+/g)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 3 && !CONNECTOR_QUERY_STOPWORDS.has(token));
+}
+
+function deriveConnectorQuery(
+  message: string,
+  history: ChatTurn[] = [],
+  priorSummary = "",
+): string | undefined {
+  const directTokens = connectorQueryTokens(message);
+  const normalizedMessage = ` ${normalizeSearchText(message)} `;
+  const needsContext =
+    directTokens.length < 2 ||
+    hasAny(normalizedMessage, [
+      " danach ",
+      " dazu ",
+      " darueber ",
+      " diese datei ",
+      " diese seite ",
+      " das dokument ",
+      " den businessplan ",
+    ]);
+  const contextualText = needsContext
+    ? [
+        ...history
+          .slice(-4)
+          .filter((turn) => turn.role === "user")
+          .map((turn) => turn.content),
+        priorSummary,
+      ].join(" ")
+    : "";
+  const tokens = [...directTokens, ...connectorQueryTokens(contextualText)];
+  const unique = Array.from(new Set(tokens));
+  return unique.slice(0, 6).join(" ") || undefined;
+}
+
 function connectorLabel(connectorID: string): string {
   const labels: Record<string, string> = {
     authorities: "Kammern & Aemter",
@@ -741,6 +850,24 @@ function shortDate(value: unknown): string {
   return value.slice(0, 10);
 }
 
+function escapeDriveQuery(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+function driveSearchQuery(query?: string): string {
+  const tokens = query?.split(/\s+/).filter(Boolean).slice(0, 4) ?? [];
+  if (!tokens.length) return "trashed=false";
+  const clauses = tokens.flatMap((token) => {
+    const escaped = escapeDriveQuery(token);
+    return [`name contains '${escaped}'`, `fullText contains '${escaped}'`];
+  });
+  return `trashed=false and (${clauses.join(" or ")})`;
+}
+
+function cleanSlackChannelName(value: string): string {
+  return value.trim().replace(/^#/, "").toLowerCase();
+}
+
 function tokenExpired(token: MCPTokenRow): boolean {
   if (!token.expires_at) return false;
   return new Date(token.expires_at).getTime() <= Date.now() + 60_000;
@@ -832,11 +959,14 @@ async function usableToken(
   return null;
 }
 
-async function loadGoogleDriveContext(accessToken: string): Promise<MCPLiveContext> {
+async function loadGoogleDriveContext(
+  accessToken: string,
+  query?: string,
+): Promise<MCPLiveContext> {
   const url = new URL("https://www.googleapis.com/drive/v3/files");
   url.searchParams.set("pageSize", "6");
   url.searchParams.set("fields", "files(id,name,mimeType,webViewLink,modifiedTime)");
-  url.searchParams.set("q", "trashed=false");
+  url.searchParams.set("q", driveSearchQuery(query));
   url.searchParams.set("orderBy", "modifiedTime desc");
   const data = await fetchJSON(url, { headers: { Authorization: `Bearer ${accessToken}` } });
   const files = Array.isArray((data as Record<string, unknown> | null)?.files)
@@ -851,7 +981,15 @@ async function loadGoogleDriveContext(accessToken: string): Promise<MCPLiveConte
     if (source) sources.push(source);
     return `Datei "${name}" (${typeof file.mimeType === "string" ? file.mimeType : "Datei"}), zuletzt geaendert ${shortDate(file.modifiedTime)}${link ? `. Link: ${link}` : ""}`;
   });
-  return { connector_id: "google_drive", label: "Google Drive", facts, sources };
+  const prefix = query ? `Suche "${query}" in Google Drive. ` : "";
+  const resolvedFacts =
+    facts.length || !query ? facts : [`Suche "${query}" in Google Drive ergab keine Treffer.`];
+  return {
+    connector_id: "google_drive",
+    label: "Google Drive",
+    facts: resolvedFacts.map((fact) => (facts.length ? prefix + fact : fact)),
+    sources,
+  };
 }
 
 async function loadGitHubContext(accessToken: string): Promise<MCPLiveContext> {
@@ -889,7 +1027,7 @@ function notionTitle(page: Record<string, unknown>): string {
   return typeof page.object === "string" ? `Notion ${page.object}` : "Notion Treffer";
 }
 
-async function loadNotionContext(accessToken: string): Promise<MCPLiveContext> {
+async function loadNotionContext(accessToken: string, query?: string): Promise<MCPLiveContext> {
   const data = await fetchJSON(
     "https://api.notion.com/v1/search",
     {
@@ -899,7 +1037,7 @@ async function loadNotionContext(accessToken: string): Promise<MCPLiveContext> {
         "Content-Type": "application/json",
         "Notion-Version": "2022-06-28",
       },
-      body: JSON.stringify({ page_size: 6 }),
+      body: JSON.stringify(query ? { query, page_size: 6 } : { page_size: 6 }),
     },
     3_000,
   );
@@ -914,7 +1052,15 @@ async function loadNotionContext(accessToken: string): Promise<MCPLiveContext> {
     if (source) sources.push(source);
     return `${title}, zuletzt geaendert ${shortDate(page.last_edited_time)}${url ? `. Link: ${url}` : ""}`;
   });
-  return { connector_id: "notion", label: "Notion", facts, sources };
+  const prefix = query ? `Suche "${query}" in Notion. ` : "";
+  const resolvedFacts =
+    facts.length || !query ? facts : [`Suche "${query}" in Notion ergab keine Treffer.`];
+  return {
+    connector_id: "notion",
+    label: "Notion",
+    facts: resolvedFacts.map((fact) => (facts.length ? prefix + fact : fact)),
+    sources,
+  };
 }
 
 async function loadSlackContext(accessToken: string): Promise<MCPLiveContext> {
@@ -936,12 +1082,27 @@ async function loadSlackContext(accessToken: string): Promise<MCPLiveContext> {
     const channels = await fetchJSON(url, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-    const names = Array.isArray((channels as Record<string, unknown> | null)?.channels)
+    const visibleChannels = Array.isArray((channels as Record<string, unknown> | null)?.channels)
       ? ((channels as Record<string, unknown>).channels as Record<string, unknown>[])
-          .map((channel) => (typeof channel.name === "string" ? `#${channel.name}` : ""))
-          .filter(Boolean)
+          .map((channel) => ({
+            id: typeof channel.id === "string" ? channel.id : "",
+            name: typeof channel.name === "string" ? channel.name : "",
+          }))
+          .filter((channel) => channel.id && channel.name)
       : [];
+    const names = visibleChannels.map((channel) => `#${channel.name}`);
     if (names.length) facts.push(`Sichtbare Channels: ${names.slice(0, 6).join(", ")}.`);
+    return {
+      connector_id: "slack",
+      label: "Slack",
+      facts,
+      action_hints: visibleChannels.slice(0, 6).map((channel) => ({
+        action: "slack_post",
+        label: `In #${channel.name} posten`,
+        channel_id: channel.id,
+        channel: `#${channel.name}`,
+      })),
+    };
   } catch {
     // Channel listing is optional; auth.test is enough to prove the connector is live.
   }
@@ -985,6 +1146,7 @@ async function loadConnectorContext(
   userID: string,
   connection: MCPConnectionRow,
   token: MCPTokenRow | undefined,
+  query?: string,
 ): Promise<MCPLiveContext | null> {
   const connectorID = connection.connector_id;
   if (connectorID === "authorities") {
@@ -1020,11 +1182,11 @@ async function loadConnectorContext(
 
   switch (connectorID) {
     case "google_drive":
-      return await loadGoogleDriveContext(liveToken.access_token);
+      return await loadGoogleDriveContext(liveToken.access_token, query);
     case "github":
       return await loadGitHubContext(liveToken.access_token);
     case "notion":
-      return await loadNotionContext(liveToken.access_token);
+      return await loadNotionContext(liveToken.access_token, query);
     case "slack":
       return await loadSlackContext(liveToken.access_token);
     case "google_business":
@@ -1039,8 +1201,10 @@ async function loadMCPLiveContext(
   userID: string | undefined,
   ctx: FounderContext,
   message: string,
+  options: { history?: ChatTurn[]; priorSummary?: string } = {},
 ): Promise<MCPLiveContext[]> {
   if (!userID) return [];
+  const query = deriveConnectorQuery(message, options.history ?? [], options.priorSummary ?? "");
 
   const work = async () => {
     const { data, error } = await supabase
@@ -1076,7 +1240,13 @@ async function loadMCPLiveContext(
 
     const settled = await Promise.allSettled(
       relevant.map((connection) =>
-        loadConnectorContext(supabase, userID, connection, tokenMap.get(connection.connector_id)),
+        loadConnectorContext(
+          supabase,
+          userID,
+          connection,
+          tokenMap.get(connection.connector_id),
+          query,
+        ),
       ),
     );
     return settled
@@ -1284,11 +1454,17 @@ Deno.serve(async (req) => {
         : [];
 
       const surface = typeof extra.surface === "string" ? extra.surface : undefined;
+      const mcpLiveContextPromise = historyPromise.then((loadedHistory) =>
+        loadMCPLiveContext(supabase, user?.id, ctx, message, {
+          history: loadedHistory,
+          priorSummary,
+        }),
+      );
       const [recentCount, history, webSources, mcpLiveContext] = await Promise.all([
         rateLimitPromise,
         historyPromise,
         findWebSources(ctx, message),
-        loadMCPLiveContext(supabase, user?.id, ctx, message),
+        mcpLiveContextPromise,
       ]);
       if (recentCount >= 80) {
         return new Response(
@@ -1429,6 +1605,7 @@ Deno.serve(async (req) => {
         "add_kanban_card",
         "remember_fact",
         "open_screen",
+        "slack_post",
       ]);
       const ALLOWED_SCREENS = new Set([
         "kanban",
@@ -1444,22 +1621,65 @@ Deno.serve(async (req) => {
         "copilot",
         "profile",
       ]);
-      const appActions = (Array.isArray(kimiData.app_aktionen) ? kimiData.app_aktionen : [])
-        .filter((a: Record<string, unknown>) => {
-          if (typeof a?.aktion !== "string" || !ALLOWED_APP_ACTIONS.has(a.aktion)) return false;
-          if (a.aktion === "open_screen") {
-            return typeof a.screen === "string" && ALLOWED_SCREENS.has(a.screen);
+      const slackChannels = new Map<string, { channelID: string; channel: string }>();
+      for (const item of mcpLiveContext) {
+        for (const hint of Array.isArray(item.action_hints) ? item.action_hints : []) {
+          if (!isRecord(hint) || hint.action !== "slack_post") continue;
+          const channelID = typeof hint.channel_id === "string" ? hint.channel_id : "";
+          const channel = typeof hint.channel === "string" ? hint.channel : "";
+          if (!channelID || !channel) continue;
+          slackChannels.set(channelID, { channelID, channel });
+          slackChannels.set(cleanSlackChannelName(channel), { channelID, channel });
+        }
+      }
+      const field = (a: Record<string, unknown>, keys: string[]) => {
+        for (const key of keys) {
+          if (typeof a[key] === "string" && a[key].trim()) return a[key].trim();
+        }
+        return "";
+      };
+      const appActions: Record<string, unknown>[] = [];
+      for (const raw of Array.isArray(kimiData.app_aktionen) ? kimiData.app_aktionen : []) {
+        if (!isRecord(raw)) continue;
+        const actionName = typeof raw.aktion === "string" ? raw.aktion : "";
+        if (!ALLOWED_APP_ACTIONS.has(actionName)) continue;
+
+        if (actionName === "open_screen") {
+          const screen = field(raw, ["screen"]);
+          if (ALLOWED_SCREENS.has(screen)) {
+            appActions.push({ action: actionName, title: "", note: "", due: "", screen });
           }
-          return typeof a.titel === "string" && a.titel.trim().length > 0;
-        })
-        .slice(0, 2)
-        .map((a: Record<string, unknown>) => ({
-          action: a.aktion,
-          title: typeof a.titel === "string" ? a.titel : "",
-          note: typeof a.notiz === "string" ? a.notiz : "",
-          due: typeof a.faellig === "string" ? a.faellig : "",
-          screen: typeof a.screen === "string" ? a.screen : "",
-        }));
+          continue;
+        }
+
+        if (actionName === "slack_post") {
+          const messageText = field(raw, ["nachricht", "message", "text", "notiz"]).slice(0, 1800);
+          const rawChannelID = field(raw, ["channel_id", "channelId"]);
+          const rawChannel = field(raw, ["channel", "channel_name", "channelName", "titel"]);
+          const known =
+            slackChannels.get(rawChannelID) ?? slackChannels.get(cleanSlackChannelName(rawChannel));
+          if (known && messageText.length > 0) {
+            appActions.push({
+              action: "slack_post",
+              title: `Slack ${known.channel}`,
+              channel_id: known.channelID,
+              channel: known.channel,
+              message: messageText,
+            });
+          }
+          continue;
+        }
+
+        const title = field(raw, ["titel", "title"]);
+        if (!title) continue;
+        appActions.push({
+          action: actionName,
+          title,
+          note: field(raw, ["notiz", "note"]),
+          due: field(raw, ["faellig", "due"]),
+          screen: "",
+        });
+      }
 
       result = {
         answer: polishedAnswer,
@@ -1469,7 +1689,7 @@ Deno.serve(async (req) => {
           ? kimiData.follow_up_aktionen
           : [],
         navigation,
-        app_actions: appActions,
+        app_actions: appActions.slice(0, 2),
         new_facts: newFacts,
         conversation_summary: conversationSummary,
       };

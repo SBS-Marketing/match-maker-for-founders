@@ -345,6 +345,38 @@ struct MCPConnectorResponse: Decodable {
     let message: String?
 }
 
+private struct MCPActSlackPostRequest: Encodable {
+    let action = "slack_post"
+    let channelID: String
+    let channel: String
+    let text: String
+
+    enum CodingKeys: String, CodingKey {
+        case action
+        case channelID = "channel_id"
+        case channel
+        case text
+    }
+}
+
+struct MCPActResponse: Decodable {
+    let ok: Bool
+    let action: String?
+    let connectorID: String?
+    let channelID: String?
+    let channel: String?
+    let messageTs: String?
+
+    enum CodingKeys: String, CodingKey {
+        case ok
+        case action
+        case connectorID = "connector_id"
+        case channelID = "channel_id"
+        case channel
+        case messageTs = "message_ts"
+    }
+}
+
 private struct SupabaseConnectedAccountUpsert: Encodable {
     let userID: String
     let provider: String
@@ -507,6 +539,13 @@ struct SupabaseService {
                 action: "disconnect",
                 returnTo: nil
             )
+        )
+    }
+
+    func postSlackMessage(channelID: String, channel: String, text: String) async throws -> MCPActResponse {
+        try await invokeFunction(
+            "mcp-act",
+            body: MCPActSlackPostRequest(channelID: channelID, channel: channel, text: text)
         )
     }
 

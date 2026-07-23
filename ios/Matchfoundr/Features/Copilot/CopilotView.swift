@@ -1038,6 +1038,10 @@ struct CopilotView: View {
             send(prompt)
         case .draftMatchMessage(let matchID):
             appendAssistant(CopilotEngine.draftMessageForMatch(matchID, state: state))
+        case .previewSlackPost(let channelID, let channel, let text):
+            appendAssistant(slackPreviewMessage(channelID: channelID, channel: channel, text: text))
+        case .postToSlack(let channelID, let channel, let text):
+            postToSlack(channelID: channelID, channel: channel, text: text)
         default:
             state.execute(action)
             if let confirmation = confirmationMessage(for: action) {
@@ -1049,6 +1053,96 @@ struct CopilotView: View {
         }
     }
 
+    private func slackPreviewMessage(channelID: String, channel: String, text: String) -> CopilotMessage {
+        let preview: String
+        if text.count > 900 {
+            preview = String(text.prefix(900)).trimmingCharacters(in: .whitespacesAndNewlines) + "…"
+        } else {
+            preview = text
+        }
+        return CopilotMessage(
+            mine: false,
+            text:
+            """
+            Ich habe den Slack-Post vorbereitet.
+
+            Ziel: \(channel)
+
+            \(preview)
+            """,
+            actions: [
+                CopilotAction(
+                    label: "Jetzt posten",
+                    icon: "paperplane.fill",
+                    command: .postToSlack(channelID: channelID, channel: channel, text: text)
+                ),
+                CopilotAction(
+                    label: "Text ändern",
+                    icon: "pencil",
+                    command: .askCopilot("Passe diesen Slack-Post nochmal an:\n\(text)")
+                )
+            ],
+            memory: state.founderMemory,
+            source: .local
+        )
+    }
+
+    private func postToSlack(channelID: String, channel: String, text: String) {
+        appendAssistant(CopilotMessage(
+            mine: false,
+            text: "Ich sende den bestätigten Slack-Post an \(channel)…",
+            memory: state.founderMemory,
+            source: .local
+        ))
+
+        Task { @MainActor in
+            do {
+                let response = try await SupabaseService.shared.postSlackMessage(
+                    channelID: channelID,
+                    channel: channel,
+                    text: text
+                )
+                let postedChannel = response.channel ?? channel
+                appendAssistant(CopilotMessage(
+                    mine: false,
+                    text: "Gepostet in \(postedChannel).",
+                    memory: state.founderMemory,
+                    source: .local
+                ))
+            } catch {
+                appendAssistant(slackPostFailedMessage(channelID: channelID, channel: channel, text: text, error: error))
+            }
+        }
+    }
+
+    private func slackPostFailedMessage(channelID: String, channel: String, text: String, error: Error) -> CopilotMessage {
+        CopilotMessage(
+            mine: false,
+            text:
+            """
+            Slack-Post fehlgeschlagen.
+
+            Grund: \(error.localizedDescription)
+
+            Prüfe kurz die Slack-Verknüpfung oder versuch es erneut.
+            """,
+            actions: [
+                CopilotAction(
+                    label: "Erneut posten",
+                    icon: "arrow.clockwise",
+                    command: .postToSlack(channelID: channelID, channel: channel, text: text)
+                ),
+                CopilotAction(
+                    label: "Verknüpfungen",
+                    icon: "link",
+                    command: .open(.tab(.profile))
+                )
+            ],
+            memory: state.founderMemory,
+            source: .local
+        )
+    }
+
     private func shouldMinimizeAfter(_ action: CopilotAction) -> Bool {
         switch action.command {
         case .open(let destination):
@@ -1058,7 +1152,7 @@ struct CopilotView: View {
              .addKanbanCard:
             return true
         case .askCopilot, .draftMatchMessage, .startCofounderTrial, .refreshBackend, .refreshPartners,
-             .toggleDocument, .rememberFact:
+             .toggleDocument, .rememberFact, .previewSlackPost, .postToSlack:
             return false
         }
     }

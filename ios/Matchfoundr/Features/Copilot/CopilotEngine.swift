@@ -1360,6 +1360,17 @@ enum CopilotEngine {
         case "open_screen":
             guard let screen = screenDestination(cloud.screen ?? "") else { return nil }
             return action(screenLabel(cloud.screen ?? ""), "arrow.up.right.square", .open(screen))
+        case "slack_post":
+            let channelID = (cloud.channelId ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            let channel = (cloud.channel ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            let message = (cloud.message ?? cloud.note ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !channelID.isEmpty, !message.isEmpty else { return nil }
+            let displayChannel = channel.isEmpty ? "Slack" : channel
+            return action(
+                chipLabel("Slack prüfen", displayChannel, max: 34),
+                "paperplane.fill",
+                .previewSlackPost(channelID: channelID, channel: displayChannel, text: message)
+            )
         default:
             return nil
         }

@@ -72,7 +72,14 @@ const connectorSpecs: Record<ConnectorID, ConnectorSpec> = {
     id: "slack",
     label: "Slack Team",
     mode: "oauth",
-    scopes: ["channels:read", "channels:history", "chat:write", "team:read", "users:read"],
+    scopes: [
+      "channels:read",
+      "channels:history",
+      "chat:write",
+      "chat:write.public",
+      "team:read",
+      "users:read",
+    ],
     capabilities: ["team_briefing", "broadcast_drafts", "channel_context"],
   },
   github: {

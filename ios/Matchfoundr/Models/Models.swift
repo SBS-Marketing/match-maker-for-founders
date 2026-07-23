@@ -855,6 +855,8 @@ enum CopilotCommand: Hashable {
     case rememberFact(String)
     case foundStartup(name: String, category: String, stage: String, city: String, idea: String)
     case addKanbanCard(title: String, note: String)
+    case previewSlackPost(channelID: String, channel: String, text: String)
+    case postToSlack(channelID: String, channel: String, text: String)
 }
 
 enum CopilotDestination: Hashable {

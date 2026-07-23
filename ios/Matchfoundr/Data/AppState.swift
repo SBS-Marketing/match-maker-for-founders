@@ -2235,6 +2235,8 @@ final class AppState: ObservableObject {
         case .addKanbanCard(let title, let note):
             KanbanStore.shared.add(title: title, note: note)
             open(.screen(.kanban))
+        case .previewSlackPost, .postToSlack:
+            break
         }
     }
 

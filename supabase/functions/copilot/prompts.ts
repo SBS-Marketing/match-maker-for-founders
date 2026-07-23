@@ -35,11 +35,18 @@ export type MCPConnector = {
   tools?: string[];
   use_case?: string;
 };
+export type MCPActionHint = {
+  action?: string;
+  label?: string;
+  channel_id?: string;
+  channel?: string;
+};
 export type MCPLiveContext = {
   connector_id?: string;
   label?: string;
   facts?: string[];
   sources?: WebSource[];
+  action_hints?: MCPActionHint[];
 };
 
 // Plattform-Bereiche, auf die der Co-Pilot aktiv verweisen darf.
@@ -128,8 +135,23 @@ export function mcpLiveContextBlock(context: MCPLiveContext[] = []): string {
         .map((fact) => `${item.label || item.connector_id || "Connector"}: ${fact.trim()}`),
     )
     .slice(0, 10);
-  if (!facts.length) return "(kein Connector musste fuer diese Nachricht live abgefragt werden)";
-  return facts.map((fact, index) => `${index + 1}. ${fact.slice(0, 520)}`).join("\n");
+  const hints = context
+    .flatMap((item) =>
+      (Array.isArray(item.action_hints) ? item.action_hints : [])
+        .filter((hint) => hint?.action === "slack_post" && hint.channel_id && hint.channel)
+        .map(
+          (hint) =>
+            `Slack-Schreibaktion erlaubt nur nach User-Bestaetigung: action=slack_post, channel_id=${hint.channel_id}, channel=${hint.channel}`,
+        ),
+    )
+    .slice(0, 6);
+  if (!facts.length && !hints.length) {
+    return "(kein Connector musste fuer diese Nachricht live abgefragt werden)";
+  }
+  return [
+    ...facts.map((fact, index) => `${index + 1}. ${fact.slice(0, 520)}`),
+    ...hints.map((hint, index) => `Action ${index + 1}. ${hint}`),
+  ].join("\n");
 }
 
 export type ChatPromptInput = {
@@ -439,6 +461,9 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
     - Externe Schreibaktionen (Mail senden, Datei aendern, Slack posten, Buchhaltung buchen,
       Shop aktualisieren, Kalender extern schreiben) IMMER erst bestaetigen lassen. In der Antwort
       den geplanten Schritt klar benennen, nicht so tun als sei er schon erledigt.
+    - Slack posten: Nur wenn im MCP-LIVE-KONTEXT eine Action slack_post mit channel_id genannt ist.
+      Gib dann maximal eine vorbereitete App-Aktion slack_post zur Bestaetigung aus. Erfinde keine
+      Channel-ID und schreibe nicht "gepostet", bevor der Founder getippt hat.
 
     PFLICHTEN-WISSEN DACH (nutze das AKTIV — nie nur "Gewerbe anmelden" sagen):
     - Handwerk: Prüfe IMMER die Meisterpflicht! Zulassungspflichtige Gewerke (Anlage A HwO:
@@ -499,6 +524,8 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
        - {"aktion": "add_kanban_card", "titel": "…", "notiz": "…"}  (legt eine Karte aufs Board)
        - {"aktion": "remember_fact", "titel": "der Fakt als Satz"}
        - {"aktion": "open_screen", "screen": "kanban|calendar|swipe|chats|documents|company|startup|radar|events|guides|copilot|profile"}
+       - {"aktion": "slack_post", "channel_id": "C…", "channel": "#team", "nachricht": "…"}
+         Nur fuer Slack, nur mit channel_id aus MCP-LIVE-KONTEXT, und nur als Bestätigungs-Chip.
        Der Client zeigt daraus tippbare Aktions-Chips — nichts wird ungefragt ausgeführt.
        Keine Funktionen erfinden, keine anderen Aktions-Namen.
     8. Web-Recherche & NICHT HALLUZINIEREN (höchste Priorität):

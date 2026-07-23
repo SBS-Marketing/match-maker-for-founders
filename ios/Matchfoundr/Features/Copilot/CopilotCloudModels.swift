@@ -69,7 +69,8 @@ struct CopilotAppContext: Encodable {
             "open_company_profile", "publish_company_profile", "open_documents",
             "open_matches", "draft_match_message", "remember_fact", "refresh_live_data",
             "web_research_sources", "find_authority_contacts",
-            "use_mcp_connector", "mcp_read_context", "mcp_prepare_action", "mcp_request_confirmation"
+            "use_mcp_connector", "mcp_read_context", "mcp_prepare_action", "mcp_request_confirmation",
+            "slack_post_confirmed"
         ],
         rule: "Wenn eine Antwort eine App-Aktion braucht, formuliere sie konkret und gib passende navigation/follow_up_aktionen nur dann, wenn sie jetzt wirklich helfen. Bei Fragen zu Kammer, Amt, Genehmigung oder Ansprechpartnern nutze Web-Recherche und gib sources zurueck, wenn die Quellen konkret verwendet wurden. MCP-Werkzeuge sind stille Faehigkeiten: nutze sie nur bei echtem Kontextnutzen, nenne fehlende Verknuepfungen nur bei Bedarf, und verlange vor externen Schreibaktionen immer eine Bestaetigung."
     )
@@ -151,6 +152,9 @@ struct CopilotCloudAppAction: Decodable {
     let note: String?
     let due: String?
     let screen: String?
+    let channelId: String?
+    let channel: String?
+    let message: String?
 }
 
 struct CopilotCloudNav: Decodable {

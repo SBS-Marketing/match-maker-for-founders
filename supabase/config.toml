@@ -9,5 +9,8 @@ verify_jwt = false
 [functions.mcp-connect]
 verify_jwt = false
 
+[functions.mcp-act]
+verify_jwt = false
+
 [functions.migrate-helper]
 verify_jwt = false
