@@ -84,6 +84,7 @@ struct MyProfile: Codable {
     var pitch: String
     var plz: String
     var availability: Availability
+    var birthdate: String? = nil
 
     var industry: Industry { industries.first { $0.id == industryId } ?? industries[0] }
     var firstName: String { name.split(separator: " ").first.map(String.init) ?? name }

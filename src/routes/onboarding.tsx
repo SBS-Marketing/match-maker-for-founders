@@ -6,6 +6,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Check, Lightbulb, Loader2, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { AuthGate } from "@/components/AuthGate";
+import { ConnectedAccounts } from "@/components/ConnectedAccounts";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { writePlanContext, type PlanContext } from "@/lib/plan-draft";
@@ -54,9 +55,10 @@ function OnboardingPage() {
   const [industry, setIndustry] = useState<IndustryId | null>(null);
   const [skills, setSkills] = useState<string[]>([]);
   const [name, setName] = useState("");
+  const [birthdate, setBirthdate] = useState("");
+  const [ort, setOrt] = useState("");
   const [role, setRole] = useState("");
   const [pitch, setPitch] = useState("");
-  const [plz, setPlz] = useState("");
   const [availability, setAvailability] = useState<Availability | null>(null);
 
   const selectedIndustry = useMemo(
@@ -66,7 +68,15 @@ function OnboardingPage() {
 
   const canFinish = name.trim().length > 1 && role.trim().length > 1 && availability !== null;
   const canNext =
-    step === 0 ? mode !== null : step === 1 ? industry !== null && skills.length > 0 : canFinish;
+    step === 0
+      ? name.trim().length > 1
+      : step === 1
+        ? mode !== null
+        : step === 2
+          ? industry !== null && skills.length > 0
+          : step === 3
+            ? canFinish
+            : true;
 
   function toggleSkill(tag: string) {
     setSkills((cur) => (cur.includes(tag) ? cur.filter((t) => t !== tag) : [...cur, tag]));
@@ -79,6 +89,8 @@ function OnboardingPage() {
     const hours = AVAILABILITY.find((a) => a.id === availability)?.hours ?? 15;
     const context: PlanContext = {
       userName: name.trim(),
+      birthdate: birthdate || undefined,
+      city: ort.trim() || undefined,
       path: mode === "skills" ? "talent" : "founder",
       industry: selectedIndustry.id,
       industryLabel: selectedIndustry.label,
@@ -106,7 +118,7 @@ function OnboardingPage() {
             venture_term: selectedIndustry.terms.venture,
             partner_term: selectedIndustry.terms.partner,
             skills,
-            location: plz.trim() || null,
+            location: ort.trim() || null,
             vision: pitch.trim() || null,
             onboarded_at: new Date().toISOString(),
           })
@@ -128,7 +140,7 @@ function OnboardingPage() {
           matchfoundr<span className="text-[var(--ember)]">.</span>
         </span>
         <div className="flex gap-1.5">
-          {[0, 1, 2].map((i) => (
+          {[0, 1, 2, 3, 4].map((i) => (
             <span
               key={i}
               className="h-1.5 rounded-full transition-all duration-300"
@@ -141,11 +153,58 @@ function OnboardingPage() {
         </div>
       </div>
 
-      {/* Schritt 1 — Modus */}
+      {/* Schritt 1 — Persönliche Daten (steht bewusst am Anfang) */}
       {step === 0 && (
         <div className="flex flex-1 flex-col justify-center">
           <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-[var(--cream)]">
-            Womit startest du?
+            Wer bist du?
+          </h1>
+          <p className="mt-2 text-[14px] leading-snug text-white/60">
+            Name, Geburtsdatum, Ort — den Rest baust du später in Ruhe aus.
+          </p>
+          <div className="mt-6 space-y-4">
+            <Field label="Dein Name">
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Vorname reicht"
+                autoFocus
+                className="onb-input"
+              />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Geburtsdatum">
+                <input
+                  type="date"
+                  value={birthdate}
+                  onChange={(e) => setBirthdate(e.target.value)}
+                  max={new Date().toISOString().slice(0, 10)}
+                  className="onb-input"
+                />
+              </Field>
+              <Field label="Dein Ort">
+                <input
+                  value={ort}
+                  onChange={(e) => setOrt(e.target.value)}
+                  placeholder="z. B. Köln"
+                  className="onb-input"
+                />
+              </Field>
+            </div>
+            <p className="flex items-start gap-2 text-[12.5px] leading-snug text-white/50">
+              <span aria-hidden>🔒</span>
+              Name, Geburtsdatum und Ort zeigen wir passenden Leuten in deiner Nähe. Deine E-Mail
+              bleibt privat.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Schritt 2 — Modus */}
+      {step === 1 && (
+        <div className="flex flex-1 flex-col justify-center">
+          <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-[var(--cream)]">
+            Womit startest du{name.trim() ? `, ${name.trim().split(" ")[0]}` : ""}?
           </h1>
           <div className="mt-6 grid gap-3">
             <ModeCard
@@ -166,8 +225,8 @@ function OnboardingPage() {
         </div>
       )}
 
-      {/* Schritt 2 — Branche & Skills */}
-      {step === 1 && (
+      {/* Schritt 3 — Branche & Skills */}
+      {step === 2 && (
         <div className="flex flex-1 flex-col justify-center py-6">
           <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-[var(--cream)]">
             Deine Welt.
@@ -220,22 +279,13 @@ function OnboardingPage() {
         </div>
       )}
 
-      {/* Schritt 3 — Kurzprofil */}
-      {step === 2 && (
+      {/* Schritt 4 — Kurzprofil */}
+      {step === 3 && (
         <div className="flex flex-1 flex-col justify-center py-6">
           <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-[var(--cream)]">
-            Fast geschafft.
+            Fast geschafft, {name.trim().split(" ")[0] || "los"}.
           </h1>
           <div className="mt-5 space-y-4">
-            <Field label="Dein Name">
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Vorname reicht"
-                autoFocus
-                className="onb-input"
-              />
-            </Field>
             <Field label={mode === "skills" ? "Deine Rolle" : "Deine Rolle im Vorhaben"}>
               <input
                 value={role}
@@ -261,17 +311,6 @@ function OnboardingPage() {
                 className="onb-input resize-none"
               />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="PLZ">
-                <input
-                  value={plz}
-                  onChange={(e) => setPlz(e.target.value.replace(/\D/g, "").slice(0, 5))}
-                  inputMode="numeric"
-                  placeholder="50667"
-                  className="onb-input"
-                />
-              </Field>
-            </div>
             <Field label="Verfügbarkeit">
               <div className="grid gap-2">
                 {AVAILABILITY.map((a) => (
@@ -301,6 +340,31 @@ function OnboardingPage() {
         </div>
       )}
 
+      {/* Schritt 5 — Werkzeuge verbinden (geführter Abschluss) */}
+      {step === 4 && (
+        <div className="flex flex-1 flex-col justify-center py-6">
+          <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-[var(--cream)]">
+            Verbinde deine Werkzeuge.
+          </h1>
+          <p className="mt-2 text-[14px] leading-snug text-white/60">
+            Dein Co-Pilot wird spürbar schlauer, wenn er auf deine Tools zugreifen darf — Kalender,
+            Dateien, Postfach. Du entscheidest, was er sehen darf. Alles optional.
+          </p>
+          <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+            {user ? (
+              <ConnectedAccounts userId={user.id} />
+            ) : (
+              <p className="px-1 py-4 text-[13px] text-white/50">
+                Melde dich an, um Werkzeuge zu verbinden — du kannst das auch später im Profil tun.
+              </p>
+            )}
+          </div>
+          <p className="mt-3 text-[12.5px] leading-snug text-white/45">
+            Kannst du jederzeit im Profil ändern. Überspringen geht auch — tippe einfach „Los geht's".
+          </p>
+        </div>
+      )}
+
       {/* Fußzeile: Zurück / Weiter */}
       <div className="mt-6 flex items-center gap-3">
         {step > 0 && (
@@ -313,7 +377,7 @@ function OnboardingPage() {
           </button>
         )}
         <button
-          onClick={() => (step < 2 ? setStep((s) => s + 1) : finish())}
+          onClick={() => (step < 4 ? setStep((s) => s + 1) : finish())}
           disabled={!canNext || saving}
           className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl text-[14.5px] font-semibold text-white transition disabled:opacity-40"
           style={{ background: "var(--ember-grad)", boxShadow: "var(--ember-glow)" }}
@@ -322,7 +386,7 @@ function OnboardingPage() {
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <>
-              {step < 2 ? "Weiter" : "Los geht's"}
+              {step < 4 ? "Weiter" : "Los geht's"}
               <ArrowRight className="h-4 w-4" />
             </>
           )}

@@ -23,6 +23,8 @@ export type PlanSlide =
 
 export type PlanContext = {
   userName?: string;
+  birthdate?: string;
+  city?: string;
   path: "founder" | "talent" | "hybrid" | null;
   industry: IndustryId | null;
   industryLabel?: string;
