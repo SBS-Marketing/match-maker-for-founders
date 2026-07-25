@@ -341,63 +341,85 @@ struct OnboardingView: View {
     }
 
     // ─── Schritt 1 — Persönliche Daten: Name, Geburtsdatum, Ort (bewusst zuerst) ───
+    // Icon-geführte Karten im Warm-Signal-Stil — wie Rollen-/Branchen-Schritt.
     private var personalData: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            sectionLabel("Dein Name")
-            TextField("Wie sollen wir dich nennen?", text: $name)
-                .font(.system(size: 16))
-                .textInputAutocapitalization(.words)
-                .submitLabel(.next)
-                .padding(.horizontal, 15)
-                .frame(height: 52)
-                .background(MF.surface)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(MF.border, lineWidth: 1.5))
-
-            sectionLabel("Geburtsdatum")
-            HStack {
-                Text(birthdaySet ? Self.birthdayFormatter.string(from: birthday) : "Noch nicht gewählt")
-                    .font(.system(size: 15, weight: birthdaySet ? .semibold : .regular))
-                    .foregroundStyle(birthdaySet ? MF.ink : MF.faint)
-                Spacer()
-                DatePicker("", selection: $birthday, in: ...Date(), displayedComponents: .date)
-                    .labelsHidden()
-                    .datePickerStyle(.compact)
-                    .tint(MF.ember)
-                    .onChange(of: birthday) { _, _ in birthdaySet = true }
+        VStack(spacing: 12) {
+            personalCard(icon: "person.fill", label: "Dein Name", filled: !name.trimmingCharacters(in: .whitespaces).isEmpty) {
+                TextField("Wie sollen wir dich nennen?", text: $name)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(MF.ink)
+                    .textInputAutocapitalization(.words)
+                    .submitLabel(.next)
             }
-            .padding(.horizontal, 15)
-            .frame(height: 52)
-            .background(MF.surface)
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(MF.border, lineWidth: 1.5))
 
-            sectionLabel("Dein Ort")
-            TextField("z. B. Köln", text: $region)
-                .font(.system(size: 16))
-                .textInputAutocapitalization(.words)
-                .padding(.horizontal, 15)
-                .frame(height: 52)
-                .background(MF.surface)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(MF.border, lineWidth: 1.5))
+            personalCard(icon: "calendar", label: "Geburtsdatum", filled: birthdaySet) {
+                HStack(spacing: 0) {
+                    Text(birthdaySet ? Self.birthdayFormatter.string(from: birthday) : "Noch nicht gewählt")
+                        .font(.system(size: 16, weight: birthdaySet ? .semibold : .regular))
+                        .foregroundStyle(birthdaySet ? MF.ink : MF.faint)
+                    Spacer(minLength: 0)
+                    DatePicker("", selection: $birthday, in: ...Date(), displayedComponents: .date)
+                        .labelsHidden()
+                        .datePickerStyle(.compact)
+                        .tint(MF.ember)
+                        .onChange(of: birthday) { _, _ in birthdaySet = true }
+                }
+            }
 
-            HStack(spacing: 10) {
+            personalCard(icon: "mappin.and.ellipse", label: "Dein Ort", filled: !region.trimmingCharacters(in: .whitespaces).isEmpty) {
+                TextField("z. B. Köln", text: $region)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(MF.ink)
+                    .textInputAutocapitalization(.words)
+            }
+
+            HStack(spacing: 11) {
                 Image(systemName: "lock.shield.fill")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(MF.emberDeep)
                 Text("Name, Geburtsdatum und Ort helfen uns, dich passenden Leuten in deiner Nähe zu zeigen. E-Mail & Co. kommen später — beim Anlegen deines Kontos.")
-                    .font(.system(size: 13))
+                    .font(.system(size: 12.5))
                     .foregroundStyle(MF.smoke)
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(14)
+            .padding(13)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(MF.emberTint.opacity(0.55))
+            .background(MF.emberTint.opacity(0.5))
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .padding(.top, 18)
+            .padding(.top, 6)
         }
+    }
+
+    /// Eingabe-Karte im App-Stil: Ember-Icon-Kachel + Label + Feld (wie Rollen-Karten).
+    private func personalCard<Content: View>(
+        icon: String,
+        label: String,
+        filled: Bool,
+        @ViewBuilder _ field: () -> Content
+    ) -> some View {
+        HStack(spacing: 13) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(filled ? MF.emberDeep : MF.smoke)
+                .frame(width: 44, height: 44)
+                .background(filled ? MF.emberTint : MF.canvas)
+                .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(label)
+                    .font(.mfMono(10))
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(filled ? MF.ember : MF.faint)
+                field()
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(MF.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(filled ? MF.ember.opacity(0.55) : MF.border, lineWidth: 1.5))
     }
 
     private var regionAndEffort: some View {
