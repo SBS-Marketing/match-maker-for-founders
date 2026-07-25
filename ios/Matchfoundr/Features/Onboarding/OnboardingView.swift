@@ -48,6 +48,8 @@ struct OnboardingView: View {
         ZStack {
             if step == 0 {
                 welcome.transition(.opacity)
+            } else if step == 1 {
+                personalStep.transition(.opacity)
             } else if step == 5 {
                 payoff.transition(.opacity)
             } else if step == 6 {
@@ -216,7 +218,6 @@ struct OnboardingView: View {
                         .lineSpacing(3)
                         .padding(.top, 8)
 
-                    if step == 1 { personalData.padding(.top, 22) }
                     if step == 2 { industryGrid.padding(.top, 22) }
                     if step == 3 { roleList.padding(.top, 22) }
                     if step == 4 { regionAndEffort.padding(.top, 4) }
@@ -340,86 +341,173 @@ struct OnboardingView: View {
         }
     }
 
-    // ─── Schritt 1 — Persönliche Daten: Name, Geburtsdatum, Ort (bewusst zuerst) ───
-    // Icon-geführte Karten im Warm-Signal-Stil — wie Rollen-/Branchen-Schritt.
-    private var personalData: some View {
-        VStack(spacing: 12) {
-            personalCard(icon: "person.fill", label: "Dein Name", filled: !name.trimmingCharacters(in: .whitespaces).isEmpty) {
-                TextField("Wie sollen wir dich nennen?", text: $name)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(MF.ink)
-                    .textInputAutocapitalization(.words)
-                    .submitLabel(.next)
-            }
+    // ─── Schritt 1 — Persönliche Daten in der Optik der ersten Seite ───
+    // Ember-Gradient-Vollseite wie der Welcome-Screen: weiße Schrift,
+    // transluzente Felder, weißer CTA. Name → Geburtsdatum → Ort.
+    private var personalStep: some View {
+        ZStack {
+            MF.emberGrad.ignoresSafeArea()
 
-            personalCard(icon: "calendar", label: "Geburtsdatum", filled: birthdaySet) {
-                HStack(spacing: 0) {
-                    Text(birthdaySet ? Self.birthdayFormatter.string(from: birthday) : "Noch nicht gewählt")
-                        .font(.system(size: 16, weight: birthdaySet ? .semibold : .regular))
-                        .foregroundStyle(birthdaySet ? MF.ink : MF.faint)
-                    Spacer(minLength: 0)
-                    DatePicker("", selection: $birthday, in: ...Date(), displayedComponents: .date)
-                        .labelsHidden()
-                        .datePickerStyle(.compact)
-                        .tint(MF.ember)
-                        .onChange(of: birthday) { _, _ in birthdaySet = true }
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 12) {
+                    Button { back() } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 19, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 32, height: 32)
+                    }
+                    .buttonStyle(.plain)
+                    HStack(spacing: 6) {
+                        ForEach(collectSteps, id: \.self) { s in
+                            Capsule()
+                                .fill(s <= step ? Color.white : Color.white.opacity(0.3))
+                                .frame(height: 5)
+                        }
+                    }
+                    Color.clear.frame(width: 32, height: 32)
                 }
-            }
+                .padding(.horizontal, 14)
+                .padding(.top, 8)
+                .frame(minHeight: 44)
 
-            personalCard(icon: "mappin.and.ellipse", label: "Dein Ort", filled: !region.trimmingCharacters(in: .whitespaces).isEmpty) {
-                TextField("z. B. Köln", text: $region)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(MF.ink)
-                    .textInputAutocapitalization(.words)
-            }
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("Schritt 1 von 4")
+                            .font(.mfMono(10))
+                            .tracking(1.4)
+                            .textCase(.uppercase)
+                            .foregroundStyle(.white.opacity(0.75))
+                        Text("Wer bist du?")
+                            .font(.system(size: 34, weight: .heavy))
+                            .tracking(-1)
+                            .foregroundStyle(.white)
+                            .padding(.top, 8)
+                        Text("Name, Geburtsdatum, Ort — den Rest baust du später in Ruhe aus.")
+                            .font(.system(size: 15.5))
+                            .foregroundStyle(.white.opacity(0.9))
+                            .lineSpacing(3)
+                            .padding(.top, 10)
 
-            HStack(spacing: 11) {
-                Image(systemName: "lock.shield.fill")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(MF.emberDeep)
-                Text("Name, Geburtsdatum und Ort helfen uns, dich passenden Leuten in deiner Nähe zu zeigen. E-Mail & Co. kommen später — beim Anlegen deines Kontos.")
-                    .font(.system(size: 12.5))
-                    .foregroundStyle(MF.smoke)
-                    .lineSpacing(2)
-                    .fixedSize(horizontal: false, vertical: true)
+                        VStack(spacing: 12) {
+                            emberField(icon: "person.fill", label: "Dein Name") {
+                                ZStack(alignment: .leading) {
+                                    if name.isEmpty {
+                                        Text("Wie sollen wir dich nennen?")
+                                            .font(.system(size: 16))
+                                            .foregroundStyle(.white.opacity(0.55))
+                                    }
+                                    TextField("", text: $name)
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                        .tint(.white)
+                                        .textInputAutocapitalization(.words)
+                                        .submitLabel(.next)
+                                }
+                            }
+
+                            emberField(icon: "calendar", label: "Geburtsdatum") {
+                                HStack(spacing: 0) {
+                                    Text(birthdaySet ? Self.birthdayFormatter.string(from: birthday) : "Noch nicht gewählt")
+                                        .font(.system(size: 16, weight: birthdaySet ? .semibold : .regular))
+                                        .foregroundStyle(birthdaySet ? .white : .white.opacity(0.55))
+                                    Spacer(minLength: 0)
+                                    DatePicker("", selection: $birthday, in: ...Date(), displayedComponents: .date)
+                                        .labelsHidden()
+                                        .datePickerStyle(.compact)
+                                        .tint(.white)
+                                        .colorScheme(.dark)
+                                        .onChange(of: birthday) { _, _ in birthdaySet = true }
+                                }
+                            }
+
+                            emberField(icon: "mappin.and.ellipse", label: "Dein Ort") {
+                                ZStack(alignment: .leading) {
+                                    if region.isEmpty {
+                                        Text("z. B. Köln")
+                                            .font(.system(size: 16))
+                                            .foregroundStyle(.white.opacity(0.55))
+                                    }
+                                    TextField("", text: $region)
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                        .tint(.white)
+                                        .textInputAutocapitalization(.words)
+                                }
+                            }
+                        }
+                        .padding(.top, 26)
+
+                        HStack(spacing: 10) {
+                            Image(systemName: "lock.shield.fill")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(.white.opacity(0.9))
+                            Text("E-Mail & Co. kommen später — beim Anlegen deines Kontos.")
+                                .font(.system(size: 12.5))
+                                .foregroundStyle(.white.opacity(0.8))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(.top, 18)
+                    }
+                    .padding(.horizontal, 26)
+                    .padding(.top, 6)
+                    .padding(.bottom, 30)
+                }
+                .scrollIndicators(.hidden)
             }
-            .padding(13)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(MF.emberTint.opacity(0.5))
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .padding(.top, 6)
+        }
+        .safeAreaInset(edge: .bottom) {
+            Button {
+                next()
+            } label: {
+                HStack(spacing: 8) {
+                    Text("Weiter").font(.system(size: 17, weight: .bold))
+                    if canNext {
+                        Image(systemName: "arrow.right").font(.system(size: 15, weight: .heavy))
+                    }
+                }
+                .foregroundStyle(canNext ? MF.emberDeep : Color.white.opacity(0.5))
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(canNext ? Color.white : Color.white.opacity(0.22))
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .shadow(color: .black.opacity(canNext ? 0.28 : 0), radius: 16, y: 10)
+            }
+            .buttonStyle(.plain)
+            .disabled(!canNext)
+            .padding(.horizontal, 22)
+            .padding(.top, 14)
+            .padding(.bottom, 10)
         }
     }
 
-    /// Eingabe-Karte im App-Stil: Ember-Icon-Kachel + Label + Feld (wie Rollen-Karten).
-    private func personalCard<Content: View>(
+    /// Transluzente Eingabe-Karte auf dem Ember-Gradient (Optik der ersten Seite).
+    private func emberField<Content: View>(
         icon: String,
         label: String,
-        filled: Bool,
         @ViewBuilder _ field: () -> Content
     ) -> some View {
         HStack(spacing: 13) {
             Image(systemName: icon)
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(filled ? MF.emberDeep : MF.smoke)
+                .foregroundStyle(.white)
                 .frame(width: 44, height: 44)
-                .background(filled ? MF.emberTint : MF.canvas)
+                .background(.white.opacity(0.18))
                 .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
             VStack(alignment: .leading, spacing: 3) {
                 Text(label)
                     .font(.mfMono(10))
                     .tracking(1.2)
                     .textCase(.uppercase)
-                    .foregroundStyle(filled ? MF.ember : MF.faint)
+                    .foregroundStyle(.white.opacity(0.7))
                 field()
             }
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(MF.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 18).stroke(filled ? MF.ember.opacity(0.55) : MF.border, lineWidth: 1.5))
+        .background(.white.opacity(0.14))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.25), lineWidth: 1))
     }
 
     private var regionAndEffort: some View {
