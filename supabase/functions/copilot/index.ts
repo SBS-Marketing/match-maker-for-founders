@@ -27,8 +27,8 @@ const corsHeaders = {
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const KIMI_MODEL = "moonshotai/kimi-k3";
 const SONNET_MODEL = "anthropic/claude-sonnet-4-6";
-const KIMI_TIMEOUT_MS = 8_000;
-const SONNET_TIMEOUT_MS = 18_000;
+const KIMI_TIMEOUT_MS = 12_000;
+const SONNET_TIMEOUT_MS = 22_000;
 
 // ─── Token-Preise (USD pro 1M Tokens, Schätzwerte für Admin-Insights) ─
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
@@ -1485,7 +1485,32 @@ Deno.serve(async (req) => {
         mcpConnectors,
         mcpLiveContext,
       });
-      const kimiRaw = await callKimiWithFallback(kimiPrompt, "chat", sink, 1200);
+      let kimiRaw: string;
+      try {
+        kimiRaw = await callKimiWithFallback(kimiPrompt, "chat", sink, 1200);
+      } catch (err) {
+        // Sanfte Degradation: lieber eine freundliche Mentor-Antwort als ein harter 500.
+        console.error(
+          "chat model failed, graceful fallback:",
+          err instanceof Error ? err.message : err,
+        );
+        return new Response(
+          JSON.stringify({
+            answer:
+              "Ich brauch gerade einen kurzen Moment — die Leitung war überlastet. Schreib mir einfach nochmal, ich bin sofort wieder für dich da.",
+            too_early: false,
+            sources: [],
+            quick_actions: [],
+            navigation: [],
+            app_actions: [],
+            new_facts: [],
+            celebrated_win: null,
+            conversation_summary: priorSummary,
+            degraded: true,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
       console.log("[KIMI chat raw]", kimiRaw.slice(0, 300));
       const kimiData = parseJSON(kimiRaw);
 
@@ -1681,6 +1706,12 @@ Deno.serve(async (req) => {
         });
       }
 
+      const celebratedWin =
+        typeof kimiData.gefeierter_erfolg === "string" &&
+        kimiData.gefeierter_erfolg.trim().length > 3
+          ? kimiData.gefeierter_erfolg.trim().slice(0, 160)
+          : null;
+
       result = {
         answer: polishedAnswer,
         too_early: kimiData.zu_frueh === true,
@@ -1691,6 +1722,7 @@ Deno.serve(async (req) => {
         navigation,
         app_actions: appActions.slice(0, 2),
         new_facts: newFacts,
+        celebrated_win: celebratedWin,
         conversation_summary: conversationSummary,
       };
     } else if (task === "plan_generate") {
