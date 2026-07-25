@@ -119,8 +119,23 @@ struct TodayView: View {
                 .font(.system(size: 27, weight: .heavy))
                 .tracking(-0.8)
                 .foregroundStyle(MF.ink)
+            if !momentumLine.isEmpty {
+                Text(momentumLine)
+                    .font(.system(size: 13.5, weight: .semibold))
+                    .foregroundStyle(MF.emberDeep)
+                    .padding(.top, 2)
+            }
         }
         .padding(.top, 2)
+    }
+
+    /// Motivierende Mentor-Zeile, die den Fortschritt spiegelt.
+    private var momentumLine: String {
+        switch state.achievements.count {
+        case 0: return ""
+        case 1: return "Dein erster Meilenstein steht — der nächste wartet schon."
+        default: return "\(state.achievements.count) Meilensteine schon — du bist in Bewegung."
+        }
     }
 
     private var greetingLine: String {
