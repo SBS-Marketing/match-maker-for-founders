@@ -18,6 +18,7 @@ struct TodayView: View {
                         greetingHeader
                         deinTagCard
                         focalCard
+                        achievementsCard
                         businessPulse
                         launchGuideCard
                     }
@@ -255,6 +256,52 @@ struct TodayView: View {
     }
 
     /// Die Zahlen, die zählen — drei Kacheln.
+    // Erfolgs-Chronik — vom Co-Pilot gefeierte Meilensteine, hält motiviert.
+    @ViewBuilder
+    private var achievementsCard: some View {
+        if !state.achievements.isEmpty {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 8) {
+                    Image(systemName: "trophy.fill")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(MF.emberDeep)
+                    Text("Deine Erfolge")
+                        .font(.system(size: 15, weight: .heavy))
+                        .foregroundStyle(MF.ink)
+                    Spacer()
+                    Text("\(state.achievements.count)")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(MF.emberDeep)
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 3)
+                        .background(MF.emberTint)
+                        .clipShape(Capsule())
+                }
+                VStack(spacing: 9) {
+                    ForEach(state.achievements.prefix(3)) { a in
+                        HStack(alignment: .top, spacing: 10) {
+                            Image(systemName: "checkmark.seal.fill")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(MF.ember)
+                            Text(a.text)
+                                .font(.system(size: 13.5, weight: .semibold))
+                                .foregroundStyle(MF.ink)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: 0)
+                        }
+                    }
+                }
+                .padding(.top, 12)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(MF.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 18).stroke(MF.border, lineWidth: 1))
+            .warmShadow()
+        }
+    }
+
     private var businessPulse: some View {
         VStack(alignment: .leading, spacing: 12) {
             MSectionHead(text: "Business-Puls", action: "Details") {

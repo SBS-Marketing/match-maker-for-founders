@@ -90,6 +90,14 @@ struct MyProfile: Codable {
     var firstName: String { name.split(separator: " ").first.map(String.init) ?? name }
 }
 
+/// Ein vom Co-Pilot erkannter, gefeierter Meilenstein — sammelt sich als
+/// Erfolgs-Chronik und hält den Founder motiviert.
+struct Achievement: Codable, Identifiable, Hashable {
+    var id = UUID()
+    var text: String
+    var date: Date = Date()
+}
+
 /// Zusätzliche Profilfläche aus der Web-Version: Headline, About, Cover und Links.
 struct ProfileExtras: Codable, Equatable {
     var headline: String

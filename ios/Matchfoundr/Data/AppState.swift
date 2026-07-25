@@ -52,6 +52,23 @@ final class AppState: ObservableObject {
     @Published var copilotFacts: [String] = [] {
         didSet { defaults.set(copilotFacts, forKey: "mf.copilot.facts") }
     }
+
+    /// Vom Co-Pilot gefeierte Meilensteine — Erfolgs-Chronik, hält motiviert.
+    @Published var achievements: [Achievement] = [] {
+        didSet { persist(achievements, key: "mf.achievements") }
+    }
+
+    /// Verbucht einen erkannten Erfolg (Dedupe gegen die letzten Einträge) und feiert ihn haptisch.
+    func recordAchievement(_ text: String) {
+        let clean = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard clean.count > 3 else { return }
+        if achievements.prefix(20).contains(where: {
+            $0.text.caseInsensitiveCompare(clean) == .orderedSame
+        }) { return }
+        achievements.insert(Achievement(text: clean), at: 0)
+        if achievements.count > 50 { achievements = Array(achievements.prefix(50)) }
+        Haptics.success()
+    }
     @Published var copilotSessions: [CopilotSession] = [] {
         didSet { persist(copilotSessions, key: "mf.copilot.sessions") }
     }
@@ -2386,6 +2403,7 @@ final class AppState: ObservableObject {
         mcpConnectorLinks = load([MCPConnectorLink].self, key: "mf.mcp.connector.links") ?? []
         startupWorkspaceActivated = defaults.bool(forKey: "mf.startup.activated")
         copilotFacts = defaults.stringArray(forKey: "mf.copilot.facts") ?? []
+        achievements = load([Achievement].self, key: "mf.achievements") ?? []
         copilotSessions = compactCopilotSessions(load([CopilotSession].self, key: "mf.copilot.sessions") ?? [])
         if let rawID = defaults.string(forKey: "mf.copilot.activeSessionID"),
            let id = UUID(uuidString: rawID),

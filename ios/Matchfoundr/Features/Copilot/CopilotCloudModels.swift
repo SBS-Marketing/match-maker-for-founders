@@ -142,6 +142,7 @@ struct CopilotCloudResponse: Decodable {
     let appActions: [CopilotCloudAppAction]?
     let newFacts: [String]?
     let sources: [CopilotSource]?
+    let celebratedWin: String?
     let error: String?
 }
 

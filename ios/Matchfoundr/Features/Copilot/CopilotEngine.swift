@@ -42,6 +42,10 @@ enum CopilotEngine {
             let structuredActions = (response.appActions ?? []).compactMap(structuredAction(from:))
             let nativeActions = structuredActions + (nativeHint?.actions ?? [])
             let navigation = (response.navigation ?? []).compactMap(nativeNav(from:))
+            if let win = response.celebratedWin?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !win.isEmpty {
+                state.recordAchievement(win)
+            }
             let choiceReplies = choiceReplies(for: answer, quickActions: quickActions, state: state)
             let quickReplies = choiceReplies.isEmpty
                 ? quickActions.filter {
