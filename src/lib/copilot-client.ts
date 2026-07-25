@@ -7,6 +7,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import type { Session, User } from "@supabase/supabase-js";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { GRANTS } from "@/data/grants";
 import type { PlanContext } from "@/lib/plan-draft";
@@ -32,12 +33,43 @@ export type CopilotResult = {
   quickActions: string[];
   navigation: CopilotNav[];
   newFacts: string[];
+  celebratedWin?: string | null;
   source: "cloud" | "local";
 };
+
+export type Achievement = { text: string; date: string };
 
 const MEMORY_KEY = "mf_copilot_memory_v1";
 const DEMO_CHAT_KEY = "mf_copilot_chat_v1";
 const CHAT_EVENT = "mf-copilot-chat-changed";
+const ACHIEVEMENTS_KEY = "mf_copilot_achievements_v1";
+
+// ─── Erfolgs-Chronik (vom Co-Pilot gefeierte Meilensteine) ───
+
+export function readAchievements(): Achievement[] {
+  try {
+    const raw = localStorage.getItem(ACHIEVEMENTS_KEY);
+    const list = raw ? (JSON.parse(raw) as Achievement[]) : [];
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Verbucht einen erkannten Erfolg (Dedupe gegen die letzten Einträge). Gibt true zurück, wenn neu. */
+export function recordAchievement(text: string): boolean {
+  const clean = text.trim();
+  if (clean.length < 4) return false;
+  const list = readAchievements();
+  if (list.slice(0, 20).some((a) => a.text.toLowerCase() === clean.toLowerCase())) return false;
+  const next = [{ text: clean, date: new Date().toISOString() }, ...list].slice(0, 50);
+  try {
+    localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(next));
+  } catch {
+    /* localStorage kann fehlschlagen — nicht kritisch */
+  }
+  return true;
+}
 
 export function makeMsgId(): string {
   return Math.random().toString(36).slice(2, 9) + Date.now().toString(36);
@@ -235,11 +267,20 @@ export async function askCopilot(options: AskOptions): Promise<CopilotResult> {
     );
     addCopilotFacts(newFacts);
 
+    const celebratedWin =
+      typeof data?.celebrated_win === "string" && data.celebrated_win.trim().length > 3
+        ? data.celebrated_win.trim()
+        : null;
+    if (celebratedWin && recordAchievement(celebratedWin)) {
+      toast.success("🎉 Meilenstein!", { description: celebratedWin });
+    }
+
     return {
       answer,
       quickActions: Array.isArray(data?.quick_actions) ? data.quick_actions.slice(0, 4) : [],
       navigation: navigation.slice(0, 2),
       newFacts,
+      celebratedWin,
       source: "cloud",
     };
   } catch (err) {
