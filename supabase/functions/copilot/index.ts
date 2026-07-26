@@ -31,7 +31,10 @@ const GEMINI_MODEL = "google/gemini-2.5-flash";
 const KIMI_MODEL = "moonshotai/kimi-k3";
 const SONNET_MODEL = "anthropic/claude-sonnet-4-6";
 const GEMINI_TIMEOUT_MS = 12_000;
-const KIMI_TIMEOUT_MS = 12_000;
+// Kimi K3 timeoutet auf diesem OpenRouter-Konto derzeit ausnahmslos. Kurzer
+// Timeout, damit Heavy-Tasks schnell auf den funktionierenden Sonnet fallen.
+// Sobald k3-Zugang funktioniert, hier wieder erhöhen.
+const KIMI_TIMEOUT_MS = 6_000;
 const SONNET_TIMEOUT_MS = 22_000;
 
 // ─── Token-Preise (USD pro 1M Tokens, Schätzwerte für Admin-Insights) ─
