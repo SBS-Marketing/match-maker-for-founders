@@ -10,6 +10,7 @@ import { ConnectedAccounts } from "@/components/ConnectedAccounts";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { writePlanContext, type PlanContext } from "@/lib/plan-draft";
+import { recordAchievement } from "@/lib/copilot-client";
 import { INDUSTRIES, type IndustryId } from "../../onboarding/industries";
 
 export const Route = createFileRoute("/onboarding")({
@@ -128,6 +129,7 @@ function OnboardingPage() {
       }
     }
 
+    recordAchievement("Profil erstellt — willkommen an Bord.");
     toast.success(`Willkommen, ${name.trim().split(" ")[0]}!`);
     navigate({ to: "/heute" });
   }

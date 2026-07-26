@@ -842,6 +842,7 @@ struct OnboardingView: View {
             availability: availability,
             birthdate: birthdaySet ? Self.birthdayFormatter.string(from: birthday) : nil
         )
+        state.recordAchievement("Profil erstellt — willkommen an Bord.")
         Haptics.success()
         state.completeOnboarding(with: profile, launchAIAnalysis: false)
     }
