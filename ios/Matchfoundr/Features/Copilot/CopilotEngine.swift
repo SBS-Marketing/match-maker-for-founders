@@ -39,7 +39,10 @@ enum CopilotEngine {
             }
             let newFacts = response.newFacts ?? []
             let quickActions = Array((response.quickActions ?? []).prefix(4))
-            let structuredActions = (response.appActions ?? []).compactMap(structuredAction(from:))
+            // Sichere lokale Aktionen sofort ausführen: der Co-Pilot sagt "mach ich",
+            // also passiert es auch. Was ausgeführt wurde, wird kein Chip mehr.
+            let pendingCloudActions = (response.appActions ?? []).filter { !autoRun($0, state: state) }
+            let structuredActions = pendingCloudActions.compactMap(structuredAction(from:))
             let nativeActions = structuredActions + (nativeHint?.actions ?? [])
             let navigation = (response.navigation ?? []).compactMap(nativeNav(from:))
             let rawWin = response.celebratedWin?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1343,6 +1346,32 @@ enum CopilotEngine {
     }
 
     /// Backend-validierte App-Aktion → ausführbarer Chip.
+    /// Führt sichere, lokale und umkehrbare Aktionen sofort aus — der Co-Pilot
+    /// kündigt sie im Text an ("trag ich dir ein"), also müssen sie auch passieren.
+    /// Bewusst NICHT automatisch: `open_screen` (würde den User wegreißen) und
+    /// `slack_post` (externe Schreibaktion, bleibt bestätigungspflichtig).
+    /// Gibt true zurück, wenn ausgeführt — dann entfällt der Chip.
+    @MainActor
+    private static func autoRun(_ cloud: CopilotCloudAppAction, state: AppState) -> Bool {
+        let title = (cloud.title ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let note = (cloud.note ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else { return false }
+        switch cloud.action {
+        case "add_calendar_item":
+            let due = (cloud.due ?? "").isEmpty ? "Diese Woche" : cloud.due!
+            state.addPlannerItem(title: title, note: note, dueLabel: due, kind: .focus, target: nil)
+            return true
+        case "add_kanban_card":
+            KanbanStore.shared.add(title: title, note: note)
+            return true
+        case "remember_fact":
+            state.rememberCopilotFact(title)
+            return true
+        default:
+            return false
+        }
+    }
+
     private static func structuredAction(from cloud: CopilotCloudAppAction) -> CopilotAction? {
         let title = (cloud.title ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         let note = (cloud.note ?? "").trimmingCharacters(in: .whitespacesAndNewlines)

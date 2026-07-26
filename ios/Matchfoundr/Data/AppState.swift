@@ -942,8 +942,12 @@ final class AppState: ObservableObject {
     }
     let freeSwipes = 5
     var swipesLeft: Int { isPremium ? .max : max(0, freeSwipes - swipesToday) }
-    var aiDailyLimit: Int { isPremium ? 25_000 : 2_000 }
-    var aiWeeklyLimit: Int { isPremium ? 120_000 : 8_000 }
+    // Grobe Notbremse gegen Runaway-Nutzung — NICHT die eigentliche Kostenkontrolle.
+    // Die läuft serverseitig über ai_token_grants (dort exakt pro User steuerbar).
+    // Alte Werte (2k/8k) blockierten schon nach ~3 Nachrichten am Tag, weil eine
+    // Nachricht mit mindestens 550 geschätzten Tokens zu Buche schlägt.
+    var aiDailyLimit: Int { isPremium ? 400_000 : 60_000 }
+    var aiWeeklyLimit: Int { isPremium ? 2_000_000 : 250_000 }
     var planName: String { isPremium ? "Pro" : "Standard" }
 
     enum PaywallReason { case swipes, chat, aiAnalysis, aiUsage }
