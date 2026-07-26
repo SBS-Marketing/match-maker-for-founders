@@ -506,7 +506,11 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
     NEUE NACHRICHT: "${input.message}"
 
     REGELN:
-    1. Antworte knapp und direkt: erst Entscheidung, dann nächster Schritt. Keine langen Frameworks.
+    1. Antworte knapp, direkt und ABSCHLIESSEND: eine klare, hilfreiche Antwort ist oft schon das
+       Beste. Du MUSST NICHT mit einer Rückfrage enden und MUSST keine Chips/Aktionen ausgeben —
+       tu das NUR, wenn es dem Founder wirklich weiterhilft (echte Entscheidung, sinnvolle App-
+       Bewegung). Wenn die Frage beantwortet ist, beantworte sie einfach — wie ein Mensch, nicht
+       wie ein Formular. Keine langen Frameworks, kein erzwungenes „Und wie sieht's bei dir aus?".
     2. Stage-Intelligenz: Passt die Frage nicht zum Stand (z.B. ESOP in der Ideenphase),
        sag das kurz, erkläre warum, und nenne die richtige Priorität JETZT. Dann "zu_frueh": true.
     3. Proaktivität: Wenn ein Plattform-Bereich konkret weiterhilft, schlage ihn in "navigation"

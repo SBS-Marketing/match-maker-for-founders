@@ -25,13 +25,18 @@ const corsHeaders = {
 };
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+// Gemini Flash = schnelles Primärmodell für Chat (niedrige Latenz, gute Recherche).
+// Kimi K3 = Schwerarbeit (Plan, Extraktion) + Chat-Fallback. Sonnet = letzter Fallback.
+const GEMINI_MODEL = "google/gemini-2.5-flash";
 const KIMI_MODEL = "moonshotai/kimi-k3";
 const SONNET_MODEL = "anthropic/claude-sonnet-4-6";
+const GEMINI_TIMEOUT_MS = 12_000;
 const KIMI_TIMEOUT_MS = 12_000;
 const SONNET_TIMEOUT_MS = 22_000;
 
 // ─── Token-Preise (USD pro 1M Tokens, Schätzwerte für Admin-Insights) ─
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
+  [GEMINI_MODEL]: { input: 0.1, output: 0.4 },
   [KIMI_MODEL]: { input: 0.6, output: 2.5 },
   [SONNET_MODEL]: { input: 3.0, output: 15.0 },
 };
@@ -118,7 +123,7 @@ async function callOpenRouter(
       body: JSON.stringify({
         model,
         messages: [{ role: "user", content: prompt }],
-        temperature: model === KIMI_MODEL ? 0.3 : 0.7,
+        temperature: model === SONNET_MODEL ? 0.7 : 0.35,
         max_tokens: maxTokens,
       }),
     });
@@ -156,10 +161,29 @@ async function callOpenRouter(
 }
 
 // ─── Convenience wrappers ────────────────────────────────────
+const callGemini = (prompt: string, sink?: UsageSink, maxTokens = 1200) =>
+  callOpenRouter(GEMINI_MODEL, prompt, maxTokens, GEMINI_TIMEOUT_MS, sink);
 const callKimi = (prompt: string, sink?: UsageSink, maxTokens = 1024) =>
   callOpenRouter(KIMI_MODEL, prompt, maxTokens, KIMI_TIMEOUT_MS, sink);
 const callSonnet = (prompt: string, sink?: UsageSink, maxTokens = 420) =>
   callOpenRouter(SONNET_MODEL, prompt, maxTokens, SONNET_TIMEOUT_MS, sink);
+
+// Chat-Pfad: schnelles Gemini zuerst, dann direkt Sonnet.
+// Kimi K3 ist bewusst NICHT im Chat-Pfad — es timeoutet auf diesem OpenRouter-
+// Konto ausnahmslos (12s Verlust). Fallback wird als fallback:true geloggt.
+async function callChatModel(
+  prompt: string,
+  sink?: UsageSink,
+  maxTokens = 1200,
+): Promise<string> {
+  try {
+    return await callGemini(prompt, sink, maxTokens);
+  } catch (err) {
+    console.warn(`[GEMINI chat fallback→sonnet] ${err instanceof Error ? err.message : String(err)}`);
+    const fb: UsageSink | undefined = sink ? (entry) => sink({ ...entry, fallback: true }) : undefined;
+    return await callSonnet(prompt, fb, Math.max(900, maxTokens));
+  }
+}
 
 async function callKimiWithFallback(
   prompt: string,
@@ -1487,7 +1511,7 @@ Deno.serve(async (req) => {
       });
       let kimiRaw: string;
       try {
-        kimiRaw = await callKimiWithFallback(kimiPrompt, "chat", sink, 1200);
+        kimiRaw = await callChatModel(kimiPrompt, sink, 1200);
       } catch (err) {
         // Sanfte Degradation: lieber eine freundliche Mentor-Antwort als ein harter 500.
         console.error(
