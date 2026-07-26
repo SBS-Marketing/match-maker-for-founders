@@ -3,6 +3,19 @@
 // und Karte 5/18/18/18, Prompt-Chips, weißes Input-Dock mit Indigo-Send.
 
 import SwiftUI
+import Supabase
+
+/// Eine vom Backend nachgereichte Nachricht (Hintergrund-Recherche).
+private struct CopilotFollowUpRow: Decodable {
+    let sessionID: UUID
+    let role: String
+    let content: String
+
+    enum CodingKeys: String, CodingKey {
+        case sessionID = "session_id"
+        case role, content
+    }
+}
 
 struct CopilotView: View {
     @EnvironmentObject var state: AppState
@@ -90,6 +103,7 @@ struct CopilotView: View {
             loadActiveSession()
             runPendingCopilotPrompt()
         }
+        .task { await observeFollowUps() }
         .onChange(of: state.activeCopilotSessionID) { _, _ in
             loadActiveSession()
         }
@@ -993,7 +1007,12 @@ struct CopilotView: View {
         thinkingSessionID = sessionID
         startThinkingCopyLoop(for: sessionID)
         Task { @MainActor in
-            let answer = await CopilotEngine.answer(for: text, state: state, history: history)
+            let answer = await CopilotEngine.answer(
+                for: text,
+                state: state,
+                history: history,
+                sessionID: sessionID
+            )
             appendCopilotResponse(answer, to: sessionID)
             thinkingSessionID = nil
             if state.activeCopilotSessionID == sessionID {
@@ -1002,6 +1021,50 @@ struct CopilotView: View {
                 }
             }
             runPendingCopilotPrompt()
+        }
+    }
+
+    // ─── Nachgereichte Antworten (Poke-Prinzip) ──────────────────
+    // Recherchiert der Co-Pilot im Hintergrund, schreibt das Backend das
+    // Ergebnis als eigene Zeile in copilot_messages. Hier hängen wir sie
+    // live an den Chat an — der Founder muss nichts tun.
+    private func observeFollowUps() async {
+        guard state.isAuthenticated else { return }
+        let channel = Backend.client.channel("copilot-followups")
+        let inserts = channel.postgresChange(
+            InsertAction.self,
+            schema: "public",
+            table: "copilot_messages"
+        )
+        await channel.subscribe()
+        defer { Task { await channel.unsubscribe() } }
+
+        for await insert in inserts {
+            guard
+                let row = try? insert.decodeRecord(
+                    as: CopilotFollowUpRow.self,
+                    decoder: JSONDecoder()
+                ),
+                row.role == "assistant"
+            else { continue }
+            await MainActor.run { appendFollowUp(row) }
+        }
+    }
+
+    @MainActor
+    private func appendFollowUp(_ row: CopilotFollowUpRow) {
+        let text = row.content.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        // Die Sofort-Antwort steht schon im Chat und wird ebenfalls persistiert —
+        // doppelte Texte also überspringen.
+        let known = state.copilotMessages(for: row.sessionID)
+        guard !known.contains(where: { $0.text == text }) else { return }
+
+        let message = CopilotMessage(mine: false, text: text, source: .cloud)
+        state.appendCopilotMessage(message, to: row.sessionID)
+        if state.activeCopilotSessionID == row.sessionID {
+            messages = state.copilotMessages(for: row.sessionID)
+            Haptics.select()
         }
     }
 

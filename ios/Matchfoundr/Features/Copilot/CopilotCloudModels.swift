@@ -5,7 +5,15 @@ import Foundation
 struct CopilotCloudRequest: Encodable {
     let task = "chat"
     let message: String
+    /// Lokale Session-UUID — das Backend legt die Session bei Bedarf an und
+    /// kann darüber später recherchierte Antworten nachreichen (Realtime).
+    let sessionID: UUID?
     let extra: CopilotCloudExtra
+
+    enum CodingKeys: String, CodingKey {
+        case task, message, extra
+        case sessionID = "session_id"
+    }
 }
 
 struct CopilotCloudExtra: Encodable {

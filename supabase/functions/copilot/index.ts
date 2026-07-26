@@ -1581,11 +1581,23 @@ Deno.serve(async (req) => {
         };
       };
 
+      // Der Client (iOS) nutzt seine lokale Session-UUID. Damit die Fremd-
+      // schlüssel von copilot_messages greifen, legen wir die Session-Zeile
+      // an, falls sie noch nicht existiert.
+      const ensureSession = async () => {
+        if (!user || !session_id) return;
+        await supabase.from("copilot_sessions").upsert(
+          { id: session_id, user_id: user.id },
+          { onConflict: "id", ignoreDuplicates: true },
+        );
+      };
+
       if (delegate) {
         const authedUserID = user!.id;
         const followUp = (async () => {
           const deep = await runResearch();
           if (!deep) return;
+          await ensureSession();
           await supabase.from("copilot_messages").insert({
             session_id,
             user_id: authedUserID,
@@ -1685,6 +1697,7 @@ Deno.serve(async (req) => {
 
         // Save assistant message to DB (nur mit User + Session)
         if (user && session_id) {
+          await ensureSession();
           await supabase.from("copilot_messages").insert({
             session_id,
             user_id: user.id,

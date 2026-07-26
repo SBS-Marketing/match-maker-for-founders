@@ -9,7 +9,8 @@ enum CopilotEngine {
     static func answer(
         for message: String,
         state: AppState,
-        history: [CopilotMessage]
+        history: [CopilotMessage],
+        sessionID: UUID? = nil
     ) async -> CopilotMessage {
         let localText = message.lowercased()
         let nativeHint = requiresNativeControl(localText) ? localAnswer(for: message, state: state) : nil
@@ -17,6 +18,7 @@ enum CopilotEngine {
         do {
             let request = CopilotCloudRequest(
                 message: message,
+                sessionID: sessionID,
                 extra: CopilotCloudExtra(
                     surface: "/co-pilot",
                     memory: state.copilotFacts + state.copilotLiveContextFacts(),
