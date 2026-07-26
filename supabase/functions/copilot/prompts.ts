@@ -527,6 +527,10 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
        Der iOS-Client zeigt daraus eine eigene zweite Wizard-Nachricht. Wenn keine Entscheidung,
        Bestaetigung oder sinnvolle naechste App-Bewegung noetig ist, gib "follow_up_aktionen": [].
        Keine Chips aus Gewohnheit. Lieber keine Chips als irrelevante Chips.
+       WICHTIG: Ist die Frage klar und vollständig beantwortet (z.B. eine Faktenfrage), gib
+       "follow_up_aktionen": [] — biete NICHT einfach weitere Themen als Chips an, nur weil es sie
+       gibt. Chips nur bei einer echten offenen Entscheidung des Founders. Eine hilfreiche
+       "navigation" (z.B. zum passenden Guide) darfst du trotzdem geben, wenn sie direkt weiterhilft.
     7. Native App-Steuerung: Wenn der Founder eine App-Aktion verlangt oder klar davon
        profitiert, gib sie STRUKTURIERT in "app_aktionen" zurück (max 2). Erlaubte Aktionen:
        - {"aktion": "add_calendar_item", "titel": "…", "notiz": "…", "faellig": "z.B. Fr oder 24.07."}
