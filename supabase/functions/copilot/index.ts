@@ -11,6 +11,7 @@ import {
   SONNET_PROMPTS,
   buildChatPolishPrompt,
   buildChatPrompt,
+  buildInteractionPrompt,
   type ChatTurn,
   type FounderContext,
   type MCPConnector,
@@ -1481,18 +1482,10 @@ Deno.serve(async (req) => {
         : [];
 
       const surface = typeof extra.surface === "string" ? extra.surface : undefined;
-      const mcpLiveContextPromise = historyPromise.then((loadedHistory) =>
-        loadMCPLiveContext(supabase, user?.id, ctx, message, {
-          history: loadedHistory,
-          priorSummary,
-        }),
-      );
-      const [recentCount, history, webSources, mcpLiveContext] = await Promise.all([
-        rateLimitPromise,
-        historyPromise,
-        findWebSources(ctx, message),
-        mcpLiveContextPromise,
-      ]);
+
+      // Nur das Nötigste abwarten — Web-Recherche und MCP blockieren die
+      // erste Antwort nicht mehr, die laufen ggf. im Hintergrund.
+      const [recentCount, history] = await Promise.all([rateLimitPromise, historyPromise]);
       if (recentCount >= 80) {
         return new Response(
           JSON.stringify({ error: "Rate limit erreicht — bitte in einer Stunde erneut." }),
@@ -1500,21 +1493,19 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Stage 1: Kimi — Analyse, Antwortentwurf, Memory-Extraktion, Nav-Vorschläge
-      const kimiPrompt = buildChatPrompt(ctx, {
+      // ── Interaction-Agent: antwortet SOFORT, recherchiert selbst nicht ──
+      // Braucht es echte Quellen, gibt er nur eine kurze Ansage zurück und der
+      // Execution-Teil arbeitet im Hintergrund weiter (siehe unten).
+      const interactionPrompt = buildInteractionPrompt(ctx, {
         message,
         history,
         memory,
         priorSummary,
         surface,
-        app: extra.app,
-        webSources,
-        mcpConnectors,
-        mcpLiveContext,
       });
       let kimiRaw: string;
       try {
-        kimiRaw = await callChatModel(kimiPrompt, sink, 1200);
+        kimiRaw = await callChatModel(interactionPrompt, sink, 700);
       } catch (err) {
         // Sanfte Degradation: lieber eine freundliche Mentor-Antwort als ein harter 500.
         console.error(
@@ -1538,12 +1529,87 @@ Deno.serve(async (req) => {
           { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      console.log("[KIMI chat raw]", kimiRaw.slice(0, 300));
+      console.log("[interaction raw]", kimiRaw.slice(0, 300));
       const kimiData = parseJSON(kimiRaw);
 
-      // Extract draft — Kimi K3 antwortet direkt, kein Sonnet-Polish mehr (Latenz halbiert)
+      // Der Interaction-Agent nutzt keine Live-Connectoren — die zieht bei
+      // Bedarf der Execution-Teil im Hintergrund.
+      const mcpLiveContext: MCPLiveContext[] = [];
+
+      // ── Execution-Teil: läuft im Hintergrund weiter und liefert die
+      // recherchierte Antwort als EIGENE Nachricht nach (Realtime).
+      const assignment =
+        typeof kimiData.auftrag === "string" ? kimiData.auftrag.trim() : "";
+      const wantsResearch = kimiData.recherche_noetig === true;
+      // Nachliefern geht nur mit User + Session (sonst gibt es keinen Kanal).
+      const canDeliverLater = Boolean(user) && Boolean(session_id);
+      const delegate = wantsResearch && canDeliverLater;
+
+      // Die eigentliche Recherche-Arbeit — einmal definiert, zweifach genutzt:
+      // im Hintergrund (mit Session) oder synchron (ohne Session).
+      const runResearch = async (): Promise<{ answer: string; sources: WebSource[] } | null> => {
+        const [webSources, liveContext] = await Promise.all([
+          findWebSources(ctx, message),
+          loadMCPLiveContext(supabase, user?.id, ctx, message, { history, priorSummary }),
+        ]);
+        const deepRaw = await callChatModel(
+          buildChatPrompt(ctx, {
+            message: assignment ? `${message}\n\n(Auftrag: ${assignment})` : message,
+            history,
+            memory,
+            priorSummary,
+            surface,
+            app: extra.app,
+            webSources,
+            mcpConnectors,
+            mcpLiveContext: liveContext,
+          }),
+          undefined,
+          1200,
+        );
+        const deepData = parseJSON(deepRaw);
+        const deepAnswer = extractDraft(deepData, deepRaw).trim();
+        if (!deepAnswer) return null;
+        return {
+          answer: deepAnswer,
+          sources: mergeSources(
+            Array.isArray(deepData.quellen)
+              ? (deepData.quellen.map(normalizeSource).filter(Boolean) as WebSource[])
+              : [],
+            liveContext.flatMap((item) => (Array.isArray(item.sources) ? item.sources : [])),
+          ),
+        };
+      };
+
+      if (delegate) {
+        const authedUserID = user!.id;
+        const followUp = (async () => {
+          const deep = await runResearch();
+          if (!deep) return;
+          await supabase.from("copilot_messages").insert({
+            session_id,
+            user_id: authedUserID,
+            role: "assistant",
+            content: deep.answer,
+            model_used: GEMINI_MODEL,
+            sources: deep.sources,
+          });
+        })().catch((err) =>
+          console.error("follow-up failed:", err instanceof Error ? err.message : err),
+        );
+        const rt = globalThis as typeof globalThis & {
+          EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void };
+        };
+        if (typeof rt.EdgeRuntime?.waitUntil === "function") rt.EdgeRuntime.waitUntil(followUp);
+      }
+
+      // Ohne Session könnten wir nichts nachreichen — dann lieber gleich
+      // ausrecherchieren, statt ein Versprechen zu geben, das nie eingelöst wird.
+      const syncResearch = wantsResearch && !canDeliverLater ? await runResearch() : null;
+
+      // Extract draft — der Interaction-Agent antwortet direkt (kein Polish-Call)
       const draft = extractDraft(kimiData, kimiRaw);
-      const polishedAnswer = draft;
+      const polishedAnswer = syncResearch?.answer ?? draft;
 
       // Nav-Vorschläge gegen den Routen-Katalog validieren
       const validRoutes = new Set(ROUTE_CATALOG.map((r) => r.to as string));
@@ -1573,7 +1639,7 @@ Deno.serve(async (req) => {
       const mcpSources = mergeSources(
         mcpLiveContext.flatMap((item) => (Array.isArray(item.sources) ? item.sources : [])),
       );
-      const sources = mergeSources(modelSources, mcpSources);
+      const sources = mergeSources(syncResearch?.sources ?? [], modelSources, mcpSources);
 
       // Persistenz (Kontext, Nachricht, Deadline) läuft NACH der Antwort im
       // Hintergrund — spart 2-3 DB-Roundtrips Wartezeit pro Chat-Nachricht.
@@ -1751,6 +1817,8 @@ Deno.serve(async (req) => {
         new_facts: newFacts,
         celebrated_win: celebratedWin,
         conversation_summary: conversationSummary,
+        // true = es kommt gleich noch eine recherchierte Nachricht nach
+        pending: delegate,
       };
     } else if (task === "plan_generate") {
       const authedUser = requireUser();
