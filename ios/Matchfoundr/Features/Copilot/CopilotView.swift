@@ -597,6 +597,31 @@ struct CopilotView: View {
                         .clipShape(Capsule())
                 }
                 VStack(alignment: .leading, spacing: 11) {
+                    if let win = msg.celebratedWin {
+                        HStack(spacing: 9) {
+                            Text("🎉").font(.system(size: 16))
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("Meilenstein")
+                                    .font(.mfMono(9))
+                                    .tracking(1)
+                                    .textCase(.uppercase)
+                                    .foregroundStyle(MF.emberDeep)
+                                Text(win)
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundStyle(MF.ink)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 9)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(MF.emberTint)
+                        .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 13).stroke(MF.ember.opacity(0.4), lineWidth: 1)
+                        )
+                    }
                     Text(msg.text)
                         .font(.system(size: 14.5))
                         .foregroundStyle(MF.inkSoft)

@@ -704,6 +704,8 @@ struct CopilotMessage: Identifiable, Codable {
     var memory: FounderMemorySnapshot?
     var source: CopilotAnswerSource = .local
     var createdAt: Date = .now
+    /// Vom Co-Pilot in dieser Antwort gefeierter Meilenstein (ephemeral, nicht persistiert).
+    var celebratedWin: String? = nil
 
     init(
         id: UUID = UUID(),
@@ -716,7 +718,8 @@ struct CopilotMessage: Identifiable, Codable {
         sources: [CopilotSource] = [],
         memory: FounderMemorySnapshot? = nil,
         source: CopilotAnswerSource = .local,
-        createdAt: Date = .now
+        createdAt: Date = .now,
+        celebratedWin: String? = nil
     ) {
         self.id = id
         self.mine = mine
@@ -729,6 +732,7 @@ struct CopilotMessage: Identifiable, Codable {
         self.memory = memory
         self.source = source
         self.createdAt = createdAt
+        self.celebratedWin = celebratedWin
     }
 
     enum CodingKeys: String, CodingKey {

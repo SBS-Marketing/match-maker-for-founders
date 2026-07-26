@@ -42,10 +42,9 @@ enum CopilotEngine {
             let structuredActions = (response.appActions ?? []).compactMap(structuredAction(from:))
             let nativeActions = structuredActions + (nativeHint?.actions ?? [])
             let navigation = (response.navigation ?? []).compactMap(nativeNav(from:))
-            if let win = response.celebratedWin?.trimmingCharacters(in: .whitespacesAndNewlines),
-               !win.isEmpty {
-                state.recordAchievement(win)
-            }
+            let rawWin = response.celebratedWin?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let celebratedWin = (rawWin?.isEmpty == false) ? rawWin : nil
+            if let win = celebratedWin { state.recordAchievement(win) }
             let choiceReplies = choiceReplies(for: answer, quickActions: quickActions, state: state)
             let quickReplies = choiceReplies.isEmpty
                 ? quickActions.filter {
@@ -64,7 +63,8 @@ enum CopilotEngine {
                 quickReplies: quickReplies.isEmpty ? (nativeHint?.quickReplies ?? []) : quickReplies,
                 sources: Array((response.sources ?? []).prefix(5)),
                 memory: state.founderMemory,
-                source: .cloud
+                source: .cloud,
+                celebratedWin: celebratedWin
             )
         } catch {
             return liveUnavailableAnswer(error, state: state, retryPrompt: message)
