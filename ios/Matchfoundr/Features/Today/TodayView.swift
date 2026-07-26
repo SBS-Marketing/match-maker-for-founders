@@ -7,6 +7,7 @@ import SwiftUI
 struct TodayView: View {
     @EnvironmentObject var state: AppState
     @State private var focusDone = false
+    @State private var showAllAchievements = false
 
     var body: some View {
         NavigationStack(path: $state.todayPath) {
@@ -42,6 +43,47 @@ struct TodayView: View {
         }
         .tint(MF.emberDeep)
         .onAppear { state.registerActiveDay() }
+        .sheet(isPresented: $showAllAchievements) { achievementsSheet }
+    }
+
+    private var achievementsSheet: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(state.achievements) { a in
+                        HStack(alignment: .top, spacing: 11) {
+                            Image(systemName: "checkmark.seal.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(MF.ember)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(a.text)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(MF.ink)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Text(a.date.formatted(.dateTime.day().month(.wide).year()))
+                                    .font(.system(size: 11.5))
+                                    .foregroundStyle(MF.faint)
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(MF.surface)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(MF.border, lineWidth: 1))
+                    }
+                }
+                .padding(20)
+            }
+            .background(MF.canvas.ignoresSafeArea())
+            .navigationTitle("Deine Erfolge")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Fertig") { showAllAchievements = false }
+                }
+            }
+        }
     }
 
     private var todayTopBar: some View {
@@ -317,6 +359,19 @@ struct TodayView: View {
                     }
                 }
                 .padding(.top, 12)
+
+                if state.achievements.count > 3 {
+                    Button {
+                        Haptics.tap()
+                        showAllAchievements = true
+                    } label: {
+                        Text("Alle \(state.achievements.count) anzeigen")
+                            .font(.system(size: 12.5, weight: .bold))
+                            .foregroundStyle(MF.emberDeep)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 11)
+                }
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
