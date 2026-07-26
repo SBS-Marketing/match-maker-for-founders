@@ -41,6 +41,7 @@ struct TodayView: View {
             .toolbar(.hidden, for: .navigationBar)
         }
         .tint(MF.emberDeep)
+        .onAppear { state.registerActiveDay() }
     }
 
     private var todayTopBar: some View {
@@ -129,12 +130,21 @@ struct TodayView: View {
         .padding(.top, 2)
     }
 
-    /// Motivierende Mentor-Zeile, die den Fortschritt spiegelt.
+    /// Motivierende Mentor-Zeile, die Serie und Fortschritt spiegelt.
     private var momentumLine: String {
-        switch state.achievements.count {
-        case 0: return ""
-        case 1: return "Dein erster Meilenstein steht — der nächste wartet schon."
-        default: return "\(state.achievements.count) Meilensteine schon — du bist in Bewegung."
+        let streak = state.dayStreak >= 2 ? "🔥 \(state.dayStreak) Tage in Folge" : nil
+        let wins = state.achievements.count
+        let winPart: String? = wins == 0 ? nil : wins == 1
+            ? "1 Meilenstein"
+            : "\(wins) Meilensteine"
+        switch (streak, winPart) {
+        case let (s?, w?): return "\(s) · \(w) — du bist in Bewegung."
+        case let (s?, nil): return "\(s) — dranbleiben zahlt sich aus."
+        case let (nil, w?):
+            return wins == 1
+                ? "Dein erster Meilenstein steht — der nächste wartet schon."
+                : "\(w) schon — du bist in Bewegung."
+        default: return ""
         }
     }
 

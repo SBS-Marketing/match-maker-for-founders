@@ -69,6 +69,30 @@ final class AppState: ObservableObject {
         if achievements.count > 50 { achievements = Array(achievements.prefix(50)) }
         Haptics.success()
     }
+
+    /// Aktive Tage in Folge — kleine tägliche Motivation.
+    @Published private(set) var dayStreak: Int = 0
+
+    /// Markiert heute als aktiven Tag und aktualisiert die Serie (idempotent pro Tag).
+    func registerActiveDay() {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        let stored = defaults.integer(forKey: "mf.streak.count")
+        if let last = (defaults.object(forKey: "mf.streak.lastDay") as? Date).map({
+            cal.startOfDay(for: $0)
+        }) {
+            if cal.isDate(last, inSameDayAs: today) {
+                dayStreak = max(stored, 1)
+                return
+            }
+            let yesterday = cal.date(byAdding: .day, value: -1, to: today) ?? today
+            dayStreak = cal.isDate(last, inSameDayAs: yesterday) ? stored + 1 : 1
+        } else {
+            dayStreak = 1
+        }
+        defaults.set(today, forKey: "mf.streak.lastDay")
+        defaults.set(dayStreak, forKey: "mf.streak.count")
+    }
     @Published var copilotSessions: [CopilotSession] = [] {
         didSet { persist(copilotSessions, key: "mf.copilot.sessions") }
     }
@@ -2404,6 +2428,7 @@ final class AppState: ObservableObject {
         startupWorkspaceActivated = defaults.bool(forKey: "mf.startup.activated")
         copilotFacts = defaults.stringArray(forKey: "mf.copilot.facts") ?? []
         achievements = load([Achievement].self, key: "mf.achievements") ?? []
+        dayStreak = defaults.integer(forKey: "mf.streak.count")
         copilotSessions = compactCopilotSessions(load([CopilotSession].self, key: "mf.copilot.sessions") ?? [])
         if let rawID = defaults.string(forKey: "mf.copilot.activeSessionID"),
            let id = UUID(uuidString: rawID),
