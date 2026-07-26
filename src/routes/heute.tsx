@@ -25,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { CopilotMark } from "@/components/Copilot";
 import { MorningReport } from "@/components/MorningReport";
+import { AchievementsCard } from "@/components/AchievementsCard";
 import { askCopilot, type CopilotNav } from "@/lib/copilot-client";
 import {
   buildLocalPlanSlides,
@@ -206,6 +207,9 @@ function TodayPage() {
       <div className="mt-4">
         <MorningReport />
       </div>
+
+      {/* Erfolgs-Chronik — gefeierte Meilensteine */}
+      <AchievementsCard />
 
       {/* DER eine Fokus */}
       <section

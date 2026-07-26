@@ -65,10 +65,21 @@ export function recordAchievement(text: string): boolean {
   const next = [{ text: clean, date: new Date().toISOString() }, ...list].slice(0, 50);
   try {
     localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(next));
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event(ACHIEVEMENTS_EVENT));
+    }
   } catch {
     /* localStorage kann fehlschlagen — nicht kritisch */
   }
   return true;
+}
+
+export const ACHIEVEMENTS_EVENT = "mf-achievements-changed";
+
+export function onAchievementsChange(handler: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener(ACHIEVEMENTS_EVENT, handler);
+  return () => window.removeEventListener(ACHIEVEMENTS_EVENT, handler);
 }
 
 export function makeMsgId(): string {
