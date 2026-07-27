@@ -359,6 +359,22 @@ private struct MCPActSlackPostRequest: Encodable {
     }
 }
 
+private struct MCPActGmailSendRequest: Encodable {
+    let action = "gmail_send"
+    let to: String
+    let subject: String
+    let body: String
+}
+
+private struct MCPActCapabilitiesRequest: Encodable {
+    let action = "capabilities"
+}
+
+struct MCPActCapabilitiesResponse: Decodable {
+    let ok: Bool
+    let actions: [String]
+}
+
 struct MCPActResponse: Decodable {
     let ok: Bool
     let action: String?
@@ -366,6 +382,9 @@ struct MCPActResponse: Decodable {
     let channelID: String?
     let channel: String?
     let messageTs: String?
+    let to: String?
+    let messageID: String?
+    let threadID: String?
 
     enum CodingKeys: String, CodingKey {
         case ok
@@ -374,6 +393,9 @@ struct MCPActResponse: Decodable {
         case channelID = "channel_id"
         case channel
         case messageTs = "message_ts"
+        case to
+        case messageID = "message_id"
+        case threadID = "thread_id"
     }
 }
 
@@ -546,6 +568,20 @@ struct SupabaseService {
         try await invokeFunction(
             "mcp-act",
             body: MCPActSlackPostRequest(channelID: channelID, channel: channel, text: text)
+        )
+    }
+
+    func sendGmailMessage(to: String, subject: String, body: String) async throws -> MCPActResponse {
+        try await invokeFunction(
+            "mcp-act",
+            body: MCPActGmailSendRequest(to: to, subject: subject, body: body)
+        )
+    }
+
+    func fetchMCPActionCapabilities() async throws -> MCPActCapabilitiesResponse {
+        try await invokeFunction(
+            "mcp-act",
+            body: MCPActCapabilitiesRequest()
         )
     }
 

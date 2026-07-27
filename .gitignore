@@ -39,3 +39,6 @@ dist-ssr
 ios/Matchfoundr.xcodeproj/
 ios/build/
 *.xcuserstate
+
+# Supabase CLI local state (machine-specific)
+supabase/.temp/

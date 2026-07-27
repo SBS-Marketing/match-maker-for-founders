@@ -21,9 +21,20 @@ struct RootView: View {
     @EnvironmentObject var state: AppState
     @Environment(\.scenePhase) private var scenePhase
 
+    private var showsOnboardingPreview: Bool {
+#if DEBUG
+        ProcessInfo.processInfo.arguments.contains("--preview-onboarding")
+#else
+        false
+#endif
+    }
+
     var body: some View {
         Group {
-            if state.authIsLoading {
+            if showsOnboardingPreview {
+                OnboardingView()
+                    .transition(.opacity)
+            } else if state.authIsLoading {
                 AuthLoadingView()
                     .transition(.opacity)
             } else if !state.isAuthenticated {

@@ -1265,7 +1265,11 @@ final class AppState: ObservableObject {
         }
     }
 
-    func completeOnboarding(with profile: MyProfile, launchAIAnalysis: Bool = false) {
+    func completeOnboarding(
+        with profile: MyProfile,
+        launchAIAnalysis: Bool = false,
+        showAppTourAfter: Bool = true
+    ) {
         self.profile = profile
         profileExtras = .empty(for: profile)
         companyProfile = .empty(for: profile)
@@ -1278,8 +1282,8 @@ final class AppState: ObservableObject {
         todayPath = []
         discoverPath = []
         communityPath = []
-        hasSeenAppTour = launchAIAnalysis
-        showingAppTour = !launchAIAnalysis
+        hasSeenAppTour = !showAppTourAfter
+        showingAppTour = showAppTourAfter
         if launchAIAnalysis {
             queueCopilotPrompt(onboardingAnalysisPrompt(for: profile), title: "KI-Gründungscheck")
         } else {
@@ -2354,6 +2358,20 @@ final class AppState: ObservableObject {
         var nextSessions = copilotSessions
         guard let index = nextSessions.firstIndex(where: { $0.id == sessionID }) else { return }
         nextSessions[index].append(message)
+        copilotSessions = compactCopilotSessions(nextSessions)
+    }
+
+    func updateCopilotEmailDraft(
+        _ draft: CopilotEmailDraft,
+        messageID: UUID,
+        sessionID: UUID
+    ) {
+        var nextSessions = copilotSessions
+        guard let sessionIndex = nextSessions.firstIndex(where: { $0.id == sessionID }),
+              let messageIndex = nextSessions[sessionIndex].messages.firstIndex(where: { $0.id == messageID })
+        else { return }
+        nextSessions[sessionIndex].messages[messageIndex].emailDraft = draft
+        nextSessions[sessionIndex].updatedAt = .now
         copilotSessions = compactCopilotSessions(nextSessions)
     }
 

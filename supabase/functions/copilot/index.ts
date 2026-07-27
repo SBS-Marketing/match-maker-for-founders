@@ -54,6 +54,9 @@ type UsageEntry = {
   fallback: boolean;
 };
 type UsageSink = (entry: UsageEntry) => void;
+type DatabaseClient = {
+  from: (relation: string) => any;
+};
 type TokenGrant = {
   user_id: string;
   token_limit: number;
@@ -86,7 +89,7 @@ function tokenQuotaPayload(grant: TokenGrant) {
 }
 
 async function loadTokenGrant(
-  supabase: ReturnType<typeof createClient>,
+  supabase: DatabaseClient,
   userID: string,
 ): Promise<TokenGrant | null> {
   const { data, error } = await supabase
@@ -109,6 +112,7 @@ async function callOpenRouter(
   maxTokens = 2048,
   timeoutMs = 30_000,
   sink?: UsageSink,
+  jsonMode = false,
 ): Promise<string> {
   const controller = new AbortController();
   const timeoutID = setTimeout(() => controller.abort(), timeoutMs);
@@ -129,10 +133,15 @@ async function callOpenRouter(
         messages: [{ role: "user", content: prompt }],
         temperature: model === SONNET_MODEL ? 0.7 : 0.35,
         max_tokens: maxTokens,
+        ...(jsonMode ? { response_format: { type: "json_object" } } : {}),
       }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(`OpenRouter error (${model}): ${JSON.stringify(data)}`);
+    const choice = data?.choices?.[0];
+    if (choice?.finish_reason === "length") {
+      throw new Error(`OpenRouter output truncated (${model}, max_tokens=${maxTokens})`);
+    }
     if (sink) {
       sink({
         model,
@@ -143,7 +152,7 @@ async function callOpenRouter(
         fallback: false,
       });
     }
-    const content = data?.choices?.[0]?.message?.content;
+    const content = choice?.message?.content;
     return typeof content === "string" ? content : content == null ? "" : JSON.stringify(content);
   } catch (err) {
     const isTimeout = err instanceof DOMException && err.name === "AbortError";
@@ -164,28 +173,93 @@ async function callOpenRouter(
   }
 }
 
+type ResearchModelResult = {
+  content: string;
+  sources: WebSource[];
+};
+
+async function callResearchModel(prompt: string, maxTokens = 1400): Promise<ResearchModelResult> {
+  const controller = new AbortController();
+  const timeoutID = setTimeout(() => controller.abort(), 45_000);
+
+  try {
+    const res = await fetch(OPENROUTER_URL, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${Deno.env.get("OPENROUTER_API_KEY")}`,
+        "HTTP-Referer": "https://matchfoundr.com",
+        "X-Title": "matchfoundr Execution Agent",
+      },
+      body: JSON.stringify({
+        model: GEMINI_MODEL,
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.2,
+        max_tokens: maxTokens,
+        response_format: { type: "json_object" },
+        plugins: [{ id: "web", engine: "exa", max_results: 5 }],
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(`OpenRouter research error: ${JSON.stringify(data)}`);
+    }
+
+    const message = data?.choices?.[0]?.message;
+    const content =
+      typeof message?.content === "string"
+        ? message.content
+        : message?.content == null
+          ? ""
+          : JSON.stringify(message.content);
+    const sources = (Array.isArray(message?.annotations) ? message.annotations : [])
+      .map((annotation: unknown) => {
+        if (!isRecord(annotation) || annotation.type !== "url_citation") return null;
+        const citation = isRecord(annotation.url_citation) ? annotation.url_citation : null;
+        if (!citation) return null;
+        return normalizeSource({
+          type: "Web",
+          title: citation.title,
+          url: citation.url,
+          snippet: citation.content,
+        });
+      })
+      .filter((source: WebSource | null): source is WebSource => Boolean(source));
+
+    return { content, sources: mergeSources(sources) };
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error("OpenRouter research timeout after 45000ms");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutID);
+  }
+}
+
 // ─── Convenience wrappers ────────────────────────────────────
-const callGemini = (prompt: string, sink?: UsageSink, maxTokens = 1200) =>
-  callOpenRouter(GEMINI_MODEL, prompt, maxTokens, GEMINI_TIMEOUT_MS, sink);
-const callKimi = (prompt: string, sink?: UsageSink, maxTokens = 1024) =>
-  callOpenRouter(KIMI_MODEL, prompt, maxTokens, KIMI_TIMEOUT_MS, sink);
-const callSonnet = (prompt: string, sink?: UsageSink, maxTokens = 420) =>
-  callOpenRouter(SONNET_MODEL, prompt, maxTokens, SONNET_TIMEOUT_MS, sink);
+const callGemini = (prompt: string, sink?: UsageSink, maxTokens = 1200, jsonMode = false) =>
+  callOpenRouter(GEMINI_MODEL, prompt, maxTokens, GEMINI_TIMEOUT_MS, sink, jsonMode);
+const callKimi = (prompt: string, sink?: UsageSink, maxTokens = 1024, jsonMode = false) =>
+  callOpenRouter(KIMI_MODEL, prompt, maxTokens, KIMI_TIMEOUT_MS, sink, jsonMode);
+const callSonnet = (prompt: string, sink?: UsageSink, maxTokens = 420, jsonMode = false) =>
+  callOpenRouter(SONNET_MODEL, prompt, maxTokens, SONNET_TIMEOUT_MS, sink, jsonMode);
 
 // Chat-Pfad: schnelles Gemini zuerst, dann direkt Sonnet.
 // Kimi K3 ist bewusst NICHT im Chat-Pfad — es timeoutet auf diesem OpenRouter-
 // Konto ausnahmslos (12s Verlust). Fallback wird als fallback:true geloggt.
-async function callChatModel(
-  prompt: string,
-  sink?: UsageSink,
-  maxTokens = 1200,
-): Promise<string> {
+async function callChatModel(prompt: string, sink?: UsageSink, maxTokens = 1200): Promise<string> {
   try {
-    return await callGemini(prompt, sink, maxTokens);
+    return await callGemini(prompt, sink, maxTokens, true);
   } catch (err) {
-    console.warn(`[GEMINI chat fallback→sonnet] ${err instanceof Error ? err.message : String(err)}`);
-    const fb: UsageSink | undefined = sink ? (entry) => sink({ ...entry, fallback: true }) : undefined;
-    return await callSonnet(prompt, fb, Math.max(900, maxTokens));
+    console.warn(
+      `[GEMINI chat fallback→sonnet] ${err instanceof Error ? err.message : String(err)}`,
+    );
+    const fb: UsageSink | undefined = sink
+      ? (entry) => sink({ ...entry, fallback: true })
+      : undefined;
+    return await callSonnet(prompt, fb, Math.max(1800, maxTokens), true);
   }
 }
 
@@ -358,6 +432,7 @@ function needsWebResearch(_ctx: FounderContext, message: string): boolean {
   // Foundern mit passendem Profil (z.B. Handwerk) auf jede Nachricht und
   // kostet Sekunden. Kurze Begriffe mit Wortgrenze, damit "gesamt" ≠ "amt".
   const text = ` ${message.toLowerCase()} `;
+  if (/versicher|haftpflicht/.test(text)) return true;
   const phrases = [
     "handwerkskammer",
     "gewerbeamt",
@@ -379,8 +454,122 @@ function needsWebResearch(_ctx: FounderContext, message: string): boolean {
   );
 }
 
+function isPureAppMutationRequest(message: string): boolean {
+  const text = message
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  const asksForResearch =
+    /\b(finde|such|suche|recherchier|pruf|pruef|wer ist|welche|kontakt|ansprechpartner|offnungszeiten|adresse|telefonnummer)\b/.test(
+      text,
+    );
+  if (asksForResearch) return false;
+
+  const calendarRequest =
+    /\b(termin|erinnerung|kalender)\b/.test(text) &&
+    /\b(eintrag|trag|trage|anleg|plane|planen|erstell)\b/.test(text);
+  const boardRequest =
+    /\b(board|kanban|karte|aufgabe|task)\b/.test(text) &&
+    /\b(anleg|erstell|pack|setz|hinzufug)\b/.test(text);
+  const slackRequest =
+    /\b(slack|channel)\b/.test(text) && /\b(post|schreib|send|schick)\b/.test(text);
+  const emailRequest =
+    /\b(e-?mail|mail)\b/.test(text) &&
+    /\b(schreib|formulier|vorbereit|entwurf|verfass)\b/.test(text);
+  return calendarRequest || boardRequest || slackRequest || emailRequest;
+}
+
+function executionAgentDescriptor(
+  ctx: FounderContext,
+  message: string,
+  assignment: string,
+): { key: string; name: string; purpose: string } {
+  const text = `${message} ${assignment} ${ctx.industry || ""} ${ctx.idea || ""}`.toLowerCase();
+  if (/versicher|haftpflicht|berufsgenossenschaft/.test(text)) {
+    return {
+      key: "insurance-research",
+      name: "Versicherungs-Scout",
+      purpose: "Versicherungen, Pflichtschutz und konkrete Anbieter belastbar recherchieren",
+    };
+  }
+  if (/förder|foerder|zuschuss|kredit|finanzierung/.test(text)) {
+    return {
+      key: "funding-research",
+      name: "Fördermittel-Scout",
+      purpose: "Passende Förderungen, Kredite und Voraussetzungen mit aktuellen Quellen prüfen",
+    };
+  }
+  if (/kammer|behörde|behoerde|gewerbeamt|finanzamt|zulassung|genehmigung/.test(text)) {
+    return {
+      key: "authorities-research",
+      name: "Behörden-Lotse",
+      purpose: "Zuständigkeiten, Pflichten und konkrete Ansprechpartner verlässlich ermitteln",
+    };
+  }
+  return {
+    key: "business-research",
+    name: "Business-Research",
+    purpose: "Konkrete Markt-, Anbieter- und Gründungsfragen mehrstufig recherchieren",
+  };
+}
+
+function dispatchExecutionWorker(jobID: string): void {
+  const projectURL = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!projectURL || !serviceRoleKey) {
+    console.error("execution worker dispatch skipped: backend configuration missing");
+    return;
+  }
+
+  const dispatch = fetch(`${projectURL}/functions/v1/copilot-worker`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+    },
+    body: JSON.stringify({ job_id: jobID }),
+  }).then(async (response) => {
+    if (!response.ok) {
+      console.error("execution worker dispatch failed:", response.status, await response.text());
+    }
+  });
+
+  const runtime = globalThis as typeof globalThis & {
+    EdgeRuntime?: { waitUntil?: (promise: Promise<unknown>) => void };
+  };
+  if (typeof runtime.EdgeRuntime?.waitUntil === "function") {
+    runtime.EdgeRuntime.waitUntil(dispatch);
+  }
+}
+
+function requestedLocation(ctx: FounderContext, message: string): string {
+  const stopwords = new Set([
+    "der",
+    "die",
+    "das",
+    "dem",
+    "den",
+    "einer",
+    "einem",
+    "einen",
+    "meiner",
+    "meinem",
+    "meinen",
+  ]);
+  const patterns = [
+    /\b(?:handwerkskammer|hwk|ihk)\s+(?:zu\s+)?([A-Za-zÄÖÜäöüß-]{3,})/i,
+    /\b(?:in|für|fuer)\s+([A-Za-zÄÖÜäöüß-]{3,})/i,
+  ];
+  for (const pattern of patterns) {
+    const candidate = message.match(pattern)?.[1]?.trim();
+    if (candidate && !stopwords.has(candidate.toLowerCase())) return candidate;
+  }
+  return ctx.city && ctx.city !== "unbekannt" ? ctx.city : "";
+}
+
 function buildResearchQueries(ctx: FounderContext, message: string): string[] {
-  const city = ctx.city && ctx.city !== "unbekannt" ? ctx.city : "";
+  const city = requestedLocation(ctx, message);
   const industry = (ctx.industry || "").toLowerCase();
   const idea = (ctx.idea || "").toLowerCase();
   const venture = (ctx.venture_term || "").toLowerCase();
@@ -395,6 +584,12 @@ function buildResearchQueries(ctx: FounderContext, message: string): string[] {
     /handwerk|hwk|handwerkskammer|friseur|kosmetik|elektriker|elektroniker|installateur|maler|bäcker|baecker|metzger|tischler|schreiner|dachdecker|kfz|meister/.test(
       haystack,
     );
+
+  if (/versicher|haftpflicht|versicherer/.test(text)) {
+    const business = (ctx.idea || ctx.venture_term || "Betrieb").trim();
+    queries.push(`${place}${business} Betriebshaftpflicht Versicherer Angebot`);
+    queries.push(`${business} Betriebshaftpflicht Handwerk Anbieter Vergleich`);
+  }
 
   if (
     isHandwerk ||
@@ -896,6 +1091,164 @@ function cleanSlackChannelName(value: string): string {
   return value.trim().replace(/^#/, "").toLowerCase();
 }
 
+function stripCannedPreamble(answer: string): string {
+  const cleaned = answer
+    .replace(/^\s*(?:klar|gerne|natürlich|kein problem)(?:[,.!:\s]+|$)/i, "")
+    .trim();
+  return cleaned || answer.trim();
+}
+
+function confirmationSafeAnswer(answer: string, appActions: Record<string, unknown>[]): string {
+  const cleaned = stripCannedPreamble(answer);
+  const mutation = appActions.find((action) =>
+    ["add_calendar_item", "add_kanban_card", "slack_post", "email_draft"].includes(
+      String(action.action ?? ""),
+    ),
+  );
+  if (!mutation) return cleaned;
+
+  const alreadyFramesAsPending = /\b(vorbereitet|bestätig|freigabe)\b/i.test(cleaned);
+  const falselyClaimsCompletion =
+    /\b(eingetragen|erledigt|gepostet|gesendet|angelegt|erstellt)\b/i.test(cleaned) ||
+    /\b(?:trag(?:e)?|packe|setze|poste|sende|leg(?:e)?)\s+ich\b/i.test(cleaned) ||
+    /\bich\s+(?:trag(?:e)?|packe|setze|poste|sende|leg(?:e)?)\b/i.test(cleaned);
+  if (alreadyFramesAsPending || !falselyClaimsCompletion) return cleaned;
+
+  const action = String(mutation.action ?? "");
+  const title = typeof mutation.title === "string" ? mutation.title.trim() : "";
+  const due = typeof mutation.due === "string" ? mutation.due.trim() : "";
+  if (action === "add_calendar_item") {
+    return `Der Termin ist vorbereitet${title ? `: ${title}` : ""}${due ? `, ${due}` : ""}. Bestätige ihn unten.`;
+  }
+  if (action === "add_kanban_card") {
+    return `Die Board-Karte ist vorbereitet${title ? `: ${title}` : ""}. Bestätige sie unten.`;
+  }
+  if (action === "email_draft") {
+    return "Der E-Mail-Entwurf ist vorbereitet. Prüfe und versende ihn unten.";
+  }
+  return "Die Slack-Nachricht ist vorbereitet. Bestätige sie unten.";
+}
+
+function shouldExposeFollowUp(
+  message: string,
+  question: string | null,
+  options: string[],
+): boolean {
+  if (!question || options.length < 2) return false;
+
+  const clean = (value: string) =>
+    value
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  const current = clean(message);
+  const followUp = clean(question);
+
+  // Ein Wizard löst eine fehlende Entscheidung. Er ist keine Themen-Navigation
+  // und kein "Soll ich noch mehr erklären?" nach einer beantworteten Sachfrage.
+  const topicBranching =
+    /(genauer|naher) (anschauen|erklaren|durchgehen)|andere punkte|weitermachen|vertiefen/.test(
+      followUp,
+    );
+  if (topicBranching) return false;
+
+  const factualQuestion =
+    /^(was (ist|sind|muss|brauche|kostet)|wie funktioniert|warum|wieso|welche pflichten)\b/.test(
+      current,
+    );
+  const explicitDecision =
+    /\b(entscheiden|entscheidung|auswahl|auswahlen|welche option|solo|co-?founder|mitgrunder|partner suchen)\b/.test(
+      current,
+    );
+
+  return !factualQuestion || explicitDecision;
+}
+
+function executionResultAddsValue(
+  immediateAnswer: string,
+  executionAnswer: string,
+  sources: WebSource[],
+  hasConnectorEvidence: boolean,
+  modelDecision: boolean,
+  valueReason: string,
+): boolean {
+  if (!modelDecision || valueReason.trim().length < 8) return false;
+  if (!sources.length && !hasConnectorEvidence) return false;
+
+  const terms = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .match(/[a-z0-9§€%-]{3,}/g) ?? [];
+  const immediateTerms = new Set(terms(immediateAnswer));
+  const executionTerms = new Set(terms(executionAnswer));
+  if (executionTerms.size < 5) return false;
+
+  let shared = 0;
+  let novel = 0;
+  for (const term of executionTerms) {
+    if (immediateTerms.has(term)) shared += 1;
+    else novel += 1;
+  }
+  const smallerSet = Math.max(1, Math.min(immediateTerms.size, executionTerms.size));
+  const overlap = shared / smallerSet;
+
+  // Eine zweite Nachricht muss substanziell Neues liefern, nicht nur die
+  // Sofortantwort mit etwas mehr Text und denselben Begriffen wiederholen.
+  return novel >= 4 && !(overlap > 0.82 && novel < 7);
+}
+
+function supportedResearchSources(
+  ctx: FounderContext,
+  message: string,
+  sources: WebSource[],
+): WebSource[] {
+  if (!sources.length) return [];
+  const normalize = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/ä/g, "ae")
+      .replace(/ö/g, "oe")
+      .replace(/ü/g, "ue")
+      .replace(/ß/g, "ss")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  const request = normalize(message);
+  const sourceTexts = sources.map((source) =>
+    normalize(`${source.title} ${source.url} ${source.snippet || ""}`),
+  );
+
+  const requiredTopicGroups: string[][] = [];
+  if (/versicher|haftpflicht/.test(request)) {
+    requiredTopicGroups.push(["versicher", "haftpflicht"]);
+  }
+  if (/forderung|foerderung|zuschuss|kredit/.test(request)) {
+    requiredTopicGroups.push(["forderung", "foerderung", "zuschuss", "kredit"]);
+  }
+  if (/handwerkskammer|(^|\W)hwk(\W|$)/.test(request)) {
+    requiredTopicGroups.push(["handwerkskammer", "hwk"]);
+  }
+  if (/gewerbeamt|gewerbeanmeld/.test(request)) {
+    requiredTopicGroups.push(["gewerbeamt", "gewerbeanmeld"]);
+  }
+
+  const locationSensitive =
+    /\b(ansprechpartner|zustandig|zuständig|amt|kammer|lokal|vor ort)\b/i.test(message);
+  const explicitLocation = locationSensitive ? requestedLocation(ctx, message) : "";
+  const location = explicitLocation ? normalize(explicitLocation) : "";
+
+  return sources.filter((_, index) => {
+    const sourceText = sourceTexts[index];
+    const topicsMatch = requiredTopicGroups.every((group) =>
+      group.some((term) => sourceText.includes(term)),
+    );
+    const locationMatches = !location || sourceText.includes(location);
+    return topicsMatch && locationMatches;
+  });
+}
+
 function tokenExpired(token: MCPTokenRow): boolean {
   if (!token.expires_at) return false;
   return new Date(token.expires_at).getTime() <= Date.now() + 60_000;
@@ -920,7 +1273,7 @@ async function fetchJSON(
 }
 
 async function refreshGoogleToken(
-  supabase: ReturnType<typeof createClient>,
+  supabase: DatabaseClient,
   userID: string,
   token: MCPTokenRow,
 ): Promise<MCPTokenRow | null> {
@@ -975,7 +1328,7 @@ async function refreshGoogleToken(
 }
 
 async function usableToken(
-  supabase: ReturnType<typeof createClient>,
+  supabase: DatabaseClient,
   userID: string,
   token: MCPTokenRow | undefined,
 ): Promise<MCPTokenRow | null> {
@@ -1170,7 +1523,7 @@ async function loadGoogleBusinessContext(accessToken: string): Promise<MCPLiveCo
 }
 
 async function loadConnectorContext(
-  supabase: ReturnType<typeof createClient>,
+  supabase: DatabaseClient,
   userID: string,
   connection: MCPConnectionRow,
   token: MCPTokenRow | undefined,
@@ -1225,7 +1578,7 @@ async function loadConnectorContext(
 }
 
 async function loadMCPLiveContext(
-  supabase: ReturnType<typeof createClient>,
+  supabase: DatabaseClient,
   userID: string | undefined,
   ctx: FounderContext,
   message: string,
@@ -1339,8 +1692,15 @@ Deno.serve(async (req) => {
         ? (onboarding.skills as Record<string, unknown>)
         : null;
 
-    // Load founder context + Profil + Session-Zusammenfassung parallel (spart Roundtrips)
-    const [{ data: contextData }, { data: profile }, { data: sessionRow }] = user
+    // Load founder context, profile, session summary and the actual execution
+    // status in parallel. Chat history alone is never treated as a job status.
+    const activeExecutionThreshold = new Date(Date.now() - 3 * 60_000).toISOString();
+    const [
+      { data: contextData },
+      { data: profile },
+      { data: sessionRow },
+      { data: activeExecutionRow },
+    ] = user
       ? await Promise.all([
           supabase
             .from("copilot_context")
@@ -1353,8 +1713,21 @@ Deno.serve(async (req) => {
           session_id
             ? supabase.from("copilot_sessions").select("summary").eq("id", session_id).maybeSingle()
             : Promise.resolve({ data: null }),
+          session_id
+            ? supabase
+                .from("copilot_execution_jobs")
+                .select(
+                  "id,status,assignment,progress_text,current_step,max_steps,started_at,created_at",
+                )
+                .eq("session_id", session_id)
+                .in("status", ["queued", "running"])
+                .gte("updated_at", activeExecutionThreshold)
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle()
+            : Promise.resolve({ data: null }),
         ])
-      : [{ data: null }, { data: null }, { data: null }];
+      : [{ data: null }, { data: null }, { data: null }, { data: null }];
 
     const ctx: FounderContext = {
       userName: profile?.display_name || stringOrUndefined(onboarding?.userName) || "Founder",
@@ -1450,7 +1823,7 @@ Deno.serve(async (req) => {
             (t) => (t?.role === "user" || t?.role === "assistant") && typeof t.content === "string",
           )
         : [];
-      const historyPromise: Promise<ChatTurn[]> =
+      const historyPromise =
         clientHistory.length > 0 || !session_id || !user
           ? Promise.resolve(clientHistory)
           : supabase
@@ -1498,6 +1871,16 @@ Deno.serve(async (req) => {
       // Execution-Teil arbeitet im Hintergrund weiter (siehe unten).
       const interactionPrompt = buildInteractionPrompt(ctx, {
         message,
+        activeExecution: activeExecutionRow
+          ? {
+              status: activeExecutionRow.status,
+              assignment: activeExecutionRow.assignment,
+              startedAt: activeExecutionRow.started_at || activeExecutionRow.created_at,
+              progress: activeExecutionRow.progress_text || undefined,
+              currentStep: activeExecutionRow.current_step,
+              maxSteps: activeExecutionRow.max_steps,
+            }
+          : null,
         history,
         memory,
         priorSummary,
@@ -1505,7 +1888,7 @@ Deno.serve(async (req) => {
       });
       let kimiRaw: string;
       try {
-        kimiRaw = await callChatModel(interactionPrompt, sink, 700);
+        kimiRaw = await callChatModel(interactionPrompt, sink, 1600);
       } catch (err) {
         // Sanfte Degradation: lieber eine freundliche Mentor-Antwort als ein harter 500.
         console.error(
@@ -1518,6 +1901,7 @@ Deno.serve(async (req) => {
               "Ich brauch gerade einen kurzen Moment — die Leitung war überlastet. Schreib mir einfach nochmal, ich bin sofort wieder für dich da.",
             too_early: false,
             sources: [],
+            follow_up_question: null,
             quick_actions: [],
             navigation: [],
             app_actions: [],
@@ -1530,7 +1914,61 @@ Deno.serve(async (req) => {
         );
       }
       console.log("[interaction raw]", kimiRaw.slice(0, 300));
-      const kimiData = parseJSON(kimiRaw);
+      let parsedInteraction = parseJSONLoose(kimiRaw);
+      if (!isRecord(parsedInteraction)) {
+        console.warn("[interaction invalid JSON] attempting repair");
+        try {
+          const repairPrompt = `
+            Repariere die folgende unvollständige oder ungültige Modellantwort.
+            Antworte ausschließlich als valides JSON-Objekt. Die sichtbare "antwort"
+            muss auf Deutsch, vollständig, ohne Codezaun und ohne abgebrochenen Satz sein.
+            Kürze sie bei Bedarf, statt sie unvollständig zu lassen.
+
+            Erforderliche Felder:
+            {
+              "antwort": "vollständige Antwort",
+              "klaerung_noetig": false,
+              "recherche_noetig": false,
+              "auftrag": "",
+              "follow_up_frage": null,
+              "follow_up_aktionen": [],
+              "app_aktionen": [],
+              "neue_fakten": [],
+              "gefeierter_erfolg": null,
+              "gespraechs_zusammenfassung": ""
+            }
+
+            Aktuelle Nutzerfrage:
+            ${message}
+
+            Ungültige Antwort:
+            ${stripFences(kimiRaw).slice(0, 10_000)}
+          `;
+          const repairedRaw = await callSonnet(repairPrompt, sink, 1400, true);
+          parsedInteraction = parseJSONLoose(repairedRaw);
+        } catch (repairError) {
+          console.error(
+            "interaction repair failed:",
+            repairError instanceof Error ? repairError.message : repairError,
+          );
+        }
+      }
+      const kimiData = isRecord(parsedInteraction)
+        ? parsedInteraction
+        : {
+            antwort:
+              "Die Antwort wurde nicht vollständig übertragen. Versuch es bitte noch einmal.",
+            klaerung_noetig: false,
+            recherche_noetig: false,
+            auftrag: "",
+            follow_up_frage: null,
+            follow_up_aktionen: [],
+            app_aktionen: [],
+            neue_fakten: [],
+            gefeierter_erfolg: null,
+            gespraechs_zusammenfassung: priorSummary,
+          };
+      const draft = extractDraft(kimiData, kimiRaw).trim();
 
       // Der Interaction-Agent nutzt keine Live-Connectoren — die zieht bei
       // Bedarf der Execution-Teil im Hintergrund.
@@ -1538,23 +1976,32 @@ Deno.serve(async (req) => {
 
       // ── Execution-Teil: läuft im Hintergrund weiter und liefert die
       // recherchierte Antwort als EIGENE Nachricht nach (Realtime).
-      const assignment =
-        typeof kimiData.auftrag === "string" ? kimiData.auftrag.trim() : "";
-      const wantsResearch = kimiData.recherche_noetig === true;
+      const assignment = typeof kimiData.auftrag === "string" ? kimiData.auftrag.trim() : "";
+      const clarificationNeeded = kimiData.klaerung_noetig === true;
+      const wantsResearch =
+        !clarificationNeeded &&
+        !isPureAppMutationRequest(message) &&
+        (kimiData.recherche_noetig === true || needsWebResearch(ctx, message));
       // Nachliefern geht nur mit User + Session (sonst gibt es keinen Kanal).
       const canDeliverLater = Boolean(user) && Boolean(session_id);
-      const delegate = wantsResearch && canDeliverLater;
+      const delegateRequested = wantsResearch && canDeliverLater && !activeExecutionRow;
 
       // Die eigentliche Recherche-Arbeit — einmal definiert, zweifach genutzt:
       // im Hintergrund (mit Session) oder synchron (ohne Session).
-      const runResearch = async (): Promise<{ answer: string; sources: WebSource[] } | null> => {
-        const [webSources, liveContext] = await Promise.all([
+      const runResearch = async (): Promise<{
+        answer: string;
+        sources: WebSource[];
+        deliverAsFollowUp: boolean;
+      } | null> => {
+        const [unfilteredWebSources, liveContext] = await Promise.all([
           findWebSources(ctx, message),
           loadMCPLiveContext(supabase, user?.id, ctx, message, { history, priorSummary }),
         ]);
-        const deepRaw = await callChatModel(
+        const webSources = supportedResearchSources(ctx, message, unfilteredWebSources);
+        const researchResult = await callResearchModel(
           buildChatPrompt(ctx, {
             message: assignment ? `${message}\n\n(Auftrag: ${assignment})` : message,
+            immediateAnswer: draft,
             history,
             memory,
             priorSummary,
@@ -1564,20 +2011,41 @@ Deno.serve(async (req) => {
             mcpConnectors,
             mcpLiveContext: liveContext,
           }),
-          undefined,
-          1200,
+          1400,
         );
+        const deepRaw = researchResult.content;
         const deepData = parseJSON(deepRaw);
         const deepAnswer = extractDraft(deepData, deepRaw).trim();
         if (!deepAnswer) return null;
+        const deepSources = mergeSources(
+          webSources,
+          researchResult.sources,
+          Array.isArray(deepData.quellen)
+            ? (deepData.quellen.map(normalizeSource).filter(Boolean) as WebSource[])
+            : [],
+          liveContext.flatMap((item) => (Array.isArray(item.sources) ? item.sources : [])),
+        );
+        const hasConnectorEvidence = liveContext.some(
+          (item) => Array.isArray(item.facts) && item.facts.length > 0,
+        );
+        const groundedSources = supportedResearchSources(ctx, message, deepSources);
+        const hasGroundedWebEvidence = groundedSources.length > 0;
+        const deliverAsFollowUp = executionResultAddsValue(
+          draft,
+          deepAnswer,
+          groundedSources,
+          hasConnectorEvidence,
+          deepData.nachricht_noetig === true,
+          typeof deepData.mehrwert === "string" ? deepData.mehrwert : "",
+        );
         return {
           answer: deepAnswer,
-          sources: mergeSources(
-            Array.isArray(deepData.quellen)
-              ? (deepData.quellen.map(normalizeSource).filter(Boolean) as WebSource[])
+          sources: hasGroundedWebEvidence
+            ? groundedSources
+            : hasConnectorEvidence
+              ? deepSources
               : [],
-            liveContext.flatMap((item) => (Array.isArray(item.sources) ? item.sources : [])),
-          ),
+          deliverAsFollowUp,
         };
       };
 
@@ -1586,42 +2054,78 @@ Deno.serve(async (req) => {
       // an, falls sie noch nicht existiert.
       const ensureSession = async () => {
         if (!user || !session_id) return;
-        await supabase.from("copilot_sessions").upsert(
-          { id: session_id, user_id: user.id },
-          { onConflict: "id", ignoreDuplicates: true },
-        );
+        await supabase
+          .from("copilot_sessions")
+          .upsert(
+            { id: session_id, user_id: user.id },
+            { onConflict: "id", ignoreDuplicates: true },
+          );
       };
 
-      if (delegate) {
-        const authedUserID = user!.id;
-        const followUp = (async () => {
-          const deep = await runResearch();
-          if (!deep) return;
-          await ensureSession();
-          await supabase.from("copilot_messages").insert({
+      let executionJobID: string | null = null;
+      if (delegateRequested) {
+        await ensureSession();
+        const agentDescriptor = executionAgentDescriptor(ctx, message, assignment);
+        const { data: executionAgent, error: executionAgentError } = await supabase
+          .from("copilot_execution_agents")
+          .upsert(
+            {
+              user_id: user!.id,
+              agent_key: agentDescriptor.key,
+              name: agentDescriptor.name,
+              purpose: agentDescriptor.purpose,
+              status: "working",
+              last_used_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id,agent_key" },
+          )
+          .select("id")
+          .single();
+        if (executionAgentError) {
+          console.error("execution agent upsert failed:", executionAgentError.message);
+        }
+
+        const { data: executionJob, error: executionJobError } = await supabase
+          .from("copilot_execution_jobs")
+          .insert({
             session_id,
-            user_id: authedUserID,
-            role: "assistant",
-            content: deep.answer,
-            model_used: GEMINI_MODEL,
-            sources: deep.sources,
-          });
-        })().catch((err) =>
-          console.error("follow-up failed:", err instanceof Error ? err.message : err),
-        );
-        const rt = globalThis as typeof globalThis & {
-          EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void };
-        };
-        if (typeof rt.EdgeRuntime?.waitUntil === "function") rt.EdgeRuntime.waitUntil(followUp);
+            user_id: user!.id,
+            agent_id: executionAgent?.id ?? null,
+            status: "queued",
+            request_message: message,
+            assignment: assignment || message,
+            current_step: 0,
+            max_steps: 4,
+            next_run_at: new Date().toISOString(),
+            progress_text: "Auftrag angenommen.",
+            working_memory: {
+              immediate_answer: draft,
+              conversation_summary: priorSummary,
+            },
+          })
+          .select("id")
+          .single();
+        if (executionJobError) {
+          console.error("execution job create failed:", executionJobError.message);
+        } else {
+          executionJobID = executionJob.id;
+          dispatchExecutionWorker(executionJob.id);
+        }
       }
 
       // Ohne Session könnten wir nichts nachreichen — dann lieber gleich
       // ausrecherchieren, statt ein Versprechen zu geben, das nie eingelöst wird.
-      const syncResearch = wantsResearch && !canDeliverLater ? await runResearch() : null;
+      const shouldResearchSynchronously =
+        wantsResearch && (!canDeliverLater || (delegateRequested && !executionJobID));
+      const syncResearch = shouldResearchSynchronously ? await runResearch() : null;
 
       // Extract draft — der Interaction-Agent antwortet direkt (kein Polish-Call)
-      const draft = extractDraft(kimiData, kimiRaw);
-      const polishedAnswer = syncResearch?.answer ?? draft;
+      let polishedAnswer = syncResearch
+        ? syncResearch.sources.length > 0
+          ? syncResearch.answer
+          : "Die Live-Suche hat gerade keine belastbaren Quellen geliefert. Ich nenne dir deshalb keine Anbieter oder Konditionen aus dem Bauch heraus."
+        : draft;
 
       // Nav-Vorschläge gegen den Routen-Katalog validieren
       const validRoutes = new Set(ROUTE_CATALOG.map((r) => r.to as string));
@@ -1652,6 +2156,126 @@ Deno.serve(async (req) => {
         mcpLiveContext.flatMap((item) => (Array.isArray(item.sources) ? item.sources : [])),
       );
       const sources = mergeSources(syncResearch?.sources ?? [], modelSources, mcpSources);
+
+      // App-Aktionen gegen die Whitelist validieren — der Client baut daraus Chips.
+      const ALLOWED_APP_ACTIONS = new Set([
+        "add_calendar_item",
+        "add_kanban_card",
+        "remember_fact",
+        "open_screen",
+        "slack_post",
+        "email_draft",
+      ]);
+      const ALLOWED_SCREENS = new Set([
+        "kanban",
+        "calendar",
+        "swipe",
+        "chats",
+        "documents",
+        "company",
+        "startup",
+        "radar",
+        "events",
+        "guides",
+        "copilot",
+        "profile",
+      ]);
+      const slackChannels = new Map<string, { channelID: string; channel: string }>();
+      for (const item of mcpLiveContext) {
+        for (const hint of Array.isArray(item.action_hints) ? item.action_hints : []) {
+          if (!isRecord(hint) || hint.action !== "slack_post") continue;
+          const channelID = typeof hint.channel_id === "string" ? hint.channel_id : "";
+          const channel = typeof hint.channel === "string" ? hint.channel : "";
+          if (!channelID || !channel) continue;
+          slackChannels.set(channelID, { channelID, channel });
+          slackChannels.set(cleanSlackChannelName(channel), { channelID, channel });
+        }
+      }
+      const field = (a: Record<string, unknown>, keys: string[]) => {
+        for (const key of keys) {
+          if (typeof a[key] === "string" && a[key].trim()) return a[key].trim();
+        }
+        return "";
+      };
+      const appActions: Record<string, unknown>[] = [];
+      const rawAppActions = clarificationNeeded
+        ? []
+        : Array.isArray(kimiData.app_aktionen)
+          ? kimiData.app_aktionen
+          : [];
+      for (const raw of rawAppActions) {
+        if (!isRecord(raw)) continue;
+        const actionName = typeof raw.aktion === "string" ? raw.aktion : "";
+        if (!ALLOWED_APP_ACTIONS.has(actionName)) continue;
+
+        if (actionName === "open_screen") {
+          const screen = field(raw, ["screen"]);
+          if (ALLOWED_SCREENS.has(screen)) {
+            appActions.push({ action: actionName, title: "", note: "", due: "", screen });
+          }
+          continue;
+        }
+
+        if (actionName === "slack_post") {
+          const messageText = field(raw, ["nachricht", "message", "text", "notiz"]).slice(0, 1800);
+          const rawChannelID = field(raw, ["channel_id", "channelId"]);
+          const rawChannel = field(raw, ["channel", "channel_name", "channelName", "titel"]);
+          const known =
+            slackChannels.get(rawChannelID) ?? slackChannels.get(cleanSlackChannelName(rawChannel));
+          if (known && messageText.length > 0) {
+            appActions.push({
+              action: "slack_post",
+              title: `Slack ${known.channel}`,
+              channel_id: known.channelID,
+              channel: known.channel,
+              message: messageText,
+            });
+          }
+          continue;
+        }
+
+        if (actionName === "email_draft") {
+          const subject = field(raw, ["betreff", "subject", "titel", "title"]).slice(0, 180);
+          const body = field(raw, [
+            "inhalt",
+            "body",
+            "entwurf",
+            "nachricht",
+            "message",
+            "notiz",
+          ]).slice(0, 12_000);
+          if (!subject || !body) continue;
+          appActions.push({
+            action: "email_draft",
+            recipient: field(raw, [
+              "empfaenger",
+              "empfanger",
+              "empfaenger_name",
+              "recipient_name",
+              "recipient",
+              "name",
+            ]).slice(0, 180),
+            to: field(raw, ["an", "to", "email", "empfaenger_email", "recipient_email"]).slice(
+              0,
+              320,
+            ),
+            subject,
+            body,
+          });
+          continue;
+        }
+
+        const title = field(raw, ["titel", "title"]);
+        if (!title) continue;
+        appActions.push({
+          action: actionName,
+          title,
+          note: field(raw, ["notiz", "note"]),
+          due: field(raw, ["faellig", "due"]),
+          screen: "",
+        });
+      }
+      polishedAnswer = confirmationSafeAnswer(polishedAnswer, appActions);
 
       // Persistenz (Kontext, Nachricht, Deadline) läuft NACH der Antwort im
       // Hintergrund — spart 2-3 DB-Roundtrips Wartezeit pro Chat-Nachricht.
@@ -1730,108 +2354,43 @@ Deno.serve(async (req) => {
         runtime.EdgeRuntime.waitUntil(persistPromise);
       }
 
-      // App-Aktionen gegen die Whitelist validieren — der Client baut daraus Chips.
-      const ALLOWED_APP_ACTIONS = new Set([
-        "add_calendar_item",
-        "add_kanban_card",
-        "remember_fact",
-        "open_screen",
-        "slack_post",
-      ]);
-      const ALLOWED_SCREENS = new Set([
-        "kanban",
-        "calendar",
-        "swipe",
-        "chats",
-        "documents",
-        "company",
-        "startup",
-        "radar",
-        "events",
-        "guides",
-        "copilot",
-        "profile",
-      ]);
-      const slackChannels = new Map<string, { channelID: string; channel: string }>();
-      for (const item of mcpLiveContext) {
-        for (const hint of Array.isArray(item.action_hints) ? item.action_hints : []) {
-          if (!isRecord(hint) || hint.action !== "slack_post") continue;
-          const channelID = typeof hint.channel_id === "string" ? hint.channel_id : "";
-          const channel = typeof hint.channel === "string" ? hint.channel : "";
-          if (!channelID || !channel) continue;
-          slackChannels.set(channelID, { channelID, channel });
-          slackChannels.set(cleanSlackChannelName(channel), { channelID, channel });
-        }
-      }
-      const field = (a: Record<string, unknown>, keys: string[]) => {
-        for (const key of keys) {
-          if (typeof a[key] === "string" && a[key].trim()) return a[key].trim();
-        }
-        return "";
-      };
-      const appActions: Record<string, unknown>[] = [];
-      for (const raw of Array.isArray(kimiData.app_aktionen) ? kimiData.app_aktionen : []) {
-        if (!isRecord(raw)) continue;
-        const actionName = typeof raw.aktion === "string" ? raw.aktion : "";
-        if (!ALLOWED_APP_ACTIONS.has(actionName)) continue;
-
-        if (actionName === "open_screen") {
-          const screen = field(raw, ["screen"]);
-          if (ALLOWED_SCREENS.has(screen)) {
-            appActions.push({ action: actionName, title: "", note: "", due: "", screen });
-          }
-          continue;
-        }
-
-        if (actionName === "slack_post") {
-          const messageText = field(raw, ["nachricht", "message", "text", "notiz"]).slice(0, 1800);
-          const rawChannelID = field(raw, ["channel_id", "channelId"]);
-          const rawChannel = field(raw, ["channel", "channel_name", "channelName", "titel"]);
-          const known =
-            slackChannels.get(rawChannelID) ?? slackChannels.get(cleanSlackChannelName(rawChannel));
-          if (known && messageText.length > 0) {
-            appActions.push({
-              action: "slack_post",
-              title: `Slack ${known.channel}`,
-              channel_id: known.channelID,
-              channel: known.channel,
-              message: messageText,
-            });
-          }
-          continue;
-        }
-
-        const title = field(raw, ["titel", "title"]);
-        if (!title) continue;
-        appActions.push({
-          action: actionName,
-          title,
-          note: field(raw, ["notiz", "note"]),
-          due: field(raw, ["faellig", "due"]),
-          screen: "",
-        });
-      }
-
       const celebratedWin =
         typeof kimiData.gefeierter_erfolg === "string" &&
         kimiData.gefeierter_erfolg.trim().length > 3
           ? kimiData.gefeierter_erfolg.trim().slice(0, 160)
           : null;
+      const rawFollowUpQuestion =
+        typeof kimiData.follow_up_frage === "string" ? kimiData.follow_up_frage.trim() : "";
+      const followUpQuestion =
+        rawFollowUpQuestion.length >= 5 ? rawFollowUpQuestion.slice(0, 120) : null;
+      const quickActions = followUpQuestion
+        ? (Array.isArray(kimiData.follow_up_aktionen) ? kimiData.follow_up_aktionen : [])
+            .filter(
+              (option: unknown): option is string =>
+                typeof option === "string" &&
+                option.trim().length >= 2 &&
+                option.trim().length <= 60 &&
+                !option.trim().endsWith("?"),
+            )
+            .map((option: string) => option.trim())
+            .slice(0, 4)
+        : [];
+      const exposeFollowUp = shouldExposeFollowUp(message, followUpQuestion, quickActions);
 
       result = {
         answer: polishedAnswer,
         too_early: kimiData.zu_frueh === true,
         sources,
-        quick_actions: Array.isArray(kimiData.follow_up_aktionen)
-          ? kimiData.follow_up_aktionen
-          : [],
+        follow_up_question: exposeFollowUp ? followUpQuestion : null,
+        quick_actions: exposeFollowUp ? quickActions : [],
         navigation,
         app_actions: appActions.slice(0, 2),
         new_facts: newFacts,
         celebrated_win: celebratedWin,
         conversation_summary: conversationSummary,
-        // true = es kommt gleich noch eine recherchierte Nachricht nach
-        pending: delegate,
+        // true only while a persisted execution job is new or actually active.
+        pending: Boolean(executionJobID || activeExecutionRow),
+        execution_job_id: executionJobID || activeExecutionRow?.id || null,
       };
     } else if (task === "plan_generate") {
       const authedUser = requireUser();

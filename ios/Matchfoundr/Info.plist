@@ -30,7 +30,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>20260727</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>matchfoundr nimmt dein Meeting nur auf, wenn du die Aufnahme startest — für die Co-Pilot-Zusammenfassung.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

@@ -1,886 +1,1252 @@
-// Onboarding — nach Design mfx-onboarding.jsx (Warm Signal, Ember, nativ):
-// Welcome (schwebende Founder-Blasen) → Wer bist du (persönliche Daten)
-// → Was baust du → Wen suchst du → Wo & Verfügbarkeit → Payoff mit echten
-// Treffern → Werkzeuge verbinden (geführt). Sammelt das Nötigste zuerst,
-// endet mit einem greifbaren Ergebnis und einem geführten Setup der Connectoren.
-
 import SwiftUI
 
 struct OnboardingView: View {
-    @EnvironmentObject var state: AppState
+    @EnvironmentObject private var state: AppState
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.openURL) private var openURL
-    @State private var step = 0
 
-    @State private var industryId: String?
-    @State private var roles: Set<String> = []
-    @State private var region = ""
-    @State private var availability: Availability = .fulltime
+    @State private var step: Step = .name
+    @State private var direction = 1
     @State private var name = ""
-    @State private var birthday = Calendar.current.date(byAdding: .year, value: -28, to: Date()) ?? Date()
-    @State private var birthdaySet = false
-    @State private var poppedBubble: Int?
+    @State private var mode: FounderMode?
+    @State private var pitch = ""
+    @State private var industryID: String?
+    @State private var region = ""
+    @State private var selectedSkills: Set<String> = []
+    @State private var availability: Availability?
+    @State private var selectedFocus: Set<String> = []
+    @State private var briefReady = false
+    @State private var analysisPhase = 0
+    @State private var selectedPlan: PlanChoice = .standard
+    @State private var didPrefill = false
+    @FocusState private var focusedField: InputField?
 
-    // Vorname für die persönliche Ansprache ab Schritt 2.
-    private var firstName: String {
-        name.split(separator: " ").first.map(String.init) ?? name.trimmingCharacters(in: .whitespaces)
+    private enum Step: Int, CaseIterable {
+        case name
+        case path
+        case description
+        case industry
+        case location
+        case skills
+        case availability
+        case focus
+        case brief
+        case connect
+        case plan
     }
 
-    private static let birthdayFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "de_DE")
-        f.dateFormat = "dd.MM.yyyy"
-        return f
-    }()
+    private enum InputField {
+        case name
+        case pitch
+        case region
+    }
 
-    // Die vier Sammel-Schritte (persönlich → Branche → Rollen → Region).
-    private let collectSteps = [1, 2, 3, 4]
+    private enum PlanChoice {
+        case standard
+        case pro
+    }
 
-    private var canNext: Bool {
+    private struct FocusOption: Identifiable {
+        let id: String
+        let icon: String
+        let title: String
+    }
+
+    private struct BriefItem: Identifiable {
+        let id = UUID()
+        let icon: String
+        let tint: Color
+        let title: String
+        let detail: String
+    }
+
+    private var pageBackground: Color {
+        colorScheme == .dark ? Color(hex: 0x0E0E10) : Color(hex: 0xF8F7F3)
+    }
+
+    private var elevatedBackground: Color {
+        colorScheme == .dark ? Color(hex: 0x1B1B1E) : .white
+    }
+
+    private var primaryText: Color {
+        colorScheme == .dark ? .white : MF.ink
+    }
+
+    private var secondaryText: Color {
+        colorScheme == .dark ? Color.white.opacity(0.58) : MF.smoke
+    }
+
+    private var subtleBorder: Color {
+        colorScheme == .dark ? Color.white.opacity(0.12) : MF.border
+    }
+
+    private var firstName: String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines)
+            .split(separator: " ")
+            .first
+            .map(String.init) ?? ""
+    }
+
+    private var selectedIndustry: Industry? {
+        industries.first { $0.id == industryID }
+    }
+
+    private var progress: Double {
+        let lastRequiredStep = Step.focus.rawValue + 1
+        let completed = min(step.rawValue + 1, lastRequiredStep)
+        return Double(completed) / Double(lastRequiredStep)
+    }
+
+    private var canContinue: Bool {
         switch step {
-        case 1: !name.trimmingCharacters(in: .whitespaces).isEmpty
-        case 2: industryId != nil
-        case 3: !roles.isEmpty
-        default: true
+        case .name:
+            return !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .path:
+            return mode != nil
+        case .description:
+            return pitch.trimmingCharacters(in: .whitespacesAndNewlines).count >= 4
+        case .industry:
+            return industryID != nil
+        case .location:
+            return region.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2
+        case .skills:
+            return !selectedSkills.isEmpty
+        case .availability:
+            return availability != nil
+        case .focus:
+            return !selectedFocus.isEmpty
+        case .brief:
+            return briefReady
+        case .connect, .plan:
+            return true
         }
+    }
+
+    private var focusOptions: [FocusOption] {
+        if mode == .skills {
+            return [
+                FocusOption(id: "opportunities", icon: "scope", title: "Passende Betriebe"),
+                FocusOption(id: "positioning", icon: "text.quote", title: "Angebot schärfen"),
+                FocusOption(id: "outreach", icon: "paperplane.fill", title: "Kontakte & Nachrichten"),
+                FocusOption(id: "portfolio", icon: "doc.richtext.fill", title: "Referenzen & Unterlagen"),
+                FocusOption(id: "planning", icon: "calendar", title: "Woche strukturieren"),
+            ]
+        }
+        return [
+            FocusOption(id: "plan", icon: "list.bullet.clipboard.fill", title: "Nächste Schritte"),
+            FocusOption(id: "admin", icon: "building.columns.fill", title: "Ämter & Pflichten"),
+            FocusOption(id: "money", icon: "eurosign.circle.fill", title: "Startkosten & Preise"),
+            FocusOption(id: "customers", icon: "person.2.fill", title: "Erste Kunden"),
+            FocusOption(id: "documents", icon: "doc.text.fill", title: "Unterlagen"),
+            FocusOption(id: "partner", icon: "person.badge.plus", title: "Partner & Hilfe"),
+        ]
     }
 
     var body: some View {
         ZStack {
-            if step == 0 {
-                welcome.transition(.opacity)
-            } else if step == 1 {
-                personalStep.transition(.opacity)
-            } else if step == 5 {
-                payoff.transition(.opacity)
-            } else if step == 6 {
-                connectStep.transition(.opacity)
-            } else {
-                collect.transition(.opacity)
-            }
-        }
-        .animation(.easeOut(duration: 0.28), value: step)
-    }
+            pageBackground.ignoresSafeArea()
 
-    private func next() {
-        Haptics.tap()
-        if step >= 6 { finish() } else { step += 1 }
-    }
-
-    private func back() {
-        Haptics.select()
-        if step > 0 { step -= 1 }
-    }
-
-    // ═══════════════════════════════════ STEP 0 — Welcome
-    // [x, y, größe, name, alter, gründet]
-    private let bubbles: [(CGFloat, CGFloat, CGFloat, String, Int, String)] = [
-        (30, 110, 60, "Lisa", 23, "ein Kosmetikstudio"),
-        (252, 158, 48, "Deniz", 29, "eine Buchungs-App"),
-        (286, 282, 66, "Jonas", 34, "einen Elektrobetrieb"),
-        (36, 340, 52, "Mara", 27, "ein Design-Studio"),
-        (240, 442, 56, "Tim", 31, "Büro-Bowls"),
-        (66, 505, 46, "Anna", 38, "eine Padelhalle"),
-    ]
-
-    private var welcome: some View {
-        ZStack {
-            MF.emberGrad.ignoresSafeArea()
-
-            // schwebende Founder-Blasen — antippbar, verraten was hier entsteht
-            ForEach(Array(bubbles.enumerated()), id: \.offset) { i, b in
-                let on = poppedBubble == i
-                FloatingBubble(index: i, size: b.2, initial: String(b.3.prefix(1)), active: on) {
-                    Haptics.select()
-                    withAnimation(.easeOut(duration: 0.18)) { poppedBubble = on ? nil : i }
-                }
-                .position(x: b.0 + b.2 / 2, y: b.1 + b.2 / 2)
-            }
-            if let i = poppedBubble {
-                let b = bubbles[i]
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("\(b.3), \(b.4)")
-                        .font(.system(size: 14.5, weight: .heavy))
-                        .foregroundStyle(Color(hex: 0x1A1A1A))
-                    Text("gründet \(b.5)")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(MF.emberDeep)
-                }
-                .padding(.horizontal, 13)
-                .padding(.vertical, 9)
-                .background(.white)
-                .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
-                .shadow(color: .black.opacity(0.35), radius: 14, y: 8)
-                .fixedSize()
-                .position(x: min(max(b.0 + b.2 / 2, 90), 300), y: b.1 - 26)
-                .transition(.scale(scale: 0.85).combined(with: .opacity))
-            }
-
-            VStack(alignment: .leading, spacing: 0) {
-                Spacer()
-                HStack(spacing: 0) {
-                    Text("match").foregroundStyle(.white)
-                    Text("foundr").foregroundStyle(.white.opacity(0.6))
-                }
-                .font(.system(size: 26, weight: .heavy))
-                .tracking(-0.5)
-                .padding(.bottom, 18)
-
-                Text("Finde den Mitgründer, der wirklich passt.")
-                    .font(.system(size: 38, weight: .heavy))
-                    .tracking(-1)
-                    .foregroundStyle(.white)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Text("Kein endloses Netzwerken — echte Treffer nach Skills, Vision und Werten. DACH-weit.")
-                    .font(.system(size: 16.5))
-                    .foregroundStyle(.white.opacity(0.9))
-                    .lineSpacing(4)
-                    .padding(.top, 16)
-                    .frame(maxWidth: 320, alignment: .leading)
-
-                Button {
-                    next()
-                } label: {
-                    HStack(spacing: 8) {
-                        Text("Los geht's").font(.system(size: 17, weight: .bold))
-                        Image(systemName: "arrow.right").font(.system(size: 15, weight: .heavy))
-                    }
-                    .foregroundStyle(MF.emberDeep)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 54)
-                    .background(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .shadow(color: .black.opacity(0.3), radius: 16, y: 10)
-                }
-                .buttonStyle(.plain)
-                .padding(.top, 26)
-
-                Button {
-                    finish()
-                } label: {
-                    Text("Ich habe schon ein Konto")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.9))
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.plain)
-                .padding(.top, 14)
-            }
-            .padding(.horizontal, 30)
-            .padding(.bottom, 34)
-        }
-    }
-
-    // ═══════════════════════════════════ STEPS 1–3 — Collect
-    private struct RoleOption: Identifiable {
-        let id: String
-        let icon: String
-        let label: String
-    }
-
-    private let roleOptions: [RoleOption] = [
-        .init(id: "ops", icon: "bolt.fill", label: "Macher fürs Operative"),
-        .init(id: "sales", icon: "person.2.fill", label: "Vertrieb & Sales"),
-        .init(id: "tech", icon: "square.grid.2x2.fill", label: "Technik & Produkt"),
-        .init(id: "money", icon: "checkmark.seal.fill", label: "Finanzen & Zahlen"),
-        .init(id: "brand", icon: "star.fill", label: "Design & Marke"),
-        .init(id: "craft", icon: "book.fill", label: "Handwerk & Umsetzung"),
-    ]
-
-    private var stepHead: (eyebrow: String, title: String, sub: String) {
-        switch step {
-        case 1: ("Schritt 1 von 4", "Wer bist du?", "Name, Geburtsdatum, Ort — den Rest baust du später in Ruhe aus.")
-        case 2: ("Schritt 2 von 4", firstName.isEmpty ? "Was baust du gerade?" : "\(firstName), was baust du gerade?", "Damit wir dich den richtigen Leuten zeigen.")
-        case 3: ("Schritt 3 von 4", "Wen suchst du?", "Wähl bis zu drei — was deinem Team am meisten fehlt.")
-        default: ("Schritt 4 von 4", "Dein Einsatz", "Wie viel Zeit steckst du gerade rein?")
-        }
-    }
-
-    private var collect: some View {
-        VStack(spacing: 0) {
-            topBar
-
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(stepHead.eyebrow)
-                        .font(.mfMono(10))
-                        .tracking(1.4)
-                        .textCase(.uppercase)
-                        .foregroundStyle(MF.ember)
-                    Text(stepHead.title)
-                        .font(.system(size: 27, weight: .heavy))
-                        .tracking(-0.8)
-                        .foregroundStyle(MF.ink)
-                        .padding(.top, 8)
-                    Text(stepHead.sub)
-                        .font(.system(size: 15))
-                        .foregroundStyle(MF.smoke)
-                        .lineSpacing(3)
-                        .padding(.top, 8)
-
-                    if step == 2 { industryGrid.padding(.top, 22) }
-                    if step == 3 { roleList.padding(.top, 22) }
-                    if step == 4 { regionAndEffort.padding(.top, 4) }
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 14)
-                .padding(.bottom, 40)
-            }
-            .scrollIndicators(.hidden)
-        }
-        .background(MF.canvas.ignoresSafeArea())
-        .safeAreaInset(edge: .bottom) { footer }
-    }
-
-    private var topBar: some View {
-        HStack(spacing: 12) {
-            Button { back() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 19, weight: .bold))
-                    .foregroundStyle(MF.smoke)
-                    .frame(width: 32, height: 32)
-            }
-            .buttonStyle(.plain)
-
-            HStack(spacing: 6) {
-                ForEach(collectSteps, id: \.self) { s in
-                    Capsule()
-                        .fill(s <= step ? MF.ember : MF.border)
-                        .frame(height: 5)
-                }
-            }
-
-            if step == 4 {
-                Button { next() } label: {
-                    Text("Überspringen")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(MF.smoke)
-                }
-                .buttonStyle(.plain)
-            } else {
-                Color.clear.frame(width: 32, height: 32)
-            }
-        }
-        .padding(.horizontal, 14)
-        .padding(.top, 8)
-        .frame(minHeight: 44)
-    }
-
-    private var industryGrid: some View {
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 11), GridItem(.flexible())], spacing: 11) {
-            ForEach(industries) { ind in
-                let on = industryId == ind.id
-                Button {
-                    Haptics.select()
-                    industryId = ind.id
-                } label: {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text(ind.emoji)
-                            .font(.system(size: 22))
-                            .frame(width: 42, height: 42)
-                            .background(on ? MF.surface : MF.canvas)
-                            .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
-                        Text(ind.label)
-                            .font(.system(size: 14.5, weight: .bold))
-                            .foregroundStyle(on ? MF.emberDeep : MF.ink)
-                            .multilineTextAlignment(.leading)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(14)
-                    .background(on ? MF.emberTint : MF.surface)
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18)
-                            .stroke(on ? MF.ember : MF.border, lineWidth: 1.5)
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    private var roleList: some View {
-        VStack(spacing: 10) {
-            ForEach(roleOptions) { r in
-                let on = roles.contains(r.id)
-                Button {
-                    Haptics.select()
-                    if on { roles.remove(r.id) } else if roles.count < 3 { roles.insert(r.id) }
-                } label: {
-                    HStack(spacing: 13) {
-                        Image(systemName: r.icon)
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(on ? MF.emberDeep : MF.smoke)
-                            .frame(width: 40, height: 40)
-                            .background(on ? MF.surface : MF.canvas)
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        Text(r.label)
-                            .font(.system(size: 15.5, weight: .bold))
-                            .foregroundStyle(on ? MF.emberDeep : MF.ink)
-                        Spacer(minLength: 0)
-                        ZStack {
-                            if on {
-                                Circle().fill(MF.ember).frame(width: 24, height: 24)
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 12, weight: .heavy))
-                                    .foregroundStyle(.white)
-                            } else {
-                                Circle().stroke(MF.border, lineWidth: 2).frame(width: 24, height: 24)
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 15)
-                    .padding(.vertical, 13)
-                    .background(on ? MF.emberTint : MF.surface)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(on ? MF.ember : MF.border, lineWidth: 1.5))
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    // ─── Schritt 1 — Persönliche Daten in der Optik der ersten Seite ───
-    // Ember-Gradient-Vollseite wie der Welcome-Screen: weiße Schrift,
-    // transluzente Felder, weißer CTA. Name → Geburtsdatum → Ort.
-    private var personalStep: some View {
-        ZStack {
-            MF.emberGrad.ignoresSafeArea()
-
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 12) {
-                    Button { back() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 19, weight: .bold))
-                            .foregroundStyle(.white)
-                            .frame(width: 32, height: 32)
-                    }
-                    .buttonStyle(.plain)
-                    HStack(spacing: 6) {
-                        ForEach(collectSteps, id: \.self) { s in
-                            Capsule()
-                                .fill(s <= step ? Color.white : Color.white.opacity(0.3))
-                                .frame(height: 5)
-                        }
-                    }
-                    Color.clear.frame(width: 32, height: 32)
-                }
-                .padding(.horizontal, 14)
-                .padding(.top, 8)
-                .frame(minHeight: 44)
+            VStack(spacing: 0) {
+                progressHeader
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text("Schritt 1 von 4")
-                            .font(.mfMono(10))
-                            .tracking(1.4)
-                            .textCase(.uppercase)
-                            .foregroundStyle(.white.opacity(0.75))
-                        Text("Wer bist du?")
-                            .font(.system(size: 34, weight: .heavy))
-                            .tracking(-1)
-                            .foregroundStyle(.white)
-                            .padding(.top, 8)
-                        Text("Name, Geburtsdatum, Ort — den Rest baust du später in Ruhe aus.")
-                            .font(.system(size: 15.5))
-                            .foregroundStyle(.white.opacity(0.9))
-                            .lineSpacing(3)
-                            .padding(.top, 10)
-
-                        VStack(spacing: 12) {
-                            emberField(icon: "person.fill", label: "Dein Name") {
-                                ZStack(alignment: .leading) {
-                                    if name.isEmpty {
-                                        Text("Wie sollen wir dich nennen?")
-                                            .font(.system(size: 16))
-                                            .foregroundStyle(.white.opacity(0.55))
-                                    }
-                                    TextField("", text: $name)
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundStyle(.white)
-                                        .tint(.white)
-                                        .textInputAutocapitalization(.words)
-                                        .submitLabel(.next)
-                                }
-                            }
-
-                            emberField(icon: "calendar", label: "Geburtsdatum") {
-                                HStack(spacing: 0) {
-                                    Text(birthdaySet ? Self.birthdayFormatter.string(from: birthday) : "Noch nicht gewählt")
-                                        .font(.system(size: 16, weight: birthdaySet ? .semibold : .regular))
-                                        .foregroundStyle(birthdaySet ? .white : .white.opacity(0.55))
-                                    Spacer(minLength: 0)
-                                    DatePicker("", selection: $birthday, in: ...Date(), displayedComponents: .date)
-                                        .labelsHidden()
-                                        .datePickerStyle(.compact)
-                                        .tint(.white)
-                                        .colorScheme(.dark)
-                                        .onChange(of: birthday) { _, _ in birthdaySet = true }
-                                }
-                            }
-
-                            emberField(icon: "mappin.and.ellipse", label: "Dein Ort") {
-                                ZStack(alignment: .leading) {
-                                    if region.isEmpty {
-                                        Text("z. B. Köln")
-                                            .font(.system(size: 16))
-                                            .foregroundStyle(.white.opacity(0.55))
-                                    }
-                                    TextField("", text: $region)
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundStyle(.white)
-                                        .tint(.white)
-                                        .textInputAutocapitalization(.words)
-                                }
-                            }
-                        }
-                        .padding(.top, 26)
-
-                        HStack(spacing: 10) {
-                            Image(systemName: "lock.shield.fill")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(.white.opacity(0.9))
-                            Text("E-Mail & Co. kommen später — beim Anlegen deines Kontos.")
-                                .font(.system(size: 12.5))
-                                .foregroundStyle(.white.opacity(0.8))
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .padding(.top, 18)
-                    }
-                    .padding(.horizontal, 26)
-                    .padding(.top, 6)
-                    .padding(.bottom, 30)
+                    currentStep
+                        .frame(maxWidth: 560, alignment: .leading)
+                        .padding(.horizontal, 24)
+                        .padding(.top, 22)
+                        .padding(.bottom, 36)
+                        .id(step)
+                        .transition(
+                            .asymmetric(
+                                insertion: .move(edge: direction > 0 ? .trailing : .leading)
+                                    .combined(with: .opacity),
+                                removal: .move(edge: direction > 0 ? .leading : .trailing)
+                                    .combined(with: .opacity)
+                            )
+                        )
                 }
+                .scrollDismissesKeyboard(.interactively)
                 .scrollIndicators(.hidden)
             }
         }
         .safeAreaInset(edge: .bottom) {
-            Button {
-                next()
-            } label: {
-                HStack(spacing: 8) {
-                    Text("Weiter").font(.system(size: 17, weight: .bold))
-                    if canNext {
-                        Image(systemName: "arrow.right").font(.system(size: 15, weight: .heavy))
-                    }
+            footer
+        }
+        .onAppear {
+            prefillNameIfNeeded()
+            focusCurrentField()
+        }
+        .onChange(of: step) { _, _ in
+            focusCurrentField()
+        }
+        .task(id: step) {
+            guard step == .brief, !briefReady else { return }
+            analysisPhase = 0
+            for phase in 1...3 {
+                try? await Task.sleep(for: .milliseconds(520))
+                guard !Task.isCancelled else { return }
+                withAnimation(.easeInOut(duration: 0.24)) {
+                    analysisPhase = phase
                 }
-                .foregroundStyle(canNext ? MF.emberDeep : Color.white.opacity(0.5))
-                .frame(maxWidth: .infinity)
-                .frame(height: 54)
-                .background(canNext ? Color.white : Color.white.opacity(0.22))
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .shadow(color: .black.opacity(canNext ? 0.28 : 0), radius: 16, y: 10)
+            }
+            try? await Task.sleep(for: .milliseconds(360))
+            guard !Task.isCancelled else { return }
+            Haptics.success()
+            withAnimation(.easeOut(duration: 0.38)) {
+                briefReady = true
+            }
+        }
+        .task(id: step == .connect) {
+            guard step == .connect else { return }
+            await state.refreshConnectedAccounts(showLoading: false)
+        }
+    }
+
+    private var progressHeader: some View {
+        HStack(spacing: 14) {
+            Button {
+                goBack()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(primaryText)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .disabled(!canNext)
-            .padding(.horizontal, 22)
-            .padding(.top, 14)
-            .padding(.bottom, 10)
-        }
-    }
+            .opacity(step == .name ? 0 : 1)
+            .disabled(step == .name)
+            .accessibilityLabel("Zurück")
 
-    /// Transluzente Eingabe-Karte auf dem Ember-Gradient (Optik der ersten Seite).
-    private func emberField<Content: View>(
-        icon: String,
-        label: String,
-        @ViewBuilder _ field: () -> Content
-    ) -> some View {
-        HStack(spacing: 13) {
-            Image(systemName: icon)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 44, height: 44)
-                .background(.white.opacity(0.18))
-                .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
-            VStack(alignment: .leading, spacing: 3) {
-                Text(label)
-                    .font(.mfMono(10))
-                    .tracking(1.2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(.white.opacity(0.7))
-                field()
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(subtleBorder)
+                    Capsule()
+                        .fill(MF.ember)
+                        .frame(width: max(12, proxy.size.width * progress))
+                }
             }
-            Spacer(minLength: 0)
+            .frame(height: 4)
+
+            Text(progressLabel)
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .foregroundStyle(secondaryText)
+                .frame(width: 54, alignment: .trailing)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .background(.white.opacity(0.14))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.25), lineWidth: 1))
+        .frame(maxWidth: 560)
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
+        .frame(height: 52)
     }
 
-    private var regionAndEffort: some View {
+    @ViewBuilder
+    private var currentStep: some View {
+        switch step {
+        case .name:
+            nameStep
+        case .path:
+            pathStep
+        case .description:
+            descriptionStep
+        case .industry:
+            industryStep
+        case .location:
+            locationStep
+        case .skills:
+            skillsStep
+        case .availability:
+            availabilityStep
+        case .focus:
+            focusStep
+        case .brief:
+            briefStep
+        case .connect:
+            connectStep
+        case .plan:
+            planStep
+        }
+    }
+
+    private var nameStep: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionLabel("Dein Einsatz")
-            HStack(spacing: 9) {
-                effortChip("Vollzeit", .fulltime)
-                effortChip("Teilzeit", .parttime)
-                effortChip("Nebenbei", .weekend)
+            assistantMark
+            question(
+                "Willkommen bei matchfoundr.",
+                "Wie dürfen wir dich nennen?",
+                helper: "Mehr brauche ich für den Anfang nicht."
+            )
+
+            onboardingField(
+                placeholder: "Dein Vorname",
+                text: $name,
+                icon: "person.fill",
+                field: .name,
+                capitalization: .words
+            )
+            .padding(.top, 38)
+        }
+    }
+
+    private var pathStep: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            assistantMark
+            question(
+                firstName.isEmpty ? "Was ist dein nächster Schritt?" : "\(firstName), was ist dein nächster Schritt?",
+                "Ich richte die App danach aus.",
+                helper: nil
+            )
+
+            VStack(spacing: 10) {
+                choiceRow(
+                    icon: "storefront.fill",
+                    title: "Eigenes Business starten",
+                    subtitle: "Idee, Betrieb, Shop, Salon oder Agentur",
+                    selected: mode == .idea
+                ) {
+                    mode = .idea
+                    selectedSkills.removeAll()
+                    selectedFocus.removeAll()
+                }
+
+                choiceRow(
+                    icon: "hand.raised.fill",
+                    title: "Mit meinen Skills einsteigen",
+                    subtitle: "Ich suche ein Vorhaben, einen Betrieb oder Auftrag",
+                    selected: mode == .skills
+                ) {
+                    mode = .skills
+                    selectedSkills.removeAll()
+                    selectedFocus.removeAll()
+                }
+            }
+            .padding(.top, 30)
+        }
+    }
+
+    private var descriptionStep: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            assistantMark
+            question(
+                mode == .skills ? "Womit willst du anderen helfen?" : "Was willst du aufbauen?",
+                mode == .skills
+                    ? "Ein Satz reicht. Ich mache daraus später ein klares Angebot."
+                    : "Beschreib es so, wie du es einem Freund sagen würdest.",
+                helper: nil
+            )
+
+            VStack(alignment: .leading, spacing: 10) {
+                TextField(
+                    mode == .skills
+                        ? "z. B. Buchhaltung für kleine Betriebe"
+                        : "z. B. einen mobilen Friseursalon",
+                    text: $pitch,
+                    axis: .vertical
+                )
+                .focused($focusedField, equals: .pitch)
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(primaryText)
+                .tint(MF.ember)
+                .textInputAutocapitalization(.sentences)
+                .lineLimit(3...7)
+                .padding(16)
+                .background(elevatedBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(focusedField == .pitch ? MF.ember : subtleBorder, lineWidth: 1)
+                )
+
+                Text("\(pitch.trimmingCharacters(in: .whitespacesAndNewlines).count) Zeichen")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(secondaryText)
+            }
+            .padding(.top, 34)
+        }
+    }
+
+    private var industryStep: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            assistantMark
+            question(
+                "Wo passt das am ehesten rein?",
+                "Nicht perfekt nachdenken. Das lässt sich später ändern.",
+                helper: nil
+            )
+
+            FlowLayout(spacing: 9) {
+                ForEach(industries) { industry in
+                    choiceChip(
+                        iconText: industry.emoji,
+                        title: industry.label,
+                        selected: industryID == industry.id
+                    ) {
+                        industryID = industry.id
+                    }
+                }
+            }
+            .padding(.top, 30)
+        }
+    }
+
+    private var locationStep: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            assistantMark
+            question(
+                "Wo soll das stattfinden?",
+                "Ort oder PLZ reichen.",
+                helper: "Damit finde ich passende Kammern, Förderstellen, Events und Partner in deiner Nähe."
+            )
+
+            onboardingField(
+                placeholder: "z. B. 44139 Dortmund",
+                text: $region,
+                icon: "mappin.and.ellipse",
+                field: .region,
+                capitalization: .words
+            )
+            .padding(.top, 34)
+        }
+    }
+
+    private var skillsStep: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            assistantMark
+            question(
+                mode == .skills ? "Was kannst du richtig gut?" : "Was bringst du schon mit?",
+                "Wähle bis zu vier.",
+                helper: mode == .idea
+                    ? "Damit suche ich Ergänzung statt Kopien von dir."
+                    : "Damit sehen Betriebe sofort, wo du helfen kannst."
+            )
+
+            FlowLayout(spacing: 9) {
+                ForEach(skillTags, id: \.self) { skill in
+                    choiceChip(
+                        iconText: nil,
+                        title: skill,
+                        selected: selectedSkills.contains(skill)
+                    ) {
+                        toggle(skill, in: &selectedSkills, limit: 4)
+                    }
+                }
+            }
+            .padding(.top, 30)
+        }
+    }
+
+    private var availabilityStep: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            assistantMark
+            question(
+                "Wie viel Raum hat das gerade?",
+                "Eine ehrliche Antwort macht Vorschläge besser.",
+                helper: nil
+            )
+
+            VStack(spacing: 10) {
+                ForEach(Availability.allCases, id: \.rawValue) { value in
+                    choiceRow(
+                        icon: availabilityIcon(value),
+                        title: value.label,
+                        subtitle: value.sub,
+                        selected: availability == value
+                    ) {
+                        availability = value
+                    }
+                }
+            }
+            .padding(.top, 30)
+        }
+    }
+
+    private var focusStep: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            assistantMark
+            question(
+                "Was soll ich dir zuerst abnehmen?",
+                "Wähle bis zu drei. Ich nutze das für deinen Startplan und spätere Vorschläge.",
+                helper: nil
+            )
+
+            FlowLayout(spacing: 9) {
+                ForEach(focusOptions) { option in
+                    iconChoiceChip(option, selected: selectedFocus.contains(option.id)) {
+                        toggle(option.id, in: &selectedFocus, limit: 3)
+                    }
+                }
+            }
+            .padding(.top, 30)
+        }
+    }
+
+    private var briefStep: some View {
+        Group {
+            if briefReady {
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 14, weight: .heavy))
+                            .foregroundStyle(.white)
+                            .frame(width: 30, height: 30)
+                            .background(Color(hex: 0x2E9B63))
+                            .clipShape(Circle())
+                        Text("Startprofil bereit")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(Color(hex: 0x2E9B63))
+                    }
+
+                    Text("Ich habe deinen Start sortiert.")
+                        .font(.system(size: 34, weight: .bold))
+                        .foregroundStyle(primaryText)
+                        .padding(.top, 22)
+
+                    Text(briefSummary)
+                        .font(.system(size: 16))
+                        .foregroundStyle(secondaryText)
+                        .lineSpacing(4)
+                        .padding(.top, 12)
+
+                    VStack(spacing: 0) {
+                        ForEach(Array(startBrief.enumerated()), id: \.element.id) { index, item in
+                            briefRow(number: index + 1, item: item)
+                            if index < startBrief.count - 1 {
+                                Divider()
+                                    .overlay(subtleBorder)
+                                    .padding(.leading, 54)
+                            }
+                        }
+                    }
+                    .padding(.top, 28)
+
+                    Label(
+                        mode == .skills
+                            ? "Ich halte dich im Skill-Partner-Modus und starte kein Business für dich."
+                            : "Diese Reihenfolge landet direkt auf deiner Heute-Seite.",
+                        systemImage: "checkmark.shield.fill"
+                    )
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(secondaryText)
+                    .padding(.top, 24)
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.98)))
+            } else {
+                analysisView
             }
         }
     }
 
-    private func sectionLabel(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: 13, weight: .bold))
-            .foregroundStyle(MF.smoke)
-            .padding(.top, 26)
-            .padding(.bottom, 12)
+    private var analysisView: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack {
+                Circle()
+                    .stroke(subtleBorder, lineWidth: 1)
+                    .frame(width: 66, height: 66)
+                    .scaleEffect(analysisPhase.isMultiple(of: 2) ? 1 : 1.12)
+                MFLogo(size: 24)
+            }
+            .animation(.easeInOut(duration: 0.5), value: analysisPhase)
+
+            Text("Einen Moment.\nIch sortiere das.")
+                .font(.system(size: 34, weight: .bold))
+                .foregroundStyle(primaryText)
+                .padding(.top, 26)
+
+            VStack(alignment: .leading, spacing: 16) {
+                analysisLine("Vorhaben verstehen", complete: analysisPhase >= 1)
+                analysisLine("Region und Branche einordnen", complete: analysisPhase >= 2)
+                analysisLine("Ersten Ablauf bauen", complete: analysisPhase >= 3)
+            }
+            .padding(.top, 34)
+        }
     }
 
-    private func effortChip(_ label: String, _ value: Availability) -> some View {
-        let on = availability == value
-        return Button {
-            Haptics.select()
-            availability = value
-        } label: {
-            Text(label)
-                .font(.system(size: 14.5, weight: .bold))
-                .foregroundStyle(on ? MF.ember : MF.ink)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(on ? MF.emberTint : MF.surface)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(on ? MF.ember : MF.border, lineWidth: 1.5))
+    private var connectStep: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            assistantMark
+            question(
+                "Soll ich in deinem Alltag mitarbeiten?",
+                "Optional. Du kannst alles später im Profil verbinden oder wieder trennen.",
+                helper: nil
+            )
+
+            VStack(spacing: 10) {
+                integrationRow(.gmail)
+                integrationRow(.googleCalendar)
+            }
+            .padding(.top, 30)
+
+            if let message = state.integrationMessage, !message.isEmpty {
+                Text(message)
+                    .font(.system(size: 13))
+                    .foregroundStyle(secondaryText)
+                    .padding(.top, 16)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Label("Warum erst jetzt?", systemImage: "lock.shield.fill")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(primaryText)
+                Text("Du hast zuerst gesehen, wofür matchfoundr die Zugriffe nutzt. Keine Verbindung ist nötig, um die App zu starten.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(secondaryText)
+                    .lineSpacing(3)
+            }
+            .padding(.top, 26)
         }
-        .buttonStyle(.plain)
+    }
+
+    private var planStep: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            assistantMark
+            question(
+                "Wie möchtest du starten?",
+                "Die Kern-App bleibt in Standard nutzbar.",
+                helper: nil
+            )
+
+            VStack(spacing: 12) {
+                planChoice(
+                    .standard,
+                    title: "Standard",
+                    price: "Kostenlos",
+                    detail: "Startplan, Matching, Community, Kalender und begrenzte KI-Nutzung."
+                )
+                planChoice(
+                    .pro,
+                    title: "Pro",
+                    price: "3 Tage kostenlos",
+                    detail: "Persönlicher KI-Gründungscheck, mehr Co-Pilot-Nutzung und Hintergrundaufgaben."
+                )
+            }
+            .padding(.top, 30)
+
+            Text(selectedPlan == .pro
+                 ? "Kein Kauf in diesem Schritt. Der KI-Check startet nach dem Öffnen der App."
+                 : "Du kannst Pro später im Profil testen.")
+                .font(.system(size: 12.5))
+                .foregroundStyle(secondaryText)
+                .lineSpacing(3)
+                .padding(.top, 16)
+        }
     }
 
     private var footer: some View {
-        Button {
-            next()
-        } label: {
-            HStack(spacing: 8) {
-                Text(step == 4 ? "Profil erstellen" : "Weiter")
-                    .font(.system(size: 17, weight: .bold))
-                if canNext {
-                    Image(systemName: "arrow.right").font(.system(size: 15, weight: .heavy))
+        VStack(spacing: 0) {
+            if step == .connect {
+                Button("Ohne Verknüpfung weiter") {
+                    advance()
                 }
+                .font(.system(size: 13.5, weight: .semibold))
+                .foregroundStyle(secondaryText)
+                .padding(.bottom, 10)
             }
-            .foregroundStyle(canNext ? .white : MF.faint)
-            .frame(maxWidth: .infinity)
-            .frame(height: 54)
-            .background(canNext ? AnyShapeStyle(MF.emberGrad) : AnyShapeStyle(MF.surfaceSoft))
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+            Button {
+                if step == .plan {
+                    finish()
+                } else {
+                    advance()
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Text(footerTitle)
+                        .font(.system(size: 16.5, weight: .bold))
+                    Image(systemName: step == .plan ? "checkmark" : "arrow.right")
+                        .font(.system(size: 14, weight: .bold))
+                }
+                .foregroundStyle(canContinue ? .white : secondaryText.opacity(0.55))
+                .frame(maxWidth: .infinity)
+                .frame(height: 52)
+                .background(canContinue ? MF.ember : subtleBorder)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .disabled(!canContinue)
         }
-        .buttonStyle(.plain)
-        .disabled(!canNext)
-        .padding(.horizontal, 22)
-        .padding(.top, 14)
+        .frame(maxWidth: 560)
+        .padding(.horizontal, 20)
+        .padding(.top, 10)
         .padding(.bottom, 8)
-        .background(
-            LinearGradient(colors: [MF.canvas.opacity(0), MF.canvas, MF.canvas],
-                           startPoint: .top, endPoint: .bottom)
+        .background(.ultraThinMaterial)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(subtleBorder)
+                .frame(height: 0.5)
+        }
+    }
+
+    private var footerTitle: String {
+        switch step {
+        case .brief:
+            "Werkzeuge einrichten"
+        case .connect:
+            "Weiter"
+        case .plan:
+            selectedPlan == .pro ? "Pro testen und starten" : "Kostenlos starten"
+        default:
+            "Weiter"
+        }
+    }
+
+    private var assistantMark: some View {
+        HStack(spacing: 9) {
+            MFLogo(size: 19)
+            Text("Co-Pilot")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(secondaryText)
+        }
+        .padding(.bottom, 20)
+    }
+
+    private func question(_ title: String, _ subtitle: String, helper: String?) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.system(size: 32, weight: .bold))
+                .foregroundStyle(primaryText)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text(subtitle)
+                .font(.system(size: 16))
+                .foregroundStyle(secondaryText)
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let helper {
+                Text(helper)
+                    .font(.system(size: 13.5, weight: .medium))
+                    .foregroundStyle(MF.ember)
+                    .lineSpacing(3)
+                    .padding(.top, 2)
+            }
+        }
+    }
+
+    private func onboardingField(
+        placeholder: String,
+        text: Binding<String>,
+        icon: String,
+        field: InputField,
+        capitalization: TextInputAutocapitalization
+    ) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(focusedField == field ? MF.ember : secondaryText)
+                .frame(width: 22)
+
+            TextField(placeholder, text: text)
+                .focused($focusedField, equals: field)
+                .font(.system(size: 17, weight: .medium))
+                .foregroundStyle(primaryText)
+                .tint(MF.ember)
+                .textInputAutocapitalization(capitalization)
+                .submitLabel(.continue)
+                .onSubmit {
+                    if canContinue { advance() }
+                }
+        }
+        .padding(.horizontal, 16)
+        .frame(height: 56)
+        .background(elevatedBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(focusedField == field ? MF.ember : subtleBorder, lineWidth: 1)
         )
     }
 
-    // ═══════════════════════════════════ STEP 4 — Payoff
-    private var payoff: some View {
-        VStack(spacing: 0) {
-            topBar
+    private func choiceRow(
+        icon: String,
+        title: String,
+        subtitle: String,
+        selected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button {
+            Haptics.select()
+            action()
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: icon)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(selected ? .white : secondaryText)
+                    .frame(width: 38, height: 38)
+                    .background(selected ? MF.ember : subtleBorder)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(MF.emberGrad)
-                            .frame(width: 64, height: 64)
-                            .emberGlow()
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 30, weight: .heavy))
-                            .foregroundStyle(.white)
-                    }
-
-                    Text("Dein Profil steht.\n\(payoffHits.count) passen schon zu dir.")
-                        .font(.system(size: 30, weight: .heavy))
-                        .tracking(-1)
-                        .foregroundStyle(MF.ink)
-                        .padding(.top, 20)
-
-                    Text("Basierend auf \(selectedIndustry?.label ?? "deiner Branche") in \(region.isEmpty ? "deiner Nähe" : region). Schau sie dir an — der Rest kommt täglich dazu.")
-                        .font(.system(size: 15.5))
-                        .foregroundStyle(MF.smoke)
-                        .lineSpacing(3)
-                        .padding(.top, 12)
-
-                    VStack(spacing: 11) {
-                        ForEach(payoffHits) { card in
-                            HStack(spacing: 13) {
-                                MFAvatar(name: card.name, service: "cofounder", size: 48)
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text(card.name)
-                                        .font(.system(size: 15.5, weight: .bold))
-                                        .foregroundStyle(MF.ink)
-                                    Text("\(card.role) · \(card.city)")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(MF.smoke)
-                                        .lineLimit(1)
-                                }
-                                Spacer(minLength: 0)
-                                Text("\(card.matchPercent)%")
-                                    .font(.system(size: 13, weight: .bold))
-                                    .foregroundStyle(MF.emberDeep)
-                                    .padding(.horizontal, 11)
-                                    .padding(.vertical, 6)
-                                    .background(MF.emberTint)
-                                    .clipShape(Capsule())
-                            }
-                            .padding(13)
-                            .background(MF.surface)
-                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 16).stroke(MF.border, lineWidth: 1))
-                            .warmShadow()
-                        }
-                    }
-                    .padding(.top, 24)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.system(size: 15.5, weight: .bold))
+                        .foregroundStyle(primaryText)
+                    Text(subtitle)
+                        .font(.system(size: 13))
+                        .foregroundStyle(secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 8)
-                .padding(.bottom, 40)
+
+                Spacer(minLength: 8)
+
+                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 21, weight: .medium))
+                    .foregroundStyle(selected ? MF.ember : subtleBorder)
             }
-            .scrollIndicators(.hidden)
-        }
-        .background(MF.canvas.ignoresSafeArea())
-        .safeAreaInset(edge: .bottom) {
-            Button {
-                next()
-            } label: {
-                HStack(spacing: 8) {
-                    Text("Fast fertig — Werkzeuge einrichten").font(.system(size: 16.5, weight: .bold))
-                    Image(systemName: "arrow.right").font(.system(size: 15, weight: .heavy))
-                }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 54)
-                .background(MF.emberGrad)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .emberGlow()
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 22)
-            .padding(.vertical, 14)
-            .background(
-                LinearGradient(colors: [MF.canvas.opacity(0), MF.canvas, MF.canvas],
-                               startPoint: .top, endPoint: .bottom)
+            .padding(14)
+            .background(elevatedBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(selected ? MF.ember : subtleBorder, lineWidth: 1)
             )
         }
+        .buttonStyle(.plain)
     }
 
-    // ═══════════════════════════════════ STEP 6 — Werkzeuge verbinden
-    // Geführter Abschluss: zeigt die empfohlenen Connectoren und lässt sie
-    // direkt verbinden (gleiche Mechanik wie im Profil) — oder überspringen.
-    private var connectStep: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Button { back() } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 19, weight: .bold))
-                        .foregroundStyle(MF.smoke)
-                        .frame(width: 32, height: 32)
-                }
-                .buttonStyle(.plain)
-                Spacer()
-                Button { finish() } label: {
-                    Text("Später")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(MF.smoke)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 14)
-            .padding(.top, 8)
-            .frame(minHeight: 44)
-
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("Fast geschafft")
-                        .font(.mfMono(10))
-                        .tracking(1.4)
-                        .textCase(.uppercase)
-                        .foregroundStyle(MF.ember)
-                    Text("Verbinde deine Werkzeuge")
-                        .font(.system(size: 27, weight: .heavy))
-                        .tracking(-0.8)
-                        .foregroundStyle(MF.ink)
-                        .padding(.top, 8)
-                    Text("Dein Co-Pilot wird deutlich schlauer, wenn er auf deine Tools zugreifen darf — Kalender, Dateien, Buchhaltung. Du entscheidest, was er sehen darf. Alles optional.")
+    private func choiceChip(
+        iconText: String?,
+        title: String,
+        selected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button {
+            Haptics.select()
+            action()
+        } label: {
+            HStack(spacing: 7) {
+                if let iconText {
+                    Text(iconText)
                         .font(.system(size: 15))
-                        .foregroundStyle(MF.smoke)
-                        .lineSpacing(3)
-                        .padding(.top, 8)
-
-                    VStack(spacing: 10) {
-                        ForEach(Array(MCPConnectorID.recommended.enumerated()), id: \.element.id) { _, connector in
-                            connectorRow(connector)
-                        }
-                    }
-                    .padding(.top, 22)
-
-                    if let msg = state.mcpConnectorMessage {
-                        Text(msg)
-                            .font(.system(size: 13))
-                            .foregroundStyle(MF.smoke)
-                            .padding(.top, 14)
-                            .transition(.opacity)
-                    }
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 14)
-                .padding(.bottom, 40)
-            }
-            .scrollIndicators(.hidden)
-        }
-        .background(MF.canvas.ignoresSafeArea())
-        .task { await state.refreshMCPConnectors(showLoading: false) }
-        .safeAreaInset(edge: .bottom) {
-            Button {
-                finish()
-            } label: {
-                HStack(spacing: 8) {
-                    Text("Zu meinen Treffern").font(.system(size: 17, weight: .bold))
-                    Image(systemName: "arrow.right").font(.system(size: 15, weight: .heavy))
+                Text(title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(selected ? .white : primaryText)
+                    .fixedSize(horizontal: true, vertical: false)
+                if selected {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 10, weight: .heavy))
+                        .foregroundStyle(.white)
                 }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 54)
-                .background(MF.emberGrad)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .emberGlow()
             }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 22)
-            .padding(.vertical, 14)
-            .background(
-                LinearGradient(colors: [MF.canvas.opacity(0), MF.canvas, MF.canvas],
-                               startPoint: .top, endPoint: .bottom)
-            )
+            .padding(.horizontal, 13)
+            .frame(height: 40)
+            .background(selected ? MF.ember : elevatedBackground)
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(selected ? MF.ember : subtleBorder, lineWidth: 1))
         }
+        .buttonStyle(.plain)
     }
 
-    private func connectorRow(_ connector: MCPConnectorID) -> some View {
-        let link = state.mcpLink(for: connector)
-        let isConnected = link?.isConnected ?? false
-        let isBusy = state.mcpBusyConnector == connector
-        return HStack(spacing: 13) {
-            Image(systemName: connector.icon)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(isConnected ? MF.emberDeep : MF.smoke)
-                .frame(width: 42, height: 42)
-                .background(isConnected ? MF.surface : MF.canvas)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(connector.label)
+    private func iconChoiceChip(
+        _ option: FocusOption,
+        selected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button {
+            Haptics.select()
+            action()
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: option.icon)
+                    .font(.system(size: 13, weight: .semibold))
+                Text(option.title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .fixedSize(horizontal: true, vertical: false)
+                if selected {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 10, weight: .heavy))
+                }
+            }
+            .foregroundStyle(selected ? .white : primaryText)
+            .padding(.horizontal, 13)
+            .frame(height: 42)
+            .background(selected ? MF.ember : elevatedBackground)
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(selected ? MF.ember : subtleBorder, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func analysisLine(_ text: String, complete: Bool) -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .stroke(complete ? Color(hex: 0x2E9B63) : subtleBorder, lineWidth: 1.5)
+                    .frame(width: 24, height: 24)
+                if complete {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 10, weight: .heavy))
+                        .foregroundStyle(Color(hex: 0x2E9B63))
+                }
+            }
+            Text(text)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(complete ? primaryText : secondaryText)
+        }
+        .animation(.easeOut(duration: 0.24), value: complete)
+    }
+
+    private func briefRow(number: Int, item: BriefItem) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(item.tint.opacity(colorScheme == .dark ? 0.22 : 0.12))
+                    .frame(width: 40, height: 40)
+                Image(systemName: item.icon)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(item.tint)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("\(number). \(item.title)")
                     .font(.system(size: 15.5, weight: .bold))
-                    .foregroundStyle(isConnected ? MF.emberDeep : MF.ink)
-                Text(isConnected ? (link?.statusLabel ?? "Verbunden") : connector.detail)
+                    .foregroundStyle(primaryText)
+                Text(item.detail)
+                    .font(.system(size: 13.5))
+                    .foregroundStyle(secondaryText)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.vertical, 14)
+    }
+
+    private func integrationRow(_ provider: IntegrationProvider) -> some View {
+        let account = state.connectedAccount(for: provider)
+        let connected = account?.isConnected == true
+        let busy = state.integrationBusyProvider == provider
+
+        return HStack(spacing: 13) {
+            Image(systemName: provider.icon)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(connected ? Color(hex: 0x2E9B63) : secondaryText)
+                .frame(width: 40, height: 40)
+                .background(subtleBorder)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(provider.label)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(primaryText)
+                Text(connected ? (account?.displayLabel ?? "Verbunden") : integrationPurpose(provider))
                     .font(.system(size: 12.5))
-                    .foregroundStyle(MF.smoke)
+                    .foregroundStyle(secondaryText)
                     .lineLimit(2)
             }
-            Spacer(minLength: 0)
+
+            Spacer(minLength: 8)
+
             Button {
-                Haptics.select()
                 Task {
-                    if isConnected {
-                        await state.disconnectMCPConnector(connector)
-                    } else if let url = await state.mcpConnectURL(for: connector) {
+                    if let url = await state.integrationConnectURL(for: provider) {
                         openURL(url)
                     }
                 }
             } label: {
                 Group {
-                    if isBusy {
-                        ProgressView().tint(MF.ember)
+                    if busy {
+                        ProgressView()
+                            .tint(MF.ember)
                     } else {
-                        Text(isConnected ? "Trennen" : "Verbinden")
-                            .font(.system(size: 13.5, weight: .bold))
-                            .foregroundStyle(isConnected ? MF.smoke : .white)
+                        Text(connected ? "Verbunden" : "Verbinden")
+                            .font(.system(size: 12.5, weight: .bold))
+                            .foregroundStyle(connected ? Color(hex: 0x2E9B63) : .white)
                     }
                 }
-                .frame(width: 84, height: 34)
-                .background(isConnected ? AnyShapeStyle(MF.surface) : AnyShapeStyle(MF.emberGrad))
+                .frame(width: 82, height: 34)
+                .background(connected ? subtleBorder : MF.ember)
                 .clipShape(Capsule())
-                .overlay(Capsule().stroke(isConnected ? MF.border : Color.clear, lineWidth: 1.5))
             }
             .buttonStyle(.plain)
-            .disabled(isBusy)
+            .disabled(connected || busy)
         }
         .padding(13)
-        .background(MF.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(isConnected ? MF.ember : MF.border, lineWidth: 1.5))
+        .background(elevatedBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(subtleBorder, lineWidth: 1))
     }
 
-    private var selectedIndustry: Industry? {
-        industries.first { $0.id == industryId }
+    private func planChoice(
+        _ choice: PlanChoice,
+        title: String,
+        price: String,
+        detail: String
+    ) -> some View {
+        let selected = selectedPlan == choice
+        return Button {
+            Haptics.select()
+            selectedPlan = choice
+        } label: {
+            HStack(alignment: .top, spacing: 13) {
+                Image(systemName: selected ? "largecircle.fill.circle" : "circle")
+                    .font(.system(size: 22))
+                    .foregroundStyle(selected ? MF.ember : subtleBorder)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(title)
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundStyle(primaryText)
+                        Spacer()
+                        Text(price)
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(choice == .pro ? MF.ember : secondaryText)
+                    }
+                    Text(detail)
+                        .font(.system(size: 13.5))
+                        .foregroundStyle(secondaryText)
+                        .lineSpacing(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(16)
+            .background(elevatedBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(selected ? MF.ember : subtleBorder, lineWidth: selected ? 1.5 : 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
-    private var payoffHits: [FounderCard] {
-        if !state.deck.isEmpty { return Array(state.deck.prefix(3)) }
-        // Deck kommt erst nach dem Onboarding — bis dahin passende Beispiel-Treffer.
+    private var briefSummary: String {
+        let industry = selectedIndustry?.label ?? "dein Bereich"
+        let place = region.trimmingCharacters(in: .whitespacesAndNewlines)
+        if mode == .skills {
+            return "\(pitch.trimmingCharacters(in: .whitespacesAndNewlines)) · \(industry) · \(place). Daraus ergibt sich dieser erste Einsatzplan:"
+        }
+        return "\(pitch.trimmingCharacters(in: .whitespacesAndNewlines)) · \(industry) · \(place). Daraus ergibt sich diese erste Reihenfolge:"
+    }
+
+    private var startBrief: [BriefItem] {
+        if mode == .skills {
+            return [
+                BriefItem(
+                    icon: "text.quote",
+                    tint: MF.ember,
+                    title: "Angebot in einen klaren Satz bringen",
+                    detail: "Aus deinem Können wird ein konkretes Ergebnis, das ein kleiner Betrieb sofort versteht."
+                ),
+                BriefItem(
+                    icon: "scope",
+                    tint: Color(hex: 0x3D63D8),
+                    title: "Passende Vorhaben in \(cleanRegion) finden",
+                    detail: "Nur Betriebe und Gründer anzeigen, zu denen Branche, Skills und Zeit wirklich passen."
+                ),
+                BriefItem(
+                    icon: "paperplane.fill",
+                    tint: Color(hex: 0x2E9B63),
+                    title: "Erstes Gespräch vorbereiten",
+                    detail: "Eine persönliche Nachricht mit klarem Nutzen statt einer allgemeinen Bewerbung."
+                ),
+            ]
+        }
+
+        let firstFocus = focusOptions.first { selectedFocus.contains($0.id) }
+        let firstTitle = firstFocus.map { "\($0.title) konkret klären" } ?? "Nächsten Schritt festlegen"
+
         return [
-            FounderCard(id: "onb-1", name: "Deniz Kaya", role: "Entwickler", city: "Frankfurt", pitch: "", skills: [], industryId: industryId ?? "agentur", availability: .fulltime, matchPercent: 91),
-            FounderCard(id: "onb-2", name: "Lena Hoffmann", role: "Vertrieb", city: region, pitch: "", skills: [], industryId: industryId ?? "handel", availability: .parttime, matchPercent: 87),
-            FounderCard(id: "onb-3", name: "Jonas Weber", role: "Meister im Betrieb", city: "Köln", pitch: "", skills: [], industryId: industryId ?? "handwerk", availability: .fulltime, matchPercent: 84),
+            BriefItem(
+                icon: firstFocus?.icon ?? "list.bullet.clipboard.fill",
+                tint: MF.ember,
+                title: firstTitle,
+                detail: firstFocusDetail(firstFocus?.id)
+            ),
+            BriefItem(
+                icon: "building.columns.fill",
+                tint: Color(hex: 0x3D63D8),
+                title: "\(localAuthorityLabel) und Pflichten prüfen",
+                detail: "Für \(selectedIndustry?.label ?? "deine Branche") in \(cleanRegion), mit offiziellen Quellen statt allgemeiner Listen."
+            ),
+            BriefItem(
+                icon: "person.2.fill",
+                tint: Color(hex: 0x2E9B63),
+                title: "Ein echtes Signal holen",
+                detail: "Ein Kundengespräch, Partnerkontakt oder Testtermin zeigt schneller als Planung, was wirklich trägt."
+            ),
         ]
     }
 
-    // ═══════════════════════════════════ Abschluss
-    private func finish() {
-        let roleLabels = roleOptions.filter { roles.contains($0.id) }.map(\.label)
-        let profile = MyProfile(
-            mode: .idea,
-            industryId: industryId ?? industries[0].id,
-            skills: roleLabels.isEmpty ? ["Organisation"] : roleLabels,
-            name: name.trimmingCharacters(in: .whitespaces).isEmpty
-                ? "Founder"
-                : name.trimmingCharacters(in: .whitespaces),
-            role: "Gründer:in",
-            pitch: "",
-            plz: region.trimmingCharacters(in: .whitespaces),
-            availability: availability,
-            birthdate: birthdaySet ? Self.birthdayFormatter.string(from: birthday) : nil
-        )
-        state.recordAchievement("Profil erstellt — willkommen an Bord.")
-        Haptics.success()
-        state.completeOnboarding(with: profile, launchAIAnalysis: false)
+    private var cleanRegion: String {
+        let clean = region.trimmingCharacters(in: .whitespacesAndNewlines)
+        return clean.isEmpty ? "deiner Region" : clean
     }
-}
 
-// ─── Bausteine ───────────────────────────────────────────────
-
-/// Schwebende Founder-Blase auf dem Welcome-Screen.
-private struct FloatingBubble: View {
-    let index: Int
-    let size: CGFloat
-    let initial: String
-    let active: Bool
-    let onTap: () -> Void
-    @State private var drift = false
-
-    var body: some View {
-        Button(action: onTap) {
-            Text(initial)
-                .font(.system(size: size * 0.34, weight: .heavy))
-                .foregroundStyle(.white)
-                .frame(width: size, height: size)
-                .background(.white.opacity(active ? 0.32 : 0.16))
-                .clipShape(Circle())
-                .overlay(Circle().stroke(.white.opacity(active ? 0.85 : 0.4), lineWidth: 1.5))
-                .shadow(color: active ? .black.opacity(0.35) : .clear, radius: 12, y: 8)
+    private var progressLabel: String {
+        switch step {
+        case .brief:
+            "Plan"
+        case .connect:
+            "Optional"
+        case .plan:
+            "Start"
+        default:
+            "\(step.rawValue + 1)/\(Step.focus.rawValue + 1)"
         }
-        .buttonStyle(.plain)
-        .offset(y: drift ? -10 : 4)
-        .animation(
-            .easeInOut(duration: 3.4 + Double(index) * 0.5).repeatForever(autoreverses: true),
-            value: drift
+    }
+
+    private var localAuthorityLabel: String {
+        switch industryID {
+        case "handwerk":
+            return "Handwerkskammer"
+        case "gastro", "lokal", "beauty":
+            return "Gewerbeamt"
+        case "gesundheit":
+            return "Zulassung"
+        default:
+            return "IHK/Gewerbeamt"
+        }
+    }
+
+    private func firstFocusDetail(_ id: String?) -> String {
+        switch id {
+        case "admin":
+            "Anmeldung, Genehmigungen und regionale Ansprechpartner in die richtige Reihenfolge bringen."
+        case "money":
+            "Einmalkosten, laufende Kosten und Preisuntergrenze als erste belastbare Zahlen erfassen."
+        case "customers":
+            "Eine kleine Zielgruppe wählen und drei konkrete Gespräche vorbereiten."
+        case "documents":
+            "Das erste wirklich benötigte Dokument gemeinsam erstellen, statt sechs leere Vorlagen anzulegen."
+        case "partner":
+            "Klären, welche Lücke wirklich fehlt, bevor du wahllos nach einem Co-Founder suchst."
+        default:
+            "Aus der Idee wird ein überschaubarer Ablauf für die nächsten sieben Tage."
+        }
+    }
+
+    private func integrationPurpose(_ provider: IntegrationProvider) -> String {
+        switch provider {
+        case .gmail:
+            "Wichtige Mails und Entwürfe im Morgenbriefing"
+        case .googleCalendar:
+            "Termine vorbereiten und auf Bestätigung eintragen"
+        case .whatsapp:
+            "Nachrichten-Signale aus Kunden- und Team-Chats"
+        }
+    }
+
+    private func availabilityIcon(_ value: Availability) -> String {
+        switch value {
+        case .fulltime:
+            "sun.max.fill"
+        case .parttime:
+            "clock.fill"
+        case .weekend:
+            "moon.stars.fill"
+        }
+    }
+
+    private func toggle(_ value: String, in selection: inout Set<String>, limit: Int) {
+        if selection.contains(value) {
+            selection.remove(value)
+        } else if selection.count < limit {
+            selection.insert(value)
+        } else {
+            Haptics.heavy()
+        }
+    }
+
+    private func prefillNameIfNeeded() {
+        guard !didPrefill else { return }
+        didPrefill = true
+        let suggested = state.authUser?.displayName.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !suggested.isEmpty, !suggested.contains("@") {
+            name = suggested
+        }
+    }
+
+    private func focusCurrentField() {
+        focusedField = nil
+        let target: InputField?
+        switch step {
+        case .name:
+            target = .name
+        case .description:
+            target = .pitch
+        case .location:
+            target = .region
+        default:
+            target = nil
+        }
+        guard let target else { return }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(280))
+            focusedField = target
+        }
+    }
+
+    private func advance() {
+        guard canContinue else {
+            Haptics.heavy()
+            return
+        }
+        focusedField = nil
+        guard let next = Step(rawValue: step.rawValue + 1) else { return }
+        direction = 1
+        Haptics.tap()
+        withAnimation(.easeOut(duration: 0.28)) {
+            step = next
+        }
+    }
+
+    private func goBack() {
+        guard let previous = Step(rawValue: step.rawValue - 1) else { return }
+        focusedField = nil
+        direction = -1
+        Haptics.select()
+        withAnimation(.easeOut(duration: 0.28)) {
+            step = previous
+        }
+    }
+
+    private func finish() {
+        guard let mode,
+              let industryID,
+              let availability
+        else {
+            Haptics.heavy()
+            return
+        }
+
+        let cleanName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanPitch = pitch.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanLocation = region.trimmingCharacters(in: .whitespacesAndNewlines)
+        let profile = MyProfile(
+            mode: mode,
+            industryId: industryID,
+            skills: selectedSkills.sorted(),
+            name: cleanName,
+            role: mode == .skills ? "Skill-Partner:in" : "Gründer:in",
+            pitch: cleanPitch,
+            plz: cleanLocation,
+            availability: availability,
+            birthdate: nil
         )
-        .onAppear { drift = true }
+
+        let focusLabels = focusOptions
+            .filter { selectedFocus.contains($0.id) }
+            .map(\.title)
+        state.mergeCopilotFacts([
+            "Onboarding: Arbeitsmodus \(mode == .skills ? "Skill-Partner" : "eigenes Business").",
+            "Onboarding: Der Co-Pilot soll zuerst bei \(focusLabels.joined(separator: ", ")) helfen.",
+            "Onboarding: Verfügbare Zeit \(availability.label).",
+        ])
+        state.recordAchievement("Startprofil eingerichtet.")
+
+        let usePro = selectedPlan == .pro
+        if usePro {
+            state.activateTrial(days: 3)
+        }
+        state.completeOnboarding(
+            with: profile,
+            launchAIAnalysis: usePro,
+            showAppTourAfter: false
+        )
     }
 }
 
-/// Einfaches Flow-Layout für Tag-Wolken (wird app-weit genutzt).
+/// Einfaches Flow-Layout für Tags und kompakte Auswahl-Chips.
 struct FlowLayout: Layout {
     var spacing: CGFloat = 8
 
@@ -888,23 +1254,36 @@ struct FlowLayout: Layout {
         layout(proposal: proposal, subviews: subviews).size
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    func placeSubviews(
+        in bounds: CGRect,
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout ()
+    ) {
         let result = layout(proposal: proposal, subviews: subviews)
-        for (idx, pos) in result.positions.enumerated() {
-            subviews[idx].place(at: CGPoint(x: bounds.minX + pos.x, y: bounds.minY + pos.y),
-                                proposal: .unspecified)
+        for (index, position) in result.positions.enumerated() {
+            subviews[index].place(
+                at: CGPoint(x: bounds.minX + position.x, y: bounds.minY + position.y),
+                proposal: .unspecified
+            )
         }
     }
 
-    private func layout(proposal: ProposedViewSize, subviews: Subviews) -> (size: CGSize, positions: [CGPoint]) {
+    private func layout(
+        proposal: ProposedViewSize,
+        subviews: Subviews
+    ) -> (size: CGSize, positions: [CGPoint]) {
         let proposedWidth = proposal.width ?? 0
         let hasFiniteWidth = proposedWidth.isFinite && proposedWidth > 0
         let maxWidth = hasFiniteWidth ? proposedWidth : CGFloat.greatestFiniteMagnitude
         var positions: [CGPoint] = []
-        var x: CGFloat = 0, y: CGFloat = 0, rowHeight: CGFloat = 0
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
         var contentWidth: CGFloat = 0
-        for sub in subviews {
-            let size = sub.sizeThatFits(.unspecified)
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
             if x + size.width > maxWidth, x > 0 {
                 contentWidth = max(contentWidth, x - spacing)
                 x = 0
@@ -915,7 +1294,14 @@ struct FlowLayout: Layout {
             x += size.width + spacing
             rowHeight = max(rowHeight, size.height)
         }
+
         contentWidth = max(contentWidth, x > 0 ? x - spacing : 0)
-        return (CGSize(width: hasFiniteWidth ? proposedWidth : contentWidth, height: y + rowHeight), positions)
+        return (
+            CGSize(
+                width: hasFiniteWidth ? proposedWidth : contentWidth,
+                height: y + rowHeight
+            ),
+            positions
+        )
     }
 }

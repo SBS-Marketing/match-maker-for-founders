@@ -3,6 +3,9 @@ project_id = "rzmcoxnfcpqqyxgkafwk"
 [functions.copilot]
 verify_jwt = false
 
+[functions.copilot-worker]
+verify_jwt = false
+
 [functions.connect-google]
 verify_jwt = false
 

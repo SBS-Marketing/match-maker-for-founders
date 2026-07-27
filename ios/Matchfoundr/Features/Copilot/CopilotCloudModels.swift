@@ -78,7 +78,7 @@ struct CopilotAppContext: Encodable {
             "open_matches", "draft_match_message", "remember_fact", "refresh_live_data",
             "web_research_sources", "find_authority_contacts",
             "use_mcp_connector", "mcp_read_context", "mcp_prepare_action", "mcp_request_confirmation",
-            "slack_post_confirmed"
+            "slack_post_confirmed", "email_draft", "gmail_send_confirmed"
         ],
         rule: "Wenn eine Antwort eine App-Aktion braucht, formuliere sie konkret und gib passende navigation/follow_up_aktionen nur dann, wenn sie jetzt wirklich helfen. Bei Fragen zu Kammer, Amt, Genehmigung oder Ansprechpartnern nutze Web-Recherche und gib sources zurueck, wenn die Quellen konkret verwendet wurden. MCP-Werkzeuge sind stille Faehigkeiten: nutze sie nur bei echtem Kontextnutzen, nenne fehlende Verknuepfungen nur bei Bedarf, und verlange vor externen Schreibaktionen immer eine Bestaetigung."
     )
@@ -145,12 +145,14 @@ struct CopilotOnboardingSkills: Encodable {
 
 struct CopilotCloudResponse: Decodable {
     let answer: String?
+    let followUpQuestion: String?
     let quickActions: [String]?
     let navigation: [CopilotCloudNav]?
     let appActions: [CopilotCloudAppAction]?
     let newFacts: [String]?
     let sources: [CopilotSource]?
     let celebratedWin: String?
+    let pending: Bool?
     let error: String?
 }
 
@@ -164,6 +166,10 @@ struct CopilotCloudAppAction: Decodable {
     let channelId: String?
     let channel: String?
     let message: String?
+    let recipient: String?
+    let to: String?
+    let subject: String?
+    let body: String?
 }
 
 struct CopilotCloudNav: Decodable {

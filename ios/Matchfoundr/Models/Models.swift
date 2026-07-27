@@ -698,14 +698,18 @@ struct CopilotMessage: Identifiable, Codable {
     let text: String
     var navigation: [CopilotNav] = []
     var actions: [CopilotAction] = []
+    var followUpQuestion: String?
     var quickReplies: [String] = []
     var choices: [CopilotChoice] = []
     var sources: [CopilotSource] = []
+    var emailDraft: CopilotEmailDraft?
     var memory: FounderMemorySnapshot?
     var source: CopilotAnswerSource = .local
     var createdAt: Date = .now
     /// Vom Co-Pilot in dieser Antwort gefeierter Meilenstein (ephemeral, nicht persistiert).
     var celebratedWin: String? = nil
+    /// Die Execution-Ebene arbeitet nach der Sofortantwort noch weiter.
+    var backgroundWorkPending: Bool = false
 
     init(
         id: UUID = UUID(),
@@ -713,30 +717,36 @@ struct CopilotMessage: Identifiable, Codable {
         text: String,
         actions: [CopilotAction] = [],
         navigation: [CopilotNav] = [],
+        followUpQuestion: String? = nil,
         quickReplies: [String] = [],
         choices: [CopilotChoice] = [],
         sources: [CopilotSource] = [],
+        emailDraft: CopilotEmailDraft? = nil,
         memory: FounderMemorySnapshot? = nil,
         source: CopilotAnswerSource = .local,
         createdAt: Date = .now,
-        celebratedWin: String? = nil
+        celebratedWin: String? = nil,
+        backgroundWorkPending: Bool = false
     ) {
         self.id = id
         self.mine = mine
         self.text = text
         self.actions = actions
         self.navigation = navigation
+        self.followUpQuestion = followUpQuestion
         self.quickReplies = quickReplies
         self.choices = choices
         self.sources = sources
+        self.emailDraft = emailDraft
         self.memory = memory
         self.source = source
         self.createdAt = createdAt
         self.celebratedWin = celebratedWin
+        self.backgroundWorkPending = backgroundWorkPending
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, mine, text, quickReplies, choices, sources, source, createdAt
+        case id, mine, text, quickReplies, choices, sources, emailDraft, source, createdAt
     }
 
     init(from decoder: Decoder) throws {
@@ -747,11 +757,93 @@ struct CopilotMessage: Identifiable, Codable {
         quickReplies = try container.decodeIfPresent([String].self, forKey: .quickReplies) ?? []
         choices = try container.decodeIfPresent([CopilotChoice].self, forKey: .choices) ?? []
         sources = try container.decodeIfPresent([CopilotSource].self, forKey: .sources) ?? []
+        emailDraft = try container.decodeIfPresent(CopilotEmailDraft.self, forKey: .emailDraft)
         source = try container.decodeIfPresent(CopilotAnswerSource.self, forKey: .source) ?? .local
         createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? .now
         navigation = []
         actions = []
+        followUpQuestion = nil
         memory = nil
+        celebratedWin = nil
+        backgroundWorkPending = false
+    }
+}
+
+struct CopilotEmailDraft: Identifiable, Codable, Hashable {
+    let id: UUID
+    var recipientName: String
+    var to: String
+    var subject: String
+    var body: String
+
+    init(
+        id: UUID = UUID(),
+        recipientName: String = "",
+        to: String = "",
+        subject: String,
+        body: String
+    ) {
+        self.id = id
+        self.recipientName = recipientName
+        self.to = to
+        self.subject = subject
+        self.body = body
+    }
+
+    static func legacy(from text: String, context: String = "") -> CopilotEmailDraft? {
+        let lines = text.components(separatedBy: .newlines)
+        guard let subjectIndex = lines.firstIndex(where: {
+            $0.trimmingCharacters(in: .whitespaces)
+                .lowercased()
+                .hasPrefix("betreff:")
+        }) else {
+            return nil
+        }
+        let subjectLine = lines[subjectIndex].trimmingCharacters(in: .whitespacesAndNewlines)
+        let subject = subjectLine
+            .dropFirst("Betreff:".count)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !subject.isEmpty else { return nil }
+
+        let remaining = lines.dropFirst(subjectIndex + 1)
+        let bodyStart = remaining.firstIndex(where: { line in
+            let clean = line.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            return clean.hasPrefix("sehr geehrt")
+                || clean.hasPrefix("guten tag")
+                || clean.hasPrefix("hallo")
+                || clean.hasPrefix("hi ")
+                || clean == "hi"
+        }) ?? remaining.startIndex
+        let mailLines = Array(remaining[bodyStart...])
+        let stopIndex = mailLines.firstIndex(where: { line in
+            let clean = line
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased()
+            return clean == "---"
+                || clean.hasPrefix("wichtige hinweise")
+                || clean.hasPrefix("quellen:")
+                || clean.hasPrefix("du kannst die e-mail")
+                || clean.hasPrefix("du kannst die email")
+                || clean.hasPrefix("fertig zum öffnen")
+                || clean.hasPrefix("fertig zum offnen")
+        }) ?? mailLines.endIndex
+        let body = mailLines[..<stopIndex]
+            .joined(separator: "\n")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard body.count >= 20 else { return nil }
+
+        let searchable = context.isEmpty ? text : "\(context)\n\(text)"
+        let range = NSRange(searchable.startIndex..., in: searchable)
+        let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
+        let emailURL = detector?
+            .matches(in: searchable, range: range)
+            .compactMap(\.url)
+            .first(where: { $0.scheme == "mailto" })
+        let to = emailURL?
+            .absoluteString
+            .replacingOccurrences(of: "mailto:", with: "")
+            .removingPercentEncoding ?? ""
+        return CopilotEmailDraft(to: to, subject: subject, body: body)
     }
 }
 

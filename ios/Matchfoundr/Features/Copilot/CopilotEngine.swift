@@ -12,6 +12,18 @@ enum CopilotEngine {
         history: [CopilotMessage],
         sessionID: UUID? = nil
     ) async -> CopilotMessage {
+        if let clarification = clarificationQuestion(
+            for: message,
+            state: state,
+            history: history
+        ) {
+            return CopilotMessage(
+                mine: false,
+                text: clarification,
+                source: .local
+            )
+        }
+
         let localText = message.lowercased()
         let nativeHint = requiresNativeControl(localText) ? localAnswer(for: message, state: state) : nil
 
@@ -39,37 +51,39 @@ enum CopilotEngine {
                   !answer.isEmpty else {
                 throw URLError(.badServerResponse)
             }
-            let newFacts = response.newFacts ?? []
             let quickActions = Array((response.quickActions ?? []).prefix(4))
-            // Sichere lokale Aktionen sofort ausführen: der Co-Pilot sagt "mach ich",
-            // also passiert es auch. Was ausgeführt wurde, wird kein Chip mehr.
+            let followUpQuestion = response.followUpQuestion?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            // Nur internes Merken darf still passieren. Kalender und Board
+            // bleiben als sichtbare Bestätigung, genau wie externe Aktionen.
             let pendingCloudActions = (response.appActions ?? []).filter { !autoRun($0, state: state) }
-            let structuredActions = pendingCloudActions.compactMap(structuredAction(from:))
+            let emailDraft = pendingCloudActions.compactMap(emailDraft(from:)).first
+                ?? fallbackEmailDraft(answer: answer, request: message, history: history)
+            let visibleAnswer = emailDraft == nil
+                ? answer
+                : "Der E-Mail-Entwurf ist fertig. Du kannst ihn direkt bearbeiten oder versenden."
+            let structuredActions = pendingCloudActions
+                .filter { $0.action != "email_draft" }
+                .compactMap(structuredAction(from:))
             let nativeActions = structuredActions + (nativeHint?.actions ?? [])
             let navigation = (response.navigation ?? []).compactMap(nativeNav(from:))
             let rawWin = response.celebratedWin?.trimmingCharacters(in: .whitespacesAndNewlines)
             let celebratedWin = (rawWin?.isEmpty == false) ? rawWin : nil
             if let win = celebratedWin { state.recordAchievement(win) }
-            let choiceReplies = choiceReplies(for: answer, quickActions: quickActions, state: state)
-            let quickReplies = choiceReplies.isEmpty
-                ? quickActions.filter {
-                    nativeAction(from: $0, answer: answer, newFacts: newFacts, state: state) == nil
-                        && !isQuestionLikeFollowUp($0)
-                }
-                : choiceReplies
+            let hasExplicitChoice = followUpQuestion?.isEmpty == false && quickActions.count >= 2
+            let quickReplies = hasExplicitChoice ? quickActions : []
             return CopilotMessage(
                 mine: false,
-                text: answer,
-                actions: dedupeActions(
-                    cloudActions(for: answer, quickActions: quickActions, newFacts: newFacts, state: state)
-                    + nativeActions
-                ),
+                text: visibleAnswer,
+                actions: dedupeActions(nativeActions),
                 navigation: navigation.isEmpty ? (nativeHint?.navigation ?? []) : navigation,
-                quickReplies: quickReplies.isEmpty ? (nativeHint?.quickReplies ?? []) : quickReplies,
+                followUpQuestion: hasExplicitChoice ? followUpQuestion : nil,
+                quickReplies: quickReplies,
                 sources: Array((response.sources ?? []).prefix(5)),
-                memory: state.founderMemory,
+                emailDraft: emailDraft,
                 source: .cloud,
-                celebratedWin: celebratedWin
+                celebratedWin: celebratedWin,
+                backgroundWorkPending: response.pending == true
             )
         } catch {
             return liveUnavailableAnswer(error, state: state, retryPrompt: message)
@@ -111,6 +125,101 @@ enum CopilotEngine {
             return "Die Supabase Function `copilot` war nicht erreichbar."
         }
         return error.localizedDescription
+    }
+
+    @MainActor
+    private static func clarificationQuestion(
+        for message: String,
+        state: AppState,
+        history: [CopilotMessage]
+    ) -> String? {
+        let text = normalized(message)
+
+        if needsConcreteLocation(text),
+           !hasUsableLocation(state.founderMemory.location),
+           !recentHistoryContainsLocationAnswer(history) {
+            return "Für welche Stadt oder PLZ soll ich das prüfen?"
+        }
+
+        if isBareEmailDraftRequest(text), !conversationHasEmailRecipient(message, history: history) {
+            return "An wen soll die E-Mail gehen?"
+        }
+
+        return nil
+    }
+
+    private static func needsConcreteLocation(_ text: String) -> Bool {
+        let explicitlyLocal = [
+            "in meiner nahe", "bei mir", "meine region", "meiner region",
+            "vor ort", "zustandig", "welche kammer", "welches amt",
+            "regionale forder",
+        ].contains(where: text.contains)
+        if explicitlyLocal { return true }
+
+        let asksForConcreteLookup = [
+            "finde", "such ", "suche", "wer ist", "kontakt", "ansprechpartner",
+            "adresse", "telefon", "termin buchen",
+        ].contains(where: text.contains)
+        let locationChangesResult = [
+            "hwk", "ihk", "kammer", "gewerbeamt", "finanzamt", "behorde",
+            "beratung", "forderung", "event",
+        ].contains(where: text.contains)
+        return asksForConcreteLookup && locationChangesResult
+    }
+
+    private static func hasUsableLocation(_ value: String) -> Bool {
+        let clean = normalized(value)
+        guard clean.count >= 2 else { return false }
+        return !["dach", "deutschland", "unbekannt", "noch offen", "keine angabe"]
+            .contains(clean)
+    }
+
+    private static func recentHistoryContainsLocationAnswer(_ history: [CopilotMessage]) -> Bool {
+        let recent = Array(history.suffix(6))
+        for index in recent.indices where !recent[index].mine {
+            let question = normalized(recent[index].text)
+            guard question.contains("stadt oder plz") || question.contains("ort oder plz") else {
+                continue
+            }
+            let nextIndex = recent.index(after: index)
+            if nextIndex < recent.endIndex,
+               recent[nextIndex].mine,
+               recent[nextIndex].text.trimmingCharacters(in: .whitespacesAndNewlines).count >= 2 {
+                return true
+            }
+        }
+        return false
+    }
+
+    private static func isBareEmailDraftRequest(_ text: String) -> Bool {
+        let mentionsEmail = text.contains("mail")
+        let wantsDraft = ["schreib", "formulier", "vorbereit", "entwurf", "verfass"]
+            .contains(where: text.contains)
+        return mentionsEmail && wantsDraft
+    }
+
+    private static func conversationHasEmailRecipient(
+        _ message: String,
+        history: [CopilotMessage]
+    ) -> Bool {
+        let current = normalized(message)
+        if current.contains(" an ") || current.contains(" fur ") {
+            return true
+        }
+
+        let recent = ([message] + history.suffix(5).map(\.text))
+            .joined(separator: "\n")
+            .lowercased()
+        if recent.contains("@") { return true }
+        return ["ansprechpartner", "frau ", "herr ", "dr. ", "kontakt:"]
+            .contains(where: recent.contains)
+    }
+
+    private static func normalized(_ value: String) -> String {
+        value
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .folding(options: .diacriticInsensitive, locale: Locale(identifier: "de_DE"))
     }
 
     @MainActor
@@ -1062,103 +1171,6 @@ enum CopilotEngine {
         "\(match.card.name) · \(match.card.matchPercent)%"
     }
 
-    private static func defaultActions(for answer: String) -> [CopilotAction] {
-        let lower = answer.lowercased()
-        if matches(lower, "unterlagen", "businessplan", "startkosten", "finanzplan", "antrag", "anmeldung") {
-            return [
-                action("Unterlagen öffnen", "folder.fill", .open(.screen(.documents))),
-                action("PDF erstellen", "doc.richtext.fill", .exportDocumentPDF),
-                action("Kalender öffnen", "calendar", .open(.screen(.calendar))),
-            ]
-        }
-        if matches(lower, "founder radar", "business radar", "readiness", "risiko", "score") {
-            return [
-                action("Business Radar", "scope", .open(.screen(.radar))),
-                action("Live neu berechnen", "arrow.clockwise", .refreshFounderRadar),
-            ]
-        }
-        if matches(lower, "match", "co-founder", "mitgründer", "mitgruender", "partner", "kontakt", "anschreiben") {
-            return [
-                action("Partner-Check", "person.2.fill", .open(.screen(.cofounderDesk))),
-                action("Chats öffnen", "bubble.left.and.bubble.right.fill", .open(.screen(.chats))),
-            ]
-        }
-        if matches(lower, "firmenprofil", "profil", "seite", "landingpage") {
-            return [
-                action("Firmenprofil", "building.2.fill", .open(.screen(.company))),
-                action("Plan öffnen", "calendar", .open(.screen(.calendar))),
-            ]
-        }
-        return [
-            action("Kalender öffnen", "calendar", .open(.screen(.calendar))),
-            action("Memory zeigen", "brain.head.profile", .open(.screen(.calendar))),
-        ]
-    }
-
-    @MainActor
-    private static func cloudActions(for answer: String, quickActions: [String], newFacts: [String], state: AppState) -> [CopilotAction] {
-        var actions = defaultActions(for: answer)
-
-        for quickAction in quickActions {
-            if let action = nativeAction(from: quickAction, answer: answer, newFacts: newFacts, state: state) {
-                actions.insert(action, at: 0)
-            }
-        }
-
-        if let fact = newFacts.first {
-            actions.insert(action("Memory speichern", "brain.head.profile", .rememberFact(fact)), at: 0)
-        }
-
-        if canFoundStartup(state: state)
-            && !state.hasStartupWorkspace
-            && matches(answer.lowercased(), "startup", "business", "betrieb", "workspace", "gründen", "gruenden", "firma", "gewerbe", "vorhaben") {
-            actions.append(startupFoundingAction(state: state))
-        }
-
-        return dedupeActions(actions)
-    }
-
-    @MainActor
-    private static func nativeAction(from label: String, answer: String, newFacts: [String], state: AppState) -> CopilotAction? {
-        let lower = label.lowercased()
-        if matches(lower, "termin", "kalender", "eintrag", "eintragen", "planen", "slot") {
-            return action("Termin eintragen", "calendar.badge.plus", .addSmartPlannerItem(
-                title: inferredPlannerTitle(from: label, answer: answer),
-                note: inferredPlannerNote(from: answer),
-                dueLabel: inferredDueLabel(from: "\(label)\n\(answer)"),
-                kind: inferredPlannerKind(from: "\(label)\n\(answer)"),
-                target: inferredPlannerTarget(from: "\(label)\n\(answer)"),
-                assigneeName: state.profile?.name
-            ))
-        }
-        if matches(lower, "memory", "merken", "speichern", "verzeichnis") {
-            let fact = newFacts.first ?? inferredFact(from: answer, state: state)
-            return action("Memory speichern", "brain.head.profile", .rememberFact(fact))
-        }
-        if matches(lower, "startup gründen", "startup gruenden", "business starten", "business anlegen", "betrieb anlegen", "geschäft anlegen", "geschaeft anlegen", "workspace gründen", "workspace gruenden", "firma anlegen", "vorhaben anlegen") {
-            guard canFoundStartup(state: state) else {
-                return action("Profilmodus prüfen", "person.text.rectangle.fill", .open(.tab(.profile)))
-            }
-            return startupFoundingAction(state: state)
-        }
-        if matches(lower, "firmenprofil", "profil", "builder", "seite") {
-            return action("Firmenprofil öffnen", "building.2.fill", .open(.screen(.company)))
-        }
-        if matches(lower, "pdf", "export", "teilen", "datei erstellen") {
-            return action("PDF erstellen", "doc.richtext.fill", .exportDocumentPDF)
-        }
-        if matches(lower, "unterlagen", "dokument", "businessplan", "startkosten", "finanzplan") {
-            return action("Unterlagen öffnen", "folder.fill", .open(.screen(.documents)))
-        }
-        if matches(lower, "match", "nachricht", "anschreiben", "chat") {
-            return action("Nachricht schreiben", "square.and.pencil", .askCopilot("Formuliere eine Nachricht an einen passenden Kontakt"))
-        }
-        if matches(lower, "partner", "growth", "kapital", "steuer", "mentor", "talent") {
-            return action("Partner öffnen", "person.crop.circle.badge.checkmark", .open(.screen(.partners(serviceHint(in: lower) ?? "all"))))
-        }
-        return nil
-    }
-
     @MainActor
     private static func startupFoundingAction(state: AppState) -> CopilotAction {
         let profile = state.profile
@@ -1204,72 +1216,6 @@ enum CopilotEngine {
             memory: state.founderMemory,
             source: .local
         )
-    }
-
-    @MainActor
-    private static func choiceReplies(for answer: String, quickActions: [String], state: AppState) -> [String] {
-        let lowerAnswer = answer.lowercased()
-        let combined = ([answer] + quickActions).joined(separator: " ").lowercased()
-
-        if mentionsSoloOrCofounder(combined) {
-            if state.profile?.mode == .skills {
-                return [
-                    "Ich will als Skill-Partner mitmachen.",
-                    "Ich will als Partner auf Augenhöhe einsteigen.",
-                    "Ich habe doch eine eigene Idee."
-                ]
-            }
-            return [
-                "Ich starte erstmal solo.",
-                "Ich suche aktiv einen Partner oder Mitstreiter.",
-                "Ich bin noch unsicher."
-            ]
-        }
-
-        if matches(lowerAnswer, "bist du da schon klarer", "hast du dich entschieden", "was fühlt sich", "was fuehlt sich") {
-            return [
-                "Ja, ich habe mich entschieden.",
-                "Nein, ich bin noch unsicher.",
-                "Hilf mir beim Einordnen."
-            ]
-        }
-
-        if matches(combined, "budget", "kosten", "startkosten", "kapital") {
-            return [
-                "Ich will klein starten.",
-                "Ich kann etwas Budget einsetzen.",
-                "Ich brauche Finanzierung."
-            ]
-        }
-
-        if matches(combined, "wann", "heute", "morgen", "woche", "zeitplan", "deadline") {
-            return [
-                "Heute angehen.",
-                "Diese Woche planen.",
-                "Später priorisieren."
-            ]
-        }
-
-        if matches(combined, "verfügbarkeit", "verfuegbarkeit", "zeit investieren", "stunden") {
-            return [
-                "1-3 Stunden pro Woche.",
-                "4-8 Stunden pro Woche.",
-                "Mehr als 10 Stunden pro Woche."
-            ]
-        }
-
-        return []
-    }
-
-    private static func mentionsSoloOrCofounder(_ text: String) -> Bool {
-        matches(text, "solo", "allein", "selbst starten")
-            && matches(text, "co-founder", "cofounder", "mitgründer", "mitgruender", "partner")
-    }
-
-    private static func isQuestionLikeFollowUp(_ text: String) -> Bool {
-        let lower = text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        return lower.hasSuffix("?")
-            || matches(lower, "was ", "welche ", "welchen ", "wie ", "warum ", "wieso ", "ob du ", "fühlt sich", "fuehlt sich")
     }
 
     private static func dedupeActions(_ actions: [CopilotAction]) -> [CopilotAction] {
@@ -1348,24 +1294,14 @@ enum CopilotEngine {
     }
 
     /// Backend-validierte App-Aktion → ausführbarer Chip.
-    /// Führt sichere, lokale und umkehrbare Aktionen sofort aus — der Co-Pilot
-    /// kündigt sie im Text an ("trag ich dir ein"), also müssen sie auch passieren.
-    /// Bewusst NICHT automatisch: `open_screen` (würde den User wegreißen) und
-    /// `slack_post` (externe Schreibaktion, bleibt bestätigungspflichtig).
+    /// Nur internes Merken läuft automatisch. Änderungen an Kalender, Board
+    /// oder verbundenen Diensten brauchen immer einen sichtbaren User-Tap.
     /// Gibt true zurück, wenn ausgeführt — dann entfällt der Chip.
     @MainActor
     private static func autoRun(_ cloud: CopilotCloudAppAction, state: AppState) -> Bool {
         let title = (cloud.title ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        let note = (cloud.note ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty else { return false }
         switch cloud.action {
-        case "add_calendar_item":
-            let due = (cloud.due ?? "").isEmpty ? "Diese Woche" : cloud.due!
-            state.addPlannerItem(title: title, note: note, dueLabel: due, kind: .focus, target: nil)
-            return true
-        case "add_kanban_card":
-            KanbanStore.shared.add(title: title, note: note)
-            return true
         case "remember_fact":
             state.rememberCopilotFact(title)
             return true
@@ -1409,6 +1345,38 @@ enum CopilotEngine {
         default:
             return nil
         }
+    }
+
+    private static func emailDraft(from cloud: CopilotCloudAppAction) -> CopilotEmailDraft? {
+        guard cloud.action == "email_draft" else { return nil }
+        let subject = (cloud.subject ?? cloud.title ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let body = (cloud.body ?? cloud.message ?? cloud.note ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !subject.isEmpty, !body.isEmpty else { return nil }
+        return CopilotEmailDraft(
+            recipientName: (cloud.recipient ?? "").trimmingCharacters(in: .whitespacesAndNewlines),
+            to: (cloud.to ?? "").trimmingCharacters(in: .whitespacesAndNewlines),
+            subject: subject,
+            body: body
+        )
+    }
+
+    private static func fallbackEmailDraft(
+        answer: String,
+        request: String,
+        history: [CopilotMessage]
+    ) -> CopilotEmailDraft? {
+        let lowerRequest = request.lowercased()
+        let asksForEmail = lowerRequest.contains("mail")
+            && ["schreib", "formulier", "vorbereit", "entwurf", "verfass"]
+                .contains(where: lowerRequest.contains)
+        guard asksForEmail || answer.localizedCaseInsensitiveContains("Betreff:") else {
+            return nil
+        }
+
+        let searchable = ([request, answer] + history.suffix(4).map(\.text)).joined(separator: "\n")
+        return CopilotEmailDraft.legacy(from: answer, context: searchable)
     }
 
     private static func screenDestination(_ id: String) -> CopilotDestination? {
