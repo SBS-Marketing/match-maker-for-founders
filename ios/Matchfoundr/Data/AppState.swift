@@ -22,6 +22,9 @@ final class AppState: ObservableObject {
     var isAuthenticated: Bool { authUser != nil }
 
     // ─── Profil / Onboarding ─────────────────────────────────
+    @Published var appearance: AppAppearance = .system {
+        didSet { defaults.set(appearance.rawValue, forKey: "mf.appearance") }
+    }
     @Published var profile: MyProfile? {
         didSet { persistProfile() }
     }
@@ -967,6 +970,7 @@ final class AppState: ObservableObject {
     private var eventRefreshTask: Task<Void, Never>?
 
     private init() {
+        appearance = AppAppearance(rawValue: defaults.string(forKey: "mf.appearance") ?? "") ?? .system
         purgeLegacySeedStateIfNeeded()
         loadProfile()
         loadWorkspaceData()

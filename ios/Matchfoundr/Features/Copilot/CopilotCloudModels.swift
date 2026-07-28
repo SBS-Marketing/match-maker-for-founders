@@ -105,6 +105,9 @@ struct CopilotOnboardingContext: Encodable {
     let copilotContext: String
     let context: CopilotOnboardingDetails
     let skills: CopilotOnboardingSkills
+    /// Die im Onboarding gewählten Schwerpunkte — bisher gingen sie nach dem
+    /// Startplan verloren, obwohl der Co-Pilot sie dauerhaft brauchen kann.
+    let focus: [String]
     let createdAt: String
 
     init(profile: MyProfile) {
@@ -117,6 +120,7 @@ struct CopilotOnboardingContext: Encodable {
         copilotContext = profile.industry.copilotContext
         context = CopilotOnboardingDetails(
             idea: profile.pitch.isEmpty ? nil : profile.pitch,
+            city: profile.plz.isEmpty ? nil : profile.plz,
             role: profile.role,
             stage: profile.mode == .idea ? "Idee" : "Skills-Profil",
             goal: "den nächsten belastbaren Schritt finden",
@@ -126,12 +130,53 @@ struct CopilotOnboardingContext: Encodable {
             selected: profile.skills,
             availability: profile.availability.hoursPerWeek
         )
+        // Nach dem Onboarding stecken die Schwerpunkte in den copilotFacts
+        // und gehen dem Modell darüber zu — hier bleibt das Feld leer.
+        focus = []
+        createdAt = ISO8601DateFormatter().string(from: .now)
+    }
+}
+
+extension CopilotOnboardingContext {
+    /// Variante für den Onboarding-Flow selbst: dort gibt es noch kein
+    /// `MyProfile`, die Antworten liegen nur im View-State.
+    init(
+        userName: String,
+        mode: FounderMode?,
+        pitch: String,
+        industry: Industry?,
+        region: String,
+        skills: [String],
+        availability: Availability?,
+        focus: [String]
+    ) {
+        self.userName = userName
+        path = mode == .skills ? "talent" : "founder"
+        self.industry = industry?.id ?? ""
+        industryLabel = industry?.label ?? ""
+        ventureTerm = industry?.ventureTerm ?? "Vorhaben"
+        partnerTerm = industry?.partnerTerm ?? "Partner"
+        copilotContext = industry?.copilotContext ?? ""
+        context = CopilotOnboardingDetails(
+            idea: pitch.isEmpty ? nil : pitch,
+            city: region.isEmpty ? nil : region,
+            role: mode == .skills ? "bietet Skills an" : "gründet selbst",
+            stage: "Onboarding, noch nicht gestartet",
+            goal: "den nächsten belastbaren Schritt finden",
+            risk: nil
+        )
+        self.skills = CopilotOnboardingSkills(
+            selected: skills,
+            availability: availability?.hoursPerWeek ?? 0
+        )
+        self.focus = focus
         createdAt = ISO8601DateFormatter().string(from: .now)
     }
 }
 
 struct CopilotOnboardingDetails: Encodable {
     let idea: String?
+    let city: String?
     let role: String
     let stage: String
     let goal: String
@@ -141,6 +186,79 @@ struct CopilotOnboardingDetails: Encodable {
 struct CopilotOnboardingSkills: Encodable {
     let selected: [String]
     let availability: Int
+}
+
+// ─── Onboarding: echter Startplan statt Template ──────────────
+
+/// Startet die Hintergrund-Recherche, sobald Vorhaben, Branche und Ort
+/// stehen. Läuft weiter, während der Nutzer die restlichen Fragen beantwortet.
+struct OnboardingResearchRequest: Encodable {
+    let task = "onboarding_research"
+    let message: String
+    let sessionID: UUID?
+    let extra: CopilotCloudExtra
+
+    enum CodingKeys: String, CodingKey {
+        case task, message, extra
+        case sessionID = "session_id"
+    }
+}
+
+struct OnboardingResearchResponse: Decodable {
+    let jobId: String?
+    let agent: String?
+    let error: String?
+}
+
+struct OnboardingBriefRequest: Encodable {
+    let task = "onboarding_brief"
+    let message: String
+    let sessionID: UUID?
+    let extra: OnboardingBriefExtra
+
+    enum CodingKeys: String, CodingKey {
+        case task, message, extra
+        case sessionID = "session_id"
+    }
+}
+
+struct OnboardingBriefExtra: Encodable {
+    let surface = "/onboarding"
+    let onboarding: CopilotOnboardingContext
+    let jobId: String?
+
+    enum CodingKeys: String, CodingKey {
+        case surface, onboarding
+        case jobId = "job_id"
+    }
+}
+
+struct OnboardingBriefResponse: Decodable {
+    let summary: String?
+    let regulatory: OnboardingRegulatory?
+    let steps: [OnboardingBriefStep]?
+    let sources: [CopilotSource]?
+    let researched: Bool?
+    let error: String?
+}
+
+struct OnboardingRegulatory: Decodable {
+    let level: String?
+    let title: String?
+    let detail: String?
+    let needsExpert: Bool?
+
+    var isCritical: Bool { level == "critical" }
+    var isRelevant: Bool {
+        guard let level, level != "none" else { return false }
+        return !(title ?? "").isEmpty
+    }
+}
+
+struct OnboardingBriefStep: Decodable {
+    let title: String
+    let detail: String
+    let icon: String?
 }
 
 struct CopilotCloudResponse: Decodable {

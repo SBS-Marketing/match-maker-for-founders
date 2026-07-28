@@ -4,48 +4,104 @@
 // (Ember = Aktion/nächster Schritt, Indigo = Co-Pilot).
 
 import SwiftUI
+import UIKit
+
+enum AppAppearance: String, CaseIterable, Identifiable {
+    case system
+    case light
+    case dark
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .system: "System"
+        case .light: "Hell"
+        case .dark: "Dunkel"
+        }
+    }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: nil
+        case .light: .light
+        case .dark: .dark
+        }
+    }
+}
 
 enum MF {
     // ─── Kernpalette ─────────────────────────────────────────
-    static let canvas = Color(hex: 0xFAF8F3)       // Seitenhintergrund
-    static let canvasDeep = Color(hex: 0xF4F0E8)   // Abschnittswechsel
-    static let surface = Color.white               // Karten
-    static let surfaceSoft = Color(hex: 0xF7F3EC)  // ruhige Innenflächen
-    static let ink = Color(hex: 0x17150F)          // Headlines / starker Text
-    static let inkSoft = Color(hex: 0x2A251F)
-    static let smoke = Color(hex: 0x6E665C)        // Fließtext
-    static let faint = Color(hex: 0x9A9286)        // Meta / Platzhalter
-    static let ember = Color(hex: 0xE2511C)        // Primärakzent
-    static let emberDeep = Color(hex: 0xB23B0E)
-    static let emberTint = Color(hex: 0xFBE7DA)    // aktive Pills, sanfte Füllungen
-    static let border = Color(hex: 0x17150F).opacity(0.09)
-    static let borderSoft = Color(hex: 0x17150F).opacity(0.055)
+    static let canvas = Color.adaptive(light: 0xFAF8F3, dark: 0x11110F)
+    static let canvasDeep = Color.adaptive(light: 0xF4F0E8, dark: 0x161512)
+    static let surface = Color.adaptive(light: 0xFFFFFF, dark: 0x1C1B18)
+    static let surfaceSoft = Color.adaptive(light: 0xF7F3EC, dark: 0x25231F)
+    static let ink = Color.adaptive(light: 0x17150F, dark: 0xF7F5EF)
+    static let inkSoft = Color.adaptive(light: 0x2A251F, dark: 0xE2DED5)
+    static let smoke = Color.adaptive(light: 0x6E665C, dark: 0xB9B2A8)
+    static let faint = Color.adaptive(light: 0x9A9286, dark: 0x8C857C)
+    static let ember = Color.adaptive(light: 0xE2511C, dark: 0xF86A35)
+    static let emberDeep = Color.adaptive(light: 0xB23B0E, dark: 0xFF8A5C)
+    static let emberTint = Color.adaptive(light: 0xFBE7DA, dark: 0x3A241A)
+    static let border = Color.adaptive(
+        light: 0x17150F, dark: 0xFFFFFF, lightAlpha: 0.09, darkAlpha: 0.13)
+    static let borderSoft = Color.adaptive(
+        light: 0x17150F, dark: 0xFFFFFF, lightAlpha: 0.055, darkAlpha: 0.075)
 
     // Indigo = Signalfarbe des Co-Pilot
-    static let indigo = Color(hex: 0x3756C4)
-    static let indigoDeep = Color(hex: 0x273F96)
-    static let indigoTint = Color(hex: 0xDEE7FB)
-    static let indigoInk = Color(hex: 0x26519E)
+    static let indigo = Color.adaptive(light: 0x3756C4, dark: 0x6E8AF0)
+    static let indigoDeep = Color.adaptive(light: 0x273F96, dark: 0x91A8FF)
+    static let indigoTint = Color.adaptive(light: 0xDEE7FB, dark: 0x222B45)
+    static let indigoInk = Color.adaptive(light: 0x26519E, dark: 0xAFC1FF)
 
     // ─── Gradients ───────────────────────────────────────────
     static let emberGrad = LinearGradient(
-        colors: [Color(hex: 0xF2622A), Color(hex: 0xE2511C), Color(hex: 0xB83C10)],
+        colors: [
+            Color.adaptive(light: 0xF2622A, dark: 0xFF7B45),
+            Color.adaptive(light: 0xE2511C, dark: 0xE85A25),
+            Color.adaptive(light: 0xB83C10, dark: 0xA83410),
+        ],
         startPoint: .topLeading, endPoint: .bottomTrailing)
     static let indigoGrad = LinearGradient(
-        colors: [Color(hex: 0x4B6FE2), Color(hex: 0x3756C4), Color(hex: 0x273F96)],
+        colors: [
+            Color.adaptive(light: 0x4B6FE2, dark: 0x718EF1),
+            Color.adaptive(light: 0x3756C4, dark: 0x4A65C9),
+            Color.adaptive(light: 0x273F96, dark: 0x2A3E88),
+        ],
         startPoint: .topLeading, endPoint: .bottomTrailing)
 
     // ─── Service-Palette (Farbe trägt Bedeutung) ─────────────
     struct ServiceHue { let hue: Color; let tint: Color; let ink: Color }
     static let services: [String: ServiceHue] = [
-        "cofounder": .init(hue: Color(hex: 0xE2511C), tint: Color(hex: 0xFCE6DA), ink: Color(hex: 0xA8390E)),
-        "legal":     .init(hue: Color(hex: 0x13957A), tint: Color(hex: 0xD8F1EA), ink: Color(hex: 0x0B6B57)),
-        "tax":       .init(hue: Color(hex: 0xD79014), tint: Color(hex: 0xF8ECCF), ink: Color(hex: 0x9A6608)),
-        "funding":   .init(hue: Color(hex: 0xE03A2E), tint: Color(hex: 0xFBDFDC), ink: Color(hex: 0xA82418)),
-        "capital":   .init(hue: Color(hex: 0x3A6FD6), tint: Color(hex: 0xDEE7FB), ink: Color(hex: 0x26519E)),
-        "mentor":    .init(hue: Color(hex: 0x8A55D2), tint: Color(hex: 0xECE2FA), ink: Color(hex: 0x623BA0)),
-        "talent":    .init(hue: Color(hex: 0x2E9E50), tint: Color(hex: 0xDBF1E1), ink: Color(hex: 0x1C7038)),
-        "growth":    .init(hue: Color(hex: 0xDB4B93), tint: Color(hex: 0xFBDEEC), ink: Color(hex: 0xA52E69)),
+        "cofounder": .init(hue: ember, tint: emberTint, ink: emberDeep),
+        "legal": .init(
+            hue: .adaptive(light: 0x13957A, dark: 0x37C5A4),
+            tint: .adaptive(light: 0xD8F1EA, dark: 0x173A32),
+            ink: .adaptive(light: 0x0B6B57, dark: 0x7BE0C6)),
+        "tax": .init(
+            hue: .adaptive(light: 0xD79014, dark: 0xE3AB3B),
+            tint: .adaptive(light: 0xF8ECCF, dark: 0x3B3019),
+            ink: .adaptive(light: 0x9A6608, dark: 0xF4C96C)),
+        "funding": .init(
+            hue: .adaptive(light: 0xE03A2E, dark: 0xF2675D),
+            tint: .adaptive(light: 0xFBDFDC, dark: 0x3D211F),
+            ink: .adaptive(light: 0xA82418, dark: 0xFF9B93)),
+        "capital": .init(
+            hue: .adaptive(light: 0x3A6FD6, dark: 0x6E91E8),
+            tint: .adaptive(light: 0xDEE7FB, dark: 0x202D4A),
+            ink: .adaptive(light: 0x26519E, dark: 0xAFC4FF)),
+        "mentor": .init(
+            hue: .adaptive(light: 0x8A55D2, dark: 0xA77AE5),
+            tint: .adaptive(light: 0xECE2FA, dark: 0x322546),
+            ink: .adaptive(light: 0x623BA0, dark: 0xD2B4FF)),
+        "talent": .init(
+            hue: .adaptive(light: 0x2E9E50, dark: 0x55BD71),
+            tint: .adaptive(light: 0xDBF1E1, dark: 0x203A27),
+            ink: .adaptive(light: 0x1C7038, dark: 0x89E29D)),
+        "growth": .init(
+            hue: .adaptive(light: 0xDB4B93, dark: 0xE86DAB),
+            tint: .adaptive(light: 0xFBDEEC, dark: 0x402438),
+            ink: .adaptive(light: 0xA52E69, dark: 0xFFABD3)),
     ]
 
     // ─── Radii ───────────────────────────────────────────────
@@ -60,8 +116,8 @@ enum MF {
         var large = false
         func body(content: Content) -> some View {
             content
-                .shadow(color: MF.ink.opacity(large ? 0.05 : 0.04), radius: large ? 3 : 1, y: large ? 2 : 1)
-                .shadow(color: MF.ink.opacity(large ? 0.24 : 0.18), radius: large ? 28 : 13, y: large ? 14 : 5)
+                .shadow(color: Color.black.opacity(large ? 0.08 : 0.06), radius: large ? 3 : 1, y: large ? 2 : 1)
+                .shadow(color: Color.black.opacity(large ? 0.34 : 0.24), radius: large ? 28 : 13, y: large ? 14 : 5)
         }
     }
     struct EmberGlow: ViewModifier {
@@ -219,6 +275,25 @@ enum Haptics {
 }
 
 extension Color {
+    static func adaptive(
+        light: UInt32,
+        dark: UInt32,
+        lightAlpha: CGFloat = 1,
+        darkAlpha: CGFloat = 1
+    ) -> Color {
+        Color(uiColor: UIColor { traits in
+            let isDark = traits.userInterfaceStyle == .dark
+            let value = isDark ? dark : light
+            let alpha = isDark ? darkAlpha : lightAlpha
+            return UIColor(
+                red: CGFloat((value >> 16) & 0xFF) / 255,
+                green: CGFloat((value >> 8) & 0xFF) / 255,
+                blue: CGFloat(value & 0xFF) / 255,
+                alpha: alpha
+            )
+        })
+    }
+
     init(hex: UInt32) {
         self.init(
             red: Double((hex >> 16) & 0xFF) / 255,

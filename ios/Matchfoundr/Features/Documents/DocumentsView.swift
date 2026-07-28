@@ -220,7 +220,7 @@ struct DocumentsView: View {
             .foregroundStyle(MF.ink)
             .frame(maxWidth: .infinity)
             .frame(height: 58)
-            .background(.white)
+            .background(MF.surface)
             .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
         }
         .buttonStyle(.plain)

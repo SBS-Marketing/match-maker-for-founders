@@ -77,27 +77,33 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "matchfoundr — Finde deinen Co-Founder" },
+      { title: "matchfoundr — Co-Founder, Kapital und Förderung für Gründer:innen" },
       {
         name: "description",
         content:
-          "Ein fokussiertes Netzwerk für Gründer:innen auf der Suche nach ihrem ersten Partner. Echte Profile, kein Lebenslauf-Theater.",
+          "matchfoundr bringt Gründer:innen mit Co-Founder, Kapital, Förderung, Recht, Steuer, Mentoren, Talent und Growth-Partnern zusammen — geführt vom KI-Co-Pilot.",
       },
       { name: "author", content: "matchfoundr" },
-      { property: "og:title", content: "matchfoundr — Finde deinen Co-Founder" },
+      {
+        property: "og:title",
+        content: "matchfoundr — Co-Founder, Kapital und Förderung für Gründer:innen",
+      },
       {
         property: "og:description",
         content:
-          "Ein fokussiertes Netzwerk für Gründer:innen auf der Suche nach ihrem ersten Partner. Echte Profile, kein Lebenslauf-Theater.",
+          "Die Plattform für Menschen, Programme und nächste Schritte rund um deine Gründung.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "matchfoundr — Finde deinen Co-Founder" },
+      { name: "twitter:site", content: "@matchfoundr" },
+      {
+        name: "twitter:title",
+        content: "matchfoundr — Co-Founder, Kapital und Förderung für Gründer:innen",
+      },
       {
         name: "twitter:description",
         content:
-          "Ein fokussiertes Netzwerk für Gründer:innen auf der Suche nach ihrem ersten Partner. Echte Profile, kein Lebenslauf-Theater.",
+          "Finde Menschen, Förderung und Experten, die deine Gründung wirklich weiterbringen.",
       },
       {
         property: "og:image",

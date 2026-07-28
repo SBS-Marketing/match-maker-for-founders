@@ -104,11 +104,11 @@ enum CopilotEngine {
             mine: false,
             text:
             """
-            Fehlgeschlagen. Die Verbindung zur Live-KI wurde nicht sauber erreicht.
+            Ich komme gerade nicht an meine Live-Daten.
 
-            Grund: \(reason)
+            \(reason)
 
-            Versuch es gleich erneut. Wenn es wieder scheitert, liegt es sehr wahrscheinlich an der Supabase Function `copilot` oder am Provider-Call dahinter.
+            Versuch es gleich noch einmal. Wenn es dann immer noch klemmt, liegt es an meiner Seite, nicht an dir — deine Eingaben sind gespeichert.
             """,
             actions: actions,
             memory: state.founderMemory,
@@ -119,12 +119,15 @@ enum CopilotEngine {
     private static func liveErrorReason(_ error: Error) -> String {
         let nsError = error as NSError
         if nsError.domain == NSURLErrorDomain, nsError.code == NSURLErrorTimedOut {
-            return "Die Anfrage hat länger als 120 Sekunden gedauert."
+            return "Die Antwort hat zu lange gedauert."
         }
         if nsError.domain == NSURLErrorDomain, nsError.code == NSURLErrorCannotConnectToHost {
-            return "Die Supabase Function `copilot` war nicht erreichbar."
+            return "Mein Server war nicht erreichbar."
         }
-        return error.localizedDescription
+        if nsError.domain == NSURLErrorDomain, nsError.code == NSURLErrorNotConnectedToInternet {
+            return "Dein Gerät ist gerade offline."
+        }
+        return "Die Verbindung ist abgebrochen."
     }
 
     @MainActor

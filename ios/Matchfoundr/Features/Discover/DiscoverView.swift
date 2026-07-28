@@ -1007,7 +1007,7 @@ private struct DealBadgeView: View {
         switch deal.badgeStyle {
         case "epic": MF.emberTint
         case "premium": MF.indigoTint
-        case "hot": Color(hex: 0xFFE5D6)
+        case "hot": Color.adaptive(light: 0xFFE5D6, dark: 0x42271C)
         default: MF.surfaceSoft
         }
     }
@@ -1016,7 +1016,7 @@ private struct DealBadgeView: View {
         switch deal.badgeStyle {
         case "epic": MF.emberDeep
         case "premium": MF.indigoInk
-        case "hot": Color(hex: 0xB94718)
+        case "hot": Color.adaptive(light: 0xB94718, dark: 0xFF9B70)
         default: MF.inkSoft
         }
     }
@@ -2397,14 +2397,14 @@ struct EventDetailView: View {
                         if registered {
                             HStack(spacing: 9) {
                                 Image(systemName: "checkmark.seal.fill")
-                                    .foregroundStyle(Color(hex: 0x1C7038))
+                                    .foregroundStyle(MF.services["talent"]!.ink)
                                 Text("Du bist angemeldet — wir sehen uns dort!")
                                     .font(.system(size: 13.5, weight: .semibold))
-                                    .foregroundStyle(Color(hex: 0x1C7038))
+                                    .foregroundStyle(MF.services["talent"]!.ink)
                             }
                             .frame(maxWidth: .infinity)
                             .padding(14)
-                            .background(Color(hex: 0xDBF1E1))
+                            .background(MF.services["talent"]!.tint)
                             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                         }
                     }

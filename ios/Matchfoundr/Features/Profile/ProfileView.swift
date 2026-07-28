@@ -57,6 +57,8 @@ struct ProfileView: View {
                         MSectionHead(text: "KI-Nutzung")
                         aiUsageCard
                         memoryAccessCard
+                        MSectionHead(text: "Darstellung")
+                        appearanceCard
                         MSectionHead(text: "Konto")
                         accountRows
                     }
@@ -809,6 +811,37 @@ struct ProfileView: View {
                 }
             }
         }
+    }
+
+    private var appearanceCard: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            HStack(spacing: 10) {
+                Image(systemName: "circle.lefthalf.filled")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(MF.emberDeep)
+                    .frame(width: 30, height: 30)
+                    .background(MF.emberTint)
+                    .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+                Text("Erscheinungsbild")
+                    .font(.system(size: 14.5, weight: .semibold))
+                    .foregroundStyle(MF.ink)
+                Spacer()
+            }
+
+            Picker("Erscheinungsbild", selection: $state.appearance) {
+                ForEach(AppAppearance.allCases) { appearance in
+                    Text(appearance.label).tag(appearance)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .onChange(of: state.appearance) { _, _ in Haptics.select() }
+        }
+        .padding(15)
+        .background(MF.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(MF.border, lineWidth: 1))
+        .warmShadow()
     }
 
     // ─── Konto-Zeilen ─────────────────────────────────────────

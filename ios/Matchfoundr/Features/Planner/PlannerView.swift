@@ -303,7 +303,7 @@ struct PlannerView: View {
                     .foregroundStyle(MF.indigoInk)
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
-                    .background(.white)
+                    .background(MF.surface)
                     .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
                 }
                 .buttonStyle(.plain)
@@ -359,7 +359,7 @@ struct PlannerView: View {
                 .foregroundStyle(MF.indigoInk)
                 .frame(maxWidth: .infinity)
                 .frame(height: 44)
-                .background(.white)
+                .background(MF.surface)
                 .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
             }
             .buttonStyle(.plain)

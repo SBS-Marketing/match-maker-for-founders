@@ -48,6 +48,7 @@ struct RootView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        .preferredColorScheme(state.appearance.colorScheme)
         .task {
             await state.bootstrapAuth()
         }

@@ -24,6 +24,7 @@ import {
   Sparkles,
   Store,
 } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/matches/")({
   component: () => (
@@ -83,6 +84,7 @@ const priorityServices: ServiceId[] = ["capital", "growth", "mentor", "legal", "
 function Matches() {
   const { user, session, isDemo } = useAuth();
   const [rows, setRows] = useState<Row[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [draftSlugs, setDraftSlugs] = useState<Set<string>>(new Set());
   const [active, setActive] = useState<"chats" | "all" | "funding" | "offers">("chats");
 
@@ -100,17 +102,27 @@ function Matches() {
     }
 
     (async () => {
-      const { data: matches } = await supabase
+      setLoadError(null);
+      const { data: matches, error: matchesError } = await supabase
         .from("matches")
         .select("id, user_a, user_b, created_at")
         .order("created_at", { ascending: false });
+      if (matchesError) {
+        setLoadError(matchesError.message);
+        toast.error("Matches konnten nicht geladen werden.");
+        return setRows([]);
+      }
       if (!matches) return setRows([]);
       const otherIds = matches.map((m) => (m.user_a === user.id ? m.user_b : m.user_a));
       if (otherIds.length === 0) return setRows([]);
-      const { data: profs } = await supabase
+      const { data: profs, error: profilesError } = await supabase
         .from("profiles")
         .select("id, display_name, photo_url, role")
         .in("id", otherIds);
+      if (profilesError) {
+        setLoadError(profilesError.message);
+        toast.error("Matchprofile konnten nicht geladen werden.");
+      }
       const byId = new Map((profs ?? []).map((p) => [p.id, p]));
       setRows(
         matches.map((m) => {
@@ -180,6 +192,26 @@ function Matches() {
         Lade…
       </div>
     );
+
+  if (loadError) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-20">
+        <div className="glass-pane p-8 text-center">
+          <div className="eyebrow">Inbox</div>
+          <h1 className="mt-4 text-3xl font-semibold tracking-tight">
+            Matches gerade nicht erreichbar.
+          </h1>
+          <p className="mt-3 text-[13px] leading-relaxed text-[var(--smoke)]">{loadError}</p>
+          <Button
+            className="shadow-ember mt-6 h-11 rounded-xl bg-[var(--ember)] px-5 text-[var(--cream)] hover:bg-[var(--ember-deep)]"
+            onClick={() => window.location.reload()}
+          >
+            Erneut versuchen
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex h-[calc(100svh-10rem)] max-w-6xl flex-col overflow-hidden px-3 pt-3 sm:h-auto sm:px-6 md:py-10">
@@ -355,13 +387,7 @@ function ChatThreadCard({ thread }: { thread: ChatThread }) {
   );
 }
 
-function ChatAssistantCard({
-  grants,
-  offers,
-}: {
-  grants: SavedGrant[];
-  offers: Partner[];
-}) {
+function ChatAssistantCard({ grants, offers }: { grants: SavedGrant[]; offers: Partner[] }) {
   const topGrant = grants[0]?.grant;
   const topOffer = offers[0];
 
@@ -380,7 +406,8 @@ function ChatAssistantCard({
       <div className="mt-5 rounded-2xl border border-white/10 bg-white/10 p-4">
         <div className="text-[12px] font-semibold text-white/60">Vorschlag</div>
         <p className="mt-2 text-[15px] font-semibold leading-snug text-white">
-          “Ich schicke dir EXIST-Status, MVP-Plan und die offenen Teamrollen in einem kurzen Briefing.”
+          “Ich schicke dir EXIST-Status, MVP-Plan und die offenen Teamrollen in einem kurzen
+          Briefing.”
         </p>
       </div>
 

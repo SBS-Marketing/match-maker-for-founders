@@ -383,7 +383,7 @@ private struct CompanyPreviewBlock: View {
                         .foregroundStyle(MF.emberDeep)
                         .padding(.horizontal, 14)
                         .frame(height: 38)
-                        .background(.white)
+                        .background(MF.surface)
                         .clipShape(Capsule())
                 }
             }

@@ -120,6 +120,24 @@ Deno.serve(async (req) => {
 
         if (reverseSwipe) {
           result.mutual_match = true;
+          const userA = user.id < body.target_id ? user.id : body.target_id;
+          const userB = user.id < body.target_id ? body.target_id : user.id;
+
+          // The web chat flow still keys conversation pages by public.matches.id.
+          const { data: legacyMatch, error: legacyMatchError } = await supabaseAdmin
+            .from("matches")
+            .upsert({ user_a: userA, user_b: userB }, { onConflict: "user_a,user_b" })
+            .select("id")
+            .single();
+          // Der Swipe selbst ist zu diesem Zeitpunkt bereits gespeichert. Schlaegt nur
+          // die Legacy-Zeile fehl, faellt der Chat-Einstieg weg — der Match bleibt aber
+          // gueltig. Deshalb loggen statt werfen.
+          if (legacyMatchError) {
+            console.error("matches upsert failed", legacyMatchError);
+          } else {
+            result.match_id = legacyMatch.id;
+          }
+
           // Match Details laden
           const { data: match } = await supabaseAdmin
             .from("mutual_matches")
@@ -130,7 +148,6 @@ Deno.serve(async (req) => {
             .maybeSingle();
 
           if (match) {
-            result.match_id = match.id;
             result.conversation_id = match.conversation_id ?? undefined;
           }
         }

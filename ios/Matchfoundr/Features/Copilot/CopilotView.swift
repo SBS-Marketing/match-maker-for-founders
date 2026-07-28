@@ -538,7 +538,7 @@ struct CopilotView: View {
                                 .font(.system(size: 15, weight: .heavy))
                                 .foregroundStyle(MF.indigo)
                                 .frame(width: 34, height: 34)
-                                .background(.white)
+                                .background(MF.surface)
                                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                         }
                         .padding(.leading, 15)

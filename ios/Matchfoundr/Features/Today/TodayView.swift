@@ -993,7 +993,7 @@ struct TodayView: View {
                     .foregroundStyle(MF.emberDeep)
                     .frame(maxWidth: .infinity)
                     .frame(height: 46)
-                    .background(.white)
+                    .background(MF.surface)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
                 .buttonStyle(.plain)

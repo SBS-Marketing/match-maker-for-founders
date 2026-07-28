@@ -41,14 +41,14 @@ enum MeetingRole: String, CaseIterable, Identifiable {
     var tint: Color {
         switch self {
         case .founder: MF.indigoTint
-        case .customer: Color(hex: 0xE9F7EF)
-        case .advisor: Color(hex: 0xFFF3D8)
-        case .finance: Color(hex: 0xEAF3FF)
-        case .legal: Color(hex: 0xF4ECFF)
-        case .tech: Color(hex: 0xEAF8F7)
-        case .marketing: Color(hex: 0xFEEAF3)
+        case .customer: .adaptive(light: 0xE9F7EF, dark: 0x203A2B)
+        case .advisor: .adaptive(light: 0xFFF3D8, dark: 0x3D321B)
+        case .finance: .adaptive(light: 0xEAF3FF, dark: 0x202E47)
+        case .legal: .adaptive(light: 0xF4ECFF, dark: 0x322746)
+        case .tech: .adaptive(light: 0xEAF8F7, dark: 0x193A38)
+        case .marketing: .adaptive(light: 0xFEEAF3, dark: 0x402436)
         case .operations: MF.emberTint
-        case .task: Color(hex: 0xEAF4EE)
+        case .task: .adaptive(light: 0xEAF4EE, dark: 0x20372A)
         case .unknown: MF.surfaceSoft
         }
     }
@@ -56,14 +56,14 @@ enum MeetingRole: String, CaseIterable, Identifiable {
     var ink: Color {
         switch self {
         case .founder: MF.indigoInk
-        case .customer: Color(hex: 0x26734D)
-        case .advisor: Color(hex: 0x986900)
-        case .finance: Color(hex: 0x245B9E)
-        case .legal: Color(hex: 0x6B3FA0)
-        case .tech: Color(hex: 0x1E7771)
-        case .marketing: Color(hex: 0xB4376C)
+        case .customer: .adaptive(light: 0x26734D, dark: 0x8ADDAA)
+        case .advisor: .adaptive(light: 0x986900, dark: 0xF0C96C)
+        case .finance: .adaptive(light: 0x245B9E, dark: 0xA7C8FF)
+        case .legal: .adaptive(light: 0x6B3FA0, dark: 0xD2B4FF)
+        case .tech: .adaptive(light: 0x1E7771, dark: 0x87DDD6)
+        case .marketing: .adaptive(light: 0xB4376C, dark: 0xFFABD1)
         case .operations: MF.emberDeep
-        case .task: Color(hex: 0x2E7D5B)
+        case .task: .adaptive(light: 0x2E7D5B, dark: 0x91DCAE)
         case .unknown: MF.smoke
         }
     }

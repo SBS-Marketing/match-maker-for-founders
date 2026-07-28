@@ -17,6 +17,13 @@ struct OnboardingView: View {
     @State private var selectedFocus: Set<String> = []
     @State private var briefReady = false
     @State private var analysisPhase = 0
+    @State private var limitHint: String?
+    // Live-Startplan. Der Research-Job startet direkt nach der Ortsfrage und
+    // arbeitet, während der Nutzer Skills, Zeit und Schwerpunkte beantwortet.
+    @State private var researchJobID: String?
+    @State private var researchSessionID = UUID()
+    @State private var liveBrief: OnboardingBriefResponse?
+    @State private var briefUsedFallback = false
     @State private var selectedPlan: PlanChoice = .standard
     @State private var didPrefill = false
     @FocusState private var focusedField: InputField?
@@ -104,7 +111,7 @@ struct OnboardingView: View {
         case .path:
             return mode != nil
         case .description:
-            return pitch.trimmingCharacters(in: .whitespacesAndNewlines).count >= 4
+            return pitchIsSubstantial
         case .industry:
             return industryID != nil
         case .location:
@@ -178,18 +185,31 @@ struct OnboardingView: View {
         }
         .onChange(of: step) { _, _ in
             focusCurrentField()
+            limitHint = nil
         }
         .task(id: step) {
             guard step == .brief, !briefReady else { return }
             analysisPhase = 0
-            for phase in 1...3 {
-                try? await Task.sleep(for: .milliseconds(520))
-                guard !Task.isCancelled else { return }
-                withAnimation(.easeInOut(duration: 0.24)) {
-                    analysisPhase = phase
+
+            // Die Phasen laufen jetzt neben einem echten Call, nicht anstelle
+            // eines solchen. Der Fortschritt bleibt bei Phase 2 stehen, bis
+            // die Antwort da ist — und springt dann auf 3.
+            let ticker = Task {
+                for phase in 1...2 {
+                    try? await Task.sleep(for: .milliseconds(620))
+                    guard !Task.isCancelled else { return }
+                    withAnimation(.easeInOut(duration: 0.24)) {
+                        analysisPhase = phase
+                    }
                 }
             }
-            try? await Task.sleep(for: .milliseconds(360))
+
+            await loadBrief()
+            ticker.cancel()
+            guard !Task.isCancelled else { return }
+
+            withAnimation(.easeInOut(duration: 0.2)) { analysisPhase = 3 }
+            try? await Task.sleep(for: .milliseconds(240))
             guard !Task.isCancelled else { return }
             Haptics.success()
             withAnimation(.easeOut(duration: 0.38)) {
@@ -232,7 +252,9 @@ struct OnboardingView: View {
             Text(progressLabel)
                 .font(.system(size: 12, weight: .semibold, design: .monospaced))
                 .foregroundStyle(secondaryText)
-                .frame(width: 54, alignment: .trailing)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .frame(minWidth: 54, alignment: .trailing)
         }
         .frame(maxWidth: 560)
         .padding(.horizontal, 20)
@@ -357,9 +379,16 @@ struct OnboardingView: View {
                         .stroke(focusedField == .pitch ? MF.ember : subtleBorder, lineWidth: 1)
                 )
 
-                Text("\(pitch.trimmingCharacters(in: .whitespacesAndNewlines).count) Zeichen")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(secondaryText)
+                // Eine nackte Zeichenzahl sagt niemandem, ob es reicht.
+                // Stattdessen: Was fehlt noch, bzw. was passiert als Nächstes.
+                Label(
+                    pitchIsSubstantial
+                        ? "Reicht mir. Damit starte ich gleich die Recherche."
+                        : "Ein, zwei Sätze mehr — je konkreter, desto genauer recherchiere ich.",
+                    systemImage: pitchIsSubstantial ? "checkmark.circle.fill" : "pencil.line"
+                )
+                .font(.system(size: 12.5, weight: .medium))
+                .foregroundStyle(pitchIsSubstantial ? Color(hex: 0x2E9B63) : secondaryText)
             }
             .padding(.top, 34)
         }
@@ -415,8 +444,10 @@ struct OnboardingView: View {
             question(
                 mode == .skills ? "Was kannst du richtig gut?" : "Was bringst du schon mit?",
                 "Wähle bis zu vier.",
+                // Vorher: "Ergänzung statt Kopien" — das unterstellt eine
+                // Partnersuche, auch bei Leuten, die bewusst allein starten.
                 helper: mode == .idea
-                    ? "Damit suche ich Ergänzung statt Kopien von dir."
+                    ? "Damit weiß ich, was du selbst kannst und wo Unterstützung sinnvoll ist."
                     : "Damit sehen Betriebe sofort, wo du helfen kannst."
             )
 
@@ -432,6 +463,19 @@ struct OnboardingView: View {
                 }
             }
             .padding(.top, 30)
+
+            limitHintView
+        }
+    }
+
+    @ViewBuilder
+    private var limitHintView: some View {
+        if let limitHint {
+            Label(limitHint, systemImage: "info.circle.fill")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(MF.ember)
+                .padding(.top, 16)
+                .transition(.opacity.combined(with: .move(edge: .top)))
         }
     }
 
@@ -477,6 +521,8 @@ struct OnboardingView: View {
                 }
             }
             .padding(.top, 30)
+
+            limitHintView
         }
     }
 
@@ -491,26 +537,34 @@ struct OnboardingView: View {
                             .frame(width: 30, height: 30)
                             .background(Color(hex: 0x2E9B63))
                             .clipShape(Circle())
-                        Text("Startprofil bereit")
+                        Text(liveBrief != nil ? "Für dich geprüft" : "Startprofil bereit")
                             .font(.system(size: 13, weight: .bold))
                             .foregroundStyle(Color(hex: 0x2E9B63))
                     }
 
-                    Text("Ich habe deinen Start sortiert.")
+                    // Ohne echte Prüfung kein Wort, das nach Analyse klingt.
+                    Text(liveBrief != nil
+                         ? "Ich habe deinen Start sortiert."
+                         : "Das sind deine ersten Schritte.")
                         .font(.system(size: 34, weight: .bold))
                         .foregroundStyle(primaryText)
                         .padding(.top, 22)
 
-                    Text(briefSummary)
+                    Text(liveBrief?.summary?.isEmpty == false ? liveBrief!.summary! : briefSummary)
                         .font(.system(size: 16))
                         .foregroundStyle(secondaryText)
                         .lineSpacing(4)
                         .padding(.top, 12)
 
+                    if let regulatory = liveBrief?.regulatory, regulatory.isRelevant {
+                        regulatoryCard(regulatory)
+                            .padding(.top, 22)
+                    }
+
                     VStack(spacing: 0) {
-                        ForEach(Array(startBrief.enumerated()), id: \.element.id) { index, item in
+                        ForEach(Array(displayedBrief.enumerated()), id: \.element.id) { index, item in
                             briefRow(number: index + 1, item: item)
-                            if index < startBrief.count - 1 {
+                            if index < displayedBrief.count - 1 {
                                 Divider()
                                     .overlay(subtleBorder)
                                     .padding(.leading, 54)
@@ -518,6 +572,11 @@ struct OnboardingView: View {
                         }
                     }
                     .padding(.top, 28)
+
+                    if let sources = liveBrief?.sources, !sources.isEmpty {
+                        briefSources(sources)
+                            .padding(.top, 20)
+                    }
 
                     Label(
                         mode == .skills
@@ -547,15 +606,20 @@ struct OnboardingView: View {
             }
             .animation(.easeInOut(duration: 0.5), value: analysisPhase)
 
-            Text("Einen Moment.\nIch sortiere das.")
+            Text("Einen Moment.\nIch prüfe das.")
                 .font(.system(size: 34, weight: .bold))
                 .foregroundStyle(primaryText)
                 .padding(.top, 26)
 
             VStack(alignment: .leading, spacing: 16) {
-                analysisLine("Vorhaben verstehen", complete: analysisPhase >= 1)
-                analysisLine("Region und Branche einordnen", complete: analysisPhase >= 2)
-                analysisLine("Ersten Ablauf bauen", complete: analysisPhase >= 3)
+                analysisLine("Vorhaben einordnen", complete: analysisPhase >= 1)
+                analysisLine(
+                    researchJobID == nil
+                        ? "Pflichten für deine Branche prüfen"
+                        : "Zuständige Stellen in \(cleanRegion) prüfen",
+                    complete: analysisPhase >= 2
+                )
+                analysisLine("Reihenfolge festlegen", complete: analysisPhase >= 3)
             }
             .padding(.top, 34)
         }
@@ -616,14 +680,16 @@ struct OnboardingView: View {
                     .pro,
                     title: "Pro",
                     price: "3 Tage kostenlos",
-                    detail: "Persönlicher KI-Gründungscheck, mehr Co-Pilot-Nutzung und Hintergrundaufgaben."
+                    // Was es danach kostet, gehört auf denselben Screen —
+                    // nicht erst in den Kaufdialog.
+                    detail: "Persönlicher KI-Gründungscheck, mehr Co-Pilot-Nutzung und Hintergrundaufgaben. Danach 9 €/Monat, jederzeit kündbar."
                 )
             }
             .padding(.top, 30)
 
             Text(selectedPlan == .pro
                  ? "Kein Kauf in diesem Schritt. Der KI-Check startet nach dem Öffnen der App."
-                 : "Du kannst Pro später im Profil testen.")
+                 : "Du kannst Pro später im Profil testen — 3 Tage kostenlos, danach 9 €/Monat.")
                 .font(.system(size: 12.5))
                 .foregroundStyle(secondaryText)
                 .lineSpacing(3)
@@ -634,12 +700,16 @@ struct OnboardingView: View {
     private var footer: some View {
         VStack(spacing: 0) {
             if step == .connect {
+                // Sah vorher wie ein grauer Hinweistext aus. Unterstrichen
+                // und in Akzentfarbe ist es als Ausweg erkennbar.
                 Button("Ohne Verknüpfung weiter") {
                     advance()
                 }
-                .font(.system(size: 13.5, weight: .semibold))
-                .foregroundStyle(secondaryText)
-                .padding(.bottom, 10)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(MF.ember)
+                .underline()
+                .padding(.vertical, 6)
+                .padding(.bottom, 6)
             }
 
             Button {
@@ -679,7 +749,9 @@ struct OnboardingView: View {
     private var footerTitle: String {
         switch step {
         case .brief:
-            "Werkzeuge einrichten"
+            // Der nächste Screen fragt nach Mail/Kalender — "Werkzeuge
+            // einrichten" klang nach mehr, als dort passiert.
+            "Weiter"
         case .connect:
             "Weiter"
         case .plan:
@@ -821,11 +893,12 @@ struct OnboardingView: View {
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(selected ? .white : primaryText)
                     .fixedSize(horizontal: true, vertical: false)
-                if selected {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 10, weight: .heavy))
-                        .foregroundStyle(.white)
-                }
+                // Immer im Layout, nur unsichtbar wenn nicht gewählt — sonst
+                // wächst der Chip beim Antippen und schiebt die Nachbarn weg.
+                Image(systemName: "checkmark")
+                    .font(.system(size: 10, weight: .heavy))
+                    .foregroundStyle(.white)
+                    .opacity(selected ? 1 : 0)
             }
             .padding(.horizontal, 13)
             .frame(height: 40)
@@ -851,10 +924,9 @@ struct OnboardingView: View {
                 Text(option.title)
                     .font(.system(size: 14, weight: .semibold))
                     .fixedSize(horizontal: true, vertical: false)
-                if selected {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 10, weight: .heavy))
-                }
+                Image(systemName: "checkmark")
+                    .font(.system(size: 10, weight: .heavy))
+                    .opacity(selected ? 1 : 0)
             }
             .foregroundStyle(selected ? .white : primaryText)
             .padding(.horizontal, 13)
@@ -1018,6 +1090,81 @@ struct OnboardingView: View {
         return "\(pitch.trimmingCharacters(in: .whitespacesAndNewlines)) · \(industry) · \(place). Daraus ergibt sich diese erste Reihenfolge:"
     }
 
+    /// Der echte Plan, wenn er kam — sonst die feste Vorlage. Die Vorlage ist
+    /// bewusst als Fallback erhalten: lieber generisch als leer.
+    private var displayedBrief: [BriefItem] {
+        guard let steps = liveBrief?.steps, !steps.isEmpty else { return startBrief }
+        let tints: [Color] = [MF.ember, Color(hex: 0x3D63D8), Color(hex: 0x2E9B63)]
+        return steps.enumerated().map { index, step in
+            BriefItem(
+                icon: step.icon ?? "checkmark.circle.fill",
+                tint: tints[index % tints.count],
+                title: step.title,
+                detail: step.detail
+            )
+        }
+    }
+
+    private func regulatoryCard(_ regulatory: OnboardingRegulatory) -> some View {
+        let critical = regulatory.isCritical
+        let accent = critical ? Color(hex: 0xC0392B) : Color(hex: 0xB7791F)
+        return VStack(alignment: .leading, spacing: 8) {
+            Label(
+                regulatory.title ?? "Erlaubnis prüfen",
+                systemImage: critical ? "exclamationmark.triangle.fill" : "info.circle.fill"
+            )
+            .font(.system(size: 14.5, weight: .heavy))
+            .foregroundStyle(accent)
+
+            if let detail = regulatory.detail, !detail.isEmpty {
+                Text(detail)
+                    .font(.system(size: 14))
+                    .foregroundStyle(primaryText)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if regulatory.needsExpert == true {
+                Text("Das gehört vor dem Start in fachkundige Beratung — die App ersetzt sie nicht.")
+                    .font(.system(size: 12.5, weight: .semibold))
+                    .foregroundStyle(secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(15)
+        .background(accent.opacity(colorScheme == .dark ? 0.16 : 0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(accent.opacity(0.45), lineWidth: 1)
+        )
+    }
+
+    private func briefSources(_ sources: [CopilotSource]) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text("Geprüft anhand von")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(secondaryText)
+            ForEach(Array(sources.prefix(3).enumerated()), id: \.offset) { _, source in
+                Button {
+                    if let raw = source.url, let url = URL(string: raw) { openURL(url) }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "link")
+                            .font(.system(size: 10, weight: .bold))
+                        Text(source.title)
+                            .font(.system(size: 12.5))
+                            .lineLimit(1)
+                            .multilineTextAlignment(.leading)
+                    }
+                    .foregroundStyle(MF.ember)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
     private var startBrief: [BriefItem] {
         if mode == .skills {
             return [
@@ -1067,6 +1214,93 @@ struct OnboardingView: View {
         ]
     }
 
+    /// Der Research-Agent braucht Substanz, nicht nur ein Wort. 20 Zeichen
+    /// sind etwa "Onlineshop für Kinderkleidung" — darunter lohnt keine Suche.
+    private var pitchIsSubstantial: Bool {
+        pitch.trimmingCharacters(in: .whitespacesAndNewlines).count >= 20
+    }
+
+    private var onboardingContext: CopilotOnboardingContext {
+        CopilotOnboardingContext(
+            userName: name.trimmingCharacters(in: .whitespacesAndNewlines),
+            mode: mode,
+            pitch: pitch.trimmingCharacters(in: .whitespacesAndNewlines),
+            industry: selectedIndustry,
+            region: region.trimmingCharacters(in: .whitespacesAndNewlines),
+            skills: selectedSkills.sorted(),
+            availability: availability,
+            focus: focusOptions.filter { selectedFocus.contains($0.id) }.map(\.title)
+        )
+    }
+
+    /// Feuert direkt nach der Ortsfrage. Fire-and-forget: schlägt der Start
+    /// fehl, merkt der Nutzer nichts — der Brief fällt dann auf das Template
+    /// zurück, statt den Flow zu blockieren.
+    private func startResearchIfPossible() {
+        guard researchJobID == nil,
+              state.isAuthenticated,
+              selectedIndustry != nil,
+              pitchIsSubstantial
+        else { return }
+
+        let request = OnboardingResearchRequest(
+            message: pitch.trimmingCharacters(in: .whitespacesAndNewlines),
+            sessionID: researchSessionID,
+            extra: CopilotCloudExtra(
+                surface: "/onboarding",
+                memory: [],
+                history: [],
+                onboarding: onboardingContext,
+                mcpConnectors: []
+            )
+        )
+
+        Task {
+            do {
+                let response: OnboardingResearchResponse = try await SupabaseService.shared
+                    .invokeFunction("copilot", body: request)
+                await MainActor.run { researchJobID = response.jobId }
+            } catch {
+                // Kein Job — der Brief-Screen merkt das und nimmt das Template.
+                await MainActor.run { researchJobID = nil }
+            }
+        }
+    }
+
+    /// Holt den fertigen Startplan. Läuft auch ohne abgeschlossene Recherche,
+    /// dann antwortet das Modell aus eigenem Wissen — immer noch besser als
+    /// die feste Vorlage.
+    private func loadBrief() async {
+        guard state.isAuthenticated else {
+            await MainActor.run { briefUsedFallback = true }
+            return
+        }
+
+        let request = OnboardingBriefRequest(
+            message: pitch.trimmingCharacters(in: .whitespacesAndNewlines),
+            sessionID: researchSessionID,
+            extra: OnboardingBriefExtra(
+                onboarding: onboardingContext,
+                jobId: researchJobID
+            )
+        )
+
+        do {
+            let response: OnboardingBriefResponse = try await SupabaseService.shared
+                .invokeFunction("copilot", body: request)
+            let steps = response.steps ?? []
+            await MainActor.run {
+                if steps.isEmpty {
+                    briefUsedFallback = true
+                } else {
+                    liveBrief = response
+                }
+            }
+        } catch {
+            await MainActor.run { briefUsedFallback = true }
+        }
+    }
+
     private var cleanRegion: String {
         let clean = region.trimmingCharacters(in: .whitespacesAndNewlines)
         return clean.isEmpty ? "deiner Region" : clean
@@ -1109,7 +1343,7 @@ struct OnboardingView: View {
         case "documents":
             "Das erste wirklich benötigte Dokument gemeinsam erstellen, statt sechs leere Vorlagen anzulegen."
         case "partner":
-            "Klären, welche Lücke wirklich fehlt, bevor du wahllos nach einem Co-Founder suchst."
+            "Klären, welche Lücke wirklich fehlt — Steuerberatung, eine helfende Hand oder ein fester Partner."
         default:
             "Aus der Idee wird ein überschaubarer Ablauf für die nächsten sieben Tage."
         }
@@ -1140,10 +1374,16 @@ struct OnboardingView: View {
     private func toggle(_ value: String, in selection: inout Set<String>, limit: Int) {
         if selection.contains(value) {
             selection.remove(value)
+            limitHint = nil
         } else if selection.count < limit {
             selection.insert(value)
+            limitHint = nil
         } else {
+            // Ohne sichtbare Rückmeldung fühlt sich das Limit wie ein Bug an.
             Haptics.heavy()
+            withAnimation(.easeOut(duration: 0.2)) {
+                limitHint = "Mehr als \(limit) geht nicht. Tippe eine Auswahl an, um sie zu tauschen."
+            }
         }
     }
 
@@ -1183,6 +1423,13 @@ struct OnboardingView: View {
         }
         focusedField = nil
         guard let next = Step(rawValue: step.rawValue + 1) else { return }
+
+        // Ab hier stehen Vorhaben, Branche und Ort — genug für die Recherche.
+        // Sie läuft dann während der letzten drei Fragen im Hintergrund.
+        if step == .location {
+            startResearchIfPossible()
+        }
+
         direction = 1
         Haptics.tap()
         withAnimation(.easeOut(duration: 0.28)) {
@@ -1238,11 +1485,40 @@ struct OnboardingView: View {
         if usePro {
             state.activateTrial(days: 3)
         }
+        // "Diese Reihenfolge landet direkt auf deiner Heute-Seite" war bisher
+        // nur ein Satz. Jetzt landet sie dort auch wirklich — in der Reihen-
+        // folge, in der sie im Brief stand.
+        let plannedSteps = displayedBrief
+        let regulatoryNotice = liveBrief?.regulatory
+
         state.completeOnboarding(
             with: profile,
             launchAIAnalysis: usePro,
             showAppTourAfter: false
         )
+
+        // Nach completeOnboarding, weil das die Planner-Liste neu aufsetzt.
+        // Rückwärts einfügen, damit Schritt 1 oben landet.
+        if let regulatoryNotice, regulatoryNotice.isRelevant, let title = regulatoryNotice.title {
+            state.addPlannerItem(
+                title: title,
+                note: regulatoryNotice.detail ?? "",
+                dueLabel: regulatoryNotice.isCritical ? "Vor dem Start" : "Bald",
+                kind: .legal,
+                target: nil,
+                createdByCopilot: true
+            )
+        }
+        for item in plannedSteps.reversed() {
+            state.addPlannerItem(
+                title: item.title,
+                note: item.detail,
+                dueLabel: "Aus deinem Startplan",
+                kind: .focus,
+                target: nil,
+                createdByCopilot: true
+            )
+        }
     }
 }
 

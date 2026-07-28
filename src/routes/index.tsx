@@ -1,28 +1,37 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, FormEvent, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { EventsMapCanvas } from "@/components/EventsMapCanvas";
 import { type CommunityEvent, clusterByCity, eventDateLabel } from "@/lib/events-geo";
+import { useWaitlist } from "@/hooks/useWaitlist";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "matchfoundr — Dein Partner. Nicht beim Dating — im Business." },
+      { title: "matchfoundr — Gründen mit Co-Pilot und den richtigen Menschen" },
       {
         name: "description",
         content:
-          "Die Community für alle, die gründen — vom Handwerksbetrieb bis zur Webdesign-Agentur. Finde Menschen, die mitbauen, und die nächsten Schritte, die wirklich dran sind.",
+          "matchfoundr ist die Plattform für Gründer:innen in DACH: Co-Founder, Kapital, Förderung, Recht, Steuer, Mentoren, Talent und Growth — sortiert vom KI-Co-Pilot.",
       },
       {
         property: "og:title",
-        content: "matchfoundr — Dein Partner. Nicht beim Dating — im Business.",
+        content: "matchfoundr — Gründen mit Co-Pilot und den richtigen Menschen",
       },
       {
         property: "og:description",
+        content: "Finde Menschen, Programme und nächste Schritte, die zu deiner Gründung passen.",
+      },
+      {
+        name: "twitter:title",
+        content: "matchfoundr — Gründen mit Co-Pilot und den richtigen Menschen",
+      },
+      {
+        name: "twitter:description",
         content:
-          "Die Gründer-Community: Menschen, Mitgründer, nächste Schritte. Mit Co-Pilot an Bord.",
+          "Co-Founder, Kapital, Förderung und Experten für Gründer:innen — geführt vom KI-Co-Pilot.",
       },
     ],
   }),
@@ -626,8 +635,8 @@ function LNav() {
     { t: "Marketplace", href: "#marketplace" },
     { t: "Co-Pilot", href: "#copilot", live: true },
     { t: "Förderung", href: "#foerderung" },
-    { t: "Pricing", href: "#pricing" },
-    { t: "Stories", href: "#stories" },
+    { t: "Beta", href: "#pricing" },
+    { t: "Stimmen", href: "#stories" },
   ];
   const [menuOpen, setMenuOpen] = useState(false);
   return (
@@ -699,11 +708,11 @@ function LNav() {
           to="/auth"
           style={{ fontSize: 13.5, fontWeight: 500, color: M.smoke, textDecoration: "none" }}
         >
-          Sign in
+          Anmelden
         </Link>
         <Link
           className="landing-nav-cta"
-          to="/co-pilot"
+          to="/auth"
           style={{
             background: M.ink,
             color: M.cream,
@@ -718,8 +727,8 @@ function LNav() {
             gap: 8,
           }}
         >
-          <span className="landing-nav-cta-label">Plattform starten</span>
-          <span className="landing-nav-cta-short">Start</span>
+          <span className="landing-nav-cta-label">Beta-Zugang sichern</span>
+          <span className="landing-nav-cta-short">Beta</span>
           <SvcIcon name="arrowR" size={13} color={M.cream} stroke={2.2} />
         </Link>
         <button
@@ -822,7 +831,7 @@ function LNav() {
                 marginTop: 4,
               }}
             >
-              Sign in
+              Anmelden
             </Link>
           </div>
         )}
@@ -1058,7 +1067,7 @@ function HeroCopilot() {
             +5 weitere Empfehlungen
           </span>
           <Link
-            to="/co-pilot"
+            to="/auth"
             style={{
               display: "flex",
               alignItems: "center",
@@ -1069,7 +1078,7 @@ function HeroCopilot() {
               textDecoration: "none",
             }}
           >
-            Plan generieren <SvcIcon name="arrowR" size={12} stroke={2} />
+            Profil anlegen <SvcIcon name="arrowR" size={12} stroke={2} />
           </Link>
         </div>
       </div>
@@ -1145,7 +1154,7 @@ function LHero() {
                 textTransform: "uppercase",
               }}
             >
-              1.847 Gründer:innen · 8 Disziplinen · 1 Community
+              Beta für DACH · 8 Disziplinen · 1 Co-Pilot
             </span>
           </div>
 
@@ -1201,7 +1210,7 @@ function LHero() {
                   "0 14px 32px -10px rgba(178,59,14,0.5), inset 0 1px 0 rgba(255,255,255,0.25)",
               }}
             >
-              Finde Menschen, die mitbauen
+              Beta-Zugang sichern
               <SvcIcon name="arrowR" size={15} color={M.cream} stroke={2.2} />
             </Link>
             <button
@@ -1240,10 +1249,10 @@ function LHero() {
             }}
           >
             {[
-              { k: "14 Tage", s: "erstes Match — Service-übergreifend" },
-              { k: "€2.4M", s: "Förderung, die Co-Pilot 2025 freigeschaltet hat" },
-              { k: "78%", s: "der Founder schließen 3+ Services ab" },
-              { k: "4 Städte", s: "Berlin · München · Wien · Zürich" },
+              { k: "8", s: "Disziplinen vom Co-Founder bis Growth" },
+              { k: "DACH", s: "Fokus auf Deutschland, Österreich und Schweiz" },
+              { k: "KI", s: "Co-Pilot für Plan, Matching und nächste Schritte" },
+              { k: "Beta", s: "kuratierter Zugang statt offener Massen-Marktplatz" },
             ].map((s, i) => (
               <div
                 key={s.k}
@@ -1469,10 +1478,11 @@ function LProblem() {
             <SvcIcon name="clock" size={22} color={M.ember} stroke={2} />
             <div>
               <div style={{ fontSize: 14, fontWeight: 600, color: M.ink }}>
-                280 Stunden pro Jahr verlieren Founder mit Stack-Hopping.
+                Wer allein gründet, verliert schnell Wochen in verstreuten Chats, PDFs und
+                Erstgesprächen.
               </div>
               <div style={{ fontSize: 12, color: M.smoke, marginTop: 2 }}>
-                Quelle: matchfoundr-Onboarding, n=412 Founder, Q1 2025.
+                matchfoundr bündelt Suche, Plan und nächste Aktion an einem Ort.
               </div>
             </div>
           </div>
@@ -1685,7 +1695,7 @@ function StepMini({ kind }: { kind: "chat" | "plan" | "pipeline" }) {
             color: M.smoke,
           }}
         >
-          EXIST · 78%
+          EXIST · offen
         </span>
         <span style={{ fontFamily: M.fontMono, fontSize: 9.5, color: M.ember, fontWeight: 600 }}>
           12 Tage
@@ -1699,7 +1709,7 @@ function StepMini({ kind }: { kind: "chat" | "plan" | "pipeline" }) {
           overflow: "hidden",
         }}
       >
-        <div style={{ width: "78%", height: "100%", background: M.ember }} />
+        <div style={{ width: "64%", height: "100%", background: M.ember }} />
       </div>
       <div style={{ marginTop: 4, display: "flex", flexDirection: "column", gap: 6 }}>
         {[
@@ -2118,8 +2128,8 @@ function LMarketplace() {
           </h2>
         </div>
         <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.6, color: M.smoke, maxWidth: 380 }}>
-          1.847 vorgeprüfte Partner — keiner zahlt für Sichtbarkeit. Die Reihenfolge ergibt sich aus
-          deiner Phase, nicht aus Anzeigenpreis. Co-Pilot zeigt nur, was jetzt sinnvoll ist.
+          Kuratierte Profile, Programme und Experten statt kalter Listen. Die Reihenfolge ergibt
+          sich aus deiner Phase, deinen offenen Fragen und dem, was als Nächstes wirklich dran ist.
         </p>
       </div>
       <div
@@ -2159,7 +2169,7 @@ function LMarketplace() {
           </span>
         </div>
         <Link
-          to="/co-pilot"
+          to="/auth"
           style={{
             background: M.ink,
             color: M.cream,
@@ -2173,7 +2183,7 @@ function LMarketplace() {
             gap: 8,
           }}
         >
-          Plan starten <SvcIcon name="arrowR" size={13} color={M.cream} stroke={2.2} />
+          Profil anlegen <SvcIcon name="arrowR" size={13} color={M.cream} stroke={2.2} />
         </Link>
       </div>
     </Section>
@@ -2273,7 +2283,7 @@ function LCoPilotMoment() {
               {
                 i: "people" as IconName,
                 t: "Hört auf den Subtext",
-                d: 'Erkennt "ich verliere die Lust" als Co-Founder-Risiko, nicht als Marketing-Frage.',
+                d: 'Erkennt "ich verliere die Lust" als Mitgründer-Risiko, nicht als Marketing-Frage.',
               },
               {
                 i: "layers" as IconName,
@@ -2529,7 +2539,7 @@ function LCoPilotMoment() {
                     Generiere Plan · 8 Wochen
                   </span>
                   <Link
-                    to="/co-pilot"
+                    to="/auth"
                     style={{
                       background: M.ember,
                       color: M.cream,
@@ -2544,7 +2554,7 @@ function LCoPilotMoment() {
                       gap: 6,
                     }}
                   >
-                    Übernehmen <SvcIcon name="arrowR" size={11} color={M.cream} stroke={2.4} />
+                    Profil starten <SvcIcon name="arrowR" size={11} color={M.cream} stroke={2.4} />
                   </Link>
                 </div>
               </div>
@@ -2609,7 +2619,7 @@ function LFunding() {
               fontVariantNumeric: "tabular-nums",
             }}
           >
-            €2.4M
+            DACH
           </div>
           <p
             style={{
@@ -2622,9 +2632,7 @@ function LFunding() {
               maxWidth: 460,
             }}
           >
-            Fördermittel, die Co-Pilot 2025 für unsere Founder identifiziert und{" "}
-            <span style={{ fontFamily: M.fontSerif, fontStyle: "italic" }}>tatsächlich</span>{" "}
-            bewilligt bekommen hat.
+            Förderprogramme, Antragslogik und passende Beratung in einem geführten Radar.
           </p>
           <p
             style={{
@@ -2636,8 +2644,7 @@ function LFunding() {
             }}
           >
             EXIST, ProFIT, INVEST, ERP-Gründerkredit, KfW-Programme. Mit Vorprüfung,
-            Antragsbegleitung und einem Anwalt, der die Förder-Sprache spricht. Keine Stunden bei
-            Beratern, die nichts wissen.
+            Antragsbegleitung und Experten, die die Förder-Sprache sprechen.
           </p>
           <div
             style={{
@@ -2762,7 +2769,7 @@ function LFunding() {
                 marginBottom: 6,
               }}
             >
-              <span>ANTRAG · 78%</span>
+              <span>ANTRAG · ENTWURF</span>
               <span>FRIST · 28. MAI</span>
             </div>
             <div
@@ -2773,7 +2780,7 @@ function LFunding() {
                 overflow: "hidden",
               }}
             >
-              <div style={{ width: "78%", height: "100%", background: M.cream }} />
+              <div style={{ width: "64%", height: "100%", background: M.cream }} />
             </div>
           </div>
           <div
@@ -2817,7 +2824,7 @@ function LFunding() {
               Co-Pilot vorausfüllen lassen
             </span>
             <Link
-              to="/co-pilot"
+              to="/auth"
               style={{
                 padding: "8px 14px",
                 borderRadius: 8,
@@ -2831,7 +2838,7 @@ function LFunding() {
                 gap: 6,
               }}
             >
-              Jetzt starten <SvcIcon name="arrowR" size={12} color={M.emberDeep} stroke={2.4} />
+              Zugang sichern <SvcIcon name="arrowR" size={12} color={M.emberDeep} stroke={2.4} />
             </Link>
           </div>
         </div>
@@ -2844,30 +2851,30 @@ function LCompare() {
   const rows = [
     {
       d: "Anwalt finden",
-      solo: "6 Wochen · 4 Erstgespräche · €3.200",
-      mf: "48h · 1 Erstgespräch · inkludiert",
+      solo: "Kalte Suche · unklare Startup-Erfahrung",
+      mf: "kuratierte Profile · Gründungsfokus sichtbar",
     },
     {
       d: "EXIST-Antrag schreiben",
-      solo: "11 Wochen · 6 Iterationen",
-      mf: "5 Wochen · Co-Pilot füllt 70% vor",
+      solo: "PDFs lesen · Anforderungen selbst übersetzen",
+      mf: "Programm-Check · fehlende Bausteine sichtbar",
     },
     {
       d: "Technischen Co-Founder finden",
       solo: "8 Monate LinkedIn-DMs",
-      mf: "14 Tage bis erster Termin · 9 Slots",
+      mf: "Profil, Phase und Skills sauber gematcht",
     },
     {
       d: "ESOP-Pool aufsetzen",
       solo: "Vorlage von Reddit · Anwalt prüft",
-      mf: "Template + Bird & Bird-Review · 1 Woche",
+      mf: "Template, Kontext und passender Review-Pfad",
     },
     {
       d: "Steuerberater wechseln",
       solo: "Empfehlung aus Slack-Community",
       mf: '3 Vorgeprüfte · "versteht Cap Tables"',
     },
-    { d: "Mentor mit Branchen-Match", solo: "Glück", mf: "Office Hour · 14 aktive Operator" },
+    { d: "Mentor mit Branchen-Match", solo: "Glück", mf: "Operator nach Phase und Branche" },
   ];
   return (
     <Section tone="cream" pad="140px 0">
@@ -2883,11 +2890,11 @@ function LCompare() {
             color: M.ink,
           }}
         >
-          Wie viel Zeit du{" "}
+          Wie viel Klarheit du{" "}
           <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>
-            zurück
+            sofort
           </span>{" "}
-          bekommst
+          gewinnst
           <span style={{ color: M.ember }}>.</span>
         </h2>
       </div>
@@ -3093,7 +3100,7 @@ function LTestimonials() {
       city: "Köln",
       quote:
         "Ich hatte nur die Idee und eine leere Halle im Blick. Über matchfoundr habe ich jemanden mit Bau-Erfahrung gefunden, einen Mentor mit eigener Sporthalle — und wusste nach einer Woche, was zuerst dran ist.",
-      stat: { k: "1 Woche", v: "von Idee zu Plan" },
+      stat: { k: "Plan", v: "aus Idee und offenen Fragen" },
       hero: true,
     },
     {
@@ -3102,7 +3109,7 @@ function LTestimonials() {
       city: "München",
       quote:
         '„Ich brauche jemanden, der das mit der Selbständigkeit schon durch hat" — drei Tage später hatte ich drei Telefonate. Mit Leuten, die genau meinen Weg gegangen sind.',
-      stat: { k: "3 Tage", v: "bis erstes Match" },
+      stat: { k: "3 Gespräche", v: "mit relevanten Leuten" },
     },
     {
       name: "Sofia Hellström",
@@ -3126,7 +3133,7 @@ function LTestimonials() {
         }}
       >
         <div style={{ maxWidth: 640 }}>
-          <Eyebrow>07 · Stimmen aus dem Netzwerk</Eyebrow>
+          <Eyebrow>07 · Gründer-Situationen</Eyebrow>
           <h2
             style={{
               margin: "20px 0 0",
@@ -3137,13 +3144,13 @@ function LTestimonials() {
               color: M.ink,
             }}
           >
-            Drei{" "}
+            Drei typische{" "}
             <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>
-              echte
-            </span>{" "}
-            Bewegungen.
+              Gründer
+            </span>
+            -Bewegungen.
             <br />
-            <span style={{ color: M.smoke }}>Aus den letzten 90 Tagen.</span>
+            <span style={{ color: M.smoke }}>So soll sich Gründen anfühlen.</span>
           </h2>
         </div>
       </div>
@@ -3292,7 +3299,7 @@ function PriceCard({ t }: { t: Tier }) {
         ))}
       </div>
       <Link
-        to="/co-pilot"
+        to="/auth"
         style={{
           position: "relative",
           marginTop: "auto",
@@ -3329,53 +3336,54 @@ function LPricing() {
     {
       name: "Explorer",
       price: "€0",
-      sub: "für 90 Tage",
-      blurb: "Co-Pilot kennenlernen, einen Service freischalten, einmalig matchen.",
+      sub: "Beta",
+      blurb: "Co-Pilot kennenlernen, Profil anlegen und erste passende Empfehlungen sehen.",
       feats: [
-        "1 aktiver Service · z. B. Co-Founder",
-        "3 Empfehlungen pro Woche",
-        "Co-Pilot Chat · 20 Nachrichten / Tag",
-        "Marketplace lesen — nicht kontaktieren",
+        "Founder-Profil und Phase erfassen",
+        "Co-Pilot Chat zum Sortieren der nächsten Schritte",
+        "Erste Empfehlungen aus dem Beta-Netzwerk",
+        "Events und Guides entdecken",
       ],
-      cta: "Kostenlos starten",
+      cta: "Beta-Zugang sichern",
       tone: "paper",
     },
     {
       name: "Founder",
-      price: "€49",
-      sub: "/ Monat · jährlich",
-      blurb: "Der volle Stack. Alle 8 Disziplinen. Co-Pilot ohne Limit.",
+      price: "Early",
+      sub: "Access",
+      blurb:
+        "Der volle Stack wird schrittweise freigeschaltet: alle 8 Disziplinen, Plan und Pipeline.",
       feats: [
-        "Alle 8 Services · unbegrenzte Matches",
-        "Co-Pilot · Plan-Generierung & Auto-Fill",
-        "Förderung-Pipeline · EXIST · ProFIT · INVEST",
-        "Anwalts-Erstgespräche · 3 inkludiert",
-        "Pipeline & Heute-Ansicht",
+        "Alle 8 Disziplinen im Matching",
+        "Plan-Generierung und Heute-Ansicht",
+        "Förderung-Radar für EXIST, ProFIT, INVEST",
+        "Kontaktpfad zu kuratierten Experten",
+        "Priorisierter Beta-Zugang",
       ],
-      cta: "Founder starten",
+      cta: "Founder-Profil anlegen",
       tone: "ember",
       featured: true,
     },
     {
       name: "Team",
-      price: "€129",
-      sub: "/ Monat · 3+ Sitze",
-      blurb: "Wenn ihr schon zu zweit oder zu dritt seid und gemeinsam baut.",
+      price: "Team",
+      sub: "auf Anfrage",
+      blurb: "Wenn ihr schon gemeinsam baut und euren Gründungsplan als Team führen wollt.",
       feats: [
-        "Alles aus Founder",
-        "3–10 Sitze · geteilte Pipeline",
-        "Shared Co-Pilot-Sessions",
-        "Dedizierter Onboarding-Coach",
-        "Cap-Table & ESOP-Tooling",
+        "Geteilte Pipeline",
+        "Gemeinsame Co-Pilot-Sessions",
+        "Rollen, Aufgaben und Fristen",
+        "Onboarding mit dem Matchfoundr-Team",
+        "Kontakt: founders@matchfoundr.com",
       ],
-      cta: "Team einrichten",
+      cta: "Team anfragen",
       tone: "ink",
     },
   ];
   return (
     <Section tone="paper" pad="140px 0" id="pricing">
       <div style={{ textAlign: "center", maxWidth: 760, margin: "0 auto 64px" }}>
-        <Eyebrow>08 · Pricing</Eyebrow>
+        <Eyebrow>08 · Beta-Zugang</Eyebrow>
         <h2
           style={{
             margin: "20px 0 0",
@@ -3386,9 +3394,9 @@ function LPricing() {
             color: M.ink,
           }}
         >
-          Ein Co-Pilot kostet weniger als{" "}
+          Starte ohne Risiko.{" "}
           <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>
-            eine Erstberatung
+            Preise wachsen mit dem Produkt
           </span>
           <span style={{ color: M.ember }}>.</span>
         </h2>
@@ -3401,8 +3409,8 @@ function LPricing() {
             margin: "16px auto 0",
           }}
         >
-          Transparent. Jährlich kündbar. Niemand zahlt für Sichtbarkeit — Empfehlungen ergeben sich
-          aus Phase, nicht aus Provision.
+          In der Beta zählt zuerst Passung: Profil anlegen, Co-Pilot testen und passende Menschen,
+          Programme oder Experten anfragen.
         </p>
       </div>
       <div
@@ -3419,7 +3427,196 @@ function LPricing() {
         ))}
       </div>
       <div style={{ marginTop: 28, textAlign: "center", fontSize: 13, color: M.smoke }}>
-        Alle Preise zzgl. USt. · 30 Tage Rückerstattung · keine Setup-Gebühr
+        Beta-Zugang ist kuratiert. Team-Anfragen laufen direkt über founders@matchfoundr.com.
+      </div>
+    </Section>
+  );
+}
+
+function LWaitlist() {
+  const { state, join } = useWaitlist();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const loading = state.status === "loading";
+  const done = state.status === "success" || state.status === "already_confirmed";
+
+  async function submit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    await join({
+      email,
+      name,
+      confirmUrl: origin ? `${origin}/auth/waitlist-confirm` : undefined,
+    });
+  }
+
+  return (
+    <Section tone="cream" pad="120px 0" id="waitlist">
+      <div
+        className="landing-two-col landing-section-inner"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "0.95fr 1.05fr",
+          gap: 64,
+          alignItems: "center",
+        }}
+      >
+        <div>
+          <Eyebrow>09 · Zugang sichern</Eyebrow>
+          <h2
+            style={{
+              margin: "20px 0 0",
+              fontWeight: 600,
+              fontSize: "clamp(40px, 4.5vw, 64px)",
+              lineHeight: 1,
+              letterSpacing: "-0.035em",
+              color: M.ink,
+            }}
+          >
+            App starten oder auf die{" "}
+            <span style={{ fontFamily: M.fontSerif, fontStyle: "italic", fontWeight: 400 }}>
+              Beta-Liste
+            </span>
+            <span style={{ color: M.ember }}>.</span>
+          </h2>
+          <p style={{ marginTop: 20, fontSize: 16, lineHeight: 1.65, color: M.smoke }}>
+            Wenn du sofort testen willst, legst du ein Founder-Profil an. Wenn du lieber kuratiert
+            eingeladen werden möchtest, trag dich in die Beta-Liste ein.
+          </p>
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              flexWrap: "wrap",
+              marginTop: 28,
+            }}
+          >
+            <Link
+              to="/auth"
+              style={{
+                background: M.ink,
+                color: M.cream,
+                padding: "14px 18px",
+                borderRadius: 12,
+                fontWeight: 600,
+                fontSize: 14,
+                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              Founder-Profil anlegen
+              <SvcIcon name="arrowR" size={13} color={M.cream} stroke={2.2} />
+            </Link>
+            <a
+              href="mailto:founders@matchfoundr.com?subject=Matchfoundr%20Beta"
+              style={{
+                color: M.emberDeep,
+                padding: "14px 0",
+                fontWeight: 600,
+                fontSize: 14,
+                textDecoration: "underline",
+                textDecorationColor: "rgba(178,59,14,0.35)",
+                textUnderlineOffset: 4,
+              }}
+            >
+              Kontakt aufnehmen
+            </a>
+          </div>
+        </div>
+
+        <form
+          className="landing-waitlist-form"
+          onSubmit={submit}
+          style={{
+            ...GLASS.pane,
+            borderRadius: 20,
+            padding: 26,
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr auto",
+            gap: 12,
+            alignItems: "end",
+          }}
+        >
+          <label style={{ display: "grid", gap: 8, minWidth: 0 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: M.smoke }}>Name</span>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="name"
+              placeholder="Dein Name"
+              style={{
+                width: "100%",
+                height: 48,
+                borderRadius: 12,
+                border: "1px solid rgba(21,20,15,0.12)",
+                background: M.paper,
+                padding: "0 14px",
+                font: "inherit",
+                color: M.ink,
+                outlineColor: M.ember,
+              }}
+            />
+          </label>
+          <label style={{ display: "grid", gap: 8, minWidth: 0 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: M.smoke }}>E-Mail</span>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              type="email"
+              required
+              placeholder="du@firma.de"
+              style={{
+                width: "100%",
+                height: 48,
+                borderRadius: 12,
+                border: "1px solid rgba(21,20,15,0.12)",
+                background: M.paper,
+                padding: "0 14px",
+                font: "inherit",
+                color: M.ink,
+                outlineColor: M.ember,
+              }}
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={loading || done}
+            style={{
+              height: 48,
+              border: "none",
+              borderRadius: 12,
+              background: done ? "#3D9970" : M.ember,
+              color: M.cream,
+              padding: "0 18px",
+              fontWeight: 600,
+              fontSize: 14,
+              cursor: loading || done ? "default" : "pointer",
+              whiteSpace: "nowrap",
+              boxShadow: done
+                ? "none"
+                : "0 14px 28px -10px rgba(178,59,14,0.45), inset 0 1px 0 rgba(255,255,255,0.25)",
+            }}
+          >
+            {loading ? "Sende..." : done ? "Gesichert" : "Eintragen"}
+          </button>
+          <p
+            aria-live="polite"
+            style={{
+              gridColumn: "1 / -1",
+              margin: 0,
+              minHeight: 22,
+              fontSize: 13,
+              lineHeight: 1.5,
+              color: state.status === "error" ? M.emberDeep : M.smoke,
+            }}
+          >
+            {state.message ||
+              "Du bekommst eine kurze Bestätigung per E-Mail. Kein Newsletter-Zwang."}
+          </p>
+        </form>
       </div>
     </Section>
   );
@@ -3429,24 +3626,24 @@ function LFaq() {
   const items = [
     {
       q: "Ist das ein Dating-App-Klon für Founder?",
-      a: "Nein. Der Swipe-Mechanismus ist nur die Oberfläche — dahinter steckt ein Algorithmus, der Skills, Branche, Standort und Verfügbarkeit abgleicht. Du wirst nicht nach Profilbild gematcht, sondern danach ob ihr zusammen ein Unternehmen aufbauen könnt.",
+      a: "Nein. Swipe ist nur eine schnelle Oberfläche für Entscheidungen. Entscheidend sind Skills, Branche, Standort, Phase, Verfügbarkeit und ob ihr wirklich zusammen bauen könnt.",
       open: true,
     },
     {
       q: "Wer prüft die Anwälte, Steuerberater und Mentoren?",
-      a: "Jeder Experte auf matchfoundr durchläuft eine manuelle Verifikation: Berufsnachweis, Referenzen und ein Erstgespräch mit unserem Team. Gefakte Profile fliegen raus — unkompliziert und dauerhaft.",
+      a: "Der Beta-Zugang ist kuratiert. Bei Experten achten wir auf fachlichen Fit zur Gründung, nachvollziehbare Referenzen und klare Zuständigkeit für die jeweilige Disziplin.",
     },
     {
       q: "Bekommt jemand für eine Empfehlung Geld?",
-      a: "Ja — wir arbeiten mit Affiliate-Programmen unserer Partner-Unternehmen. Das bedeutet: Wenn du über matchfoundr zu IONOS, Lexoffice oder einem anderen Partner weiterklickst, erhalten wir eine kleine Provision. Für dich entstehen dadurch keine Mehrkosten — im Gegenteil, du profitierst von exklusiven Rabatten. Auf das Matching hat das null Einfluss: Welcher Co-Founder dir vorgeschlagen wird, entscheidet ausschließlich der Algorithmus.",
+      a: "Wenn ein Partnerangebot wirtschaftlich gekennzeichnet werden muss, machen wir das sichtbar. Co-Founder- und Experten-Matching folgt deiner Phase und Passung, nicht einer bezahlten Platzierung.",
     },
     {
       q: "Was passiert mit meinen Daten und meinem Pitch?",
-      a: "Deine Idee bleibt deine Idee. Dein Profil und dein Projekt sind nur für Nutzer sichtbar, denen du aktiv zustimmst. Wir verkaufen keine Daten, geben nichts an Partner weiter und verarbeiten alles DSGVO-konform mit Serverstandort Deutschland.",
+      a: "Deine Idee bleibt deine Idee. Dein Profil und dein Projekt werden nur für passende Produktfunktionen genutzt und nicht als Rohdaten verkauft. Sichtbarkeit und Weitergabe sollen kontrolliert und nachvollziehbar bleiben.",
     },
     {
       q: "Funktioniert das auch außerhalb von Deutschland?",
-      a: "Ja. Die Plattform ist auf Deutsch und Englisch verfügbar. Aktueller Fokus liegt auf DACH — Deutschland, Österreich und Schweiz. Internationale Profile sind aber bereits möglich und werden mit steigender Nutzerzahl aktiv ausgebaut.",
+      a: "Der aktuelle Fokus liegt auf DACH — Deutschland, Österreich und Schweiz. Die Oberfläche ist deutsch; internationale Profile können später dazukommen, wenn sie zum Netzwerk passen.",
     },
     {
       q: "Kann der Co-Pilot wirklich einen EXIST-Antrag vorausfüllen?",
@@ -3454,7 +3651,7 @@ function LFaq() {
     },
     {
       q: "Kann ich kündigen?",
-      a: "Jederzeit, ohne Begründung, ohne Frist. Monatlich kündbar direkt in den Einstellungen — keine E-Mail, kein Anruf, kein Kleingedrucktes.",
+      a: "Während der Beta gibt es keinen langfristigen Vertrag. Bezahlte Pläne werden erst mit klaren Konditionen ausgerollt.",
     },
   ];
   const [openIdx, setOpenIdx] = useState<number>(0);
@@ -3470,7 +3667,7 @@ function LFaq() {
         }}
       >
         <div style={{ position: "sticky", top: 100 }}>
-          <Eyebrow>09 · Was Founder uns fragen</Eyebrow>
+          <Eyebrow>10 · Was Founder uns fragen</Eyebrow>
           <h2
             style={{
               margin: "20px 0 0",
@@ -3671,7 +3868,7 @@ function LCta() {
         }}
       >
         <div>
-          <Eyebrow tone="light">10 · Anfangen</Eyebrow>
+          <Eyebrow tone="light">11 · Anfangen</Eyebrow>
           <h2
             style={{
               margin: "20px 0 0",
@@ -3707,7 +3904,7 @@ function LCta() {
             style={{ display: "flex", gap: 12, marginTop: 36, flexWrap: "wrap" }}
           >
             <Link
-              to="/co-pilot"
+              to="/auth"
               style={{
                 background: M.ember,
                 color: M.cream,
@@ -3723,7 +3920,7 @@ function LCta() {
                   "0 18px 40px -12px rgba(178,59,14,0.6), inset 0 1px 0 rgba(255,255,255,0.25)",
               }}
             >
-              Plattform jetzt starten
+              Beta-Zugang sichern
               <SvcIcon name="arrowR" size={16} color={M.cream} stroke={2.2} />
             </Link>
             <a
@@ -3759,13 +3956,15 @@ function LCta() {
             }}
           >
             <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <SvcIcon name="check2" size={14} color={M.ember} stroke={2.4} /> Kostenlos für 90 Tage
+              <SvcIcon name="check2" size={14} color={M.ember} stroke={2.4} /> Kostenlos in der Beta
             </span>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <SvcIcon name="check2" size={14} color={M.ember} stroke={2.4} /> Keine Kreditkarte
+              <SvcIcon name="check2" size={14} color={M.ember} stroke={2.4} /> Start ohne
+              Kreditkarte
             </span>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <SvcIcon name="check2" size={14} color={M.ember} stroke={2.4} /> DSGVO · Hosting in DE
+              <SvcIcon name="check2" size={14} color={M.ember} stroke={2.4} /> Kuratierter
+              Beta-Zugang
             </span>
           </div>
         </div>
@@ -3917,13 +4116,43 @@ function LFooter() {
     },
     {
       h: "Unternehmen",
-      items: ["Über uns", "Stories", "Karriere · 6 offen", "Presse", "Partner werden"],
+      items: ["Über uns", "Stimmen", "Partner werden", "Kontakt"],
     },
     {
       h: "Rechtliches",
       items: ["Impressum", "Datenschutz", "AGB", "Cookies", "AV-Vertrag", "Security"],
     },
   ];
+  const hrefFor = (item: string) => {
+    const routes: Record<string, string> = {
+      Marketplace: "/marketplace",
+      "Co-Pilot": "/co-pilot",
+      Pipeline: "/heute",
+      "Förderung-Radar": "/foerderung",
+      "Beratungs-Buchung": "mailto:founders@matchfoundr.com?subject=Beratung%20buchen",
+      "Co-Founder": "/co-founder",
+      CoFounder: "/co-founder",
+      Kapital: "/kapital",
+      Förderung: "/foerderung",
+      "Recht & Verträge": "/recht",
+      Recht: "/recht",
+      Steuer: "/steuer",
+      Mentoren: "/mentoren",
+      Talent: "/talent",
+      Growth: "/growth",
+      "Über uns": "#stories",
+      Stimmen: "#stories",
+      "Partner werden": "mailto:founders@matchfoundr.com?subject=Partner%20werden",
+      Kontakt: "mailto:founders@matchfoundr.com",
+      Impressum: "mailto:founders@matchfoundr.com?subject=Impressum",
+      Datenschutz: "mailto:founders@matchfoundr.com?subject=Datenschutz",
+      AGB: "mailto:founders@matchfoundr.com?subject=AGB",
+      Cookies: "mailto:founders@matchfoundr.com?subject=Cookies",
+      "AV-Vertrag": "mailto:founders@matchfoundr.com?subject=AV-Vertrag",
+      Security: "mailto:founders@matchfoundr.com?subject=Security",
+    };
+    return routes[item] ?? "#";
+  };
   return (
     <footer style={{ background: M.ink, color: M.cream, padding: "80px 0 36px" }}>
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "0 64px" }}>
@@ -3972,7 +4201,7 @@ function LFooter() {
                 <SvcIcon name="shield" size={12} color="rgba(251,250,247,0.5)" stroke={1.8} />
                 Hosting · Frankfurt
               </span>
-              <span>SOC 2 · in Audit</span>
+              <span>DACH · Beta</span>
             </div>
           </div>
           {cols.map((c) => (
@@ -3993,7 +4222,7 @@ function LFooter() {
                 {c.items.map((it) => (
                   <a
                     key={it}
-                    href="#"
+                    href={hrefFor(it)}
                     style={{
                       fontSize: 14,
                       color: "rgba(251,250,247,0.85)",
@@ -4048,7 +4277,7 @@ function LFooter() {
             }}
           >
             <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#3D9970" }} />
-            Co-Pilot online · 1.2s avg
+            Co-Pilot bereit · Beta offen
           </div>
         </div>
       </div>
@@ -4172,9 +4401,13 @@ const RESPONSIVE_CSS = `
     gap: 14px !important;
   }
 
-  /* Pricing 3-col → stack */
+  /* Beta cards 3-col → stack */
   .landing-pricing-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
   .landing-root [style*="translateY(-8px)"] { transform: none !important; }
+  .landing-waitlist-form {
+    grid-template-columns: 1fr !important;
+    align-items: stretch !important;
+  }
 
   /* Footer 5-col → 2-col, brand spans full */
   .landing-footer-grid,
@@ -4233,7 +4466,7 @@ const RESPONSIVE_CSS = `
   }
   .landing-logo-wall-label { width: 100% !important; }
 
-  /* €2.4M giant number */
+  /* Funding hero wordmark */
   .landing-root [style*="font-size: 180px"] { font-size: 92px !important; line-height: 0.9 !important; }
   .landing-root [style*="font-size: 72px"] { font-size: 48px !important; line-height: 1.05 !important; }
   .landing-root [style*="font-size: 56px"] { font-size: 38px !important; line-height: 1.05 !important; }
@@ -4324,7 +4557,7 @@ const RESPONSIVE_CSS = `
     padding-top: 0 !important;
   }
 
-  /* €2.4M smaller */
+  /* Funding hero wordmark smaller */
   .landing-root [style*="font-size: 180px"] { font-size: 72px !important; }
   /* Hero typography */
   .landing-root h1 { font-size: clamp(36px, 12vw, 56px) !important; }
@@ -4382,7 +4615,8 @@ const RESPONSIVE_CSS = `
   .landing-hero-actions > a,
   .landing-hero-actions > button,
   .landing-cta-grid a,
-  .landing-cta-grid button {
+  .landing-cta-grid button,
+  .landing-waitlist-form button {
     flex: 1 1 100% !important;
     width: 100% !important;
     justify-content: center !important;
@@ -4454,6 +4688,7 @@ function Landing() {
       <LCompare />
       <LTestimonials />
       <LPricing />
+      <LWaitlist />
       <LFaq />
       <LCta />
       <LFooter />

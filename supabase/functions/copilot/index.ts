@@ -334,6 +334,18 @@ function extractDraft(kimiData: Record<string, unknown>, kimiRaw: string): strin
   return text;
 }
 
+/// Der iOS-Client encodiert mit `convertToSnakeCase`, ältere Clients und der
+/// Web-Client schicken camelCase. Beide Schreibweisen akzeptieren, statt sich
+/// auf eine zu verlassen — sonst fallen Felder stillschweigend hinten runter.
+function onboardingField(
+  source: Record<string, unknown> | null | undefined,
+  camelKey: string,
+): string | undefined {
+  if (!source) return undefined;
+  const snakeKey = camelKey.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+  return stringOrUndefined(source[camelKey]) ?? stringOrUndefined(source[snakeKey]);
+}
+
 function stringOrUndefined(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
@@ -479,12 +491,45 @@ function isPureAppMutationRequest(message: string): boolean {
   return calendarRequest || boardRequest || slackRequest || emailRequest;
 }
 
+/// Grobfilter für Vorhaben, die in Deutschland ohne Erlaubnis gar nicht
+/// starten dürfen. Bewusst großzügig: ein Fehlalarm kostet eine Recherche,
+/// ein übersehener Fall kostet den Nutzer sein Geschäft.
+function isRegulatedVenture(text: string): boolean {
+  return [
+    // Finanzaufsicht — KWG §32, ZAG, WpIG
+    /bafin|banklizenz|banking|zahlungsdienst|e-?geld|kryptoverwahr|einlagen|kreditvergabe|wertpapier|anlageberatung|fintech|neobank/,
+    // Vermittlung — GewO §34c/d/f/i
+    /versicherungsvermittl|finanzanlagenvermittl|immobilienmakl|darlehensvermittl|inkasso/,
+    // Heil- und Pflegeberufe
+    /heilprakt|physiotherap|ergotherap|logopäd|logopaed|pflegedienst|arztprax|ärztin|zahnarzt|zahnärzt|apotheke|psychotherap|hebamme|podolog|osteopath/,
+    // Lebensmittel und Gastronomie
+    /gastronom|restaurant|imbiss|bistro|café|cafe|kneipe|brauerei|lebensmittel|catering|foodtruck|food truck|eisdiele|metzger|fleischer|bäcker|baecker|konditor/,
+    // Zulassungspflichtiges Handwerk (Anlage A HwO) — auf Wortstämme, damit
+    // auch "Elektrikermeister" oder "Kfz-Werkstatt" sicher greifen.
+    /elektr|sanitär|sanitaer|heizung|installateur|klempner|dachdeck|maurer|betonbau|zimmerer|zimmermann|friseur|augenoptik|optiker|hörakustik|hoerakustik|orthopädie|orthopaedie|schornsteinfeg|kälteanlagen|kaelteanlagen|straßenbau|strassenbau|stuckateur|tischler|schreiner|metallbau|kfz|kraftfahrzeug|autowerkstatt|gerüstbau|geruestbau|glaser|maler und lackier|feinwerkmech|boots.?bau|vulkanis/,
+    // Waren-Onlinehandel — VerpackG/LUCID, Produktsicherheit
+    /onlineshop|online-shop|e-?commerce|webshop|dropshipping|versandhandel|amazon|etsy|shopify/,
+    // Sonstige erlaubnispflichtige Gewerbe
+    /bewachung|sicherheitsdienst|personenbeförderung|personenbefoerderung|taxi|fahrschule|spielhalle|waffen|tabak|arbeitnehmerüberlassung|zeitarbeit|kindertagespflege|pfandleih/,
+  ].some((pattern) => pattern.test(text));
+}
+
 function executionAgentDescriptor(
   ctx: FounderContext,
   message: string,
   assignment: string,
 ): { key: string; name: string; purpose: string } {
   const text = `${message} ${assignment} ${ctx.industry || ""} ${ctx.idea || ""}`.toLowerCase();
+  // Erlaubnispflichtige Vorhaben zuerst — hier ist eine falsche Auskunft
+  // teurer als gar keine, deshalb ein eigener Agent mit eigenem Auftrag.
+  if (isRegulatedVenture(text)) {
+    return {
+      key: "regulatory-research",
+      name: "Erlaubnis-Prüfer",
+      purpose:
+        "Erlaubnis- und Zulassungspflichten vor dem Start klären: zuständige Aufsicht, Rechtsgrundlage, Reihenfolge",
+    };
+  }
   if (/versicher|haftpflicht|berufsgenossenschaft/.test(text)) {
     return {
       key: "insurance-research",
@@ -1730,7 +1775,7 @@ Deno.serve(async (req) => {
       : [{ data: null }, { data: null }, { data: null }, { data: null }];
 
     const ctx: FounderContext = {
-      userName: profile?.display_name || stringOrUndefined(onboarding?.userName) || "Founder",
+      userName: profile?.display_name || onboardingField(onboarding, "userName") || "Founder",
       founder_type: profile?.founder_type || undefined,
       role: contextData?.role,
       idea: contextData?.idea,
@@ -1743,12 +1788,15 @@ Deno.serve(async (req) => {
     if (onboarding) {
       ctx.founder_type = ctx.founder_type || stringOrUndefined(onboarding.path);
       ctx.industry = ctx.industry || stringOrUndefined(onboarding.industry);
-      ctx.venture_term = ctx.venture_term || stringOrUndefined(onboarding.ventureTerm);
-      ctx.partner_term = ctx.partner_term || stringOrUndefined(onboarding.partnerTerm);
-      ctx.copilot_context = ctx.copilot_context || stringOrUndefined(onboarding.copilotContext);
+      ctx.venture_term = ctx.venture_term || onboardingField(onboarding, "ventureTerm");
+      ctx.partner_term = ctx.partner_term || onboardingField(onboarding, "partnerTerm");
+      ctx.copilot_context = ctx.copilot_context || onboardingField(onboarding, "copilotContext");
     }
     if (onboardingContext) {
       ctx.idea = ctx.idea || stringOrUndefined(onboardingContext.idea);
+      // Während des Onboardings gibt es noch kein Profil in der DB — der Ort
+      // kann also nur aus dem mitgeschickten Kontext kommen.
+      ctx.city = ctx.city || stringOrUndefined(onboardingContext.city);
       ctx.role = ctx.role || stringOrUndefined(onboardingContext.role);
       ctx.stage = ctx.stage || stringOrUndefined(onboardingContext.stage);
       ctx.goal = ctx.goal || stringOrUndefined(onboardingContext.goal);
@@ -2391,6 +2439,142 @@ Deno.serve(async (req) => {
         // true only while a persisted execution job is new or actually active.
         pending: Boolean(executionJobID || activeExecutionRow),
         execution_job_id: executionJobID || activeExecutionRow?.id || null,
+      };
+    } else if (task === "onboarding_research") {
+      // Wird mitten im Onboarding gefeuert, sobald Vorhaben, Branche und Ort
+      // stehen. Antwortet SOFORT mit der Job-ID; die eigentliche Recherche
+      // läuft im Worker, während der Nutzer die restlichen Fragen beantwortet.
+      const authedUser = requireUser();
+      const venture = ctx.idea || message;
+      if (!venture || venture.trim().length < 10) {
+        return new Response(
+          JSON.stringify({ error: "Zu wenig Kontext fuer eine Recherche." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      const regionLabel = ctx.city || "Deutschland";
+      const assignment = [
+        `Vorhaben: ${venture}`,
+        `Branche: ${ctx.industry || "unbekannt"}`,
+        `Ort: ${regionLabel}`,
+        "",
+        "Kläre für genau dieses Vorhaben in Deutschland:",
+        "1. Braucht es eine Erlaubnis, Zulassung oder Registrierung, bevor es losgehen darf?",
+        "   Wenn ja: welche Rechtsgrundlage, welche Aufsicht, welche Reihenfolge.",
+        `2. Welche Stelle ist in ${regionLabel} konkret zuständig (Kammer, Amt, Register) —`,
+        "   mit Namen, nicht als allgemeine Kategorie.",
+        "3. Welche zwei bis drei Schritte stehen danach wirklich als Erstes an.",
+        "Nenne echte Quellen. Erfinde keine Adressen, Beträge oder Fristen.",
+      ].join("\n");
+
+      await supabase
+        .from("copilot_sessions")
+        .upsert({ id: session_id, user_id: authedUser.id }, { onConflict: "id", ignoreDuplicates: true });
+
+      const descriptor = executionAgentDescriptor(ctx, venture, assignment);
+      const { data: onboardingAgent } = await supabase
+        .from("copilot_execution_agents")
+        .upsert(
+          {
+            user_id: authedUser.id,
+            agent_key: descriptor.key,
+            name: descriptor.name,
+            purpose: descriptor.purpose,
+            status: "working",
+            last_used_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,agent_key" },
+        )
+        .select("id")
+        .single();
+
+      const { data: onboardingJob, error: onboardingJobError } = await supabase
+        .from("copilot_execution_jobs")
+        .insert({
+          session_id: session_id || null,
+          user_id: authedUser.id,
+          agent_id: onboardingAgent?.id ?? null,
+          status: "queued",
+          request_message: venture,
+          assignment,
+          current_step: 0,
+          max_steps: 3,
+          next_run_at: new Date().toISOString(),
+          progress_text: "Ich sehe mir dein Vorhaben an.",
+          working_memory: {
+            source: "onboarding",
+            industry: ctx.industry || null,
+            region: regionLabel,
+          },
+        })
+        .select("id")
+        .single();
+
+      if (onboardingJobError) {
+        console.error("onboarding research job failed:", onboardingJobError.message);
+        result = { job_id: null, agent: descriptor.name };
+      } else {
+        dispatchExecutionWorker(onboardingJob.id);
+        result = { job_id: onboardingJob.id, agent: descriptor.name };
+      }
+    } else if (task === "onboarding_brief") {
+      // Formt den Startplan. Läuft mit ODER ohne fertige Recherche — ohne
+      // Job-Ergebnis ist es immer noch echtes Modellwissen statt Template.
+      const authedUser = requireUser();
+      const jobID = stringOrUndefined((extra as Record<string, unknown>)?.job_id);
+
+      let researchFindings: string | null = null;
+      let researchSources: unknown[] = [];
+      if (jobID) {
+        const { data: job } = await supabase
+          .from("copilot_execution_jobs")
+          .select("status, result, progress_text")
+          .eq("id", jobID)
+          .eq("user_id", authedUser.id)
+          .single();
+        const jobRecord = isRecord(job) ? job : null;
+        const jobResult = jobRecord && isRecord(jobRecord.result) ? jobRecord.result : null;
+        const answer =
+          jobResult && typeof jobResult.answer === "string" ? jobResult.answer : null;
+        if (jobRecord?.status === "completed" && answer && answer.trim() !== "") {
+          researchFindings = answer;
+          researchSources =
+            jobResult && Array.isArray(jobResult.sources) ? jobResult.sources : [];
+        }
+      }
+
+      const briefInput = JSON.stringify({
+        name: ctx.userName,
+        vorhaben: ctx.idea || message,
+        branche: ctx.industry || null,
+        branche_label: onboardingField(onboarding, "industryLabel") || null,
+        ort: ctx.city || null,
+        modus: ctx.founder_type || null,
+        mitgebrachte_skills: onboardingSkills?.selected ?? null,
+        verfuegbarkeit: onboardingSkills?.availability ?? null,
+        gewaehlte_schwerpunkte: onboarding?.focus ?? null,
+        recherche: researchFindings
+          ? { findings: researchFindings, sources: researchSources }
+          : null,
+      });
+
+      const briefRaw = await callKimiWithFallback(
+        KIMI_PROMPTS.onboarding_brief(ctx, briefInput),
+        "onboarding_brief",
+        sink,
+      );
+      const parsedBrief = parseJSONLoose(briefRaw);
+      const briefObject = isRecord(parsedBrief) ? parsedBrief : {};
+      const steps = Array.isArray(briefObject.steps) ? briefObject.steps.slice(0, 3) : [];
+
+      result = {
+        summary: typeof briefObject.summary === "string" ? briefObject.summary : "",
+        regulatory: isRecord(briefObject.regulatory) ? briefObject.regulatory : null,
+        steps,
+        sources: researchSources,
+        researched: researchFindings !== null,
       };
     } else if (task === "plan_generate") {
       const authedUser = requireUser();

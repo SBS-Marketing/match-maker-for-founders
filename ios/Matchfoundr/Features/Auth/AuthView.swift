@@ -31,7 +31,9 @@ struct AuthView: View {
         }
         var headline: String {
             switch self {
-            case .signup: "Founder-Profil erstellen"
+            // "Founder" ist Startup-Sprache. Die Zielgruppe hier meldet ein
+            // Gewerbe an, sie gründet kein Startup.
+            case .signup: "Profil anlegen"
             case .login: "Willkommen zurück"
             case .magic: "Magic Link"
             }
@@ -280,9 +282,9 @@ struct AuthView: View {
 
     private var trustRow: some View {
         VStack(alignment: .leading, spacing: 9) {
-            Label("Session wird sicher im iOS Keychain gespeichert.", systemImage: "key.fill")
-            Label("Co-Pilot und Live-Daten laufen mit deinem Supabase-User.", systemImage: "bolt.horizontal.circle.fill")
-            Label("Kein Service-Role-Key in der App.", systemImage: "shield.lefthalf.filled")
+            Label("Dein Login bleibt sicher auf diesem Gerät.", systemImage: "key.fill")
+            Label("Du bleibst angemeldet, bis du dich abmeldest.", systemImage: "bolt.horizontal.circle.fill")
+            Label("Deine Daten gehören dir — kein Weiterverkauf.", systemImage: "shield.lefthalf.filled")
         }
         .font(.system(size: 12.5, weight: .semibold))
         .foregroundStyle(MF.smoke)

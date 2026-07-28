@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { PremiumSheet } from "@/components/PremiumSheet";
 import { isPremium, registerChatContact, registerSwipe, swipesLeftToday } from "@/lib/premium";
+import { edgeFunctionHeaders, edgeFunctionUrl } from "@/lib/edge-functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthGate } from "@/components/AuthGate";
@@ -167,7 +168,7 @@ const DEMO_PROFILES: Profile[] = [
 ];
 
 function Discover() {
-  const { user, isDemo } = useAuth();
+  const { user, session, isDemo } = useAuth();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>("spark");
   const [queue, setQueue] = useState<Profile[]>([]);
@@ -251,6 +252,34 @@ function Discover() {
     load();
   }, [load]);
 
+  const performSwipe = async (targetId: string, direction: "like" | "pass") => {
+    if (!user || !session) return null;
+    const res = await fetch(edgeFunctionUrl("swipe"), {
+      method: "POST",
+      headers: edgeFunctionHeaders(session.access_token),
+      body: JSON.stringify({ target_id: targetId, direction }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Swipe fehlgeschlagen" }));
+      throw new Error(err.error ?? "Swipe fehlgeschlagen");
+    }
+    return (await res.json()) as { mutual_match?: boolean; match_id?: string };
+  };
+
+  const findChatMatchId = async (targetId: string) => {
+    if (!user) return null;
+    const ua = user.id < targetId ? user.id : targetId;
+    const ub = user.id < targetId ? targetId : user.id;
+    const { data, error } = await supabase
+      .from("matches")
+      .select("id")
+      .eq("user_a", ua)
+      .eq("user_b", ub)
+      .maybeSingle();
+    if (error) throw error;
+    return data?.id ?? null;
+  };
+
   const swipe = async (targetId: string, direction: "like" | "pass") => {
     if (!user) return;
     if (!registerSwipe()) {
@@ -263,23 +292,18 @@ function Discover() {
       if (direction === "like") toast.success("Demo-Like gespeichert");
       return;
     }
-    const { error } = await supabase
-      .from("swipes")
-      .insert({ swiper_id: user.id, target_id: targetId, direction });
-    if (error) return toast.error(error.message);
-    setQueue((q) => q.filter((x) => x.id !== targetId));
-    removeSparkProfile(targetId);
-    if (direction === "like") {
-      const ua = user.id < targetId ? user.id : targetId;
-      const ub = user.id < targetId ? targetId : user.id;
-      const { data: m } = await supabase
-        .from("matches")
-        .select("id")
-        .eq("user_a", ua)
-        .eq("user_b", ub)
-        .maybeSingle();
-      if (m) toast.success("Es ist ein Match! 🎉");
-      else toast.success("Like gesendet");
+
+    try {
+      const result = await performSwipe(targetId, direction);
+      setQueue((q) => q.filter((x) => x.id !== targetId));
+      removeSparkProfile(targetId);
+      if (direction === "like") {
+        const chatMatchId = result?.mutual_match ? await findChatMatchId(targetId) : null;
+        if (chatMatchId) toast.success("Es ist ein Match!");
+        else toast.success("Like gesendet");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Swipe fehlgeschlagen");
     }
   };
 
@@ -294,25 +318,19 @@ function Discover() {
       toast.info("Demo: Chat wird nach echtem Match freigeschaltet.");
       return;
     }
-    // Sending a like; if reciprocal -> match created, navigate to chat
-    const { error } = await supabase
-      .from("swipes")
-      .insert({ swiper_id: user.id, target_id: targetId, direction: "like" });
-    if (error && !error.message.includes("duplicate")) return toast.error(error.message);
-    setQueue((q) => q.filter((x) => x.id !== targetId));
-    removeSparkProfile(targetId);
-    const ua = user.id < targetId ? user.id : targetId;
-    const ub = user.id < targetId ? targetId : user.id;
-    const { data: m } = await supabase
-      .from("matches")
-      .select("id")
-      .eq("user_a", ua)
-      .eq("user_b", ub)
-      .maybeSingle();
-    if (m) {
-      navigate({ to: "/matches/$id", params: { id: m.id } });
-    } else {
-      toast.info("Like gesendet. Du kannst schreiben, sobald es ein Match ist.");
+
+    try {
+      const result = await performSwipe(targetId, "like");
+      setQueue((q) => q.filter((x) => x.id !== targetId));
+      removeSparkProfile(targetId);
+      const chatMatchId = result?.mutual_match ? await findChatMatchId(targetId) : null;
+      if (chatMatchId) {
+        navigate({ to: "/matches/$id", params: { id: chatMatchId } });
+      } else {
+        toast.info("Like gesendet. Du kannst schreiben, sobald es ein Match ist.");
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Like konnte nicht gesendet werden");
     }
   };
 

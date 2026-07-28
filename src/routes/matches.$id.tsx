@@ -56,30 +56,38 @@ function Chat() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [text, setText] = useState("");
   const [search, setSearch] = useState("");
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   // Load threads (sidebar)
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: matches } = await supabase
+      const { data: matches, error: matchesError } = await supabase
         .from("matches")
         .select("id, user_a, user_b, created_at")
         .order("created_at", { ascending: false });
+      if (matchesError) {
+        setLoadError(matchesError.message);
+        return setThreads([]);
+      }
       if (!matches || matches.length === 0) return setThreads([]);
       const otherIds = matches.map((m) => (m.user_a === user.id ? m.user_b : m.user_a));
-      const { data: profs } = await supabase
+      const { data: profs, error: profilesError } = await supabase
         .from("profiles")
         .select("id, display_name, photo_url, role")
         .in("id", otherIds);
+      if (profilesError) setLoadError(profilesError.message);
       const byId = new Map((profs ?? []).map((p) => [p.id, p]));
       // last messages
       const matchIds = matches.map((m) => m.id);
-      const { data: lastMsgs } = await supabase
+      const { data: lastMsgs, error: lastMessagesError } = await supabase
         .from("messages")
         .select("match_id, body, created_at")
         .in("match_id", matchIds)
         .order("created_at", { ascending: false });
+      if (lastMessagesError) setLoadError(lastMessagesError.message);
       const lastByMatch = new Map<string, { body: string; created_at: string }>();
       (lastMsgs ?? []).forEach((m: LastMessageRow) => {
         if (!lastByMatch.has(m.match_id))
@@ -109,25 +117,41 @@ function Chat() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data: match } = await supabase
+      setLoadError(null);
+      const { data: match, error: matchError } = await supabase
         .from("matches")
         .select("user_a, user_b")
         .eq("id", id)
         .maybeSingle();
-      if (!match) return;
+      if (matchError) {
+        setLoadError(matchError.message);
+        return;
+      }
+      if (!match) {
+        setLoadError("Dieses Match wurde nicht gefunden oder ist fuer dich nicht freigegeben.");
+        return;
+      }
       const otherId = match.user_a === user.id ? match.user_b : match.user_a;
-      const { data: p } = await supabase
+      const { data: p, error: profileError } = await supabase
         .from("profiles")
         .select("display_name, photo_url, role, location, industry, looking_for")
         .eq("id", otherId)
         .maybeSingle();
+      if (profileError) {
+        setLoadError(profileError.message);
+        return;
+      }
       setOther(p ?? null);
 
-      const { data: history } = await supabase
+      const { data: history, error: historyError } = await supabase
         .from("messages")
         .select("*")
         .eq("match_id", id)
         .order("created_at", { ascending: true });
+      if (historyError) {
+        setLoadError(historyError.message);
+        return;
+      }
       setMsgs(history ?? []);
     })();
 
@@ -151,13 +175,18 @@ function Chat() {
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
     const body = text.trim();
-    if (!body || !user) return;
+    if (!body || !user || sending) return;
     if (body.length > 2000) return toast.error("Nachricht zu lang");
+    setSending(true);
     setText("");
     const { error } = await supabase
       .from("messages")
       .insert({ match_id: id, sender_id: user.id, body });
-    if (error) toast.error(error.message);
+    if (error) {
+      setText(body);
+      toast.error(error.message);
+    }
+    setSending(false);
   };
 
   const filteredThreads = threads.filter((t) =>
@@ -243,6 +272,11 @@ function Chat() {
 
         {/* Conversation */}
         <div className="glass-pane flex h-full min-h-0 flex-col overflow-hidden p-0 md:h-[calc(100dvh-11rem)] md:min-h-[520px] lg:max-h-[calc(100vh-160px)]">
+          {loadError && (
+            <div className="border-b border-[rgba(226,81,28,0.2)] bg-[var(--ember-tint)] px-4 py-3 text-[12.5px] text-[var(--ember-deep)]">
+              {loadError}
+            </div>
+          )}
           {/* Header */}
           <div
             className="flex items-center gap-3 border-b px-4 py-3 md:gap-3.5 md:px-5 md:py-4"
@@ -345,11 +379,13 @@ function Chat() {
               <Smile className="hidden h-4 w-4 text-[var(--smoke)] sm:block" />
               <button
                 type="submit"
+                disabled={sending || !text.trim()}
                 className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px]"
                 style={{
                   background: "var(--ember)",
                   color: "var(--cream)",
                   boxShadow: "0 6px 14px -4px rgba(178,59,14,0.45)",
+                  opacity: sending || !text.trim() ? 0.55 : 1,
                 }}
               >
                 <Send className="h-3.5 w-3.5" />
