@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Lockup } from "@/components/Logo";
+import type { FileRouteTypes } from "@/routeTree.gen";
 
 export const Route = createFileRoute("/auth")({ component: AuthShell });
 
@@ -76,7 +77,9 @@ function AuthPage() {
           password: password,
         });
         if (error) throw error;
-        navigate({ to: next ? next : "/heute" } as any);
+        // `next` is a runtime redirect target validated by safeNext(), not one of the
+        // statically known route literals — narrow to the router's known-paths type.
+        navigate({ to: (next ?? "/heute") as FileRouteTypes["fullPaths"] });
       } else if (mode === "magic") {
         const { error } = await supabase.auth.signInWithOtp({
           email: eR.data,
@@ -95,7 +98,9 @@ function AuthPage() {
   const oauth = async (provider: "google" | "apple") => {
     const { lovable } = await import("@/integrations/lovable/index");
     const result = await lovable.auth.signInWithOAuth(provider, {
-      redirect_uri: next ? `${window.location.origin}${next}` : `${window.location.origin}/auth/callback`,
+      redirect_uri: next
+        ? `${window.location.origin}${next}`
+        : `${window.location.origin}/auth/callback`,
     });
     if (result.error) {
       toast.error(result.error.message ?? "Login fehlgeschlagen");
@@ -104,7 +109,6 @@ function AuthPage() {
     if (result.redirected) return;
     navigate({ to: "/heute" });
   };
-
 
   const skipAuth = () => {
     enterDemo();

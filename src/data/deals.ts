@@ -40,14 +40,13 @@ export const DEALS: Deal[] = (file.deals ?? []).filter((d) => d.active !== false
 export const DEALS_GENERATED_AT: string = file.generated_at;
 export const DEALS_STATS = file.stats;
 
-export const DEAL_CATEGORIES: { id: string; label: string; icon: string; count: number }[] = (() => {
-  const map = new Map<string, { label: string; icon: string; count: number }>();
-  for (const d of DEALS) {
-    const cur = map.get(d.cat);
-    if (cur) cur.count += 1;
-    else map.set(d.cat, { label: d.cat_label || d.cat, icon: d.cat_icon || "•", count: 1 });
-  }
-  return [...map.entries()]
-    .map(([id, v]) => ({ id, ...v }))
-    .sort((a, b) => b.count - a.count);
-})();
+export const DEAL_CATEGORIES: { id: string; label: string; icon: string; count: number }[] =
+  (() => {
+    const map = new Map<string, { label: string; icon: string; count: number }>();
+    for (const d of DEALS) {
+      const cur = map.get(d.cat);
+      if (cur) cur.count += 1;
+      else map.set(d.cat, { label: d.cat_label || d.cat, icon: d.cat_icon || "•", count: 1 });
+    }
+    return [...map.entries()].map(([id, v]) => ({ id, ...v })).sort((a, b) => b.count - a.count);
+  })();

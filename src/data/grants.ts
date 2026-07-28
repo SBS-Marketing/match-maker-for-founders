@@ -37,11 +37,19 @@ const FALLBACK_GRANTS: Grant[] = [
       { item: "Innovativer Tech-Kern", ok: true, note: "B2B-SaaS mit ML-Score: erfüllt." },
       { item: "Hochschul-Anbindung", ok: true, note: "TU Berlin als Trägerhochschule bestätigt." },
       { item: "Team max. 3 Personen", ok: true },
-      { item: "Noch keine GmbH gegründet", ok: "warn", note: "Du planst Q3-Gründung — Antrag muss vorher raus." },
+      {
+        item: "Noch keine GmbH gegründet",
+        ok: "warn",
+        note: "Du planst Q3-Gründung — Antrag muss vorher raus.",
+      },
       { item: "Kein Hauptberuf > 5h/Wo", ok: true },
     ],
     timeline: [
-      { phase: "Antrag finalisieren", weeks: "Wo 1–2", desc: "3 fehlende Felder, Letter of Intent der Hochschule." },
+      {
+        phase: "Antrag finalisieren",
+        weeks: "Wo 1–2",
+        desc: "3 fehlende Felder, Letter of Intent der Hochschule.",
+      },
       { phase: "Einreichung", weeks: "Wo 3", desc: "DLR-Portal, Co-Pilot prüft Formalia." },
       { phase: "Begutachtung", weeks: "Wo 4–14", desc: "Fachgutachten, ggf. Rückfragen." },
       { phase: "Bewilligung & Start", weeks: "Wo 15", desc: "Auszahlung, Coaching-Termine." },
@@ -68,7 +76,11 @@ const FALLBACK_GRANTS: Grant[] = [
     eligibility: [
       { item: "Sitz / Vorhaben in Berlin", ok: true },
       { item: "FuE-Anteil > 25%", ok: true },
-      { item: "Eigenanteil 30%", ok: "warn", note: "Co-Investoren empfohlen — Co-Pilot hat 4 Angels vorgeschlagen." },
+      {
+        item: "Eigenanteil 30%",
+        ok: "warn",
+        note: "Co-Investoren empfohlen — Co-Pilot hat 4 Angels vorgeschlagen.",
+      },
     ],
     timeline: [
       { phase: "Skizze", weeks: "Wo 1–3", desc: "IBB-Gespräch, Skizze einreichen." },

@@ -43,7 +43,11 @@ function DealsPage() {
   }, [cat, q]);
 
   const generated = DEALS_GENERATED_AT
-    ? new Date(DEALS_GENERATED_AT).toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" })
+    ? new Date(DEALS_GENERATED_AT).toLocaleDateString("de-DE", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
     : null;
 
   return (
@@ -127,7 +131,9 @@ function DealsPage() {
               </div>
 
               <p className="mt-3 text-[13px] font-semibold text-[var(--ink)]">{d.value}</p>
-              <p className="mt-1 line-clamp-3 text-[12.5px] leading-relaxed text-[var(--smoke)]">{d.desc}</p>
+              <p className="mt-1 line-clamp-3 text-[12.5px] leading-relaxed text-[var(--smoke)]">
+                {d.desc}
+              </p>
 
               {d.tags?.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-1.5">

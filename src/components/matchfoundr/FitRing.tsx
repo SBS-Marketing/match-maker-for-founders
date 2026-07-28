@@ -13,12 +13,7 @@ interface FitRingProps {
   strokeWidth?: number;
 }
 
-export function FitRing({
-  score,
-  segments,
-  size = 120,
-  strokeWidth = 10,
-}: FitRingProps) {
+export function FitRing({ score, segments, size = 120, strokeWidth = 10 }: FitRingProps) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const center = size / 2;
@@ -29,7 +24,10 @@ export function FitRing({
   const totalDegrees = 360 - totalGap;
 
   return (
-    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+    <div
+      className="relative inline-flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
       <svg width={size} height={size} className="-rotate-90">
         {/* Background ring */}
         <circle
@@ -94,10 +92,7 @@ export function FitRingLegend({ segments }: { segments: FitSegment[] }) {
     <div className="flex flex-col gap-2">
       {segments.map((seg) => (
         <div key={seg.label} className="flex items-center gap-2">
-          <span
-            className="inline-block h-2 w-2 rounded-full"
-            style={{ background: seg.color }}
-          />
+          <span className="inline-block h-2 w-2 rounded-full" style={{ background: seg.color }} />
           <span className="flex-1 text-[12px] text-[var(--ink)]">{seg.label}</span>
           <span className="font-mono text-[11px] font-medium" style={{ color: seg.color }}>
             {seg.value}%

@@ -16,8 +16,8 @@ export default async (request: Request) => {
   const ghResponse = await fetch(ghUrl, {
     method: request.method,
     headers: {
-      "Authorization": `token ${token}`,
-      "Accept": "application/vnd.github.v3+json",
+      Authorization: `token ${token}`,
+      Accept: "application/vnd.github.v3+json",
       "Content-Type": "application/json",
       "User-Agent": "matchfoundr-board",
     },

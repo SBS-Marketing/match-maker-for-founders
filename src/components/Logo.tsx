@@ -56,17 +56,32 @@ export function Lockup({
   layout = "horizontal",
   size = 24,
   className,
-}: { layout?: "horizontal" | "stacked"; size?: number; className?: string }) {
+}: {
+  layout?: "horizontal" | "stacked";
+  size?: number;
+  className?: string;
+}) {
   if (layout === "stacked") {
     return (
-      <div className={className} style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", gap: size * 0.45 }}>
+      <div
+        className={className}
+        style={{
+          display: "inline-flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: size * 0.45,
+        }}
+      >
         <IconMF size={size * 1.4} />
         <Wordmark size={size * 1.05} />
       </div>
     );
   }
   return (
-    <div className={className} style={{ display: "inline-flex", alignItems: "center", gap: size * 0.45 }}>
+    <div
+      className={className}
+      style={{ display: "inline-flex", alignItems: "center", gap: size * 0.45 }}
+    >
       <IconMF size={size} />
       <Wordmark size={size * 1.05} />
     </div>

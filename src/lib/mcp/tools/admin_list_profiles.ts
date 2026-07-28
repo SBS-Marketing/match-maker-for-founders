@@ -5,7 +5,8 @@ import { requireAdmin, errorContent } from "./_admin";
 export default defineTool({
   name: "admin_list_profiles",
   title: "Admin: Profile auflisten",
-  description: "Listet User-Profile (id, display_name, founder_type, industry, updated_at). Nur für Admins.",
+  description:
+    "Listet User-Profile (id, display_name, founder_type, industry, updated_at). Nur für Admins.",
   inputSchema: {
     limit: z.number().int().min(1).max(500).optional(),
     search: z.string().optional().describe("Filter auf display_name (ilike)"),
@@ -22,6 +23,9 @@ export default defineTool({
     if (search) q = q.ilike("display_name", `%${search}%`);
     const { data, error } = await q;
     if (error) return errorContent(error.message);
-    return { content: [{ type: "text", text: JSON.stringify(data) }], structuredContent: { profiles: data } };
+    return {
+      content: [{ type: "text", text: JSON.stringify(data) }],
+      structuredContent: { profiles: data },
+    };
   },
 });

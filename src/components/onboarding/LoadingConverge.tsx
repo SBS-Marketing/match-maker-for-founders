@@ -6,9 +6,7 @@ export function LoadingConverge({ label = "Dein Plan wird erstellt…" }: { labe
       <div className="converge-pulse">
         <CopilotMark size={72} color="#15140f" spark="#E2511C" />
       </div>
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ink)]/60">
-        {label}
-      </p>
+      <p className="font-mono text-xs uppercase tracking-[0.2em] text-[var(--ink)]/60">{label}</p>
       <style>{`
         .converge-pulse {
           animation: converge-pulse 1.5s ease-in-out infinite;

@@ -146,10 +146,7 @@ function CalendarPage() {
       <section className="glass-pane flex min-h-0 flex-1 flex-col overflow-hidden p-2 sm:p-4">
         <div className="grid shrink-0 grid-cols-7 border-b border-[var(--ruled)] pb-2">
           {WEEKDAYS.map((day) => (
-            <div
-              key={day}
-              className="text-center text-[11px] font-semibold text-[var(--smoke)]"
-            >
+            <div key={day} className="text-center text-[11px] font-semibold text-[var(--smoke)]">
               {day}
             </div>
           ))}
@@ -214,7 +211,10 @@ function CalendarPage() {
       </section>
 
       {sheet && (
-        <CalendarSheet title={sheet === "create" ? "Termin hinzufügen" : formatDate(selectedDay)} onClose={() => setSheet(null)}>
+        <CalendarSheet
+          title={sheet === "create" ? "Termin hinzufügen" : formatDate(selectedDay)}
+          onClose={() => setSheet(null)}
+        >
           {sheet === "day" ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-3">

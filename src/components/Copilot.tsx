@@ -1,4 +1,12 @@
-export function CopilotMark({ size = 18, color = "currentColor", spark = "var(--ember)" }: { size?: number; color?: string; spark?: string }) {
+export function CopilotMark({
+  size = 18,
+  color = "currentColor",
+  spark = "var(--ember)",
+}: {
+  size?: number;
+  color?: string;
+  spark?: string;
+}) {
   return (
     <svg
       width={size}
@@ -19,7 +27,13 @@ export function CopilotMark({ size = 18, color = "currentColor", spark = "var(--
   );
 }
 
-export function AITag({ children = "AI", tone = "light" }: { children?: React.ReactNode; tone?: "light" | "dark" }) {
+export function AITag({
+  children = "AI",
+  tone = "light",
+}: {
+  children?: React.ReactNode;
+  tone?: "light" | "dark";
+}) {
   const dark = tone === "dark";
   return (
     <span
@@ -42,7 +56,13 @@ export function AITag({ children = "AI", tone = "light" }: { children?: React.Re
   );
 }
 
-export function ThinkingTrace({ children, tone = "light" }: { children: React.ReactNode; tone?: "light" | "dark" }) {
+export function ThinkingTrace({
+  children,
+  tone = "light",
+}: {
+  children: React.ReactNode;
+  tone?: "light" | "dark";
+}) {
   const dark = tone === "dark";
   return (
     <div
@@ -56,10 +76,7 @@ export function ThinkingTrace({ children, tone = "light" }: { children: React.Re
         color: dark ? "rgba(255,255,255,0.55)" : "var(--smoke)",
       }}
     >
-      <span
-        className="inline-block h-1 w-1 rounded-full"
-        style={{ background: "var(--ember)" }}
-      />
+      <span className="inline-block h-1 w-1 rounded-full" style={{ background: "var(--ember)" }} />
       <span>{children}</span>
     </div>
   );
@@ -68,7 +85,10 @@ export function ThinkingTrace({ children, tone = "light" }: { children: React.Re
 export function FitScore({ value, label = "fit" }: { value: number; label?: string }) {
   return (
     <span className="inline-flex items-baseline gap-1">
-      <span className="font-semibold leading-none tracking-tight text-[var(--ember)]" style={{ fontSize: 18 }}>
+      <span
+        className="font-semibold leading-none tracking-tight text-[var(--ember)]"
+        style={{ fontSize: 18 }}
+      >
         {value}
       </span>
       <span className="font-mono text-[10px] text-[var(--smoke)]">{label}</span>

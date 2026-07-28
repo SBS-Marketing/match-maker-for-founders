@@ -4,7 +4,9 @@ import { PARTNERS } from "@/data/partners";
 
 export const Route = createFileRoute("/kapital/$slug")({
   loader: ({ params }) => {
-    const partner = PARTNERS.find((item) => item.service === "capital" && item.slug === params.slug);
+    const partner = PARTNERS.find(
+      (item) => item.service === "capital" && item.slug === params.slug,
+    );
     if (!partner) throw notFound();
     return { partner };
   },

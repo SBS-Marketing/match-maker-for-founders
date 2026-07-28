@@ -12,17 +12,25 @@ export default defineTool({
   },
   annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
   handler: async ({ title, notes }, ctx) => {
-    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Nicht authentifiziert" }], isError: true };
-    const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
-      global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    if (!ctx.isAuthenticated())
+      return { content: [{ type: "text", text: "Nicht authentifiziert" }], isError: true };
+    const supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_PUBLISHABLE_KEY!,
+      {
+        global: { headers: { Authorization: `Bearer ${ctx.getToken()}` } },
+        auth: { persistSession: false, autoRefreshToken: false },
+      },
+    );
     const { data, error } = await supabase
       .from("daily_tasks")
       .insert({ user_id: ctx.getUserId(), title, notes: notes ?? null })
       .select()
       .maybeSingle();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
-    return { content: [{ type: "text", text: JSON.stringify(data) }], structuredContent: { task: data } };
+    return {
+      content: [{ type: "text", text: JSON.stringify(data) }],
+      structuredContent: { task: data },
+    };
   },
 });
