@@ -1,7 +1,7 @@
 # matchfoundr · Deploy-Runbook
 
 Alles, was für einen Launch auf einer frischen Umgebung nötig ist.
-Projekt-Ref (Supabase): `urjpyhyezrwhwgnkkxjv`
+Projekt-Ref (Supabase): `rzmcoxnfcpqqyxgkafwk`
 
 ## 1. Frontend
 
@@ -10,17 +10,16 @@ npm install
 npm run build        # Vite-Build (Cloudflare-Worker + Client)
 ```
 
-Deploy-Ziele sind bereits konfiguriert:
-- **Cloudflare**: `wrangler.jsonc` (`npx wrangler deploy`)
-- **Netlify**: `netlify.toml`
-- **GitHub Pages** (Marketing/`docs/`): wird über den `docs/`-Ordner ausgeliefert.
+Deploy-Ziele:
+- **Primär / Launch-Kandidat: Cloudflare**: TanStack/Nitro-App aus `vite build`, Deploy über `npx wrangler deploy` erst nach Owner-Freigabe.
+- **Legacy / statisch: Netlify und GitHub Pages**: `netlify.toml`, `public/` und `docs/` enthalten ältere statische Artefakte/Tools. Nicht als Produktiv-App deployen, solange das Launch-Ziel nicht bewusst darauf umgestellt wurde.
 
 Env (Client): `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` (siehe `.env`).
 
 ## 2. Datenbank-Migrationen
 
 ```bash
-supabase link --project-ref urjpyhyezrwhwgnkkxjv
+supabase link --project-ref rzmcoxnfcpqqyxgkafwk
 supabase db push
 ```
 
@@ -67,7 +66,7 @@ supabase functions deploy daily-digest
 Einmalig im SQL-Editor (Service Role):
 
 ```sql
-select public.upsert_secret('project_url', 'https://urjpyhyezrwhwgnkkxjv.supabase.co');
+select public.upsert_secret('project_url', 'https://rzmcoxnfcpqqyxgkafwk.supabase.co');
 select public.upsert_secret('service_role_key', '<SERVICE_ROLE_KEY>');
 ```
 
@@ -77,7 +76,7 @@ der Job `matchfoundr-daily-digest` läuft dann täglich 07:00 UTC.
 
 Manueller Test:
 ```bash
-curl -X POST "https://urjpyhyezrwhwgnkkxjv.supabase.co/functions/v1/daily-digest" \
+curl -X POST "https://rzmcoxnfcpqqyxgkafwk.supabase.co/functions/v1/daily-digest" \
   -H "Authorization: Bearer <SERVICE_ROLE_KEY>"
 ```
 Antwort: `{ ok, sent, skipped, errors }`. Nutzer ohne offene Tasks/Deadlines werden übersprungen;

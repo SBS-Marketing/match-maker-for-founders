@@ -7,7 +7,7 @@ Betriebswissen für Agenten, die an diesem Repo arbeiten. **Vor der ersten Ände
 Matchmaking-Plattform für Gründer:innen — Co-Founder, Kapital, Förderung, Recht, Steuer, Mentoren, Talent, Growth — mit KI-Co-Pilot. Zielgruppe: Solo-Gründer:innen (Praxis/Studio/Selbstständigkeit). Oberfläche ist deutsch.
 
 - **Web:** React 19 + TanStack Router/Start, Vite, Tailwind v4, Radix/shadcn
-- **iOS:** SwiftUI, Bundle `de.matchfoundr.app`, 5 Tabs (Heute · Swipe · Chats · Guides · Pilot)
+- **iOS:** SwiftUI, Bundle `de.matchfoundr.app`, 5 Tabs (Heute · Entdecken · Community · Business · Profil — maßgeblich ist `MainTabView` in `MatchfoundrApp.swift`, nicht ältere Doku)
 - **Backend:** Supabase (Postgres + Edge Functions, Deno)
 - **Paketmanager:** Bun (`bun.lock` ist maßgeblich — `package-lock.json` liegt zwar da, ist aber nicht die Quelle der Wahrheit)
 - **Deploy:** Cloudflare / Netlify / GitHub Pages, siehe `DEPLOY.md`

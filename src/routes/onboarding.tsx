@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { writePlanContext, type PlanContext } from "@/lib/plan-draft";
 import { recordAchievement } from "@/lib/copilot-client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { INDUSTRIES, type IndustryId } from "../../onboarding/industries";
 
 export const Route = createFileRoute("/onboarding")({
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/onboarding")({
 
 type Mode = "skills" | "idea";
 type Availability = "fulltime" | "parttime" | "weekend";
+type ProfileUpdate = TablesUpdate<"profiles">;
 
 const SKILL_TAGS = [
   "Entwicklung",
@@ -45,6 +47,24 @@ const AVAILABILITY: { id: Availability; label: string; sub: string; hours: numbe
   { id: "parttime", label: "Teilzeit", sub: "Neben Job oder Studium", hours: 15 },
   { id: "weekend", label: "Wochenende", sub: "Erstmal nebenbei testen", hours: 8 },
 ];
+
+function inferFounderRole(skills: string[]): ProfileUpdate["role"] {
+  if (skills.some((skill) => ["Entwicklung", "KI & Daten"].includes(skill))) return "tech";
+  if (skills.includes("Design")) return "design";
+  if (skills.some((skill) => ["Vertrieb", "Marketing", "Finanzen"].includes(skill))) {
+    return "business";
+  }
+  if (skills.some((skill) => ["Organisation", "Content & Social"].includes(skill))) {
+    return "product";
+  }
+  return "other";
+}
+
+function commitmentForAvailability(availability: Availability): ProfileUpdate["commitment"] {
+  if (availability === "fulltime") return "full_time";
+  if (availability === "parttime") return "part_time";
+  return "exploring";
+}
 
 function OnboardingPage() {
   const { user, session, isDemo } = useAuth();
@@ -110,22 +130,36 @@ function OnboardingPage() {
 
     if (session && user && !isDemo) {
       try {
-        await supabase
-          .from("profiles")
-          .update({
-            display_name: name.trim(),
-            founder_type: mode === "skills" ? "talent" : "founder",
-            industry: selectedIndustry.id,
-            venture_term: selectedIndustry.terms.venture,
-            partner_term: selectedIndustry.terms.partner,
-            skills,
-            location: ort.trim() || null,
-            vision: pitch.trim() || null,
-            onboarded_at: new Date().toISOString(),
-          })
-          .eq("id", user.id);
+        const profile: ProfileUpdate & { id: string } = {
+          id: user.id,
+          display_name: name.trim(),
+          founder_type: mode === "skills" ? "talent" : "founder",
+          industry: selectedIndustry.id,
+          venture_term: selectedIndustry.terms.venture,
+          partner_term: selectedIndustry.terms.partner,
+          path: mode === "skills" ? "joiner" : "founder",
+          role: inferFounderRole(skills),
+          stage: mode === "idea" ? "idea" : "mvp",
+          commitment: commitmentForAvailability(availability),
+          skills,
+          location: ort.trim() || null,
+          vision: pitch.trim() || null,
+          looking_for: mode === "skills" ? "Passendes Gründerteam oder Vorhaben" : role.trim(),
+          is_onboarded: true,
+          onboarded_at: new Date().toISOString(),
+        };
+
+        const { error } = await supabase.from("profiles").upsert(profile, { onConflict: "id" });
+        if (error) throw error;
       } catch (err) {
         console.error("profile save failed", err);
+        toast.error(
+          err instanceof Error
+            ? `Profil konnte nicht gespeichert werden: ${err.message}`
+            : "Profil konnte nicht gespeichert werden.",
+        );
+        setSaving(false);
+        return;
       }
     }
 
@@ -362,7 +396,8 @@ function OnboardingPage() {
             )}
           </div>
           <p className="mt-3 text-[12.5px] leading-snug text-white/45">
-            Kannst du jederzeit im Profil ändern. Überspringen geht auch — tippe einfach „Los geht's".
+            Kannst du jederzeit im Profil ändern. Überspringen geht auch — tippe einfach „Los
+            geht's".
           </p>
         </div>
       )}
