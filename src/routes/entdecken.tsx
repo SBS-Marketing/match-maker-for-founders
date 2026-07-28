@@ -35,16 +35,69 @@ const AVATAR_COLORS = [
 ];
 
 const FOUNDERS = [
-  { name: "Lena Brandt", age: 29, role: "Technical Co-Founder", city: "Berlin", fit: 94, idea: "Klimadaten als API für mittelständische Industrie. Skaliert seit 2 Jahren — sucht jetzt jemand für GTM.", tags: ["AI", "B2B SaaS", "Climate"] },
-  { name: "Jonas Kessler", age: 34, role: "Business / Sales", city: "München", fit: 87, idea: "Marktplatz für ungenutzte Lagerflächen in Innenstädten. Erste Pilotkunden in DACH.", tags: ["Marketplace", "Logistik"] },
-  { name: "Aylin Demir", age: 27, role: "Product & Design", city: "Hamburg", fit: 82, idea: "Mental-Health-App für junge Eltern. Kurze Sessions, hohe Retention im Pilot.", tags: ["Health", "Mobile", "B2C"] },
-  { name: "Marek Nowak", age: 31, role: "Technical Co-Founder", city: "Köln", fit: 79, idea: "Open-Source-Tooling für Audits in regulierten Branchen. Stark wachsende Community.", tags: ["DevTools", "Fintech"] },
-  { name: "Sofia Hellström", age: 26, role: "Growth / Marketing", city: "Leipzig", fit: 76, idea: "Kuratierte Reise-Editorials mit lokalem Handwerk. Erste Magazin-Ausgabe sold out.", tags: ["Travel", "Commerce"] },
-  { name: "Tim Berger", age: 38, role: "Domain Expert", city: "Stuttgart", fit: 73, idea: "Predictive Maintenance für mittelständische Fertigung. 15 Jahre Domain, sucht Tech.", tags: ["Industrial", "AI"] },
+  {
+    name: "Lena Brandt",
+    age: 29,
+    role: "Technical Co-Founder",
+    city: "Berlin",
+    fit: 94,
+    idea: "Klimadaten als API für mittelständische Industrie. Skaliert seit 2 Jahren — sucht jetzt jemand für GTM.",
+    tags: ["AI", "B2B SaaS", "Climate"],
+  },
+  {
+    name: "Jonas Kessler",
+    age: 34,
+    role: "Business / Sales",
+    city: "München",
+    fit: 87,
+    idea: "Marktplatz für ungenutzte Lagerflächen in Innenstädten. Erste Pilotkunden in DACH.",
+    tags: ["Marketplace", "Logistik"],
+  },
+  {
+    name: "Aylin Demir",
+    age: 27,
+    role: "Product & Design",
+    city: "Hamburg",
+    fit: 82,
+    idea: "Mental-Health-App für junge Eltern. Kurze Sessions, hohe Retention im Pilot.",
+    tags: ["Health", "Mobile", "B2C"],
+  },
+  {
+    name: "Marek Nowak",
+    age: 31,
+    role: "Technical Co-Founder",
+    city: "Köln",
+    fit: 79,
+    idea: "Open-Source-Tooling für Audits in regulierten Branchen. Stark wachsende Community.",
+    tags: ["DevTools", "Fintech"],
+  },
+  {
+    name: "Sofia Hellström",
+    age: 26,
+    role: "Growth / Marketing",
+    city: "Leipzig",
+    fit: 76,
+    idea: "Kuratierte Reise-Editorials mit lokalem Handwerk. Erste Magazin-Ausgabe sold out.",
+    tags: ["Travel", "Commerce"],
+  },
+  {
+    name: "Tim Berger",
+    age: 38,
+    role: "Domain Expert",
+    city: "Stuttgart",
+    fit: 73,
+    idea: "Predictive Maintenance für mittelständische Fertigung. 15 Jahre Domain, sucht Tech.",
+    tags: ["Industrial", "AI"],
+  },
 ];
 
 function initials(name: string) {
-  return name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  return name
+    .split(" ")
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 }
 
 function colorFor(name: string) {
@@ -64,12 +117,11 @@ function DiscoverPage() {
       <section className="pt-10">
         <div className="eyebrow">Entdecken · 6 Profile zur Vorschau</div>
         <h1 className="mt-5 text-balance text-5xl font-semibold tracking-tight sm:text-6xl">
-          Menschen, die du{" "}
-          <span className="text-[var(--ember)]">treffen solltest</span>.
+          Menschen, die du <span className="text-[var(--ember)]">treffen solltest</span>.
         </h1>
         <p className="mt-6 max-w-2xl text-pretty text-[16px] leading-relaxed text-[var(--smoke)]">
-          Eine kleine Auswahl an Foundern, die gerade bei matchfoundr unterwegs sind.
-          Wenn dich jemand interessiert — melde dich an und schreib direkt.
+          Eine kleine Auswahl an Foundern, die gerade bei matchfoundr unterwegs sind. Wenn dich
+          jemand interessiert — melde dich an und schreib direkt.
         </p>
       </section>
 
@@ -96,7 +148,9 @@ function DiscoverPage() {
                       {initials(p.name)}
                     </div>
                     <div>
-                      <div className={`text-[15px] font-semibold leading-tight ${highlighted ? "text-[var(--cream)]" : "text-[var(--ink)]"}`}>
+                      <div
+                        className={`text-[15px] font-semibold leading-tight ${highlighted ? "text-[var(--cream)]" : "text-[var(--ink)]"}`}
+                      >
                         {p.name}
                       </div>
                       <div
@@ -131,8 +185,12 @@ function DiscoverPage() {
                       key={t}
                       className="rounded-full px-2.5 py-1 text-[11px]"
                       style={{
-                        background: highlighted ? "rgba(251,250,247,0.16)" : "rgba(255,255,255,0.5)",
-                        border: highlighted ? "1px solid rgba(255,200,170,0.4)" : "1px solid var(--ruled)",
+                        background: highlighted
+                          ? "rgba(251,250,247,0.16)"
+                          : "rgba(255,255,255,0.5)",
+                        border: highlighted
+                          ? "1px solid rgba(255,200,170,0.4)"
+                          : "1px solid var(--ruled)",
                         color: highlighted ? "var(--cream)" : "var(--smoke)",
                       }}
                     >
@@ -169,8 +227,7 @@ function DiscoverPage() {
         <div className="glass-pane mt-14 p-10 text-center sm:p-14">
           <div className="eyebrow">+ 240 weitere Founder</div>
           <h3 className="mt-4 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-            Mehr Founder{" "}
-            <span className="text-[var(--ember)]">entdecken</span>.
+            Mehr Founder <span className="text-[var(--ember)]">entdecken</span>.
           </h3>
           <p className="mx-auto mt-4 max-w-md text-[14px] text-[var(--smoke)]">
             Melde dich an, um das vollständige Feed zu sehen und direkt zu schreiben.

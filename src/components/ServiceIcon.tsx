@@ -36,14 +36,18 @@ const PATHS: Record<ServiceIconName, JSX.Element> = {
     </>
   ),
   pulse: <path d="M3 12h4l2-6 4 12 2-6h6" />,
-  spark: <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8" />,
+  spark: (
+    <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8" />
+  ),
   wand: (
     <>
       <path d="M15 4 4 15l3 3L18 7Z" />
       <path d="M14 5h3v3M19 11v2M21 12h-2M18 15v2M20 17h-2" />
     </>
   ),
-  sparkles: <path d="M5 3v4M3 5h4M19 14v6M16 17h6M11 4l1.5 4.5L17 10l-4.5 1.5L11 16l-1.5-4.5L5 10l4.5-1.5Z" />,
+  sparkles: (
+    <path d="M5 3v4M3 5h4M19 14v6M16 17h6M11 4l1.5 4.5L17 10l-4.5 1.5L11 16l-1.5-4.5L5 10l4.5-1.5Z" />
+  ),
   layers: (
     <>
       <path d="m12 3 9 5-9 5-9-5 9-5Z" />

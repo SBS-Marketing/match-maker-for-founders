@@ -5,7 +5,8 @@ import { requireAdmin, errorContent } from "./_admin";
 export default defineTool({
   name: "admin_ai_usage",
   title: "Admin: KI-Verbrauch & Latenzen",
-  description: "Liefert die letzten Copilot-Aufrufe (Task, Modell, Tokens, Kosten, Latenz, Status). Nur für Admins.",
+  description:
+    "Liefert die letzten Copilot-Aufrufe (Task, Modell, Tokens, Kosten, Latenz, Status). Nur für Admins.",
   inputSchema: {
     limit: z.number().int().min(1).max(500).optional(),
     task: z.string().optional(),
@@ -14,10 +15,17 @@ export default defineTool({
   handler: async ({ limit, task }, ctx) => {
     const gate = await requireAdmin(ctx);
     if (!gate.ok) return errorContent(gate.error);
-    let q = gate.supabase.from("ai_usage").select("*").order("created_at", { ascending: false }).limit(limit ?? 100);
+    let q = gate.supabase
+      .from("ai_usage")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(limit ?? 100);
     if (task) q = q.eq("task", task);
     const { data, error } = await q;
     if (error) return errorContent(error.message);
-    return { content: [{ type: "text", text: JSON.stringify(data) }], structuredContent: { usage: data } };
+    return {
+      content: [{ type: "text", text: JSON.stringify(data) }],
+      structuredContent: { usage: data },
+    };
   },
 });

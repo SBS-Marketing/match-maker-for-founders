@@ -32,12 +32,28 @@ export const ADVISORS: Advisor[] = [
       { label: "IP & Markenrecht", level: 0.6 },
     ],
     packages: [
-      { name: "Gründung Komplett", price: "€2.400", desc: "GmbH-Setup, Gesellschaftsvertrag, Anmeldung, Notar-Koordination." },
-      { name: "ESOP-Pool aufsetzen", price: "€1.800", desc: "Pool-Größe, VSOP-Template, steuerliche Abstimmung." },
-      { name: "Erstgespräch", price: "Kostenlos", desc: "30 Min Strukturierung — Co-Pilot bereitet vor." },
+      {
+        name: "Gründung Komplett",
+        price: "€2.400",
+        desc: "GmbH-Setup, Gesellschaftsvertrag, Anmeldung, Notar-Koordination.",
+      },
+      {
+        name: "ESOP-Pool aufsetzen",
+        price: "€1.800",
+        desc: "Pool-Größe, VSOP-Template, steuerliche Abstimmung.",
+      },
+      {
+        name: "Erstgespräch",
+        price: "Kostenlos",
+        desc: "30 Min Strukturierung — Co-Pilot bereitet vor.",
+      },
     ],
     vouches: [
-      { from: "Marcus K.", role: "CTO, Onsight", quote: "Hat unseren ESOP in 2 Wochen sauber aufgesetzt." },
+      {
+        from: "Marcus K.",
+        role: "CTO, Onsight",
+        quote: "Hat unseren ESOP in 2 Wochen sauber aufgesetzt.",
+      },
       { from: "Anna W.", role: "CEO, Bricklane", quote: "Spricht Founder-Sprache, keine Phrasen." },
     ],
   },
@@ -60,11 +76,23 @@ export const ADVISORS: Advisor[] = [
       { label: "Internationale Holding", level: 0.7 },
     ],
     packages: [
-      { name: "Monats-Buchhaltung", price: "ab €390 / Mo", desc: "Laufende Buchführung, USt-Voranmeldung, Reporting." },
-      { name: "Forschungszulage", price: "15% Erfolg", desc: "Antrag, Begründung, Begleitung bis Auszahlung." },
+      {
+        name: "Monats-Buchhaltung",
+        price: "ab €390 / Mo",
+        desc: "Laufende Buchführung, USt-Voranmeldung, Reporting.",
+      },
+      {
+        name: "Forschungszulage",
+        price: "15% Erfolg",
+        desc: "Antrag, Begründung, Begleitung bis Auszahlung.",
+      },
     ],
     vouches: [
-      { from: "Felix K.", role: "Founder, Cohort.io", quote: "Hat uns €42k Forschungszulage gesichert — innerhalb von 6 Monaten." },
+      {
+        from: "Felix K.",
+        role: "Founder, Cohort.io",
+        quote: "Hat uns €42k Forschungszulage gesichert — innerhalb von 6 Monaten.",
+      },
     ],
   },
 ];

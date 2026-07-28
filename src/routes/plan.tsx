@@ -38,7 +38,9 @@ function PlanPage() {
           return;
         }
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     const onboardingContext = readPlanContext();
     const fallbackSlides = filterSlides(buildLocalPlanSlides(onboardingContext));
@@ -67,7 +69,11 @@ function PlanPage() {
           return;
         }
         const filtered = filterSlides(arr);
-        try { localStorage.setItem(PLAN_CACHE_KEY, JSON.stringify(filtered)); } catch { /* ignore */ }
+        try {
+          localStorage.setItem(PLAN_CACHE_KEY, JSON.stringify(filtered));
+        } catch {
+          /* ignore */
+        }
         setSlides(filtered);
       } catch (e) {
         if (cancelled) return;
@@ -80,7 +86,9 @@ function PlanPage() {
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user, session, loading, isDemo]);
 
   const total = slides?.length ?? 0;
@@ -108,8 +116,14 @@ function PlanPage() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); goNext(); }
-      if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); }
+      if (e.key === "ArrowRight" || e.key === " ") {
+        e.preventDefault();
+        goNext();
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goPrev();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -130,7 +144,10 @@ function PlanPage() {
 
   if (error) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4" style={{ background: "var(--cream)" }}>
+      <main
+        className="flex min-h-screen flex-col items-center justify-center gap-4"
+        style={{ background: "var(--cream)" }}
+      >
         <p className="text-2xl text-[var(--ink)]">{error}</p>
         <button
           onClick={goDashboard}
@@ -145,7 +162,10 @@ function PlanPage() {
   const current = slides![idx];
 
   return (
-    <main className="relative h-screen w-screen overflow-hidden" style={{ background: "var(--cream)" }}>
+    <main
+      className="relative h-screen w-screen overflow-hidden"
+      style={{ background: "var(--cream)" }}
+    >
       {canSkip && (
         <button
           onClick={goDashboard}
@@ -206,7 +226,10 @@ function PlanPage() {
         {slides!.map((_, i) => (
           <button
             key={i}
-            onClick={() => { setDirection(i > idx ? 1 : -1); setIdx(i); }}
+            onClick={() => {
+              setDirection(i > idx ? 1 : -1);
+              setIdx(i);
+            }}
             aria-label={`Slide ${i + 1}`}
             className="h-2 rounded-full transition-all"
             style={{
@@ -233,7 +256,12 @@ function filterSlides(arr: Slide[]): Slide[] {
 }
 
 function SlideRenderer({
-  slide, idx, total, isLast, onCTA, onNext,
+  slide,
+  idx,
+  total,
+  isLast,
+  onCTA,
+  onNext,
 }: {
   slide: Slide;
   idx: number;
@@ -332,8 +360,11 @@ function SlideRenderer({
     case "track": {
       const altBg = slide.nummer % 2 === 0 ? "var(--paper)" : "#FBF8F1";
       const pColor =
-        slide.priority === "hoch" ? "var(--ember)" :
-        slide.priority === "mittel" ? "#C7A56A" : "#8a8a8a";
+        slide.priority === "hoch"
+          ? "var(--ember)"
+          : slide.priority === "mittel"
+            ? "#C7A56A"
+            : "#8a8a8a";
       return (
         <div
           className="relative flex h-full w-full flex-col justify-center px-8 py-16 md:px-20"

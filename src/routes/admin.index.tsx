@@ -393,9 +393,7 @@ function AdminDashboard() {
                         </p>
                       </div>
                       <span className="rounded-full bg-white/70 px-2 py-1 text-[11px] font-semibold text-[var(--smoke)]">
-                        {grant
-                          ? `${formatTokens(remaining ?? 0)} frei`
-                          : "kein Limit"}
+                        {grant ? `${formatTokens(remaining ?? 0)} frei` : "kein Limit"}
                       </span>
                     </div>
                     {grant && (
@@ -549,9 +547,9 @@ function AdminDashboard() {
         <Bot className="mt-0.5 h-4 w-4 shrink-0 text-[var(--indigo)]" />
         <p>
           Jede Co-Pilot-Anfrage (Kimi K2.6 + Claude Sonnet über OpenRouter) schreibt ihren Verbrauch
-          in <code>ai_usage</code>. Sobald ein User ein Kontingent in{" "}
-          <code>ai_token_grants</code> hat, wird es vor jedem KI-Call geprüft und danach
-          fortgeschrieben. Ohne Kontingent bleibt die bisherige Nutzung aktiv.
+          in <code>ai_usage</code>. Sobald ein User ein Kontingent in <code>ai_token_grants</code>{" "}
+          hat, wird es vor jedem KI-Call geprüft und danach fortgeschrieben. Ohne Kontingent bleibt
+          die bisherige Nutzung aktiv.
         </p>
       </section>
     </div>

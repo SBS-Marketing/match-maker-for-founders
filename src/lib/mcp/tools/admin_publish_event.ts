@@ -21,6 +21,9 @@ export default defineTool({
       .select()
       .maybeSingle();
     if (error) return errorContent(error.message);
-    return { content: [{ type: "text", text: JSON.stringify(data) }], structuredContent: { event: data } };
+    return {
+      content: [{ type: "text", text: JSON.stringify(data) }],
+      structuredContent: { event: data },
+    };
   },
 });

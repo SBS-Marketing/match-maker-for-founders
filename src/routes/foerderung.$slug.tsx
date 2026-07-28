@@ -174,7 +174,9 @@ function GrantDetail() {
 
       <div className="mt-3 grid min-h-0 flex-1 gap-4 overflow-y-auto pr-1 sm:mt-5 sm:flex-none sm:overflow-visible lg:grid-cols-[1.3fr_0.7fr]">
         <div className="min-w-0">
-          <h1 className="text-[30px] font-semibold leading-tight tracking-tight sm:text-5xl">{grant.name}</h1>
+          <h1 className="text-[30px] font-semibold leading-tight tracking-tight sm:text-5xl">
+            {grant.name}
+          </h1>
           <div className="mt-2 text-[14px] text-[var(--smoke)]">{grant.body}</div>
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-[13.5px]">
             <span>
@@ -249,20 +251,22 @@ function GrantDetail() {
           <div className="glass-pane mt-5 p-5">
             <div className="eyebrow">Timeline</div>
             <div className="mt-4 space-y-3">
-              {grant.timeline.map((p: { phase: string; weeks: string; desc: string }, i: number) => (
-                <div key={p.phase} className="grid grid-cols-[60px_1fr] gap-3">
-                  <div>
-                    <div className="font-mono text-[11px] font-semibold text-[var(--ember-deep)]">{`0${i + 1}`}</div>
-                    <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--smoke)]">
-                      {p.weeks}
+              {grant.timeline.map(
+                (p: { phase: string; weeks: string; desc: string }, i: number) => (
+                  <div key={p.phase} className="grid grid-cols-[60px_1fr] gap-3">
+                    <div>
+                      <div className="font-mono text-[11px] font-semibold text-[var(--ember-deep)]">{`0${i + 1}`}</div>
+                      <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-[var(--smoke)]">
+                        {p.weeks}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[14px] font-semibold tracking-tight">{p.phase}</div>
+                      <div className="text-[12.5px] text-[var(--smoke)]">{p.desc}</div>
                     </div>
                   </div>
-                  <div>
-                    <div className="text-[14px] font-semibold tracking-tight">{p.phase}</div>
-                    <div className="text-[12.5px] text-[var(--smoke)]">{p.desc}</div>
-                  </div>
-                </div>
-              ))}
+                ),
+              )}
             </div>
           </div>
         </div>

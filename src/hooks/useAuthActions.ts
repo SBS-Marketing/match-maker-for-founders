@@ -1,7 +1,13 @@
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import type { LoginInput, RegisterInput, MagicLinkInput, ResetPasswordInput, UpdatePasswordInput } from "@/lib/auth-schemas";
+import type {
+  LoginInput,
+  RegisterInput,
+  MagicLinkInput,
+  ResetPasswordInput,
+  UpdatePasswordInput,
+} from "@/lib/auth-schemas";
 
 // ─────────────────────────────────────────────────────────────
 // matchfoundr · Auth Actions Hook

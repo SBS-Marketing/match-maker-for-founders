@@ -60,12 +60,7 @@ export function RadarChart({ scores, size = 260 }: { scores: AssessmentScores; s
           />
         );
       })}
-      <polygon
-        points={polygon}
-        fill="rgba(226,81,28,0.25)"
-        stroke="#E2511C"
-        strokeWidth={2}
-      />
+      <polygon points={polygon} fill="rgba(226,81,28,0.25)" stroke="#E2511C" strokeWidth={2} />
       {AXES.map((axis, i) => {
         const p = point(i, scores[axis.key] ?? 3);
         return <circle key={axis.key} cx={p.x} cy={p.y} r={3} fill="#E2511C" />;

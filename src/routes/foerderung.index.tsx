@@ -12,7 +12,10 @@ export const Route = createFileRoute("/foerderung/")({
     return (
       <div className="mx-auto flex h-[calc(100svh-10rem)] max-w-5xl flex-col overflow-hidden px-3 pt-3 sm:h-auto sm:px-6 sm:pt-10 sm:pb-20">
         <div className="flex shrink-0 items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--cream)]" style={{ background: s.hue }}>
+          <span
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--cream)]"
+            style={{ background: s.hue }}
+          >
             <ServiceIcon name={s.icon} size={16} stroke={2} />
           </span>
           <span className="eyebrow">Förderprogramme · {GRANTS.length || s.count} aktiv</span>
@@ -21,11 +24,17 @@ export const Route = createFileRoute("/foerderung/")({
           Öffentliche <span className="text-[var(--ember)]">Förderung</span>, live gematcht.
         </h1>
         <p className="mt-3 hidden max-w-2xl text-[15px] leading-relaxed text-[var(--smoke)] sm:block">
-          Förderprogramme mit Fit-Score, Deadline und nächstem Antragsschritt, damit Neukunden direkt loslegen können.
+          Förderprogramme mit Fit-Score, Deadline und nächstem Antragsschritt, damit Neukunden
+          direkt loslegen können.
         </p>
         <div className="mt-4 grid min-h-0 flex-1 gap-4 overflow-y-auto pr-1 sm:mt-10 sm:flex-none sm:overflow-visible md:grid-cols-2">
           {GRANTS.map((g) => (
-            <Link key={g.slug} to="/foerderung/$slug" params={{ slug: g.slug }} className="glass-pane block p-6 transition hover:-translate-y-0.5">
+            <Link
+              key={g.slug}
+              to="/foerderung/$slug"
+              params={{ slug: g.slug }}
+              className="glass-pane block p-6 transition hover:-translate-y-0.5"
+            >
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="text-[18px] font-semibold tracking-tight">{g.name}</div>
@@ -34,14 +43,18 @@ export const Route = createFileRoute("/foerderung/")({
                 <FitScore value={g.fit} />
               </div>
               <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-[var(--ink-soft)]">
-                <span><b>{g.amount}</b> Volumen</span>
+                <span>
+                  <b>{g.amount}</b> Volumen
+                </span>
                 <span>{g.duration}</span>
                 <span>Deadline: {g.deadline}</span>
                 {g.region && <span>{g.region}</span>}
               </div>
               {g.category && (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="rounded-full bg-[var(--paper)] px-2.5 py-1 text-[11px] font-medium text-[var(--ink-soft)]">{g.category}</span>
+                  <span className="rounded-full bg-[var(--paper)] px-2.5 py-1 text-[11px] font-medium text-[var(--ink-soft)]">
+                    {g.category}
+                  </span>
                 </div>
               )}
               <p className="mt-3 text-[13px] leading-relaxed text-[var(--smoke)]">{g.summary}</p>

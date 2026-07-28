@@ -18,7 +18,11 @@ const PAGE_INTROS: Array<{ match: (path: string) => boolean; intro: PageIntro }>
       kicker: "Daily Hub",
       title: "Dein Startpunkt für heute.",
       body: "Hier siehst du nur, was gerade wichtig ist: Fokus, Co-Pilot, nächste Bereiche.",
-      bullets: ["Erledige den ersten Fokus", "Frag den Co-Pilot", "Spring in den passenden Workspace"],
+      bullets: [
+        "Erledige den ersten Fokus",
+        "Frag den Co-Pilot",
+        "Spring in den passenden Workspace",
+      ],
     },
   },
   {
@@ -164,12 +168,7 @@ function introFor(pathname: string): PageIntro {
 }
 
 function keyFor(pathname: string): string {
-  const section =
-    pathname
-      .split("/")
-      .filter(Boolean)
-      .slice(0, 2)
-      .join(":") || "home";
+  const section = pathname.split("/").filter(Boolean).slice(0, 2).join(":") || "home";
   return `mf_page_intro_${INTRO_VERSION}_${section}`;
 }
 

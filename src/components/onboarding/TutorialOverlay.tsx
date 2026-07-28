@@ -89,7 +89,9 @@ export function TutorialOverlay({ onClose }: { onClose: () => void }) {
   const finish = useCallback(() => {
     try {
       localStorage.setItem(DONE_KEY, "1");
-    } catch {}
+    } catch {
+      // localStorage can throw in private-browsing/storage-restricted contexts — safe to ignore.
+    }
     onClose();
   }, [onClose]);
 
@@ -147,12 +149,17 @@ export function TutorialOverlay({ onClose }: { onClose: () => void }) {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
           className="absolute inset-0"
-          onClick={() => {/* swallow */}}
+          onClick={() => {
+            /* swallow */
+          }}
         >
           {hole ? (
             <>
               {/* top */}
-              <div className="absolute left-0 right-0 top-0 bg-[rgba(21,20,15,0.72)]" style={{ height: Math.max(0, hole.top) }} />
+              <div
+                className="absolute left-0 right-0 top-0 bg-[rgba(21,20,15,0.72)]"
+                style={{ height: Math.max(0, hole.top) }}
+              />
               {/* bottom */}
               <div
                 className="absolute left-0 right-0 bg-[rgba(21,20,15,0.72)]"
@@ -161,12 +168,22 @@ export function TutorialOverlay({ onClose }: { onClose: () => void }) {
               {/* left */}
               <div
                 className="absolute bg-[rgba(21,20,15,0.72)]"
-                style={{ top: hole.top, left: 0, width: Math.max(0, hole.left), height: hole.height }}
+                style={{
+                  top: hole.top,
+                  left: 0,
+                  width: Math.max(0, hole.left),
+                  height: hole.height,
+                }}
               />
               {/* right */}
               <div
                 className="absolute bg-[rgba(21,20,15,0.72)]"
-                style={{ top: hole.top, left: hole.left + hole.width, right: 0, height: hole.height }}
+                style={{
+                  top: hole.top,
+                  left: hole.left + hole.width,
+                  right: 0,
+                  height: hole.height,
+                }}
               />
               {/* Highlight outline */}
               <motion.div
@@ -212,9 +229,7 @@ export function TutorialOverlay({ onClose }: { onClose: () => void }) {
             <h3 className="mt-2 text-[20px] font-semibold tracking-tight text-[var(--ink)]">
               {step.title}
             </h3>
-            <p className="mt-2 text-[15px] leading-relaxed text-[var(--smoke)]">
-              {step.body}
-            </p>
+            <p className="mt-2 text-[15px] leading-relaxed text-[var(--smoke)]">{step.body}</p>
 
             <div className="mt-4 flex items-center justify-between gap-2">
               <button

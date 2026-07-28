@@ -8,7 +8,11 @@ export const Route = createFileRoute("/marketplace")({
   head: () => ({
     meta: [
       { title: "Marketplace — matchfoundr" },
-      { name: "description", content: "Acht Disziplinen, alle vom Co-Pilot vermittelt: Co-Founder, Recht, Steuer, Förderung, Kapital, Mentoren, Talent, Growth." },
+      {
+        name: "description",
+        content:
+          "Acht Disziplinen, alle vom Co-Pilot vermittelt: Co-Founder, Recht, Steuer, Förderung, Kapital, Mentoren, Talent, Growth.",
+      },
     ],
   }),
   component: Marketplace,
@@ -22,7 +26,8 @@ function Marketplace() {
         Was brauchst du <span className="text-[var(--ember)]">jetzt</span>?
       </h1>
       <p className="mt-3 hidden max-w-2xl text-[15px] leading-relaxed text-[var(--smoke)] sm:block">
-        Wähle eine Kategorie oder lass den Co-Pilot direkt die passenden Angebote, Partner und Programme vorsortieren.
+        Wähle eine Kategorie oder lass den Co-Pilot direkt die passenden Angebote, Partner und
+        Programme vorsortieren.
       </p>
 
       {/* Co-Pilot routing banner */}

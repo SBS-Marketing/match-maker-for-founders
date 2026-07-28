@@ -3,10 +3,18 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 // Beta namespace — typed wrapper so TS sees the three methods we use.
+type OAuthClient = { name?: string; client_name?: string };
+type OAuthAuthorizationData = {
+  client?: OAuthClient;
+  redirect_url?: string;
+  redirect_to?: string;
+};
+type OAuthError = { message?: string };
+type OAuthResult = Promise<{ data: OAuthAuthorizationData | null; error: OAuthError | null }>;
 type OAuthApi = {
-  getAuthorizationDetails: (id: string) => Promise<{ data: any; error: any }>;
-  approveAuthorization: (id: string) => Promise<{ data: any; error: any }>;
-  denyAuthorization: (id: string) => Promise<{ data: any; error: any }>;
+  getAuthorizationDetails: (id: string) => OAuthResult;
+  approveAuthorization: (id: string) => OAuthResult;
+  denyAuthorization: (id: string) => OAuthResult;
 };
 const oauth = () => (supabase.auth as unknown as { oauth: OAuthApi }).oauth;
 
@@ -40,7 +48,7 @@ export const Route = createFileRoute("/.lovable/oauth/consent")({
 });
 
 function Consent() {
-  const details = Route.useLoaderData() as any;
+  const details = Route.useLoaderData();
   const { authorization_id } = Route.useSearch();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

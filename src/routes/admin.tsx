@@ -6,7 +6,15 @@
 
 import { type ReactNode } from "react";
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { Activity, BarChart3, BookOpen, CalendarDays, ShieldAlert, ShieldCheck, Store } from "lucide-react";
+import {
+  Activity,
+  BarChart3,
+  BookOpen,
+  CalendarDays,
+  ShieldAlert,
+  ShieldCheck,
+  Store,
+} from "lucide-react";
 import { AuthGate } from "@/components/AuthGate";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 

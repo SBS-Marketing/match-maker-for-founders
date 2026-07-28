@@ -10,14 +10,16 @@ export function ServiceSkeleton({ id }: { id: ServiceId }) {
   return (
     <div className="mx-auto max-w-4xl px-4 pt-12 pb-20 sm:px-6">
       <div className="flex items-center gap-2">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--cream)]" style={{ background: s.hue }}>
+        <span
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--cream)]"
+          style={{ background: s.hue }}
+        >
           <ServiceIcon name={s.icon} size={18} stroke={2} />
         </span>
         <span className="eyebrow">{s.label}</span>
       </div>
       <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl">
-        {s.label.split(" ")[0]}{" "}
-        <span className="text-[var(--ember)]">kuratiert</span>.
+        {s.label.split(" ")[0]} <span className="text-[var(--ember)]">kuratiert</span>.
       </h1>
       <p className="mt-4 max-w-xl text-[15px] text-[var(--smoke)]">{s.blurb}</p>
 
@@ -27,8 +29,8 @@ export function ServiceSkeleton({ id }: { id: ServiceId }) {
           <span className="eyebrow">Co-Pilot übernimmt</span>
         </div>
         <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-[var(--ink-soft)]">
-          Statt eine Liste zu durchforsten — beschreib dem Co-Pilot deine Situation. Er bringt
-          dir die 3 besten {s.short}-Partner direkt, ranked nach Fit und Verfügbarkeit.
+          Statt eine Liste zu durchforsten — beschreib dem Co-Pilot deine Situation. Er bringt dir
+          die 3 besten {s.short}-Partner direkt, ranked nach Fit und Verfügbarkeit.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link to="/co-pilot">
