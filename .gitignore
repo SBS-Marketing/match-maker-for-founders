@@ -42,3 +42,6 @@ ios/build/
 
 # Supabase CLI local state (machine-specific)
 supabase/.temp/
+
+# Lokale Claude-Code-Einstellungen (persoenlich, nicht teilen)
+.claude/settings.local.json
