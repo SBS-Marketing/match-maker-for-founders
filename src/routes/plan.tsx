@@ -3,17 +3,11 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
-import { FunctionsHttpError } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingConverge } from "@/components/onboarding/LoadingConverge";
 import { CopilotMark } from "@/components/Copilot";
-import {
-  PLAN_CACHE_KEY,
-  buildLocalPlanSlides,
-  readPlanContext,
-  type PlanSlide as Slide,
-} from "@/lib/plan-draft";
+import type { PlanSlide as Slide } from "@/lib/plan-draft";
+import { resolvePlan, type PlanSource } from "@/lib/plan-store";
 
 export const Route = createFileRoute("/plan")({
   component: PlanPage,
@@ -24,82 +18,28 @@ function PlanPage() {
   const { user, session, loading, isDemo } = useAuth();
   const [slides, setSlides] = useState<Slide[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [planSource, setPlanSource] = useState<"model" | "fallback" | null>(null);
+  const [planSource, setPlanSource] = useState<PlanSource | null>(null);
   const [idx, setIdx] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
 
+  // Auflösung, Reihenfolge und Cache-Pflege liegen in `plan-store` —
+  // `/plan` und `/heute` sehen damit garantiert denselben Plan.
   useEffect(() => {
-    let cancelled = false;
     if (loading) return;
-
-    try {
-      const cached = localStorage.getItem(PLAN_CACHE_KEY);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setSlides(filterSlides(parsed));
-          setPlanSource("model");
-          return;
-        }
-      }
-    } catch {
-      /* ignore */
-    }
-
-    const onboardingContext = readPlanContext();
-    const fallbackSlides = filterSlides(buildLocalPlanSlides(onboardingContext));
-
-    if (!user || isDemo || !session) {
-      if (fallbackSlides.length > 0) {
-        setSlides(fallbackSlides);
-        setPlanSource("fallback");
-      } else {
-        setError("Plan konnte nicht erstellt werden.");
-      }
-      return;
-    }
+    let cancelled = false;
 
     (async () => {
-      try {
-        const { data, error: err } = await supabase.functions.invoke("copilot", {
-          body: { task: "plan_generate", message: "", extra: { onboarding: onboardingContext } },
-        });
-        if (cancelled) return;
-        if (err) throw err;
-        const raw = data?.slides;
-        const arr: Slide[] = Array.isArray(raw) ? raw : [];
-        if (arr.length === 0) {
-          console.error(
-            "[plan] Copilot lieferte eine leere Antwort ohne Slides — Notfallplan aktiv.",
-            data,
-          );
-          if (fallbackSlides.length > 0) {
-            setSlides(fallbackSlides);
-            setPlanSource("fallback");
-            return;
-          }
-          setError("Plan konnte nicht erstellt werden.");
-          return;
-        }
-        const filtered = filterSlides(arr);
-        try {
-          localStorage.setItem(PLAN_CACHE_KEY, JSON.stringify(filtered));
-        } catch {
-          /* ignore */
-        }
-        setSlides(filtered);
-        setPlanSource("model");
-      } catch (e) {
-        if (cancelled) return;
-        const detail = await describeCopilotFailure(e);
-        console.error(`[plan] Copilot-Aufruf fehlgeschlagen (${detail}) — Notfallplan aktiv.`, e);
-        if (fallbackSlides.length > 0) {
-          setSlides(fallbackSlides);
-          setPlanSource("fallback");
-          return;
-        }
-        setError("Plan konnte nicht geladen werden.");
+      const resolved = await resolvePlan({
+        auth: { user, session, isDemo },
+        cancelled: () => cancelled,
+      });
+      if (cancelled) return;
+      if (!resolved) {
+        setError("Plan konnte nicht erstellt werden.");
+        return;
       }
+      setSlides(resolved.slides);
+      setPlanSource(resolved.source);
     })();
 
     return () => {
@@ -274,35 +214,6 @@ function PlanPage() {
       </div>
     </main>
   );
-}
-
-// Baut aus dem geworfenen Fehler eine Zeile mit Statuscode/Ursache statt
-// eines verschluckten catch — damit im Log wirklich steht, warum der
-// Copilot-Aufruf für plan_generate nicht durchkam.
-async function describeCopilotFailure(e: unknown): Promise<string> {
-  if (e instanceof FunctionsHttpError) {
-    let body = "";
-    try {
-      body = await e.context.clone().text();
-    } catch {
-      /* Response evtl. bereits gelesen. */
-    }
-    return `HTTP ${e.context.status} ${e.context.statusText}${body ? ` — ${body.slice(0, 300)}` : ""}`;
-  }
-  if (e instanceof Error) return `${e.name}: ${e.message}`;
-  return String(e);
-}
-
-function filterSlides(arr: Slide[]): Slide[] {
-  return arr.filter((s) => {
-    if (s.type === "dealbreaker") {
-      const r = s.risk;
-      if (r === null || r === undefined) return false;
-      const txt = String(r).trim().toLowerCase();
-      if (txt === "" || txt === "null" || txt === "keins" || txt === "kein risiko") return false;
-    }
-    return true;
-  });
 }
 
 function SlideRenderer({
