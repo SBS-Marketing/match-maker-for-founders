@@ -6,7 +6,21 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi", "docs", "public", "data", "ios", "supabase/functions"] },
+  // ".claude" muss ignoriert bleiben: dort legen parallel laufende Agenten Worktrees an.
+  // Ohne den Eintrag lintet eslint fremde Arbeitskopien mit — 1258 Fremdfehler, ~14 min Laufzeit.
+  {
+    ignores: [
+      "dist",
+      ".output",
+      ".vinxi",
+      ".claude",
+      "docs",
+      "public",
+      "data",
+      "ios",
+      "supabase/functions",
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
