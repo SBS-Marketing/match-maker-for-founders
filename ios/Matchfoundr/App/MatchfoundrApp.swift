@@ -29,10 +29,23 @@ struct RootView: View {
 #endif
     }
 
+    /// Gegenstück zu `--preview-onboarding`: startet ohne Login direkt in die
+    /// fünf Tabs. Nur für Smoke-Läufe im Simulator.
+    private var showsTabsPreview: Bool {
+#if DEBUG
+        ProcessInfo.processInfo.arguments.contains("--preview-tabs")
+#else
+        false
+#endif
+    }
+
     var body: some View {
         Group {
             if showsOnboardingPreview {
                 OnboardingView()
+                    .transition(.opacity)
+            } else if showsTabsPreview {
+                MainTabView()
                     .transition(.opacity)
             } else if state.authIsLoading {
                 AuthLoadingView()
@@ -50,6 +63,14 @@ struct RootView: View {
         }
         .preferredColorScheme(state.appearance.colorScheme)
         .task {
+#if DEBUG
+            // `bootstrapAuth` würde ohne Session `clearAuthenticatedData()`
+            // laufen lassen und das Demo-Profil sofort wieder wegräumen.
+            if showsTabsPreview {
+                state.activateTabsPreview()
+                return
+            }
+#endif
             await state.bootstrapAuth()
         }
         .onOpenURL { url in
