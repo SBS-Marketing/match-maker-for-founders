@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingConverge } from "@/components/onboarding/LoadingConverge";
@@ -22,6 +24,7 @@ function PlanPage() {
   const { user, session, loading, isDemo } = useAuth();
   const [slides, setSlides] = useState<Slide[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [planSource, setPlanSource] = useState<"model" | "fallback" | null>(null);
   const [idx, setIdx] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
 
@@ -35,6 +38,7 @@ function PlanPage() {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length > 0) {
           setSlides(filterSlides(parsed));
+          setPlanSource("model");
           return;
         }
       }
@@ -46,8 +50,12 @@ function PlanPage() {
     const fallbackSlides = filterSlides(buildLocalPlanSlides(onboardingContext));
 
     if (!user || isDemo || !session) {
-      if (fallbackSlides.length > 0) setSlides(fallbackSlides);
-      else setError("Plan konnte nicht erstellt werden.");
+      if (fallbackSlides.length > 0) {
+        setSlides(fallbackSlides);
+        setPlanSource("fallback");
+      } else {
+        setError("Plan konnte nicht erstellt werden.");
+      }
       return;
     }
 
@@ -61,8 +69,13 @@ function PlanPage() {
         const raw = data?.slides;
         const arr: Slide[] = Array.isArray(raw) ? raw : [];
         if (arr.length === 0) {
+          console.error(
+            "[plan] Copilot lieferte eine leere Antwort ohne Slides — Notfallplan aktiv.",
+            data,
+          );
           if (fallbackSlides.length > 0) {
             setSlides(fallbackSlides);
+            setPlanSource("fallback");
             return;
           }
           setError("Plan konnte nicht erstellt werden.");
@@ -75,11 +88,14 @@ function PlanPage() {
           /* ignore */
         }
         setSlides(filtered);
+        setPlanSource("model");
       } catch (e) {
         if (cancelled) return;
-        console.error(e);
+        const detail = await describeCopilotFailure(e);
+        console.error(`[plan] Copilot-Aufruf fehlgeschlagen (${detail}) — Notfallplan aktiv.`, e);
         if (fallbackSlides.length > 0) {
           setSlides(fallbackSlides);
+          setPlanSource("fallback");
           return;
         }
         setError("Plan konnte nicht geladen werden.");
@@ -176,6 +192,23 @@ function PlanPage() {
         </button>
       )}
 
+      {planSource === "fallback" &&
+        typeof document !== "undefined" &&
+        createPortal(
+          // Portal auf document.body: /plan hängt im AppShell-Layout unter
+          // dessen <main z-10>, Topbar (z-20) und Sidebar (z-30) sitzen davor
+          // in derselben Stacking-Ebene — ein fixiertes Element hier drin
+          // würde unsichtbar unter Kopfzeile/Sidebar verschwinden.
+          <div
+            className="fixed left-4 top-4 z-[60] flex items-center gap-1.5 rounded-full bg-black/35 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-white/85 backdrop-blur-sm sm:left-6 sm:top-6"
+            title="Dein Copilot war gerade nicht erreichbar — das hier ist die Notfallversion, kein von ihm erstellter Plan."
+          >
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/70" />
+            Notfallplan · nicht vom Copilot
+          </div>,
+          document.body,
+        )}
+
       <div className="relative h-full w-full">
         <AnimatePresence mode="wait" initial={false} custom={direction}>
           <motion.div
@@ -241,6 +274,23 @@ function PlanPage() {
       </div>
     </main>
   );
+}
+
+// Baut aus dem geworfenen Fehler eine Zeile mit Statuscode/Ursache statt
+// eines verschluckten catch — damit im Log wirklich steht, warum der
+// Copilot-Aufruf für plan_generate nicht durchkam.
+async function describeCopilotFailure(e: unknown): Promise<string> {
+  if (e instanceof FunctionsHttpError) {
+    let body = "";
+    try {
+      body = await e.context.clone().text();
+    } catch {
+      /* Response evtl. bereits gelesen. */
+    }
+    return `HTTP ${e.context.status} ${e.context.statusText}${body ? ` — ${body.slice(0, 300)}` : ""}`;
+  }
+  if (e instanceof Error) return `${e.name}: ${e.message}`;
+  return String(e);
 }
 
 function filterSlides(arr: Slide[]): Slide[] {
