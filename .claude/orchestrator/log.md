@@ -59,3 +59,38 @@ Append-only. Ein Eintrag pro Zyklus.
 - Ein Agent hat von sich aus einen Worktree angelegt, als der Haupt-Tree belegt war. Richtige Entscheidung — sollte im Skill stehen, statt auf Eigeninitiative zu beruhen.
 
 **Nächste Vorschläge:** siehe Board, nach MVP-Zielen sortiert. Kandidat für Zyklus 3: `/heute` an den echten Plan-Cache anbinden (Prio 1 des ersten MVP-Ziels) und der leerlaufende Drain-Cron.
+
+## Zyklus 3 — 29./30.07.2026 — ABGEBROCHEN
+
+**Entscheidung (hermes):** Den Plan zu **einer** Quelle zusammenführen und den Co-Pilot-Worker davon abbringen, fertige Antworten wegzuwerfen. Begründung: zwei Zyklen ohne sichtbares Ergebnis reichen; Auftrag 1 verändert, was im Browser zu sehen ist.
+
+**Abbruchgrund:** Monatliches Spend-Limit erreicht. Auftrag 1 brach nach dem ersten Werkzeugaufruf ab, Auftrag 3 konnte nicht starten (Worktree-Isolation braucht ein Git-Repo als Session-cwd — die Session lief von `~/Desktop`). **Nichts committet, `main` unverändert auf `0b346df`.**
+
+**Erledigt vor dem Abbruch:** Drain-Cron live von `* * * * *` auf `*/5 * * * *` (`cron.alter_job`, verifiziert). Kein Defekt behoben — der Cron ist das Recovery-Netz zum direkten Anstoß in `copilot/index.ts:569`, `202 idle` war seine Erfolgsmeldung. 1440 → 288 Aufrufe/Tag.
+
+### Hermes' Zuschnitt — beim nächsten Anlauf direkt verwendbar
+
+**Neue Befunde aus seiner Prüfung:**
+- Der Server persistiert den Plan längst: `copilot/index.ts:2624` schreibt jeden `plan_generate`-Lauf als `copilot_documents`-Zeile (`type: "pitch_outline"`). Niemand liest das zurück. Damit ist „Plan überlebt Cache-Leerung und Gerätewechsel" **ohne Migration** erreichbar — die Migrations-Drift bleibt unangetastet.
+- iOS hat eine **vierte** Plan-Liste: `AppState.swift:1029/1283` (`personalizedPlannerItems()` → UserDefaults `mf.planner.items`), ohne Kontakt zum Copilot-Plan. Der Plan hat nirgends einen Besitzer.
+- Der `auth.tsx:82`-Typfehler steht noch — die Parallelsession des Users ist nicht durch, das tsc-Gate bleibt deshalb liegen.
+
+**Auftrag 1 · `loop/3-plan-eine-quelle` · founding-engineer · Haupt-Tree (braucht Port 5173)**
+Modul `src/lib/plan-store.ts`, das den Plan in fester Reihenfolge auflöst und die Quelle mitführt: localStorage → neuester `pitch_outline` aus `copilot_documents` → `plan_generate` → Template-Fallback. `plan.tsx` ersetzt seine Inline-Kaskade (Badge aus `c45ad75` bleibt), `heute.tsx:82` zieht `firstStep` aus demselben Store. Kein Plan da → Plan-Aufgabe wird gar nicht erzeugt. Dazu der geschluckte Sync-Fehler in `heute.tsx:100-106`.
+*Erster Schritt:* live **nur lesend** prüfen, ob ein eingeloggter Client `copilot_documents` per RLS lesen darf. Wenn nein: Server-Zweig entfällt, Rest bleibt.
+*Löst Board-Befunde 1, 2, 3 und 7 des ersten MVP-Ziels auf einmal.*
+*Nicht drin:* `/aufgaben`, `founder_assessment`/`founder_skills`, `RadarChart`, `supabase/functions/**`, Migrationen, `auth.tsx`, iOS.
+
+**Auftrag 2 · `loop/3-worker-wirft-nichts-weg` · developer · nur `copilot-worker/index.ts`**
+Das Vollständigkeits-Gate (`:784-789`) bleibt, entscheidet aber nicht mehr über Wegwerfen: Ist der Job erschöpft (`step >= max_steps` oder `blocked`) und liegt eine Antwort ≥ 60 Zeichen vor, wird sie mit `partial: true` plus Hinweissatz ausgeliefert. `no_result` nur noch für „gar keine Antwort". Statt der Konstante in `:892` ein `result.gate`-Objekt mit einem Feld pro Konjunkt (`status_complete`, `adds_value`, `enough_sources`, `length_ok`, `fulfills_job`).
+*Entschärft nebenbei das geparkte Elektriker-Regex, ohne die Produktfrage zu entscheiden.*
+**Offene Frage von Hermes, unbeantwortet:** Wird `copilot-worker` am Zyklusende deployed? Wenn nein, zieht er Auftrag 2 raus und hängt stattdessen `/aufgaben` an denselben Plan-Store — das wird auch ohne Deploy sichtbar.
+
+**Auftrag 3 · `loop/3-ios-tabs-sichtbar` · developer · nur `ios/`**
+`--preview-tabs` als DEBUG-only-Gegenstück zu `--preview-onboarding` (`MatchfoundrApp.swift:24-30`). Machbarkeit geprüft: `isOnboarded` ist `profile != nil`, `completeOnboarding(with:)` setzt alles — kein Fake-Layer nötig. Dann Smoke über alle fünf Tabs mit Screenshots. Nur Abstürze und weiße Screens werden behoben, alles andere notiert. Plus: „zwei Courts" → „drei Courts" klären (Autokorrektur oder echtes Umschreiben).
+
+**Verworfen von Hermes:** `founder_assessment`/`founder_skills` verdrahten — die Tabellen gehören zu den 19, die live fehlen; das zwingt in die Migrations-Drift und damit in einen Zyklus ohne Ergebnis.
+
+**Kollisionen:** keine. Auftrag 1 nur `src/lib/` + `plan.tsx` + `heute.tsx`, Auftrag 2 nur `copilot-worker/index.ts`, Auftrag 3 nur `ios/`. `auth.tsx` in keinem.
+
+**Für den nächsten Anlauf beachten:** Die Session aus dem Repo-Ordner starten (`~/Desktop/Projekte/projekt/match-maker-for-founders`) — dann sind die Agenten-Typen registriert (`@hermes` statt Behelf über `general-purpose`) und die Worktree-Isolation funktioniert.
