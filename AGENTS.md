@@ -53,6 +53,16 @@ Die frühere Notiz „Latenz ~20 s ist modellbedingt, kein Bug" gilt nicht mehr:
 
 ## iOS bauen
 
+**`ios/Matchfoundr.xcodeproj` ist gitignored** — in einem frischen Klon oder Worktree existiert es nicht. Erst generieren:
+
+```bash
+cd ios && xcodegen generate
+```
+
+> `xcodegen` setzt dabei `CFBundleVersion` in `ios/Matchfoundr/Info.plist` auf `1` zurück und fügt `UIUserInterfaceStyle: Light` ein, weil `project.yml` die Build-Nummer nicht deklariert. **Nach dem Generieren die `Info.plist` prüfen und zurücksetzen**, sonst rollt jeder Lauf die Build-Nummer zurück.
+
+Dann bauen:
+
 ```bash
 xcodebuild -project ios/Matchfoundr.xcodeproj -scheme Matchfoundr \
   -destination 'platform=iOS Simulator,id=7F2BCAA3-8AB3-4D64-9B50-B99B8B893C99' \
@@ -62,6 +72,21 @@ xcodebuild -project ios/Matchfoundr.xcodeproj -scheme Matchfoundr \
 > **Keine Offline-SPM-Flags verwenden** — `-onlyUsePackageVersionsFromResolvedFile`, `-disableAutomaticPackageResolution`, `-clonedSourcePackagesDirPath` lassen `xcodebuild` beim Package-Graph bei 0 % CPU hängen. Die Standard-Resolution funktioniert, der globale SPM-Cache hat die Packages.
 
 Simulator: iPhone 16 Pro Max, UDID `7F2BCAA3-8AB3-4D64-9B50-B99B8B893C99`.
+
+### Ohne Login testen
+
+Zwei DEBUG-only Launch-Arguments (`MatchfoundrApp.swift`):
+
+- `--preview-onboarding` → startet direkt im Onboarding
+- `--preview-tabs` → startet direkt in `MainTabView`, alle fünf Tabs. Setzt ein Demo-Profil, `authUser` bleibt `nil`, es wird **nichts** in die Live-DB geschrieben.
+
+```bash
+xcrun simctl launch <UDID> de.matchfoundr.app --preview-tabs
+```
+
+Beide sind im Release-Binary physisch nicht vorhanden. Anmelden ist tabu — diese Flags sind der Weg.
+
+> **Getippten Text im Simulator nicht trauen.** Ist das Host-Mac-Layout deutsch (QWERTZ), landen US-Keycodes falsch: `z` wird `y`, `-` wird `ß`. Aus `zwei` wird `Ywei`, und weil das kein Wort ist, macht die iOS-Autokorrektur daraus **`Drei`**. Das hat schon einmal wie ein Datenverlust-Bug in der App ausgesehen und war die Tastatur. Bei Smoke-Läufen mit Texteingabe: Screenshot prüfen, was wirklich im Feld steht.
 
 ## Fallen
 

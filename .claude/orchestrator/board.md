@@ -20,6 +20,9 @@ Match→Chat gehört ausdrücklich **nicht** dazu. Positionierung: Solo-Gründer
 | 2 | iOS-Smoke (8 Onboarding-Schritte) | Hauptsession | kein Absturz, Plan wird erzeugt |
 | 2 | Drain-Cron entdramatisiert | Hauptsession | War kein Defekt, sondern das Recovery-Netz zum direkten Anstoß. Auf Wunsch auf `*/5 * * * *` (live, verifiziert). 1440 → 288 Aufrufe/Tag |
 | 3 | **Plan hat eine Quelle** | founding-engineer | `01cd80e` — `src/lib/plan-store.ts`; `plan.tsx` und `heute.tsx` lesen denselben Store. **Löst die Befunde 1, 2, 3 und 7 des ersten MVP-Ziels auf einmal.** RLS live geprüft, der Server-Zweig trägt |
+| 3 | **Worker wirft fertige Antworten nicht mehr weg** | developer | `471d57d` — erschöpfte Jobs liefern mit `partial: true` aus, `gate`-Objekt mit einem Feld pro Konjunkt statt einer Konstante. Vorher/Nachher mit derselben echten Antwort belegt. **Nicht deployed** |
+| 3 | **iOS-Tabs ohne Login testbar** | developer | `b5547af` — `--preview-tabs`, DEBUG-only; Release-Binary mechanisch als unverändert belegt. Smoke über alle fünf Tabs: **kein Absturz, kein weißer Screen** |
+| 3 | „zwei Courts" → „drei Courts" geklärt | developer | **Simulator-Autokorrektur**, nicht die App. QWERTZ-Host → `z` wird `y` → `Ywei` ist kein Wort → iOS schlägt `Drei` vor. Live im Screenshot erwischt |
 
 ## Offen — nach MVP-Zielen sortiert
 
@@ -38,18 +41,20 @@ Match→Chat gehört ausdrücklich **nicht** dazu. Positionierung: Solo-Gründer
 
 | Prio | Aufgabe | Befund |
 |------|---------|--------|
-| 1 | **Worker verwirft eigene Antworten** | Kein Job ist `failed`, keiner läuft in ein Timeout. Ein fünffaches UND (`copilot-worker/index.ts:784-789`) wird nie wahr. Zwei identische Anfragen — eine `completed`, eine `no_result`. **Hermes' Zuschnitt liegt fertig im Log** (Zyklus 3, Auftrag 2) |
-| 2 | **`answerFulfillsJob` hat ein hartcodiertes Elektriker-Regex** | Zeile 386-408: Jede Anfrage mit „Startkosten" muss Geldspanne **plus** Werkzeug **plus** Fahrzeug enthalten. Produktentscheidung über Antwortqualität. Nach Prio 1 nicht mehr tödlich |
-| 3 | **Fehlerursache ist nicht auswertbar** | `copilot-worker/index.ts:892` schreibt für alle Jobs dieselbe Konstante. Ein Feld pro Konjunkt macht daraus eine SQL-Abfrage |
+| 1 | **`partial` wird im Client nicht angezeigt** | `CopilotView.swift:1741` selektiert nur `status,progress_text,current_step,max_steps`; `result` liest im ganzen Repo niemand. Die Teilantwort-Kennzeichnung steht nur im Antworttext. Ein Badge im UI wäre eine eigene Aufgabe |
+| 2 | **Routing-Fehler eine Ebene höher** | Ein Kalender-Kontext wurde in den Recherche-Worker geroutet, dessen einziges Werkzeug `searchWeb()` ist. Bleibt korrekt `no_result` — der Fehler sitzt im Routing, nicht im Gate |
+| 3 | **`answerFulfillsJob` hat ein hartcodiertes Elektriker-Regex** | Zeile 386-408: Jede Anfrage mit „Startkosten" muss Geldspanne **plus** Werkzeug **plus** Fahrzeug enthalten. Produktentscheidung über Antwortqualität. Nach Prio 1 nicht mehr tödlich |
 | 4 | **`daily-digest` und `morning-report` laufen live gar nicht** | Es existiert **nur ein** Cron-Job. Ihre Migrationen liegen im Repo, sind nie angewendet worden |
 
 ### Ziel: iOS läuft rund
 
 | Prio | Aufgabe | Befund |
 |------|---------|--------|
-| 1 | **Preview-Hook für die fünf Tabs** | Es gibt nur `--preview-onboarding`. Ohne Gegenstück für `MainTabView` sind die Tabs ohne Login nicht testbar. **Hermes' Zuschnitt liegt fertig im Log** (Zyklus 3, Auftrag 3) — Machbarkeit ist geprüft, kein Fake-Layer nötig |
-| 2 | **`mcp-act` ist nicht deployed** | iOS ruft es in `SupabaseService.swift:569/576/583` auf — drei 404er |
-| 3 | Onboarding-Eingabe prüfen | Im Smoke-Test wurde „zwei Courts" als „drei Courts" angezeigt. `OnboardingView.swift:1090` setzt den Text unverändert ein — **unbestätigt**, vermutlich Autokorrektur des Simulators. Billig zu prüfen |
+| 1 | **Community-Tab ist komplett blockiert — HTTP 400** | `column community_events.source_url does not exist`. Live fehlen `source_url` **und** `booking_url`; `select=id,title` liefert 200 mit echten Events („Meister BAföG Seminar", „Senkrechtstarter Award 2026"). Die Migration `20260722132000_community_event_external_links.sql` liegt im Repo, ist nicht angewandt. **Eine einzige Migration blockiert den ganzen Tab** |
+| 2 | **`mcp-act` ist nicht deployed** | iOS ruft es in `SupabaseService.swift:569/576/583` auf — drei 404er. Im Smoke nie gefeuert: sie hängen an `postSlackMessage`/`sendGmailMessage`/`fetchMCPActionCapabilities` und liegen nicht auf dem Render-Pfad der Tabs |
+| 3 | `xcodegen generate` rollt die Build-Nummer zurück | Setzt `CFBundleVersion` von `20260727` auf `1` und fügt `UIUserInterfaceStyle: Light` ein, weil `project.yml` die Build-Nummer nicht deklariert. In AGENTS.md dokumentiert, Ursache offen |
+| 4 | Profil zeigt „5 Swipes heute" bei leerem Deck | Freemium-Zähler-Default, kein Absturz |
+| 5 | Community-„Puls"-Karte kollabiert bei leerem Deck | Avatar-`ZStack` behält ihre 92×46-Fläche. Layout-Schwäche, kein Fehler |
 
 ### Querschnitt
 
@@ -65,7 +70,7 @@ Match→Chat gehört ausdrücklich **nicht** dazu. Positionierung: Solo-Gründer
 
 | Aufgabe | Was zu entscheiden ist |
 |---------|------------------------|
-| **`copilot-worker` deployen?** | Hermes' offene Frage. Wenn nein, zieht er Auftrag 2 raus und hängt stattdessen `/aufgaben` an den Plan-Store — das wird auch ohne Deploy sichtbar |
+| **`copilot-worker` deployen?** | Der Fix liegt fertig auf `main` (`471d57d`), wirkt aber erst live. **Ohne Deploy verwirft der Worker in Produktion weiter fertige Antworten.** |
 | **`copilot` neu deployen?** | Die vier abgeschnittenen Dokumente deuten darauf, dass live der `finish_reason`-Guard fehlt |
 | **`mcp-act`** | Deployen oder die drei iOS-Aufrufe entfernen |
 | **Elektriker-Regex** | Lockern? Produktfrage über Antwortqualität |

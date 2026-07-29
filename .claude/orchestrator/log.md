@@ -122,3 +122,38 @@ Neu: `src/lib/plan-store.ts` (332 Zeilen). Löst den Plan in fester Reihenfolge 
 **Nicht gelaufen:** Auftrag 2 (Worker) — Hermes' Frage nach dem Deploy ist unbeantwortet. Auftrag 3 (iOS-Tabs) — Worktree-Isolation scheiterte, weil die Session von `~/Desktop` läuft statt aus dem Repo. Beide Zuschnitte liegen oben im Zyklus-3-Eintrag und sind direkt verwendbar.
 
 **Nebenbei:** Ein Task-Chip des Users („Exclude .claude worktrees from eslint") lief gegen ein Problem, das `8f25ce9` schon behoben hatte. Der Chip stammte von einem Agenten, der ihn hinterlegte, bevor die Hauptsession es zentral fixte. **Lehre: von Agenten hinterlegte Chips vor dem Start gegen den aktuellen Stand prüfen.**
+
+### Zyklus 3, Aufträge 2 und 3 — 30.07.2026
+
+Worktrees diesmal **von der Hauptsession angelegt** statt auf `isolation: worktree` zu warten (das scheitert, solange die Session nicht aus dem Repo läuft). Funktioniert, sollte der Standardweg im Skill werden.
+
+**Übernommen:** `471d57d` (Worker) · `b5547af` (iOS) · plus AGENTS.md um die iOS-Fallen ergänzt.
+
+#### Worker (`5c96ba0`)
+Das fünffache UND ist jetzt ein `GateReport` mit einem Feld pro Konjunkt; `resolveDelivery` entscheidet `{complete, partial, deliver}` als reine Funktion. Erschöpfte Jobs mit Antwort ≥ 60 Zeichen werden mit `partial: true` und einem Hinweissatz ausgeliefert. `no_result` bleibt nur für „gar keine Antwort".
+
+**Bewusstes Detail:** Nach einer Synthese ersetzt deren Urteil den Modell-Status für die *Entscheidung*, aber `gate.status_complete` bleibt am **tatsächlichen** Modell-Urteil. Sonst hätte jeder synthetisierte Job `status_complete: true` in der DB und die Auswertung wäre gefälscht — genau der Fall `5c8e3d60` wäre unsichtbar geblieben.
+
+**Beleg-Methode, nachahmenswert:** Der Agent hat die Gate-Funktionen aus **beiden** Fassungen importiert (Quelltext einlesen, `Deno.serve`-Wrapper und Remote-Import abschneiden, Exports anhängen) und mit derselben echten Antwort aus Job `83283198` laufen lassen. `main` → `no_result`, HEAD → `completed, partial: true`. Plus zwei Gegenproben (Antwort < 60 Zeichen bleibt `no_result`; bestandenes Gate bleibt `completed` ohne `partial`). Keine nachgebaute Logik.
+
+**Umgebung:** `deno` ist auf der Maschine **nicht installiert**. Typcheck lief über `tsc` mit Ambient-Shim für `Deno` und das Remote-Modul, `--strict` → exit 0. Für Edge Functions gibt es hier keinen nativen Typcheck. `eslint`/`build` sind für `supabase/functions/**` nicht zuständig (steht in den ignores) — ein grünes Ergebnis dort ist keine Aussage über die Datei.
+
+#### iOS (`bb8ec65`)
+`--preview-tabs` als Gegenstück zu `--preview-onboarding`. `activateTabsPreview()` nutzt das vorhandene `completeOnboarding(with:)`, kein zweiter Fake-Layer. Der DEBUG-Zweig im `.task` überspringt `bootstrapAuth()`, das sonst `clearAuthenticatedData()` aufruft und das Demo-Profil sofort abräumt. `authUser` bleibt `nil` → der Supabase-Upsert läuft nicht, der Preview schreibt nichts in die Live-DB.
+
+**Release-Build mechanisch belegt**, nicht argumentiert: Flag-String und Preview-Symbole im Debug-Binary 1 bzw. 2 Treffer, im Release **0/0**. Hängt an drei Stellen zugleich (`#else false`, `#if DEBUG` um Methode und Aufrufstelle) — fehlte die dritte, würde Release nicht kompilieren.
+
+**Smoke über alle fünf Tabs: kein Absturz, kein weißer Screen.** Der Fix-Teil des Auftrags lief damit leer — und das ist das Ergebnis.
+
+#### „zwei Courts" → „drei Courts": endgültig geklärt
+**Simulator-Autokorrektur, nicht die App.** Live im Screenshot erwischt: Feld enthält `Ywei` als schwebende Korrektur, darunter die iOS-Vorschlagsblase `Drei ✕`. Kette: Host-Mac-Layout ist deutsch (QWERTZ), Simulator folgt mit `hw=Automatic`, US-Keycodes landen falsch (`z`→`y`, `-`→`ß`, belegt auch an `Padel-Halle`→`PadelßHalle`), `Ywei` ist kein Wort, `autocorrectionDisabled` ist auf dem Feld nie gesetzt. `OnboardingView.swift:1090` setzt `pitch` verbatim — die Umschreibung passiert in der UIKit-Texteingabe, **bevor** das Binding aktualisiert wird. Für echte Nutzer:innen mit deutscher Tastatur kein Risiko.
+
+**Konsequenz für den Loop:** Getippter Text im Simulator ist unzuverlässig, solange das Host-Layout deutsch ist. In AGENTS.md dokumentiert.
+
+#### Der wertvollste Befund des Laufs
+**Der Community-Tab ist nicht leer, er ist kaputt: HTTP 400.** `column community_events.source_url does not exist`, nachgestellt per curl. Live fehlen `source_url` und `booking_url`; `select=id,title` liefert 200 mit echten Events. Die Migration `20260722132000_community_event_external_links.sql` liegt im Repo und ist nicht angewandt. **Eine einzige Migration blockiert einen ganzen Tab** — nächste und teuerste Instanz der Migrations-Drift.
+
+#### Neue AGENTS.md-Einträge
+`ios/Matchfoundr.xcodeproj` ist **gitignored** und existiert in frischen Klonen/Worktrees nicht → erst `cd ios && xcodegen generate`. Dabei setzt xcodegen `CFBundleVersion` von `20260727` auf `1` zurück und fügt `UIUserInterfaceStyle: Light` ein, weil `project.yml` die Build-Nummer nicht deklariert — nach jedem Lauf die `Info.plist` prüfen. Dazu die beiden Preview-Flags und die Tastatur-Falle.
+
+**Lehre fürs Vorgehen:** Beide Agenten haben ihre Zusicherungen *mechanisch* belegt — Symbol-Zählung im Binary, Vorher/Nachher mit importierten Funktionen — statt sie zu behaupten. Das ist der Standard, an dem künftige Aufträge gemessen werden sollten. Das Akzeptanzkriterium sollte die Beweisform vorgeben, nicht nur das Ziel.
