@@ -1345,6 +1345,31 @@ final class AppState: ObservableObject {
         Haptics.success()
     }
 
+#if DEBUG
+    /// Für `--preview-tabs`: setzt ein Demo-Profil, damit `MainTabView` ohne
+    /// Login erreichbar ist. Geht bewusst durch `completeOnboarding`, damit der
+    /// Zustand derselbe ist wie nach echtem Onboarding — inklusive Planner.
+    /// Ohne `authUser` bleibt der Supabase-Upsert darin aus.
+    func activateTabsPreview() {
+        authIsLoading = false
+        completeOnboarding(
+            with: MyProfile(
+                mode: .idea,
+                industryId: "gesundheit",
+                skills: ["Kundenkontakt", "Organisation", "Marketing"],
+                name: "Preview Gründerin",
+                role: "Gründer:in",
+                pitch: "Kleines Yoga- und Reha-Studio in Köln-Ehrenfeld.",
+                plz: "50823",
+                availability: .fulltime,
+                birthdate: nil
+            ),
+            launchAIAnalysis: false,
+            showAppTourAfter: false
+        )
+    }
+#endif
+
     func presentAppTourIfNeeded() {
         guard isOnboarded, !hasSeenAppTour, !showingAppTour else { return }
         showingAppTour = true
