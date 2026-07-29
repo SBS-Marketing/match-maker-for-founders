@@ -42,7 +42,8 @@ Match→Chat gehört ausdrücklich **nicht** dazu. Positionierung: Solo-Gründer
 | 1 | **Worker verwirft eigene Antworten** | Kein Job ist `failed`, keiner läuft in ein Timeout. Ein Vollständigkeits-Gate (`copilot-worker/index.ts:784-789`) wird nie wahr. Zwei identische Anfragen — eine `completed`, eine `no_result`. |
 | 2 | **`answerFulfillsJob` hat ein hartcodiertes Elektriker-Regex** | Zeile 386-408: Jede Anfrage mit „Startkosten" muss eine Geldspanne **plus** Werkzeug **plus** Fahrzeug enthalten. Produktentscheidung über Antwortqualität, keine technische. |
 | 3 | **Fehlerursache ist nicht auswertbar** | `copilot-worker/index.ts:892` schreibt für alle Jobs dieselbe Konstante. Ein Feld pro Konjunkt macht daraus eine SQL-Abfrage. |
-| 4 | **Drain-Cron läuft leer** | Edge-Logs der letzten 24 h zu 100 % `copilot-worker → 202 idle`, im Minutentakt, ~1440 Aufrufe/Tag seit zwei Tagen. Kostet Geld, bringt nichts. |
+| ~~4~~ | ~~Drain-Cron läuft leer~~ | **Erledigt 29.07.** — war **kein Defekt**: der Cron ist das Recovery-Sicherheitsnetz zum direkten Anstoß in `copilot/index.ts:569`, `202 idle` ist seine Erfolgsmeldung. Auf Wunsch des Users von `* * * * *` auf `*/5 * * * *` gestellt (live per `cron.alter_job`, verifiziert). 1440 → 288 Aufrufe/Tag. |
+| **neu** | **`daily-digest` und `morning-report` laufen live gar nicht** | Live existiert **nur ein** Cron-Job (`matchfoundr-copilot-worker`). Die Migrationen `20260529120100_daily_digest_cron` und `20260718091000_morning_report_cron` liegen im Repo, sind aber nie angewendet worden. Nächste Instanz der Migrations-Drift. |
 
 ### Ziel: iOS läuft rund
 
