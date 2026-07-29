@@ -27,12 +27,14 @@ import { CopilotMark } from "@/components/Copilot";
 import { MorningReport } from "@/components/MorningReport";
 import { AchievementsCard } from "@/components/AchievementsCard";
 import { askCopilot, type CopilotNav } from "@/lib/copilot-client";
+import { readPlanContext, type PlanContext } from "@/lib/plan-draft";
 import {
-  buildLocalPlanSlides,
-  readPlanContext,
-  type PlanContext,
-  type PlanSlide,
-} from "@/lib/plan-draft";
+  firstStepOf,
+  readCachedPlan,
+  resolvePlan,
+  type FirstStepSlide,
+  type ResolvedPlan,
+} from "@/lib/plan-store";
 
 export const Route = createFileRoute("/heute")({
   head: () => ({ meta: [{ title: "Heute — matchfoundr" }] }),
@@ -63,6 +65,9 @@ const EMPTY_DAILY_STATE: DailyState = { completed: [], snoozed: [] };
 function TodayPage() {
   const { user, session, isDemo } = useAuth();
   const [planContext, setPlanContext] = useState<PlanContext | null>(() => readPlanContext());
+  // Cache synchron mitnehmen, damit der Plan-Schritt im Normalfall ohne
+  // Flackern schon beim ersten Render steht.
+  const [plan, setPlan] = useState<ResolvedPlan | null>(() => readCachedPlan());
   const [dailyState, setDailyState] = useState<DailyState>(() => readDailyState());
   const [copilotInput, setCopilotInput] = useState("");
   const [copilotAnswer, setCopilotAnswer] = useState<string | null>(null);
@@ -73,14 +78,35 @@ function TodayPage() {
     writeDailyState(dailyState);
   }, [dailyState]);
 
+  // Denselben Plan holen, den `/plan` zeigt: Cache, sonst das zuletzt
+  // gespeicherte `pitch_outline`-Dokument. Kein `plan_generate` von hier
+  // (ein Dashboard-Aufruf soll keinen Modell-Lauf auslösen) und kein
+  // Template-Fallback — ohne echten Plan gibt es keine Plan-Aufgabe.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const resolved = await resolvePlan({
+        auth: { user, session, isDemo },
+        context: planContext,
+        allowGenerate: false,
+        allowFallback: false,
+        cancelled: () => cancelled,
+      });
+      if (cancelled) return;
+      setPlan(resolved);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, session, isDemo, planContext]);
+
   const today = useMemo(
     () =>
       new Date().toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" }),
     [],
   );
   const firstName = (planContext?.userName || "Founder").split(" ")[0];
-  const planSlides = useMemo(() => buildLocalPlanSlides(planContext), [planContext]);
-  const firstStep = useMemo(() => planSlides.find(isFirstStep), [planSlides]);
+  const firstStep = useMemo(() => firstStepOf(plan?.slides), [plan]);
   const topGrant = GRANTS[0];
   const dailyTasks = useMemo(
     () => buildDailyTasks(planContext, firstStep, topGrant),
@@ -103,17 +129,28 @@ function TodayPage() {
         .select("task_key,status")
         .eq("user_id", uid)
         .eq("task_date", taskDate);
-      if (cancelled || error) return;
+      if (cancelled) return;
+      if (error) {
+        console.error(
+          `[heute] daily_tasks lesen fehlgeschlagen (${error.code}: ${error.message}).`,
+        );
+        return;
+      }
       const rows = data ?? [];
       const known = new Set(rows.map((r) => r.task_key));
       const missing = dailyTasks.filter((t) => !known.has(t.id));
       if (missing.length > 0) {
-        await supabase.from("daily_tasks").upsert(
+        const { error: upsertError } = await supabase.from("daily_tasks").upsert(
           missing.map((t) =>
             toDailyTaskInsert(uid, taskDate, t, remoteStatusFor(t.id, dailyState)),
           ),
           { onConflict: "user_id,task_date,task_key" },
         );
+        if (upsertError) {
+          console.error(
+            `[heute] daily_tasks schreiben fehlgeschlagen (${upsertError.code}: ${upsertError.message}).`,
+          );
+        }
       }
       setDailyState((cur) => ({
         ...cur,
@@ -405,24 +442,30 @@ function Shortcut({ to, icon: Icon, label }: { to: string; icon: LucideIcon; lab
 
 function buildDailyTasks(
   context: PlanContext | null,
-  firstStep: Extract<PlanSlide, { type: "first_step" }> | undefined,
+  firstStep: FirstStepSlide | undefined,
   grant = GRANTS[0],
 ): DailyTask[] {
   const mentor = partnersFor("mentor")[0];
   const idea = context?.context.idea;
+  // Ohne echten ersten Schritt entsteht die Plan-Aufgabe gar nicht. Vorher
+  // wanderte hier still Template-Text in `daily_tasks` — der Nutzer bekam
+  // eine Aufgabe, die nichts mit seinem Plan zu tun hatte.
+  const planTask: DailyTask[] = firstStep
+    ? [
+        {
+          id: "plan-first-step",
+          sId: "cofounder",
+          title: "Deinen ersten Schritt machen",
+          desc: firstStep.action,
+          href: "/plan",
+          label: "Plan",
+          urgency: "hoch",
+          minutes: 20,
+        },
+      ]
+    : [];
   return [
-    {
-      id: "plan-first-step",
-      sId: "cofounder",
-      title: "Deinen ersten Schritt machen",
-      desc:
-        firstStep?.action ||
-        "Öffne deinen Plan und entscheide, welcher kleine Schritt heute wirklich zählt.",
-      href: "/plan",
-      label: "Plan",
-      urgency: "hoch",
-      minutes: 20,
-    },
+    ...planTask,
     {
       id: "funding-fit",
       sId: "funding",
@@ -530,8 +573,4 @@ function urgencyToRemote(urgency: DailyTask["urgency"]): "high" | "medium" | "lo
   if (urgency === "hoch") return "high";
   if (urgency === "niedrig") return "low";
   return "medium";
-}
-
-function isFirstStep(slide: PlanSlide): slide is Extract<PlanSlide, { type: "first_step" }> {
-  return slide.type === "first_step";
 }
