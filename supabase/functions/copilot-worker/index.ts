@@ -409,6 +409,77 @@ function answerFulfillsJob(job: ExecutionJob, answer: string): boolean {
   return true;
 }
 
+// Ab dieser Länge gilt eine Antwort als vorhanden — darunter gibt es nichts auszuliefern.
+const PARTIAL_ANSWER_MIN_LENGTH = 60;
+
+// Ein Feld pro Konjunkt des Vollständigkeits-Gates. Landet als `result.gate` in der DB,
+// damit ablesbar ist, welche Bedingung eine Antwort zurückgehalten hat.
+type GateReport = {
+  status_complete: boolean;
+  adds_value: boolean;
+  enough_sources: boolean;
+  length_ok: boolean;
+  fulfills_job: boolean;
+};
+
+function evaluateGate(
+  job: ExecutionJob,
+  answer: string,
+  checks: { statusComplete: boolean; addsValue: boolean; enoughSources: boolean },
+): GateReport {
+  return {
+    status_complete: checks.statusComplete,
+    adds_value: checks.addsValue,
+    enough_sources: checks.enoughSources,
+    length_ok: answer.length >= PARTIAL_ANSWER_MIN_LENGTH,
+    fulfills_job: answerFulfillsJob(job, answer),
+  };
+}
+
+function gatePassed(gate: GateReport): boolean {
+  return (
+    gate.status_complete &&
+    gate.adds_value &&
+    gate.enough_sources &&
+    gate.length_ok &&
+    gate.fulfills_job
+  );
+}
+
+// Was mit der Antwort passiert. `partial` heißt: das Gate ist nicht bestanden, der Job hat
+// keine Schritte mehr, aber es liegt eine Antwort vor — die wird ausgeliefert, nicht verworfen.
+type Delivery = { complete: boolean; partial: boolean; deliver: boolean };
+
+function resolveDelivery(gate: GateReport, exhausted: boolean, synthesized: boolean): Delivery {
+  // Nach einer Synthese ersetzt deren Urteil den Modell-Status; `status_complete` bleibt
+  // trotzdem am tatsächlichen Modell-Urteil, sonst wäre die Auswertung in der DB gefälscht.
+  const complete = synthesized
+    ? gate.adds_value && gate.enough_sources && gate.length_ok && gate.fulfills_job
+    : gatePassed(gate);
+  const partial = !complete && exhausted && gate.length_ok;
+  return { complete, partial, deliver: complete || partial };
+}
+
+// Hinweis an eine ausgelieferte Teilantwort: benennt die Lücke, entschuldigt sich nicht.
+function partialAnswerNote(gate: GateReport, sourceCount: number): string {
+  const gaps: string[] = [];
+  if (!gate.fulfills_job) {
+    gaps.push("Eine belastbare Zahl oder Spanne, wie dein Auftrag sie verlangt, ist nicht dabei.");
+  }
+  if (!gate.enough_sources) {
+    gaps.push(
+      sourceCount === 0
+        ? "Belegt ist davon nichts — ich habe keine tragfähige Quelle gefunden."
+        : "Das steht bisher auf einer Quelle, der Gegencheck fehlt.",
+    );
+  }
+  if (!gate.status_complete && !gate.adds_value) {
+    gaps.push("Ich war noch mitten in der Recherche, als die Schritte aufgebraucht waren.");
+  }
+  const detail = gaps.length > 0 ? ` ${gaps.join(" ")}` : "";
+  return `Das ist der Stand, nicht der Abschluss.${detail} Sag mir, woran ich weitersuchen soll.`;
+}
+
 function cleanExecutionAnswer(value: string): string {
   return value
     .replace(/\*\*/g, "")
@@ -781,29 +852,40 @@ Deno.serve(async (request) => {
     const progress = shortProgress(step, job.max_steps, decision.progress);
     const enoughSources = allSources.length >= requiredSourceCount(job.request_message);
     let answer = typeof decision.answer === "string" ? decision.answer.trim().slice(0, 7000) : "";
-    let complete =
-      decision.status === "complete" &&
-      decision.adds_value === true &&
-      enoughSources &&
-      answer.length >= 60 &&
-      answerFulfillsJob(job, answer);
+    const modelStatusComplete = decision.status === "complete";
+    let gate = evaluateGate(job, answer, {
+      statusComplete: modelStatusComplete,
+      addsValue: decision.adds_value === true,
+      enoughSources,
+    });
     const exhausted = step >= job.max_steps || decision.status === "blocked";
     const synthesisReady =
-      enoughSources &&
-      allFindings.length >= 2 &&
-      (step >= 2 || decision.status === "complete" || exhausted);
-    if (!complete && synthesisReady) {
+      enoughSources && allFindings.length >= 2 && (step >= 2 || modelStatusComplete || exhausted);
+    let synthesized = false;
+    if (!gatePassed(gate) && synthesisReady) {
       const synthesis = await synthesizeResult(job, allFindings, allSources);
       answer = synthesis.answer;
-      complete = synthesis.addsValue && answer.length >= 60 && answerFulfillsJob(job, answer);
+      gate = evaluateGate(job, answer, {
+        statusComplete: modelStatusComplete,
+        addsValue: synthesis.addsValue,
+        enoughSources,
+      });
+      synthesized = true;
     }
     answer = cleanExecutionAnswer(answer);
+
+    // Erschöpfter Job mit vorhandener Antwort: ausliefern statt wegwerfen. `no_result`
+    // bleibt für „gar keine Antwort".
+    const { complete, partial, deliver } = resolveDelivery(gate, exhausted, synthesized);
+    const deliveredAnswer = partial
+      ? `${answer}\n\n${partialAnswerNote(gate, allSources.length)}`
+      : answer;
 
     await supabase.from("copilot_execution_events").insert({
       job_id: job.id,
       agent_id: job.agent_id ?? null,
       user_id: job.user_id,
-      kind: complete ? "response" : "tool_result",
+      kind: deliver ? "response" : "tool_result",
       payload: {
         step,
         status: decision.status ?? "continue",
@@ -811,16 +893,18 @@ Deno.serve(async (request) => {
         findings: newFindings,
         source_count: allSources.length,
         next_query: decision.next_query,
+        partial,
+        gate,
       },
     });
 
-    if (complete) {
+    if (deliver) {
       if (!job.result_sent_at) {
         await supabase.from("copilot_messages").insert({
           session_id: job.session_id,
           user_id: job.user_id,
           role: "assistant",
-          content: answer,
+          content: deliveredAnswer,
           model_used: "execution-agent",
           sources: allSources.slice(0, 5),
         });
@@ -837,7 +921,7 @@ Deno.serve(async (request) => {
             sources: allSources,
             next_query: null,
           },
-          result: { answer, sources: allSources.slice(0, 5) },
+          result: { answer: deliveredAnswer, sources: allSources.slice(0, 5), partial, gate },
           result_sent_at: new Date().toISOString(),
           completed_at: new Date().toISOString(),
           last_heartbeat_at: new Date().toISOString(),
@@ -859,7 +943,7 @@ Deno.serve(async (request) => {
           })
           .eq("id", agent.id);
       }
-      return jsonResponse({ ok: true, status: "completed", job_id: job.id, step });
+      return jsonResponse({ ok: true, status: "completed", partial, job_id: job.id, step });
     }
 
     if (exhausted) {
@@ -889,7 +973,7 @@ Deno.serve(async (request) => {
             sources: allSources,
             next_query: null,
           },
-          result: { reason: "No sufficiently grounded result", sources: allSources },
+          result: { gate, partial: false, sources: allSources },
           result_sent_at: new Date().toISOString(),
           completed_at: new Date().toISOString(),
           last_heartbeat_at: new Date().toISOString(),
