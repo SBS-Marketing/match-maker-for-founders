@@ -94,3 +94,31 @@ Das Vollständigkeits-Gate (`:784-789`) bleibt, entscheidet aber nicht mehr übe
 **Kollisionen:** keine. Auftrag 1 nur `src/lib/` + `plan.tsx` + `heute.tsx`, Auftrag 2 nur `copilot-worker/index.ts`, Auftrag 3 nur `ios/`. `auth.tsx` in keinem.
 
 **Für den nächsten Anlauf beachten:** Die Session aus dem Repo-Ordner starten (`~/Desktop/Projekte/projekt/match-maker-for-founders`) — dann sind die Agenten-Typen registriert (`@hermes` statt Behelf über `general-purpose`) und die Worktree-Isolation funktioniert.
+
+## Zyklus 3 (Wiederaufnahme) — 30.07.2026
+
+**Korrektur zum Abbruch:** Das Spend-Limit war **kein** Dauerzustand. Der User hat widersprochen, der Auftrag wurde erneut gestartet und lief komplett durch. Die Systemmeldung war echt, meine Prognose („weitere Läufe scheitern genauso") war falsch. **Lehre: einen Limit-Fehler durch einen Versuch prüfen, nicht durch Verkünden.**
+
+**Übernommen:** `01cd80e` — Merge von `loop/3-plan-eine-quelle` (`33a35f7`).
+
+Neu: `src/lib/plan-store.ts` (332 Zeilen). Löst den Plan in fester Reihenfolge auf und führt die Quelle mit: `cache` → `document` (neuester `pitch_outline` aus `copilot_documents`) → `model` (`plan_generate`) → `fallback` (Template). Zwei Schalter: `allowGenerate`, `allowFallback`.
+
+`plan.tsx`: Inline-Kaskade (77 Zeilen) durch einen `resolvePlan()`-Aufruf ersetzt, `filterSlides` und `describeCopilotFailure` in den Store gewandert, Badge hängt an `source === "fallback"`.
+`heute.tsx`: `buildLocalPlanSlides` ist raus, `firstStep` kommt aus demselben Store. Ruft **kein** `plan_generate` (kein 20-s-Modell-Lauf beim Dashboard-Aufruf) und akzeptiert **keinen** Template-Fallback — ohne echten ersten Schritt entsteht die Plan-Aufgabe gar nicht. Der geschluckte Sync-Fehler loggt jetzt Code und Meldung, dazu der bis dahin ungeprüfte `upsert`.
+
+**Damit sind die Board-Befunde 1, 2, 3 und 7 des ersten MVP-Ziels erledigt** — mit einem Schnitt statt vier Einzelreparaturen.
+
+**Getestet:**
+- RLS live geprüft (nur lesend, als Rolle `authenticated` in zurückgerollter Transaktion): Policy `Users manage own documents` existiert **trotz** Migrations-Drift, `visible_rows: 4` — genau die eigenen, nicht die 14 der anderen. Server-Zweig trägt.
+- Cache gefüllt: `/plan` und `/heute` zeigen denselben Modelltext, Stringvergleich im Browser `identisch: true`
+- Cache leer: `/heute` erzeugt die Plan-Aufgabe gar nicht (`0/3` statt `0/4`), `/plan` zeigt das Notfallplan-Badge
+- `eslint` 0 Fehler · `build` grün · `tsc` nur der bekannte `auth.tsx:82` — auf dem Branch **und** nach dem Merge auf `main` nachgeprüft
+- Tabu-Check: keine der Parallelsession-Dateien angefasst (`auth.tsx`, `matches.$id.tsx`, `eslint.config.js`)
+
+**Neuer Befund:** `copilot_documents.content` ist die rohe Modellausgabe im ```json-Block — bei den vier neuesten Zeilen **mitten im String abgeschnitten** (`metadata.slides_count = 0`, `JSON.parse` scheitert). `parsePlanSlides` birgt daraus vollständige Objekte, aber diese vier liefern keinen `first_step`. Alle vom 03.06.2026. Deutet darauf, dass der live laufenden `copilot`-Function der `finish_reason === "length"`-Guard fehlt.
+
+**Ehrlich offen:** Das Primärkriterium („Plan erzeugen → Cache löschen → `/heute` neu laden") wurde **nicht** end-to-end gefahren — es braucht eine eingeloggte Session, und Anmelden ist Agenten verboten. Belegt sind RLS-Leseerlaubnis und Parse-Logik gegen echten Zeileninhalt; es fehlt der Netz-Hop dazwischen. Der Ersatz-Nachweis (Textvergleich) ist geführt. **Zwei Minuten Handarbeit beim User schließen die Lücke.**
+
+**Nicht gelaufen:** Auftrag 2 (Worker) — Hermes' Frage nach dem Deploy ist unbeantwortet. Auftrag 3 (iOS-Tabs) — Worktree-Isolation scheiterte, weil die Session von `~/Desktop` läuft statt aus dem Repo. Beide Zuschnitte liegen oben im Zyklus-3-Eintrag und sind direkt verwendbar.
+
+**Nebenbei:** Ein Task-Chip des Users („Exclude .claude worktrees from eslint") lief gegen ein Problem, das `8f25ce9` schon behoben hatte. Der Chip stammte von einem Agenten, der ihn hinterlegte, bevor die Hauptsession es zentral fixte. **Lehre: von Agenten hinterlegte Chips vor dem Start gegen den aktuellen Stand prüfen.**
