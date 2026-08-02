@@ -769,6 +769,7 @@ async function searchWeb(query: string): Promise<WebSource[]> {
     url.searchParams.set("q", query);
     url.searchParams.set("count", "5");
     const res = await fetch(url, {
+      signal: AbortSignal.timeout(4_000),
       headers: {
         Accept: "application/json",
         "X-Subscription-Token": braveKey,
@@ -831,6 +832,7 @@ async function searchWeb(query: string): Promise<WebSource[]> {
   const htmlURL = new URL("https://duckduckgo.com/html/");
   htmlURL.searchParams.set("q", query);
   const htmlRes = await fetch(htmlURL, {
+    signal: AbortSignal.timeout(4_000),
     headers: { "User-Agent": "matchfoundr-research/1.0" },
   });
   if (!htmlRes.ok) return [];
@@ -852,6 +854,9 @@ async function searchWeb(query: string): Promise<WebSource[]> {
 
 const WEB_RESEARCH_BUDGET_MS = 2_800;
 const DUTIES_RESEARCH_BUDGET_MS = 3_500;
+// Absolute Obergrenze für den synchronen Recherche-Pfad (ohne Session, wo wir
+// nichts nachreichen können). Vorher lief der ungedeckelt — bis zu 90s.
+const SYNC_RESEARCH_CAP_MS = 9_000;
 
 async function findWebSources(ctx: FounderContext, message: string): Promise<WebSource[]> {
   if (!needsWebResearch(ctx, message)) return [];
@@ -2166,13 +2171,24 @@ Deno.serve(async (req) => {
       // ausrecherchieren, statt ein Versprechen zu geben, das nie eingelöst wird.
       const shouldResearchSynchronously =
         wantsResearch && (!canDeliverLater || (delegateRequested && !executionJobID));
-      const syncResearch = shouldResearchSynchronously ? await runResearch() : null;
+      // Harte Obergrenze: der Founder wartet live. Dauert die Recherche länger,
+      // antworten wir mit dem, was der Interaction-Agent schon hat — lieber eine
+      // ehrliche Sofort-Antwort als eine perfekte nach 90 Sekunden.
+      const syncResearch = shouldResearchSynchronously
+        ? await Promise.race([
+            runResearch(),
+            new Promise<null>((resolve) =>
+              setTimeout(() => resolve(null), SYNC_RESEARCH_CAP_MS),
+            ),
+          ])
+        : null;
 
       // Extract draft — der Interaction-Agent antwortet direkt (kein Polish-Call)
       let polishedAnswer = syncResearch
         ? syncResearch.sources.length > 0
           ? syncResearch.answer
-          : "Die Live-Suche hat gerade keine belastbaren Quellen geliefert. Ich nenne dir deshalb keine Anbieter oder Konditionen aus dem Bauch heraus."
+          : draft ||
+            "Dazu finde ich gerade nichts Belastbares. Frag am besten direkt bei der Kammer nach — ich rate dir hier nichts zusammen."
         : draft;
 
       // Nav-Vorschläge gegen den Routen-Katalog validieren
