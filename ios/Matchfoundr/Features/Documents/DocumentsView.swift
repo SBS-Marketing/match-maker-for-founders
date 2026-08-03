@@ -79,6 +79,7 @@ struct DocumentsView: View {
         .background(MF.canvas.ignoresSafeArea())
         .navigationTitle("Unterlagen")
         .navigationBarTitleDisplayMode(.inline)
+        .task { await state.refreshDocumentAssets() }
         .fileImporter(
             isPresented: $showingImporter,
             allowedContentTypes: [.pdf, .plainText, .text, .image, .data],
@@ -362,6 +363,13 @@ struct DocumentsView: View {
                     Text("\(asset.kind.label) · \(asset.fileExtension.isEmpty ? "DATEI" : asset.fileExtension) · \(asset.compactSize)")
                         .font(.mfMono(10))
                         .foregroundStyle(MF.faint)
+                    HStack(spacing: 4) {
+                        Image(systemName: asset.isSynced ? "checkmark.icloud.fill" : "iphone")
+                            .font(.system(size: 9, weight: .bold))
+                        Text(asset.isSynced ? "gesichert" : "nur auf diesem Gerät")
+                            .font(.mfMono(9))
+                    }
+                    .foregroundStyle(asset.isSynced ? MF.indigoInk : MF.faint)
                 }
                 Spacer()
                 Button {
@@ -390,14 +398,20 @@ struct DocumentsView: View {
             }
 
             HStack(spacing: 8) {
-                if let url {
+                if url != nil || asset.isSynced {
                     Button {
-                        preview = DocumentPreview(url: url)
+                        // Liegt die Datei nur online, wird sie jetzt geholt.
+                        Task {
+                            if let ready = await state.localFileURL(for: asset) {
+                                preview = DocumentPreview(url: ready)
+                            }
+                        }
                     } label: {
                         smallPill("Öffnen", "eye.fill")
                     }
                     .buttonStyle(.plain)
-
+                }
+                if let url {
                     ShareLink(item: url) {
                         smallPill("Teilen", "square.and.arrow.up")
                     }

@@ -19,6 +19,7 @@ import {
   buildInteractionPrompt,
   type ChatTurn,
   type FounderContext,
+  type FounderDocument,
   type MCPConnector,
   type MCPLiveContext,
   type TaskType,
@@ -2013,6 +2014,27 @@ Deno.serve(async (req) => {
 
       const surface = typeof extra.surface === "string" ? extra.surface : undefined;
 
+      // Hochgeladene Unterlagen: Titel plus extrahierter Text. Ohne die sieht
+      // der Co-Pilot nur Dateinamen und muss über den Inhalt raten.
+      const documents: FounderDocument[] = user
+        ? await supabase
+            .from("document_assets")
+            .select("title,kind,text_content,text_preview")
+            .eq("user_id", user.id)
+            .order("imported_at", { ascending: false })
+            .limit(6)
+            .then(({ data }) =>
+              (data ?? []).map((row: Record<string, unknown>) => ({
+                title: typeof row.title === "string" ? row.title : "Unterlage",
+                kind: typeof row.kind === "string" ? row.kind : undefined,
+                text:
+                  (typeof row.text_content === "string" && row.text_content) ||
+                  (typeof row.text_preview === "string" ? row.text_preview : ""),
+              })),
+            )
+            .catch(() => [])
+        : [];
+
       // Nur das Nötigste abwarten — Web-Recherche und MCP blockieren die
       // erste Antwort nicht mehr, die laufen ggf. im Hintergrund.
       const [recentCount, history] = await Promise.all([rateLimitPromise, historyPromise]);
@@ -2042,6 +2064,7 @@ Deno.serve(async (req) => {
         memory,
         priorSummary,
         surface,
+        documents,
       });
       let kimiRaw: string;
       try {
@@ -2165,6 +2188,7 @@ Deno.serve(async (req) => {
             priorSummary,
             surface,
             app: extra.app,
+            documents,
             webSources,
             mcpConnectors,
             mcpLiveContext: liveContext,

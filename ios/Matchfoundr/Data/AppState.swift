@@ -1555,6 +1555,7 @@ final class AppState: ObservableObject {
         let imported = urls.compactMap { importDocumentFile($0) }
         guard !imported.isEmpty else { return [] }
         documentAssets.insert(contentsOf: imported, at: 0)
+        for asset in imported { pushDocumentAsset(asset) }
         if let index = documents.firstIndex(where: { $0.id == "businessplan" }) {
             documents[index].done = true
         }
@@ -1586,6 +1587,7 @@ final class AppState: ObservableObject {
                 textPreview: String(cleanDraft.prefix(900))
             )
             documentAssets.insert(asset, at: 0)
+            pushDocumentAsset(asset)
             if let index = documents.firstIndex(where: { $0.id == "businessplan" }) {
                 documents[index].done = true
             }
@@ -1709,7 +1711,84 @@ final class AppState: ObservableObject {
             try? FileManager.default.removeItem(at: url)
         }
         documentAssets.removeAll { $0.id == id }
+        if let userID = authUser?.userID {
+            Task {
+                do {
+                    try await DocumentSync.remove(asset: asset, userID: userID)
+                } catch {
+                    print("[Documents] Remote-Löschung fehlgeschlagen: \(error.localizedDescription)")
+                }
+            }
+        }
         Haptics.tap()
+    }
+
+    // ─── Unterlagen-Sync ──────────────────────────────────────
+    // Datei in den privaten Bucket, Metadaten und Volltext in die Tabelle.
+    // Ohne Login bleibt alles lokal; der nächste Start holt es nach.
+
+    /// Schiebt eine Unterlage hoch und merkt sich den Bucket-Pfad.
+    func pushDocumentAsset(_ asset: FounderDocumentAsset) {
+        guard let userID = authUser?.userID else { return }
+        let localURL = documentAssetURL(asset)
+        let fullText = localURL.map { extractedFullText(from: $0) } ?? ""
+        Task { @MainActor in
+            do {
+                let path = try await DocumentSync.push(
+                    asset: asset,
+                    localURL: localURL,
+                    userID: userID,
+                    textContent: fullText
+                )
+                if let index = documentAssets.firstIndex(where: { $0.id == asset.id }) {
+                    documentAssets[index].storagePath = path
+                }
+            } catch {
+                print("[Documents] Upload fehlgeschlagen: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    /// Holt die Serverliste und führt sie mit der lokalen zusammen. Unterlagen
+    /// von einem anderen Gerät tauchen dadurch hier auf; die Datei selbst kommt
+    /// erst beim Öffnen dazu.
+    func refreshDocumentAssets() async {
+        guard let userID = authUser?.userID else { return }
+        do {
+            let rows = try await DocumentSync.fetchRows(userID: userID)
+            let remoteByID = Dictionary(uniqueKeysWithValues: rows.map { ($0.id, $0) })
+            var merged = documentAssets
+            for index in merged.indices {
+                if let row = remoteByID[merged[index].id], merged[index].storagePath.isEmpty {
+                    merged[index].storagePath = row.storagePath ?? ""
+                }
+            }
+            let knownIDs = Set(merged.map(\.id))
+            merged.append(contentsOf: rows.filter { !knownIDs.contains($0.id) }.map(\.asset))
+            documentAssets = merged.sorted { $0.importedAt > $1.importedAt }
+
+            // Was nur lokal liegt, jetzt nachreichen.
+            for asset in documentAssets where asset.storagePath.isEmpty {
+                pushDocumentAsset(asset)
+            }
+        } catch {
+            print("[Documents] Sync fehlgeschlagen: \(error.localizedDescription)")
+        }
+    }
+
+    /// Sorgt dafür, dass die Datei lokal liegt — lädt sie bei Bedarf herunter.
+    func localFileURL(for asset: FounderDocumentAsset) async -> URL? {
+        if let url = documentAssetURL(asset) { return url }
+        guard !asset.storagePath.isEmpty else { return nil }
+        do {
+            let data = try await DocumentSync.download(path: asset.storagePath)
+            let destination = documentStorageDirectory().appendingPathComponent(asset.fileName)
+            try data.write(to: destination, options: .atomic)
+            return destination
+        } catch {
+            print("[Documents] Download fehlgeschlagen: \(error.localizedDescription)")
+            return nil
+        }
     }
 
     func startDocumentCopilot(task: String) {
@@ -1874,6 +1953,32 @@ final class AppState: ObservableObject {
         if ["txt", "md", "csv", "json", "rtf"].contains(ext),
            let text = try? String(contentsOf: url, encoding: .utf8) {
             return compactPreview(text)
+        }
+        return ""
+    }
+
+    /// Wie `extractedTextPreview`, aber ohne die enge Kappung: Grundlage dafür,
+    /// dass der Co-Pilot die Unterlage wirklich lesen kann statt nur den Anriss.
+    private func extractedFullText(from url: URL) -> String {
+        let ext = url.pathExtension.lowercased()
+        if ext == "pdf" {
+            #if canImport(PDFKit)
+            guard let pdf = PDFDocument(url: url) else { return "" }
+            var chunks: [String] = []
+            for index in 0..<min(pdf.pageCount, 60) {
+                if let text = pdf.page(at: index)?.string,
+                   !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    chunks.append(text)
+                }
+            }
+            return chunks.joined(separator: "\n")
+            #else
+            return ""
+            #endif
+        }
+        if ["txt", "md", "csv", "json", "rtf"].contains(ext),
+           let text = try? String(contentsOf: url, encoding: .utf8) {
+            return text
         }
         return ""
     }

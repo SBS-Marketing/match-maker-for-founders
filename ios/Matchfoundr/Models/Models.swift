@@ -307,6 +307,49 @@ struct FounderDocumentAsset: Identifiable, Codable, Hashable {
     var sizeBytes: Int64
     var importedAt: Date = .now
     var textPreview: String = ""
+    /// Pfad im privaten Bucket "media". Leer = liegt (noch) nur auf dem Gerät.
+    var storagePath: String = ""
+
+    var isSynced: Bool { !storagePath.isEmpty }
+
+    init(
+        id: UUID = UUID(),
+        title: String,
+        fileName: String,
+        kind: FounderDocumentAssetKind,
+        sizeBytes: Int64,
+        importedAt: Date = .now,
+        textPreview: String = "",
+        storagePath: String = ""
+    ) {
+        self.id = id
+        self.title = title
+        self.fileName = fileName
+        self.kind = kind
+        self.sizeBytes = sizeBytes
+        self.importedAt = importedAt
+        self.textPreview = textPreview
+        self.storagePath = storagePath
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, fileName, kind, sizeBytes, importedAt, textPreview, storagePath
+    }
+
+    /// Toleranter Decoder: ältere gespeicherte Listen kennen neue Felder nicht.
+    /// Der synthetisierte Decoder würde daran scheitern und — weil AppState mit
+    /// `try?` lädt — stillschweigend alle Unterlagen verlieren.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? "Unterlage"
+        fileName = try container.decodeIfPresent(String.self, forKey: .fileName) ?? ""
+        kind = try container.decodeIfPresent(FounderDocumentAssetKind.self, forKey: .kind) ?? .upload
+        sizeBytes = try container.decodeIfPresent(Int64.self, forKey: .sizeBytes) ?? 0
+        importedAt = try container.decodeIfPresent(Date.self, forKey: .importedAt) ?? .now
+        textPreview = try container.decodeIfPresent(String.self, forKey: .textPreview) ?? ""
+        storagePath = try container.decodeIfPresent(String.self, forKey: .storagePath) ?? ""
+    }
 
     var fileExtension: String {
         URL(fileURLWithPath: fileName).pathExtension.uppercased()

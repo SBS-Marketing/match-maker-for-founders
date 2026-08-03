@@ -166,6 +166,29 @@ export function mcpLiveContextBlock(context: MCPLiveContext[] = []): string {
   ].join("\n");
 }
 
+export type FounderDocument = {
+  title: string;
+  kind?: string;
+  text?: string;
+};
+
+/**
+ * Die hochgeladenen Unterlagen des Founders. Sie liegen im privaten Bucket,
+ * der extrahierte Text in der DB — hier kommt so viel davon in den Prompt,
+ * dass der Co-Pilot inhaltlich darauf antworten kann, ohne ihn zu fluten.
+ */
+export function documentsBlock(documents: FounderDocument[] = []): string {
+  if (!documents.length) return "(keine hochgeladenen Unterlagen)";
+  return documents
+    .slice(0, 6)
+    .map((document, index) => {
+      const text = (document.text || "").replace(/\s+/g, " ").trim();
+      const body = text ? `\n  Inhalt: ${text.slice(0, 900)}` : "\n  (kein Text extrahierbar)";
+      return `${index + 1}. ${document.title}${document.kind ? ` (${document.kind})` : ""}${body}`;
+    })
+    .join("\n");
+}
+
 export type ChatPromptInput = {
   message: string;
   immediateAnswer?: string;
@@ -182,6 +205,7 @@ export type ChatPromptInput = {
   priorSummary?: string; // verdichtete Zusammenfassung älterer Nachrichten dieser Session
   surface?: string; // aktuelle Seite, z.B. "/foerderung/exist-gruenderstipendium"
   app?: unknown;
+  documents?: FounderDocument[];
   webSources?: WebSource[];
   mcpConnectors?: MCPConnector[];
   mcpLiveContext?: MCPLiveContext[];
@@ -612,6 +636,11 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
     NATIVE APP-LANDKARTE UND AUSFÜHRBARE AKTIONEN:
     ${appBlock(input.app)}
 
+    UNTERLAGEN DES FOUNDERS (hochgeladen, Text extrahiert):
+    ${documentsBlock(input.documents)}
+    - Beziehe dich darauf, wenn die Frage die Unterlagen betrifft. Zitiere knapp und
+      benenne die Datei. Behaupte nichts über eine Unterlage, die hier nicht steht.
+
     AKTUELLE WEB-RECHERCHE / SCRAPER-TREFFER:
     ${webSourcesBlock(input.webSources)}
 
@@ -862,6 +891,10 @@ export function buildInteractionPrompt(ctx: FounderContext, input: ChatPromptInp
     <conversation_history>
     ${historyBlock(input.history)}
     </conversation_history>
+
+    <founder_documents>
+    ${documentsBlock(input.documents)}
+    </founder_documents>
 
     <current_surface>${escapePromptText(input.surface || "unbekannt")}</current_surface>
 
