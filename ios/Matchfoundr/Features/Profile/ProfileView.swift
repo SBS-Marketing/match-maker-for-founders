@@ -7,6 +7,7 @@ enum ProfileRoute: Hashable {
     case company
     case documents
     case memory
+    case contacts
 }
 
 struct ProfileView: View {
@@ -57,6 +58,7 @@ struct ProfileView: View {
                         MSectionHead(text: "KI-Nutzung")
                         aiUsageCard
                         memoryAccessCard
+                        savedContactsCard
                         MSectionHead(text: "Darstellung")
                         appearanceCard
                         MSectionHead(text: "Konto")
@@ -74,6 +76,7 @@ struct ProfileView: View {
                 case .company: CompanyProfileView()
                 case .documents: DocumentsView()
                 case .memory: ProfileMemoryView()
+                case .contacts: SavedContactsView()
                 }
             }
             .sheet(isPresented: $editing) {
@@ -733,6 +736,45 @@ struct ProfileView: View {
         .padding(12)
         .background(MF.surfaceSoft)
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    private var savedContactsCard: some View {
+        Button {
+            Haptics.tap()
+            path.append(.contacts)
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "person.crop.rectangle.stack.fill")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 38, height: 38)
+                    .background(MF.emberGrad)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Kontakte")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(MF.ink)
+                    Text(state.savedContacts.isEmpty
+                        ? "Noch keine Kontakte aus dem Co-Pilot gespeichert"
+                        : state.savedContacts.count == 1
+                            ? "1 gespeicherter Kontakt"
+                            : "\(state.savedContacts.count) gespeicherte Kontakte")
+                        .font(.system(size: 12.5, weight: .semibold))
+                        .foregroundStyle(MF.smoke)
+                        .lineLimit(1)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(MF.faint)
+            }
+            .padding(15)
+            .background(MF.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 18).stroke(MF.border, lineWidth: 1))
+            .warmShadow()
+        }
+        .buttonStyle(.plain)
     }
 
     private var memoryAccessCard: some View {

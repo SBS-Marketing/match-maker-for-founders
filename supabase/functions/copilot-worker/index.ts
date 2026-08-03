@@ -1,4 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  CARD_RULES,
+  answerWithoutCardDuplicates,
+  normalizeCards,
+  type CopilotCard,
+} from "../_shared/cards.ts";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MODEL = "google/gemini-2.5-flash";
@@ -185,7 +191,18 @@ async function enrichSource(source: Source): Promise<Source> {
     const topicIndex = pageText.search(
       /startkosten|startkapital|gründungskosten|gruendungskosten|investitionsbedarf/i,
     );
-    const focusIndex = moneyIndex >= 0 ? moneyIndex : topicIndex;
+    // Bei einer Kontaktsuche liegt das Interessante bei Mailadresse, Telefon oder
+    // dem Wort "Ansprechpartner" — nicht am Seitenanfang und nicht bei den Beträgen.
+    const contactIndex = [
+      /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i,
+      /(?:tel|telefon|fon)\.?\s*:?\s*\+?[\d\s()/-]{7,}/i,
+      /ansprechpartner(?:in)?/i,
+    ]
+      .map((pattern) => pageText.search(pattern))
+      .filter((index) => index >= 0)
+      .sort((a, b) => a - b)[0];
+    const focusIndex =
+      moneyIndex >= 0 ? moneyIndex : topicIndex >= 0 ? topicIndex : (contactIndex ?? -1);
     const excerpt =
       focusIndex >= 0
         ? pageText.slice(Math.max(0, focusIndex - 280), focusIndex + 1_200)
@@ -555,6 +572,68 @@ Antworte ausschließlich als JSON:
   };
 }
 
+/**
+ * Zieht aus dem fertigen Rechercheergebnis strukturierte Karten. Eigener,
+ * kleiner Call statt eines weiteren Feldes im Haupt-Prompt: die Feldtrennung
+ * ist genau das, was das Modell im Fließtext-Modus verliert. Findet sich
+ * nichts Strukturiertes, kommt eine leere Liste zurück — das ist der Normalfall.
+ */
+async function extractCards(
+  job: ExecutionJob,
+  answer: string,
+  findings: string[],
+  sources: Source[],
+): Promise<CopilotCard[]> {
+  const apiKey = Deno.env.get("OPENROUTER_API_KEY");
+  if (!apiKey) return [];
+  try {
+    const response = await fetch(OPENROUTER_URL, {
+      method: "POST",
+      signal: AbortSignal.timeout(20_000),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        "HTTP-Referer": "https://matchfoundr.com",
+        "X-Title": "matchfoundr Card Extraction",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          {
+            role: "user",
+            content: `Prüfe, ob dieses Rechercheergebnis strukturierte Karten hergibt.
+
+Nutzerfrage: ${job.request_message}
+Auftrag: ${job.assignment || job.request_message}
+Ergebnisnachricht: ${answer.slice(0, 4000)}
+Erkenntnisse: ${JSON.stringify(findings).slice(0, 6000)}
+Zulässige Quellen: ${JSON.stringify(sources).slice(0, 6000)}
+${CARD_RULES}
+Zusätzlich hier:
+- Du formulierst KEINE Nachricht, du extrahierst nur.
+- Jedes Feld muss wörtlich durch Ergebnisnachricht, Erkenntnisse oder Quellen gedeckt sein.
+- Gibt das Material keine saubere Karte her, antworte mit {"karten": []}. Das ist ein
+  vollkommen richtiges Ergebnis und besser als eine halb geratene Karte.
+
+Antworte ausschließlich als JSON: {"karten": []}`,
+          },
+        ],
+        temperature: 0,
+        max_tokens: 900,
+        response_format: { type: "json_object" },
+      }),
+    });
+    if (!response.ok) return [];
+    const payload = await response.json();
+    const content = payload?.choices?.[0]?.message?.content;
+    const parsed = parseJSONObject(typeof content === "string" ? content : JSON.stringify(content));
+    return normalizeCards(parsed.karten ?? parsed.cards);
+  } catch (error) {
+    console.error("card extraction failed:", error instanceof Error ? error.message : error);
+    return [];
+  }
+}
+
 function buildExecutionPrompt(
   job: ExecutionJob,
   agent: AgentRow | null,
@@ -608,6 +687,11 @@ ARBEITSREGELN
 - Für mehrere verlangte Anbieter/Optionen brauchst du mindestens zwei voneinander unabhängige Quellen.
 - Bei Behörden und Pflichten bevorzuge offizielle Quellen.
 - Eine fertige Antwort muss konkrete Namen, Fakten oder nächste Schritte enthalten.
+- Verlangt der Auftrag einen Ansprechpartner, ist er NICHT fertig, solange du nur die
+  Organisation hast. Lies die Seitenauszüge nach Name, Funktion, Durchwahl und Mailadresse
+  durch und suche sonst gezielt weiter (z.B. die Kontakt-, Team- oder Beratungsseite der
+  Stelle). Erst wenn mehrere Suchrichtungen zeigen, dass kein Name veröffentlicht ist, ist
+  "Stelle ohne Namen" ein zulässiges Ergebnis — und du sagst genau das.
 - Verlangt der Auftrag eine Kosten- oder Zahlenspanne, ist die Antwort nur fertig, wenn sie
   eine konkrete numerische Euro-Spanne samt Annahmen enthält. Kennzeichne sie als Planungskorridor.
 - Bei einem Elektrobetrieb muss dieser Korridor Werkzeug/Messgeräte und Fahrzeug einbeziehen.
@@ -877,9 +961,16 @@ Deno.serve(async (request) => {
     // Erschöpfter Job mit vorhandener Antwort: ausliefern statt wegwerfen. `no_result`
     // bleibt für „gar keine Antwort".
     const { complete, partial, deliver } = resolveDelivery(gate, exhausted, synthesized);
+    // Karten erst hier: die Extraktion lohnt nur, wenn wirklich ausgeliefert wird.
+    const cards =
+      deliver && allSources.length > 0
+        ? await extractCards(job, answer, allFindings, allSources)
+        : [];
+    // Was die Karte sauber getrennt trägt, muss der Fließtext nicht verkleben.
+    const finalAnswer = answerWithoutCardDuplicates(answer, cards);
     const deliveredAnswer = partial
-      ? `${answer}\n\n${partialAnswerNote(gate, allSources.length)}`
-      : answer;
+      ? `${finalAnswer}\n\n${partialAnswerNote(gate, allSources.length)}`
+      : finalAnswer;
 
     await supabase.from("copilot_execution_events").insert({
       job_id: job.id,
@@ -907,6 +998,7 @@ Deno.serve(async (request) => {
           content: deliveredAnswer,
           model_used: "execution-agent",
           sources: allSources.slice(0, 5),
+          cards,
         });
       }
       await supabase
@@ -921,7 +1013,7 @@ Deno.serve(async (request) => {
             sources: allSources,
             next_query: null,
           },
-          result: { answer: deliveredAnswer, sources: allSources.slice(0, 5), partial, gate },
+          result: { answer: deliveredAnswer, sources: allSources.slice(0, 5), cards, partial, gate },
           result_sent_at: new Date().toISOString(),
           completed_at: new Date().toISOString(),
           last_heartbeat_at: new Date().toISOString(),

@@ -56,6 +56,28 @@ final class AppState: ObservableObject {
         didSet { defaults.set(copilotFacts, forKey: "mf.copilot.facts") }
     }
 
+    /// Kontakte, die der Founder aus einer Co-Pilot-Karte in die App gelegt hat.
+    @Published var savedContacts: [SavedContact] = [] {
+        didSet { persist(savedContacts, key: "mf.contacts.saved") }
+    }
+
+    func isContactSaved(_ card: CopilotCard) -> Bool {
+        let key = SavedContact.fingerprint(card)
+        return savedContacts.contains { $0.fingerprint == key }
+    }
+
+    /// Legt den Kontakt ab. Ein bereits vorhandener Eintrag wird nicht verdoppelt.
+    @discardableResult
+    func saveContact(_ card: CopilotCard) -> Bool {
+        guard !isContactSaved(card) else { return false }
+        savedContacts.insert(SavedContact(card: card), at: 0)
+        return true
+    }
+
+    func removeSavedContact(_ id: UUID) {
+        savedContacts.removeAll { $0.id == id }
+    }
+
     /// Vom Co-Pilot gefeierte Meilensteine — Erfolgs-Chronik, hält motiviert.
     @Published var achievements: [Achievement] = [] {
         didSet { persist(achievements, key: "mf.achievements") }
@@ -2478,6 +2500,7 @@ final class AppState: ObservableObject {
         mcpConnectorLinks = load([MCPConnectorLink].self, key: "mf.mcp.connector.links") ?? []
         startupWorkspaceActivated = defaults.bool(forKey: "mf.startup.activated")
         copilotFacts = defaults.stringArray(forKey: "mf.copilot.facts") ?? []
+        savedContacts = load([SavedContact].self, key: "mf.contacts.saved") ?? []
         achievements = load([Achievement].self, key: "mf.achievements") ?? []
         dayStreak = defaults.integer(forKey: "mf.streak.count")
         copilotSessions = compactCopilotSessions(load([CopilotSession].self, key: "mf.copilot.sessions") ?? [])

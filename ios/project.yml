@@ -35,6 +35,7 @@ targets:
         UILaunchScreen: {}
         NSMicrophoneUsageDescription: "matchfoundr nimmt dein Meeting nur auf, wenn du die Aufnahme startest — für die Co-Pilot-Zusammenfassung."
         NSSpeechRecognitionUsageDescription: "Die Spracherkennung läuft auf deinem Gerät und erstellt das Transkript deines Meetings."
+        NSContactsUsageDescription: "matchfoundr legt einen Kontakt nur dann in deinem Adressbuch an, wenn du ihn auf einer Kontaktkarte dafür antippst."
         UIUserInterfaceStyle: Light
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait

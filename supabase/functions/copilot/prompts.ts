@@ -1,3 +1,5 @@
+import { CARD_RULES } from "../_shared/cards.ts";
+
 // ─────────────────────────────────────────────────────────────
 // matchfoundr · Co-Pilot Prompt Templates
 // Kimi K2.6  →  heavy analysis, structure, research
@@ -117,7 +119,10 @@ export function webSourcesBlock(sources: WebSource[] = []): string {
   return sources
     .slice(0, 8)
     .map((source, index) => {
-      const snippet = source.snippet ? `\n  Auszug: ${source.snippet.slice(0, 420)}` : "";
+      // Nachgeladene Seitenauszüge sind deutlich länger als ein Suchmaschinen-
+      // Snippet. Bei 420 Zeichen fiel genau der Teil weg, in dem Name und
+      // Durchwahl stehen — die Grenze muss den ganzen Kontaktblock durchlassen.
+      const snippet = source.snippet ? `\n  Auszug: ${source.snippet.slice(0, 2_400)}` : "";
       return `${index + 1}. ${source.title}\n  URL: ${source.url}${snippet}`;
     })
     .join("\n");
@@ -731,7 +736,12 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
        "navigation" (z.B. zum passenden Guide) darfst du trotzdem geben, wenn sie direkt weiterhilft.
     7. Native App-Steuerung: Wenn der Founder eine App-Aktion verlangt oder klar davon
        profitiert, gib sie STRUKTURIERT in "app_aktionen" zurück (max 2). Erlaubte Aktionen:
-       - {"aktion": "add_calendar_item", "titel": "…", "notiz": "…", "faellig": "z.B. Fr oder 24.07."}
+       - {"aktion": "add_calendar_item", "titel": "…", "notiz": "…", "faellig": "z.B. Fr oder 24.07.",
+          "datum": "YYYY-MM-DD oder leer", "von": "HH:MM oder leer", "bis": "HH:MM oder leer",
+          "ort": "Adresse, Raum oder Meeting-Link — oder leer"}
+         "datum", "von", "bis" und "ort" NUR füllen, wenn sie wirklich feststehen (aus der
+         Nachricht, dem Verlauf oder einem Treffer). Nie ein Datum erfinden, damit die Karte
+         voller aussieht — offen bleibt offen, dafür ist "faellig" da. "faellig" ist Pflicht.
        - {"aktion": "add_kanban_card", "titel": "…", "notiz": "…"}  (legt eine Karte aufs Board)
        - {"aktion": "remember_fact", "titel": "der Fakt als Satz"}
        - {"aktion": "open_screen", "screen": "kanban|calendar|swipe|chats|documents|company|startup|radar|events|guides|copilot|profile"}
@@ -785,6 +795,7 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
          Wochen wird das nichts — aber lass uns schauen, was in 12 Monaten geht."). Ein
          ironischer Halbsatz ersetzt keine ehrliche Information. Lieber freundlich-direkt als
          nett-vage.
+    ${CARD_RULES}
     12. Recht & Pflichten im Hintergrund halten:
        - Rechtliches/Bürokratie ist wichtig, darf den Founder aber nicht erschlagen. Nenne die
          Pflicht knapp, signalisiere dass DU sie mitverfolgst ("Das behalte ich für dich im
@@ -801,6 +812,7 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
       "gefeierter_erfolg": null,
       "zu_frueh": false,
       "quellen": [{"type": "Web", "title": "Quelle", "url": "https://...", "snippet": "optional"}],
+      "karten": [{"typ": "recherche", "titel": "…", "kernaussage": "…", "fakten": [], "quellen": [{"titel": "…", "url": "https://…"}]}],
       "follow_up_frage": null,
       "follow_up_aktionen": [],
       "navigation": [{"to": "/foerderung", "label": "EXIST-Antrag weiterführen"}],
@@ -908,6 +920,10 @@ export function buildInteractionPrompt(ctx: FounderContext, input: ChatPromptInp
       sind kein Grund zum Stoppen. Triff dort eine vernünftige Annahme und liefere einen Entwurf.
     - Standort ist entscheidend bei konkreter Kammer-/Amtszuständigkeit, lokalen Ansprechpartnern,
       regionaler Förderung und lokalen Events. Für allgemeine Erklärungen ist er nicht nötig.
+    - Sucht der Founder einen Ansprechpartner, ist das ANLIEGEN entscheidend: größere
+      Organisationen haben je Thema eine andere zuständige Stelle. Geht aus Nachricht und Verlauf
+      nicht hervor, worum es geht, frag es mit 2-3 konkreten Themen-Optionen ab, bevor du suchst.
+      Steht das Anliegen schon fest, frag nicht nochmal.
     - Bei einer E-Mail sind Empfänger und Anlass entscheidend. Tonlänge und Formulierungsdetails
       kannst du sinnvoll vorbelegen.
 
@@ -953,7 +969,11 @@ export function buildInteractionPrompt(ctx: FounderContext, input: ChatPromptInp
       Nur ein für den Founder verwertbarer Zwischenstand oder das fertige Ergebnis wird gezeigt.
 
     AKTIONEN (nur wenn er wirklich danach fragt oder klar profitiert, max 2):
-    - {"aktion": "add_calendar_item", "titel": "…", "notiz": "…", "faellig": "z.B. Fr"}
+    - {"aktion": "add_calendar_item", "titel": "…", "notiz": "…", "faellig": "z.B. Fr",
+       "datum": "YYYY-MM-DD oder leer", "von": "HH:MM oder leer", "bis": "HH:MM oder leer",
+       "ort": "Adresse, Raum oder Meeting-Link — oder leer"}
+      Datum, Uhrzeit und Ort nur setzen, wenn sie feststehen. Sonst leer lassen und "faellig"
+      nutzen — ein erfundener Termin ist schlimmer als ein grober.
     - {"aktion": "add_kanban_card", "titel": "…", "notiz": "…"}
     - {"aktion": "remember_fact", "titel": "der Fakt als Satz"}
     - {"aktion": "email_draft", "empfaenger": "Name/Organisation", "an": "mail@adresse.de oder leer", "betreff": "…", "inhalt": "vollstaendige versandfertige E-Mail"}
@@ -984,6 +1004,9 @@ export function buildInteractionPrompt(ctx: FounderContext, input: ChatPromptInp
       Navigationsvorschläge und selbst keine Fragen.
     - VERBOTEN sind Themen-Menüs wie "Meisterpflicht / Gewerbeanmeldung / Finanzamt" oder
       Fragen wie "Was soll ich genauer erklären?". Das ist keine Founder-Entscheidung.
+    - Etwas anderes ist es, wenn die Auswahl den AUFTRAG festlegt und ein anderes Ergebnis
+      liefert — etwa welches Anliegen der gesuchte Ansprechpartner abdecken soll. Dann sind
+      die Optionen richtig, weil ohne sie das falsche Ergebnis herauskommt.
     - Die "follow_up_frage" gehört nicht in "antwort", weil die App sie als eigene Nachricht zeigt.
     - Wenn keine echte Auswahl nötig ist: "follow_up_frage": null und "follow_up_aktionen": [].
 

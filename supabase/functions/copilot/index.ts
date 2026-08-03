@@ -6,6 +6,11 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
+  answerWithoutCardDuplicates,
+  normalizeCards,
+  type CopilotCard,
+} from "../_shared/cards.ts";
+import {
   KIMI_PROMPTS,
   ROUTE_CATALOG,
   SONNET_PROMPTS,
@@ -852,7 +857,95 @@ async function searchWeb(query: string): Promise<WebSource[]> {
   return results;
 }
 
+/**
+ * Sucht der Founder eine Person oder Stelle zum Anrufen/Anschreiben?
+ * Bewusst breit und branchenunabhängig — es geht um die Form der Frage,
+ * nicht um eine bestimmte Organisation.
+ */
+function isContactLookup(message: string): boolean {
+  const text = message.toLowerCase();
+  return (
+    /ansprechpartner|ansprechperson|zust[äa]ndig|kontaktdaten|kontaktperson|durchwahl|sprechzeit/.test(
+      text,
+    ) ||
+    (/\b(kontakt|wer)\b/.test(text) &&
+      /\b(name|namen|telefon|telefonnummer|nummer|mail|e-?mail|adresse|anschrift|erreiche|anrufen|anschreiben)\b/.test(
+        text,
+      ))
+  );
+}
+
+function isSafePublicURL(value: string): boolean {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return false;
+    const host = url.hostname.toLowerCase();
+    return (
+      host !== "localhost" &&
+      host !== "::1" &&
+      !host.endsWith(".local") &&
+      !/^127\./.test(host) &&
+      !/^10\./.test(host) &&
+      !/^192\.168\./.test(host) &&
+      !/^172\.(1[6-9]|2\d|3[01])\./.test(host)
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Holt die Seite und schneidet den Abschnitt heraus, in dem die Kontaktdaten
+ * stehen. Grund: Suchmaschinen-Snippets kürzen genau die Zeile weg, die den
+ * Namen trägt — der Snippet zeigt dann Titel und Anschrift, aber keine Person.
+ * Ohne diesen Schritt kann das Modell den Ansprechpartner gar nicht kennen.
+ */
+async function enrichContactSource(source: WebSource): Promise<WebSource> {
+  if (!isSafePublicURL(source.url)) return source;
+  try {
+    const response = await fetch(source.url, {
+      signal: AbortSignal.timeout(3_500),
+      redirect: "follow",
+      headers: {
+        "User-Agent": "matchfoundr-research/1.0",
+        Accept: "text/html,application/xhtml+xml",
+      },
+    });
+    if (!response.ok) return source;
+    if (!(response.headers.get("content-type") || "").includes("text/html")) return source;
+
+    const html = (await response.text()).slice(0, 240_000);
+    const pageText = cleanHTML(
+      html.match(/<main[\s\S]*?<\/main>/i)?.[0] ||
+        html.match(/<article[\s\S]*?<\/article>/i)?.[0] ||
+        html,
+    );
+    // Anker in Reihenfolge der Aussagekraft: eine Mailadresse oder Telefonnummer
+    // steht immer AN der Kontaktliste. Das Wort "Ansprechpartner" steht dagegen
+    // oft schon im Seitentitel und in der Navigation — danach zu ankern schneidet
+    // das Menü aus statt der Namen. Deshalb ist es nur der letzte Rückfall.
+    const anchor = [
+      /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i,
+      /(?:tel|telefon|fon)\.?\s*:?\s*\+?[\d\s()/-]{7,}/i,
+      /ansprechpartner(?:in|innen)?\s+(?:für|fuer|der|des)/i,
+    ]
+      .map((pattern) => pageText.search(pattern))
+      .find((index) => index >= 0);
+    // Breites Fenster: Kontaktseiten listen mehrere Personen mit je eigenem
+    // Zuständigkeitsbereich — das Modell soll die passende auswählen können.
+    const excerpt =
+      anchor === undefined
+        ? pageText.slice(0, 1_200)
+        : pageText.slice(Math.max(0, anchor - 400), anchor + 2_000);
+    return excerpt.length >= 80 ? { ...source, snippet: excerpt.slice(0, 2_400) } : source;
+  } catch {
+    return source;
+  }
+}
+
 const WEB_RESEARCH_BUDGET_MS = 2_800;
+// Zeitfenster fürs Nachladen der Trefferseiten bei einer Kontaktsuche.
+const CONTACT_ENRICH_BUDGET_MS = 4_000;
 const DUTIES_RESEARCH_BUDGET_MS = 3_500;
 // Absolute Obergrenze für den synchronen Recherche-Pfad (ohne Session, wo wir
 // nichts nachreichen können). Vorher lief der ungedeckelt — bis zu 90s.
@@ -872,7 +965,18 @@ async function findWebSources(ctx: FounderContext, message: string): Promise<Web
   const sources = groups
     .flatMap((group) => (group.status === "fulfilled" ? group.value : []))
     .sort((a, b) => sourceScore(b) - sourceScore(a));
-  return mergeSources(sources);
+  const merged = mergeSources(sources);
+
+  // Bei einer Kontaktsuche reichen Snippets nicht: die besten Treffer werden
+  // nachgeladen, damit der Name wirklich im Kontext liegt.
+  if (!isContactLookup(message) || merged.length === 0) return merged;
+  const enrichTimeout = new Promise<WebSource[]>((resolve) =>
+    setTimeout(() => resolve(merged), CONTACT_ENRICH_BUDGET_MS),
+  );
+  const enriched = Promise.all(
+    merged.map((source, index) => (index < 3 ? enrichContactSource(source) : source)),
+  );
+  return await Promise.race([enriched, enrichTimeout]);
 }
 
 type MCPConnectionRow = {
@@ -2044,6 +2148,7 @@ Deno.serve(async (req) => {
       const runResearch = async (): Promise<{
         answer: string;
         sources: WebSource[];
+        cards: CopilotCard[];
         deliverAsFollowUp: boolean;
       } | null> => {
         const [unfilteredWebSources, liveContext] = await Promise.all([
@@ -2098,6 +2203,9 @@ Deno.serve(async (req) => {
             : hasConnectorEvidence
               ? deepSources
               : [],
+          // Karten dürfen nur mitkommen, wenn die Recherche überhaupt Belege hat.
+          cards:
+            hasGroundedWebEvidence || hasConnectorEvidence ? normalizeCards(deepData.karten) : [],
           deliverAsFollowUp,
         };
       };
@@ -2174,14 +2282,21 @@ Deno.serve(async (req) => {
       // Harte Obergrenze: der Founder wartet live. Dauert die Recherche länger,
       // antworten wir mit dem, was der Interaction-Agent schon hat — lieber eine
       // ehrliche Sofort-Antwort als eine perfekte nach 90 Sekunden.
+      // Eine Kontaktsuche lädt zusätzlich die Trefferseiten nach und braucht
+      // deshalb etwas mehr Luft — ohne den Namen ist die Antwort wertlos.
+      const syncResearchCap = isContactLookup(message)
+        ? SYNC_RESEARCH_CAP_MS + CONTACT_ENRICH_BUDGET_MS
+        : SYNC_RESEARCH_CAP_MS;
       const syncResearch = shouldResearchSynchronously
         ? await Promise.race([
             runResearch(),
-            new Promise<null>((resolve) =>
-              setTimeout(() => resolve(null), SYNC_RESEARCH_CAP_MS),
-            ),
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), syncResearchCap)),
           ])
         : null;
+
+      // Karten nur zusammen mit der recherchierten Antwort — ohne Beleg keine Karte.
+      const cards: CopilotCard[] =
+        syncResearch && syncResearch.sources.length > 0 ? syncResearch.cards : [];
 
       // Extract draft — der Interaction-Agent antwortet direkt (kein Polish-Call)
       let polishedAnswer = syncResearch
@@ -2331,15 +2446,42 @@ Deno.serve(async (req) => {
 
         const title = field(raw, ["titel", "title"]);
         if (!title) continue;
-        appActions.push({
+        const base: Record<string, unknown> = {
           action: actionName,
           title,
           note: field(raw, ["notiz", "note"]),
           due: field(raw, ["faellig", "due"]),
           screen: "",
-        });
+        };
+
+        if (actionName === "add_calendar_item") {
+          // Datum und Uhrzeit nur übernehmen, wenn sie wirklich als solche
+          // formatiert sind — die Karte baut daraus die Datums-Kachel, ein
+          // freier Text wie "nächste Woche" gehört in "due".
+          const date = field(raw, ["datum", "date"]);
+          const start = field(raw, ["von", "start", "beginn", "uhrzeit"]);
+          const end = field(raw, ["bis", "end", "ende"]);
+          const time = (value: string) => {
+            const match = value.match(/^(\d{1,2}):(\d{2})$/);
+            if (!match) return "";
+            const hours = Number(match[1]);
+            return hours >= 0 && hours <= 23 && Number(match[2]) <= 59
+              ? `${String(hours).padStart(2, "0")}:${match[2]}`
+              : "";
+          };
+          if (/^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(Date.parse(date))) {
+            base.date = date;
+          }
+          base.start = time(start);
+          base.end = time(end);
+          base.location = field(raw, ["ort", "location", "treffpunkt", "link"]).slice(0, 160);
+        }
+
+        appActions.push(base);
       }
       polishedAnswer = confirmationSafeAnswer(polishedAnswer, appActions);
+      // Was die Karte sauber getrennt trägt, muss der Fließtext nicht verkleben.
+      polishedAnswer = answerWithoutCardDuplicates(polishedAnswer, cards);
 
       // Persistenz (Kontext, Nachricht, Deadline) läuft NACH der Antwort im
       // Hintergrund — spart 2-3 DB-Roundtrips Wartezeit pro Chat-Nachricht.
@@ -2393,6 +2535,7 @@ Deno.serve(async (req) => {
             content: polishedAnswer,
             model_used: "kimi-k3",
             sources,
+            cards,
           });
 
           // Save deadline if Kimi detected one
@@ -2445,6 +2588,7 @@ Deno.serve(async (req) => {
         answer: polishedAnswer,
         too_early: kimiData.zu_frueh === true,
         sources,
+        cards,
         follow_up_question: exposeFollowUp ? followUpQuestion : null,
         quick_actions: exposeFollowUp ? quickActions : [],
         navigation,

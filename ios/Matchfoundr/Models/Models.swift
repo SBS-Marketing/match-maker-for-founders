@@ -692,6 +692,204 @@ struct CopilotSource: Identifiable, Codable, Hashable {
     }
 }
 
+/// Quelle innerhalb einer Recherche-Karte — Domain trägt die Erkennung.
+struct CopilotCardSource: Identifiable, Codable, Hashable {
+    var id: String { url }
+    var title: String
+    var url: String
+
+    /// "www.hwk-do.de/beratung" → "hwk-do.de"
+    var domain: String {
+        guard let host = URL(string: url)?.host else { return url }
+        return host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
+    }
+
+    var faviconURL: URL? {
+        guard let host = URL(string: url)?.host else { return nil }
+        return URL(string: "https://icons.duckduckgo.com/ip3/\(host).ico")
+    }
+}
+
+/// Strukturierte Karte im Chat. Das Backend liefert nur validierte Karten —
+/// jedes Feld getrennt, leere Felder bleiben leer statt geraten zu werden.
+struct CopilotCard: Identifiable, Codable, Hashable {
+    enum Kind: String, Codable {
+        case contact
+        case research
+        /// Kartentyp, den diese App-Version noch nicht kennt — wird still übersprungen.
+        case unknown
+    }
+
+    var id = UUID()
+    var kind: Kind
+
+    // Kontaktkarte
+    var name: String = ""
+    var role: String = ""
+    var organization: String = ""
+    var phone: String = ""
+    var email: String = ""
+    var street: String = ""
+    var postalCode: String = ""
+    var city: String = ""
+    var website: String = ""
+    var note: String = ""
+    var sourceURL: String = ""
+
+    // Recherche-Karte
+    var title: String = ""
+    var summary: String = ""
+    var bullets: [String] = []
+    var sources: [CopilotCardSource] = []
+
+    enum CodingKeys: String, CodingKey {
+        case kind, name, role, organization, phone, email, street, city, website, note
+        case postalCode = "postal_code"
+        case sourceURL = "source_url"
+        case title, summary, bullets, sources
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let rawKind = (try? container.decodeIfPresent(String.self, forKey: .kind)) ?? nil
+        kind = Kind(rawValue: rawKind ?? "") ?? .unknown
+        func string(_ key: CodingKeys) -> String {
+            let value = (try? container.decodeIfPresent(String.self, forKey: key)) ?? nil
+            return value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        }
+        name = string(.name)
+        role = string(.role)
+        organization = string(.organization)
+        phone = string(.phone)
+        email = string(.email)
+        street = string(.street)
+        postalCode = string(.postalCode)
+        city = string(.city)
+        website = string(.website)
+        note = string(.note)
+        sourceURL = string(.sourceURL)
+        title = string(.title)
+        summary = string(.summary)
+        bullets = ((try? container.decodeIfPresent([String].self, forKey: .bullets)) ?? nil) ?? []
+        sources = ((try? container.decodeIfPresent([CopilotCardSource].self, forKey: .sources)) ?? nil) ?? []
+    }
+
+    init(kind: Kind) {
+        self.kind = kind
+    }
+
+    /// Postanschrift als eine Zeile — nur die Teile, die wirklich da sind.
+    var addressLine: String {
+        [street, [postalCode, city].filter { !$0.isEmpty }.joined(separator: " ")]
+            .filter { !$0.isEmpty }
+            .joined(separator: ", ")
+    }
+
+    /// Untertitel der Kontaktkarte: Rolle und Organisation, sauber getrennt.
+    var contactSubtitle: String {
+        [role, organization].filter { !$0.isEmpty }.joined(separator: " · ")
+    }
+
+    var isRenderable: Bool {
+        switch kind {
+        case .contact:
+            return !name.isEmpty
+        case .research:
+            return !title.isEmpty && !summary.isEmpty
+        case .unknown:
+            return false
+        }
+    }
+}
+
+/// Ein vom Co-Pilot vorbereiteter Termin. Wird erst auf Tap eingetragen.
+struct CopilotEventDraft: Identifiable, Codable, Hashable {
+    var id = UUID()
+    var title: String
+    var note: String = ""
+    /// Unscharfes Fälligkeitslabel („Fr", „diese Woche") — immer gesetzt.
+    var dueLabel: String = ""
+    /// Konkretes Datum, nur wenn der Co-Pilot wirklich eines belegt hat.
+    var date: Date?
+    var start: String = ""
+    var end: String = ""
+    var location: String = ""
+
+    private static let monthNames = [
+        "JAN", "FEB", "MRZ", "APR", "MAI", "JUN",
+        "JUL", "AUG", "SEP", "OKT", "NOV", "DEZ",
+    ]
+
+    var monthLabel: String {
+        guard let date else { return "" }
+        let month = Calendar.current.component(.month, from: date)
+        return Self.monthNames[max(0, min(11, month - 1))]
+    }
+
+    var dayLabel: String {
+        guard let date else { return "" }
+        return String(format: "%02d", Calendar.current.component(.day, from: date))
+    }
+
+    /// „14:00 – 14:30 · 30 Min" — so viel, wie wirklich belegt ist.
+    var timeLabel: String {
+        if start.isEmpty { return dueLabel }
+        var label = end.isEmpty ? start : "\(start) – \(end)"
+        if let minutes = durationMinutes {
+            label += " · \(minutes) Min"
+        }
+        return label
+    }
+
+    private var durationMinutes: Int? {
+        guard let from = Self.minutes(start), let to = Self.minutes(end), to > from else {
+            return nil
+        }
+        return to - from
+    }
+
+    private static func minutes(_ value: String) -> Int? {
+        let parts = value.split(separator: ":")
+        guard parts.count == 2, let h = Int(parts[0]), let m = Int(parts[1]) else { return nil }
+        return h * 60 + m
+    }
+
+    /// Kopfzeilen-Status: konkretes Datum schlägt das unscharfe Label.
+    var statusLabel: String {
+        guard let date else { return dueLabel.isEmpty ? "offen" : dueLabel }
+        let weekday = Self.weekdayFormatter.string(from: date)
+        return start.isEmpty ? weekday : "\(weekday) · \(start)"
+    }
+
+    private static let weekdayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "de_DE")
+        formatter.dateFormat = "EE"
+        return formatter
+    }()
+
+    /// Ort gehört mit in die Notiz, sonst geht er beim Eintragen verloren.
+    var plannerNote: String {
+        [note, location].filter { !$0.isEmpty }.joined(separator: " · ")
+    }
+}
+
+/// Ein vom Founder in der App abgelegter Kontakt.
+struct SavedContact: Identifiable, Codable, Hashable {
+    var id = UUID()
+    var card: CopilotCard
+    var savedAt: Date = .now
+
+    /// Identität eines Kontakts — verhindert Doppel-Einträge derselben Stelle.
+    static func fingerprint(_ card: CopilotCard) -> String {
+        [card.name, card.organization, card.phone, card.email]
+            .joined(separator: "|")
+            .lowercased()
+    }
+
+    var fingerprint: String { Self.fingerprint(card) }
+}
+
 struct CopilotMessage: Identifiable, Codable {
     let id: UUID
     let mine: Bool
@@ -702,7 +900,11 @@ struct CopilotMessage: Identifiable, Codable {
     var quickReplies: [String] = []
     var choices: [CopilotChoice] = []
     var sources: [CopilotSource] = []
+    /// Strukturierte Karten (Kontakt, Recherche) — vom Backend validiert.
+    var cards: [CopilotCard] = []
     var emailDraft: CopilotEmailDraft?
+    /// Vom Co-Pilot vorbereiteter Termin — wird als Karte gerendert.
+    var eventDraft: CopilotEventDraft?
     var memory: FounderMemorySnapshot?
     var source: CopilotAnswerSource = .local
     var createdAt: Date = .now
@@ -721,7 +923,9 @@ struct CopilotMessage: Identifiable, Codable {
         quickReplies: [String] = [],
         choices: [CopilotChoice] = [],
         sources: [CopilotSource] = [],
+        cards: [CopilotCard] = [],
         emailDraft: CopilotEmailDraft? = nil,
+        eventDraft: CopilotEventDraft? = nil,
         memory: FounderMemorySnapshot? = nil,
         source: CopilotAnswerSource = .local,
         createdAt: Date = .now,
@@ -737,7 +941,9 @@ struct CopilotMessage: Identifiable, Codable {
         self.quickReplies = quickReplies
         self.choices = choices
         self.sources = sources
+        self.cards = cards
         self.emailDraft = emailDraft
+        self.eventDraft = eventDraft
         self.memory = memory
         self.source = source
         self.createdAt = createdAt
@@ -746,7 +952,7 @@ struct CopilotMessage: Identifiable, Codable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id, mine, text, quickReplies, choices, sources, emailDraft, source, createdAt
+        case id, mine, text, quickReplies, choices, sources, cards, emailDraft, eventDraft, source, createdAt
     }
 
     init(from decoder: Decoder) throws {
@@ -757,7 +963,9 @@ struct CopilotMessage: Identifiable, Codable {
         quickReplies = try container.decodeIfPresent([String].self, forKey: .quickReplies) ?? []
         choices = try container.decodeIfPresent([CopilotChoice].self, forKey: .choices) ?? []
         sources = try container.decodeIfPresent([CopilotSource].self, forKey: .sources) ?? []
+        cards = try container.decodeIfPresent([CopilotCard].self, forKey: .cards) ?? []
         emailDraft = try container.decodeIfPresent(CopilotEmailDraft.self, forKey: .emailDraft)
+        eventDraft = try container.decodeIfPresent(CopilotEventDraft.self, forKey: .eventDraft)
         source = try container.decodeIfPresent(CopilotAnswerSource.self, forKey: .source) ?? .local
         createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? .now
         navigation = []

@@ -62,8 +62,12 @@ enum CopilotEngine {
             let visibleAnswer = emailDraft == nil
                 ? answer
                 : "Der E-Mail-Entwurf ist fertig. Du kannst ihn direkt bearbeiten oder versenden."
+            let eventDraft = pendingCloudActions.compactMap(eventDraft(from:)).first
+            // E-Mail und Termin bekommen eine eigene Karte — sonst stünde
+            // dieselbe Aktion doppelt da, einmal als Karte, einmal als Chip.
             let structuredActions = pendingCloudActions
                 .filter { $0.action != "email_draft" }
+                .filter { !(eventDraft != nil && $0.action == "add_calendar_item") }
                 .compactMap(structuredAction(from:))
             let nativeActions = structuredActions + (nativeHint?.actions ?? [])
             let navigation = (response.navigation ?? []).compactMap(nativeNav(from:))
@@ -80,7 +84,9 @@ enum CopilotEngine {
                 followUpQuestion: hasExplicitChoice ? followUpQuestion : nil,
                 quickReplies: quickReplies,
                 sources: Array((response.sources ?? []).prefix(5)),
+                cards: (response.cards ?? []).filter(\.isRenderable),
                 emailDraft: emailDraft,
+                eventDraft: eventDraft,
                 source: .cloud,
                 celebratedWin: celebratedWin,
                 backgroundWorkPending: response.pending == true
@@ -1348,6 +1354,56 @@ enum CopilotEngine {
         default:
             return nil
         }
+    }
+
+    /// ISO-Datum des Backends → echtes Date. Ohne gültiges Datum bleibt die
+    /// Karte beim unscharfen Fälligkeitslabel.
+    private static let eventDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+
+    private static let eventDueFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "de_DE")
+        formatter.dateFormat = "dd.MM."
+        return formatter
+    }()
+
+    private static func eventDraft(from cloud: CopilotCloudAppAction) -> CopilotEventDraft? {
+        guard cloud.action == "add_calendar_item" else { return nil }
+        let title = (cloud.title ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else { return nil }
+        let start = (cloud.start ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        var date = (cloud.date ?? "").isEmpty
+            ? nil
+            : eventDateFormatter.date(from: cloud.date!)
+        // Uhrzeit an das Datum heften, damit der Kalendereintrag zur Stunde passt.
+        if let day = date, !start.isEmpty {
+            let parts = start.split(separator: ":").compactMap { Int($0) }
+            if parts.count == 2 {
+                date = Calendar.current.date(
+                    bySettingHour: parts[0], minute: parts[1], second: 0, of: day
+                ) ?? day
+            }
+        }
+        // Steht ein Datum fest, ist "Diese Woche" als Fälligkeit falsch — dann
+        // trägt das Datum selbst das Label.
+        let due = (cloud.due ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let dueLabel = !due.isEmpty
+            ? due
+            : date.map { eventDueFormatter.string(from: $0) } ?? "Diese Woche"
+        return CopilotEventDraft(
+            title: title,
+            note: (cloud.note ?? "").trimmingCharacters(in: .whitespacesAndNewlines),
+            dueLabel: dueLabel,
+            date: date,
+            start: start,
+            end: (cloud.end ?? "").trimmingCharacters(in: .whitespacesAndNewlines),
+            location: (cloud.location ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        )
     }
 
     private static func emailDraft(from cloud: CopilotCloudAppAction) -> CopilotEmailDraft? {

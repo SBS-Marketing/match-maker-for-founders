@@ -269,6 +269,7 @@ struct CopilotCloudResponse: Decodable {
     let appActions: [CopilotCloudAppAction]?
     let newFacts: [String]?
     let sources: [CopilotSource]?
+    let cards: [CopilotCard]?
     let celebratedWin: String?
     let pending: Bool?
     let error: String?
@@ -288,6 +289,10 @@ struct CopilotCloudAppAction: Decodable {
     let to: String?
     let subject: String?
     let body: String?
+    let date: String?
+    let start: String?
+    let end: String?
+    let location: String?
 }
 
 struct CopilotCloudNav: Decodable {

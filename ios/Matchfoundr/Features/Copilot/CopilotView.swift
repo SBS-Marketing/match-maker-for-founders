@@ -13,11 +13,12 @@ private struct CopilotFollowUpRow: Decodable {
     let content: String
     let modelUsed: String?
     let sources: [CopilotSource]?
+    let cards: [CopilotCard]?
 
     enum CodingKeys: String, CodingKey {
         case sessionID = "session_id"
         case modelUsed = "model_used"
-        case role, content, sources
+        case role, content, sources, cards
     }
 }
 
@@ -900,15 +901,31 @@ struct CopilotView: View {
                             ? assistantDisplayText(msg)
                             : "Der E-Mail-Entwurf ist fertig. Du kannst ihn direkt bearbeiten oder versenden."
                     )
+                    if !msg.cards.isEmpty {
+                        CopilotCardList(cards: msg.cards)
+                    }
+                    if let eventDraft = msg.eventDraft {
+                        CopilotEventCard(draft: eventDraft)
+                    }
                     if let emailDraft = renderedEmailDraft {
-                        emailDraftCard(emailDraft, messageID: msg.id)
+                        CopilotEmailCard(draft: emailDraft) {
+                            Haptics.tap()
+                            inputFocused = false
+                            emailEditor = CopilotEmailEditorContext(
+                                messageID: msg.id,
+                                draft: emailDraft
+                            )
+                        }
                     }
                     if let source = primaryLinkSource(for: msg),
                        let urlString = source.url,
                        let url = URL(string: urlString) {
                         primaryLinkButton(source, url: url)
                     }
-                    if !msg.sources.isEmpty {
+                    // Eine Recherche-Karte trägt ihre Quellen schon selbst — dann
+                    // wäre der allgemeine Quellen-Button nur eine zweite Liste.
+                    if !msg.sources.isEmpty,
+                       !msg.cards.contains(where: { $0.kind == .research }) {
                         sourceCollectionButton(msg.sources)
                     }
                     if !msg.actions.isEmpty {
@@ -1083,68 +1100,6 @@ struct CopilotView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(MF.indigo.opacity(0.22), lineWidth: 1))
         .warmShadow()
-    }
-
-    private func emailDraftCard(_ draft: CopilotEmailDraft, messageID: UUID) -> some View {
-        Button {
-            Haptics.tap()
-            inputFocused = false
-            emailEditor = CopilotEmailEditorContext(messageID: messageID, draft: draft)
-        } label: {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 10) {
-                    Image(systemName: "envelope.fill")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 34, height: 34)
-                        .background(MF.indigoGrad)
-                        .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("E-Mail-Entwurf")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundStyle(MF.ink)
-                        Text(draft.to.isEmpty ? "Empfänger noch eintragen" : draft.to)
-                            .font(.system(size: 11.5, weight: .medium))
-                            .foregroundStyle(draft.to.isEmpty ? MF.emberDeep : MF.smoke)
-                            .lineLimit(1)
-                    }
-                    Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(MF.faint)
-                }
-
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(draft.subject)
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(MF.ink)
-                        .lineLimit(2)
-                    Text(draft.body)
-                        .font(.system(size: 12.5))
-                        .foregroundStyle(MF.smoke)
-                        .lineLimit(4)
-                        .lineSpacing(2)
-                }
-
-                HStack(spacing: 6) {
-                    Image(systemName: "pencil")
-                        .font(.system(size: 10.5, weight: .bold))
-                    Text("Bearbeiten & senden")
-                        .font(.system(size: 12.5, weight: .bold))
-                }
-                .foregroundStyle(MF.indigoInk)
-            }
-            .padding(13)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(MF.surfaceSoft)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(MF.indigo.opacity(0.22), lineWidth: 1)
-            )
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("E-Mail-Entwurf bearbeiten und senden")
     }
 
     private func personalizedEmailDraft(_ input: CopilotEmailDraft) -> CopilotEmailDraft {
@@ -1695,7 +1650,7 @@ struct CopilotView: View {
         affectsBackgroundWork: Bool
     ) async -> Bool {
         do {
-            let columns = "session_id,role,content,model_used,sources"
+            let columns = "session_id,role,content,model_used,sources,cards"
             let rows: [CopilotFollowUpRow]
             if let after {
                 rows = try await Backend.client
@@ -1795,6 +1750,7 @@ struct CopilotView: View {
             mine: false,
             text: text,
             sources: Array((row.sources ?? []).prefix(5)),
+            cards: (row.cards ?? []).filter(\.isRenderable),
             source: .cloud
         )
         state.appendCopilotMessage(message, to: row.sessionID)
