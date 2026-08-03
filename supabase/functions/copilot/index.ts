@@ -2368,6 +2368,12 @@ Deno.serve(async (req) => {
         "open_screen",
         "slack_post",
         "email_draft",
+        "set_business_modules",
+      ]);
+      // Bausteine, die der Co-Pilot auf die Business-Übersicht legen darf.
+      const ALLOWED_BUSINESS_MODULES = new Set([
+        "umsatz", "auslastung", "tagesplan", "abos", "offen",
+        "kurzinfo", "bestand", "stimmen", "personal", "startklar",
       ]);
       const ALLOWED_SCREENS = new Set([
         "kanban",
@@ -2416,6 +2422,39 @@ Deno.serve(async (req) => {
           if (ALLOWED_SCREENS.has(screen)) {
             appActions.push({ action: actionName, title: "", note: "", due: "", screen });
           }
+          continue;
+        }
+
+        // Business-Module: der Co-Pilot legt fest, welche Bausteine auf die
+        // Übersicht gehören — mit kurzer Begründung je Modul.
+        if (actionName === "set_business_modules") {
+          const ids = (Array.isArray(raw.module) ? raw.module : [])
+            .filter((m): m is string => typeof m === "string")
+            .map((m) => m.trim().toLowerCase())
+            .filter((m) => ALLOWED_BUSINESS_MODULES.has(m))
+            .slice(0, 6);
+          const extras = (Array.isArray(raw.vorschlaege) ? raw.vorschlaege : [])
+            .filter((m): m is string => typeof m === "string")
+            .map((m) => m.trim().toLowerCase())
+            .filter((m) => ALLOWED_BUSINESS_MODULES.has(m) && !ids.includes(m))
+            .slice(0, 4);
+          if (ids.length === 0) continue;
+          const reasons = isRecord(raw.begruendung) ? raw.begruendung : {};
+          const why: Record<string, string> = {};
+          for (const key of [...ids, ...extras]) {
+            const value = reasons[key];
+            if (typeof value === "string" && value.trim()) why[key] = value.trim().slice(0, 120);
+          }
+          appActions.push({
+            action: actionName,
+            title: "Module aktualisieren",
+            note: field(raw, ["intro", "notiz"]).slice(0, 240),
+            due: "",
+            screen: "",
+            modules: ids,
+            suggested: extras,
+            why,
+          });
           continue;
         }
 

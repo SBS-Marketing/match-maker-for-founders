@@ -32,6 +32,14 @@ struct CopilotCloudExtra: Encodable {
     }
 }
 
+/// Zusatzfelder der Aktion `set_business_modules` — der Co-Pilot wählt die
+/// Bausteine der Business-Übersicht und begründet sie.
+struct CopilotBusinessModulePayload: Decodable {
+    let modules: [String]?
+    let suggested: [String]?
+    let why: [String: String]?
+}
+
 struct CopilotCloudMCPConnector: Encodable {
     let id: String
     let label: String
@@ -293,6 +301,10 @@ struct CopilotCloudAppAction: Decodable {
     let start: String?
     let end: String?
     let location: String?
+    /// Nur bei `set_business_modules` gefüllt.
+    let modules: [String]?
+    let suggested: [String]?
+    let why: [String: String]?
 }
 
 struct CopilotCloudNav: Decodable {

@@ -1308,6 +1308,26 @@ enum CopilotEngine {
     /// Gibt true zurück, wenn ausgeführt — dann entfällt der Chip.
     @MainActor
     private static func autoRun(_ cloud: CopilotCloudAppAction, state: AppState) -> Bool {
+        // Modulwahl der Business-Übersicht: lokal, sofort sichtbar und im
+        // Modul-Sheet jederzeit umkehrbar — deshalb ohne Bestätigungs-Chip.
+        if cloud.action == "set_business_modules" {
+            let active = (cloud.modules ?? []).compactMap(BusinessModuleID.init(rawValue:))
+            guard !active.isEmpty else { return false }
+            let extras = (cloud.suggested ?? []).compactMap(BusinessModuleID.init(rawValue:))
+            let why = cloud.why ?? [:]
+            let note = (cloud.note ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            state.applyBusinessModules(
+                active: active.map {
+                    BusinessModuleInstance(module: $0, why: why[$0.rawValue], enabled: true)
+                },
+                suggested: extras.map {
+                    BusinessModuleInstance(module: $0, why: why[$0.rawValue], enabled: false)
+                },
+                intro: note.isEmpty ? nil : note
+            )
+            return true
+        }
+
         let title = (cloud.title ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty else { return false }
         switch cloud.action {

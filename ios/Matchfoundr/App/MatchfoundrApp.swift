@@ -123,7 +123,7 @@ struct MainTabView: View {
             CommunityTabView()
                 .tabItem { Label("Community", systemImage: "person.2.fill") }
                 .tag(AppTab.community)
-            StartupWorkspaceView()
+            BusinessModulesView()
                 .tabItem { Label("Business", systemImage: "building.2.fill") }
                 .tag(AppTab.startup)
             ProfileView()

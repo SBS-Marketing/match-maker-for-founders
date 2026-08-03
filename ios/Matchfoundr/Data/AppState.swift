@@ -78,6 +78,163 @@ final class AppState: ObservableObject {
         savedContacts.removeAll { $0.id == id }
     }
 
+    // ─── Business-Module ─────────────────────────────────────────
+    // Der Co-Pilot wählt die Bausteine je Geschäft. Bis er das tut, greift
+    // eine branchenabhängige Voreinstellung — die Seite ist nie leer.
+
+    @Published var businessModules: [BusinessModuleInstance] = [] {
+        didSet { persist(businessModules, key: "mf.business.modules") }
+    }
+
+    /// Was der Co-Pilot zusätzlich vorschlägt (noch nicht auf der Übersicht).
+    @Published var businessSuggestedModules: [BusinessModuleInstance] = [] {
+        didSet { persist(businessSuggestedModules, key: "mf.business.suggested") }
+    }
+
+    @Published var businessTiles: [BusinessTile] = [] {
+        didSet { persist(businessTiles, key: "mf.business.tiles") }
+    }
+
+    /// Begründung des Co-Piloten für die aktuelle Modulauswahl.
+    @Published var businessModuleIntro: String = "" {
+        didSet { defaults.set(businessModuleIntro, forKey: "mf.business.intro") }
+    }
+
+    var businessDisplayName: String {
+        let name = companyProfile.name.trimmingCharacters(in: .whitespaces)
+        if !name.isEmpty { return name }
+        return profile?.industry.ventureTerm ?? "Dein Vorhaben"
+    }
+
+    var businessCopilotHint: String {
+        if let first = businessSuggestedModules.first {
+            return "Ich hätte noch \(first.module.name) für dich — soll ich?"
+        }
+        return "Frag mich, was heute auf deiner Übersicht fehlt."
+    }
+
+    /// Legt die Startauswahl an, sobald die Branche bekannt ist.
+    func seedBusinessModulesIfNeeded() {
+        guard businessModules.isEmpty else { return }
+        let industry = profile?.industryId ?? "lokal"
+        let ventureTerm = profile?.industry.ventureTerm ?? "Vorhaben"
+
+        let selection: [BusinessModuleID]
+        let extras: [BusinessModuleID]
+        switch industry {
+        case "gastro":
+            selection = [.umsatz, .tagesplan, .auslastung, .bestand]
+            extras = [.personal, .stimmen]
+        case "beauty", "gesundheit":
+            selection = [.auslastung, .tagesplan, .umsatz, .stimmen]
+            extras = [.abos, .kurzinfo]
+        case "handwerk":
+            selection = [.tagesplan, .umsatz, .offen, .bestand]
+            extras = [.personal, .kurzinfo]
+        case "handel":
+            selection = [.umsatz, .bestand, .offen, .stimmen]
+            extras = [.abos, .kurzinfo]
+        case "agentur", "beratung":
+            selection = [.umsatz, .tagesplan, .offen, .kurzinfo]
+            extras = [.abos, .stimmen]
+        case "bildung":
+            selection = [.tagesplan, .auslastung, .umsatz, .abos]
+            extras = [.stimmen, .personal]
+        default:
+            selection = [.umsatz, .tagesplan, .kurzinfo]
+            extras = [.stimmen, .offen]
+        }
+
+        businessModules = selection.map {
+            BusinessModuleInstance(module: $0, why: seedReason(for: $0, venture: ventureTerm), data: seedData(for: $0))
+        }
+        businessSuggestedModules = extras.map {
+            BusinessModuleInstance(module: $0, why: seedReason(for: $0, venture: ventureTerm), enabled: false, data: seedData(for: $0))
+        }
+        if businessTiles.isEmpty { businessTiles = seedTiles() }
+        if businessModuleIntro.isEmpty {
+            businessModuleIntro = "Diese Module habe ich für dein \(ventureTerm) auf die Übersicht gelegt. Alles lässt sich abschalten."
+        }
+    }
+
+    private func seedReason(for module: BusinessModuleID, venture: String) -> String {
+        switch module {
+        case .umsatz: "Damit du siehst, ob dein \(venture) den Monat trägt"
+        case .auslastung: "Deine Kapazität ist der Kern des Geschäfts"
+        case .tagesplan: "Was heute ansteht, ohne die App zu wechseln"
+        case .abos: "Wiederkehrende Einnahmen planen sich leichter"
+        case .offen: "Damit offene Rechnungen nicht untergehen"
+        case .kurzinfo: "Die Eckdaten deines \(venture) auf einen Blick"
+        case .bestand: "Material und Ware, bevor etwas fehlt"
+        case .stimmen: "Die meisten Neukunden kommen über Bewertungen"
+        case .personal: "Ab mehreren Leuten lohnt sich ein Schichtblick"
+        case .startklar: "Zeigt, was bis zur Eröffnung noch fehlt"
+        }
+    }
+
+    private func seedTiles() -> [BusinessTile] {
+        [
+            .init(icon: "clock", label: "Termine", meta: "Kalender öffnen", screen: "calendar"),
+            .init(icon: "checklist", label: "Aufgaben", meta: "Board", screen: "kanban"),
+            .init(icon: "person.2", label: "Kontakte", meta: "Chats & Matches", screen: "chats"),
+            .init(icon: "folder", label: "Unterlagen", meta: "Dokumente", screen: "documents"),
+            .init(icon: "building.2", label: "Business-Profil", meta: "Außendarstellung", screen: "company"),
+            .init(icon: "gearshape", label: "Arbeitsfläche", meta: "Plan, Team, Zahlen", screen: "startup"),
+        ]
+    }
+
+    /// Platzhalter-Inhalte, bis echte Zahlen aus dem Betrieb kommen.
+    private func seedData(for module: BusinessModuleID) -> BusinessModuleData {
+        var d = BusinessModuleData()
+        switch module {
+        case .umsatz:
+            d.label = "Umsatz diesen Monat"
+            d.value = "—"
+            d.goal = "Ziel offen"
+            d.pct = 0
+            d.left = "Trag dein Monatsziel ein"
+        case .auslastung:
+            d.title = "Heute"
+            d.summary = "noch keine Daten"
+        case .tagesplan:
+            d.agenda = []
+        case .kurzinfo:
+            d.facts = []
+        case .startklar:
+            d.pct = 0
+            d.next = "Gewerbe anmelden"
+        default:
+            break
+        }
+        return d
+    }
+
+    func toggleBusinessModule(_ module: BusinessModuleID) {
+        guard let index = businessModules.firstIndex(where: { $0.module == module }) else { return }
+        businessModules[index].enabled.toggle()
+    }
+
+    func adoptSuggestedBusinessModule(_ module: BusinessModuleID) {
+        guard let index = businessSuggestedModules.firstIndex(where: { $0.module == module }) else { return }
+        var adopted = businessSuggestedModules.remove(at: index)
+        adopted.enabled = true
+        businessModules.append(adopted)
+    }
+
+    /// Übernimmt eine Modulauswahl, die der Co-Pilot vorgeschlagen hat.
+    func applyBusinessModules(
+        active: [BusinessModuleInstance],
+        suggested: [BusinessModuleInstance],
+        intro: String?
+    ) {
+        if !active.isEmpty { businessModules = active }
+        if !suggested.isEmpty { businessSuggestedModules = suggested }
+        if let intro, !intro.trimmingCharacters(in: .whitespaces).isEmpty {
+            businessModuleIntro = intro
+        }
+        Haptics.success()
+    }
+
     /// Vom Co-Pilot gefeierte Meilensteine — Erfolgs-Chronik, hält motiviert.
     @Published var achievements: [Achievement] = [] {
         didSet { persist(achievements, key: "mf.achievements") }
@@ -2607,6 +2764,10 @@ final class AppState: ObservableObject {
         copilotFacts = defaults.stringArray(forKey: "mf.copilot.facts") ?? []
         savedContacts = load([SavedContact].self, key: "mf.contacts.saved") ?? []
         achievements = load([Achievement].self, key: "mf.achievements") ?? []
+        businessModules = load([BusinessModuleInstance].self, key: "mf.business.modules") ?? []
+        businessSuggestedModules = load([BusinessModuleInstance].self, key: "mf.business.suggested") ?? []
+        businessTiles = load([BusinessTile].self, key: "mf.business.tiles") ?? []
+        businessModuleIntro = defaults.string(forKey: "mf.business.intro") ?? ""
         dayStreak = defaults.integer(forKey: "mf.streak.count")
         copilotSessions = compactCopilotSessions(load([CopilotSession].self, key: "mf.copilot.sessions") ?? [])
         if let rawID = defaults.string(forKey: "mf.copilot.activeSessionID"),
