@@ -2372,8 +2372,23 @@ Deno.serve(async (req) => {
       ]);
       // Bausteine, die der Co-Pilot auf die Business-Übersicht legen darf.
       const ALLOWED_BUSINESS_MODULES = new Set([
+        // Grundlagen
         "umsatz", "auslastung", "tagesplan", "abos", "offen",
         "kurzinfo", "bestand", "stimmen", "personal", "startklar",
+        // Gastro
+        "tageskasse", "wareneinsatz", "reservierungen",
+        // Handel
+        "bestellungen", "retouren", "topseller",
+        // Handwerk & Bau
+        "auftraege", "zeiterfassung", "material", "fahrzeuge",
+        // Dienstleistung & Beratung
+        "angebote", "projekte", "stundenkonto",
+        // Kurse & Bildung
+        "kursbelegung", "warteliste",
+        // Online & Sichtbarkeit
+        "reichweite", "shop", "newsletter",
+        // Geld & Pflichten
+        "liquiditaet", "steuertermine", "pflichten",
       ]);
       const ALLOWED_SCREENS = new Set([
         "kanban",

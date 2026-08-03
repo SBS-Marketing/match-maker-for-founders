@@ -776,15 +776,24 @@ export function buildChatPrompt(ctx: FounderContext, input: ChatPromptInput): st
     - {"aktion": "set_business_modules", "module": ["umsatz","tagesplan"],
        "vorschlaege": ["stimmen"], "intro": "Warum diese Auswahl, ein Satz",
        "begruendung": {"umsatz": "kurz, warum genau dieses Modul"}}
-      Legt die Bausteine auf seine Business-Übersicht. Verfügbar: umsatz (Umsatz
-      gegen Ziel), auslastung (Plätze/Stühle/Räume), tagesplan (heutige Termine),
-      abos (Mitgliedschaften), offen (offene Rechnungen), kurzinfo (Eckdaten),
-      bestand (Material/Verleih), stimmen (Bewertungen), personal (Schicht),
-      startklar (Fortschritt bis Eröffnung). Max 6 aktiv, dazu bis zu 4 Vorschläge.
-      Wähle nach dem, was das Geschäft wirklich ausmacht — eine Padelhalle lebt von
-      Auslastung und Mitgliedschaften, ein Handwerksbetrieb von Aufträgen und
-      offenen Posten. Nutze das, wenn er von seinem Geschäft erzählt oder fragt,
-      was auf seine Übersicht gehört. Nicht ungefragt bei jeder Nachricht.
+      Legt die Bausteine auf seine Business-Übersicht. Verfügbar (31):
+      GRUNDLAGEN: umsatz (Umsatz gegen Ziel), auslastung (Plätze/Stühle/Räume),
+        tagesplan (heutige Termine), abos (Mitgliedschaften), offen (offene
+        Rechnungen), kurzinfo (Eckdaten), bestand (Material/Verleih), stimmen
+        (Bewertungen), personal (Schicht), startklar (Fortschritt bis Eröffnung)
+      GASTRO: tageskasse, wareneinsatz (Food-Cost), reservierungen
+      HANDEL: bestellungen, retouren, topseller
+      HANDWERK: auftraege (Anfragen→Angebote→in Arbeit), zeiterfassung, material,
+        fahrzeuge
+      DIENSTLEISTUNG: angebote (offener Wert), projekte (Budgetstand), stundenkonto
+      KURSE: kursbelegung, warteliste
+      ONLINE: reichweite, shop, newsletter
+      GELD & PFLICHTEN (für alle): liquiditaet, steuertermine, pflichten
+      Max 6 aktiv, dazu bis zu 4 Vorschläge. Wähle nach dem, was das Geschäft
+      wirklich ausmacht — eine Padelhalle lebt von Auslastung und Mitgliedschaften,
+      ein Restaurant von Tageskasse und Wareneinsatz, ein Elektrobetrieb von
+      Auftragslage und Material. Nutze das, wenn er von seinem Geschäft erzählt
+      oder fragt, was auf seine Übersicht gehört. Nicht ungefragt bei jeder Nachricht.
        - {"aktion": "open_screen", "screen": "kanban|calendar|swipe|chats|documents|company|startup|radar|events|guides|copilot|profile"}
        - {"aktion": "email_draft", "empfaenger": "Name/Organisation", "an": "mail@adresse.de oder leer", "betreff": "…", "inhalt": "vollstaendige versandfertige E-Mail"}
        - {"aktion": "slack_post", "channel_id": "C…", "channel": "#team", "nachricht": "…"}
@@ -1024,15 +1033,24 @@ export function buildInteractionPrompt(ctx: FounderContext, input: ChatPromptInp
     - {"aktion": "set_business_modules", "module": ["umsatz","tagesplan"],
        "vorschlaege": ["stimmen"], "intro": "Warum diese Auswahl, ein Satz",
        "begruendung": {"umsatz": "kurz, warum genau dieses Modul"}}
-      Legt die Bausteine auf seine Business-Übersicht. Verfügbar: umsatz (Umsatz
-      gegen Ziel), auslastung (Plätze/Stühle/Räume), tagesplan (heutige Termine),
-      abos (Mitgliedschaften), offen (offene Rechnungen), kurzinfo (Eckdaten),
-      bestand (Material/Verleih), stimmen (Bewertungen), personal (Schicht),
-      startklar (Fortschritt bis Eröffnung). Max 6 aktiv, dazu bis zu 4 Vorschläge.
-      Wähle nach dem, was das Geschäft wirklich ausmacht — eine Padelhalle lebt von
-      Auslastung und Mitgliedschaften, ein Handwerksbetrieb von Aufträgen und
-      offenen Posten. Nutze das, wenn er von seinem Geschäft erzählt oder fragt,
-      was auf seine Übersicht gehört. Nicht ungefragt bei jeder Nachricht.
+      Legt die Bausteine auf seine Business-Übersicht. Verfügbar (31):
+      GRUNDLAGEN: umsatz (Umsatz gegen Ziel), auslastung (Plätze/Stühle/Räume),
+        tagesplan (heutige Termine), abos (Mitgliedschaften), offen (offene
+        Rechnungen), kurzinfo (Eckdaten), bestand (Material/Verleih), stimmen
+        (Bewertungen), personal (Schicht), startklar (Fortschritt bis Eröffnung)
+      GASTRO: tageskasse, wareneinsatz (Food-Cost), reservierungen
+      HANDEL: bestellungen, retouren, topseller
+      HANDWERK: auftraege (Anfragen→Angebote→in Arbeit), zeiterfassung, material,
+        fahrzeuge
+      DIENSTLEISTUNG: angebote (offener Wert), projekte (Budgetstand), stundenkonto
+      KURSE: kursbelegung, warteliste
+      ONLINE: reichweite, shop, newsletter
+      GELD & PFLICHTEN (für alle): liquiditaet, steuertermine, pflichten
+      Max 6 aktiv, dazu bis zu 4 Vorschläge. Wähle nach dem, was das Geschäft
+      wirklich ausmacht — eine Padelhalle lebt von Auslastung und Mitgliedschaften,
+      ein Restaurant von Tageskasse und Wareneinsatz, ein Elektrobetrieb von
+      Auftragslage und Material. Nutze das, wenn er von seinem Geschäft erzählt
+      oder fragt, was auf seine Übersicht gehört. Nicht ungefragt bei jeder Nachricht.
     - {"aktion": "email_draft", "empfaenger": "Name/Organisation", "an": "mail@adresse.de oder leer", "betreff": "…", "inhalt": "vollstaendige versandfertige E-Mail"}
     Der Client zeigt diese als Bestätigungs-Chips. Behaupte nie, die Änderung sei bereits
     ausgeführt. VERBOTEN: "trag ich ein", "ist eingetragen", "erledigt", "habe ich erstellt".

@@ -9,10 +9,39 @@ import SwiftUI
 
 /// Die verfügbaren Bausteine. Der Co-Pilot referenziert sie über die rawValue.
 enum BusinessModuleID: String, Codable, CaseIterable, Identifiable {
+    // Kern — für jedes Geschäft
     case umsatz, auslastung, tagesplan, abos, offen
     case kurzinfo, bestand, stimmen, personal, startklar
+    // Gastro
+    case tageskasse, wareneinsatz, reservierungen
+    // Handel
+    case bestellungen, retouren, topseller
+    // Handwerk & Bau
+    case auftraege, zeiterfassung, material, fahrzeuge
+    // Dienstleistung & Beratung
+    case angebote, projekte, stundenkonto
+    // Kurse & Bildung
+    case kursbelegung, warteliste
+    // Online & Sichtbarkeit
+    case reichweite, shop, newsletter
+    // Geld & Pflichten
+    case liquiditaet, steuertermine, pflichten
 
     var id: String { rawValue }
+
+    /// Für welche Art Geschäft der Baustein gedacht ist.
+    var branch: String {
+        switch self {
+        case .tageskasse, .wareneinsatz, .reservierungen: "Gastro"
+        case .bestellungen, .retouren, .topseller: "Handel"
+        case .auftraege, .zeiterfassung, .material, .fahrzeuge: "Handwerk"
+        case .angebote, .projekte, .stundenkonto: "Dienstleistung"
+        case .kursbelegung, .warteliste: "Kurse"
+        case .reichweite, .shop, .newsletter: "Online"
+        case .liquiditaet, .steuertermine, .pflichten: "Geld & Pflichten"
+        default: "Grundlagen"
+        }
+    }
 
     var name: String {
         switch self {
@@ -26,6 +55,27 @@ enum BusinessModuleID: String, Codable, CaseIterable, Identifiable {
         case .stimmen: "Bewertungen"
         case .personal: "Schicht"
         case .startklar: "Startklar-Check"
+        case .tageskasse: "Tageskasse"
+        case .wareneinsatz: "Wareneinsatz"
+        case .reservierungen: "Reservierungen"
+        case .bestellungen: "Bestellungen"
+        case .retouren: "Retouren"
+        case .topseller: "Topseller"
+        case .auftraege: "Auftragslage"
+        case .zeiterfassung: "Stunden diese Woche"
+        case .material: "Material"
+        case .fahrzeuge: "Fahrzeuge"
+        case .angebote: "Angebote"
+        case .projekte: "Projekte"
+        case .stundenkonto: "Stundenkonto"
+        case .kursbelegung: "Kursbelegung"
+        case .warteliste: "Warteliste"
+        case .reichweite: "Reichweite"
+        case .shop: "Onlineshop"
+        case .newsletter: "Newsletter"
+        case .liquiditaet: "Liquidität"
+        case .steuertermine: "Steuertermine"
+        case .pflichten: "Pflichten & Nachweise"
         }
     }
 
@@ -41,6 +91,27 @@ enum BusinessModuleID: String, Codable, CaseIterable, Identifiable {
         case .stimmen: "Schnitt und neue Rückmeldungen"
         case .personal: "Wer heute da ist, offene Schichten"
         case .startklar: "Fortschritt bis zur Eröffnung"
+        case .tageskasse: "Umsatz, Gäste und Bon-Schnitt von heute"
+        case .wareneinsatz: "Food-Cost gegen Zielquote"
+        case .reservierungen: "Tische und Gäste pro Service"
+        case .bestellungen: "Offene Aufträge und Versandstatus"
+        case .retouren: "Quote und häufigste Gründe"
+        case .topseller: "Was sich diesen Monat verkauft"
+        case .auftraege: "Anfragen, Angebote, laufende Aufträge"
+        case .zeiterfassung: "Erfasste und noch nicht berechnete Zeit"
+        case .material: "Verbrauch, Nachbestellungen, Lieferzeiten"
+        case .fahrzeuge: "Flotte, Prüftermine, Kilometer"
+        case .angebote: "Offener Wert und Zuschlagsquote"
+        case .projekte: "Laufende Projekte und Budgetstand"
+        case .stundenkonto: "Retainer: verbraucht von gebucht"
+        case .kursbelegung: "Freie Plätze pro Kurs oder Termin"
+        case .warteliste: "Wer auf einen Platz wartet"
+        case .reichweite: "Follower, Aufrufe, bestes Format"
+        case .shop: "Besucher, Käufe, Warenkorb"
+        case .newsletter: "Abonnenten und letzte Kampagne"
+        case .liquiditaet: "Kontostand, Reichweite, nächste Abbuchungen"
+        case .steuertermine: "Fristen für Umsatzsteuer und Abschluss"
+        case .pflichten: "Genehmigungen, Prüfungen, Versicherungen"
         }
     }
 
@@ -55,6 +126,53 @@ enum BusinessModuleID: String, Codable, CaseIterable, Identifiable {
         case .stimmen: "star"
         case .personal: "person.2"
         case .startklar: "sparkles"
+        case .tageskasse: "printer"
+        case .wareneinsatz: "fork.knife"
+        case .reservierungen: "table.furniture"
+        case .bestellungen: "shippingbox.and.arrow.backward"
+        case .retouren: "arrow.uturn.backward"
+        case .topseller: "tag"
+        case .auftraege: "square.stack.3d.up"
+        case .zeiterfassung, .stundenkonto: "timer"
+        case .material: "cube.box"
+        case .fahrzeuge: "car"
+        case .angebote: "doc.text"
+        case .projekte: "chart.bar.doc.horizontal"
+        case .kursbelegung, .warteliste: "graduationcap"
+        case .reichweite: "megaphone"
+        case .shop: "cart"
+        case .newsletter: "envelope"
+        case .liquiditaet: "banknote"
+        case .steuertermine: "receipt"
+        case .pflichten: "checkmark.shield"
+        }
+    }
+
+    /// Wie der Baustein gezeichnet wird — die 21 Bibliotheksmodule teilen
+    /// sich wenige Muster, deshalb reicht ein Layout-Typ statt 21 Renderer.
+    enum Layout {
+        case custom          // die zehn Kernmodule mit eigener Darstellung
+        case heroSplit       // Kennzahl oben, Dreier-Split unten
+        case heroList        // Kennzahl oben, Liste unten
+        case splitList       // Dreier-Split oben, Liste unten
+        case stagesList      // drei Phasen oben, Liste unten
+        case list            // nur Liste
+        case ranked          // Rangliste mit Balken (Topseller)
+        case progress        // Zeilen mit Fortschrittsbalken (Projekte)
+        case valueList       // Zeile mit farbigem Wert (Kursbelegung)
+    }
+
+    var layout: Layout {
+        switch self {
+        case .tageskasse, .zeiterfassung, .shop: .heroSplit
+        case .wareneinsatz, .retouren, .angebote, .stundenkonto, .liquiditaet: .heroList
+        case .reservierungen, .warteliste, .reichweite, .newsletter: .splitList
+        case .bestellungen, .auftraege: .stagesList
+        case .material, .fahrzeuge, .steuertermine, .pflichten: .list
+        case .topseller: .ranked
+        case .projekte: .progress
+        case .kursbelegung: .valueList
+        default: .custom
         }
     }
 }
@@ -67,10 +185,13 @@ struct BusinessStat: Codable, Hashable, Identifiable {
     var id: String { label + value }
 }
 
-/// Eine Fortschrittszeile (Platz 1 · 92 %).
+/// Eine Fortschrittszeile (Platz 1 · 92 %). `value`/`sub` nutzen die
+/// Bibliotheksmodule Topseller und Projekte.
 struct BusinessBar: Codable, Hashable, Identifiable {
     var name: String
     var pct: Int
+    var value: String?
+    var sub: String?
     var id: String { name }
 }
 
@@ -112,7 +233,11 @@ struct BusinessModuleData: Codable, Hashable {
     var names: String?
     var openShifts: String?
     var next: String?
+    /// Färbt den Kennzahl-Balken warnend (z. B. Wareneinsatz über Ziel).
+    var warn: Bool?
     var stats: [BusinessStat]?
+    /// Drei Phasen nebeneinander (Anfragen → Angebote → in Arbeit).
+    var stages: [BusinessStat]?
     var bars: [BusinessBar]?
     var agenda: [BusinessAgendaRow]?
     var facts: [BusinessFact]?
@@ -166,17 +291,20 @@ struct BusinessModuleCard: View {
             if isEmpty {
                 emptyState
             } else {
-                switch instance.module {
-                case .umsatz: revenue
-                case .auslastung: utilization
-                case .tagesplan: agenda
-                case .abos: subscriptions
-                case .offen: openItems
-                case .kurzinfo: facts
-                case .bestand: inventory
-                case .stimmen: reviews
-                case .personal: shift
-                case .startklar: readiness
+                switch instance.module.layout {
+                case .custom: core
+                case .heroSplit:
+                    VStack(spacing: 0) { hero; BizHairline(); BizSplit(stats: d.stats ?? []) }
+                case .heroList:
+                    VStack(spacing: 0) { hero; BizHairline(); factList }
+                case .splitList:
+                    VStack(spacing: 0) { BizSplit(stats: d.stats ?? []); BizHairline(); factList }
+                case .stagesList:
+                    VStack(spacing: 0) { BizStages(stages: d.stages ?? []); BizHairline(); factList }
+                case .list: factList
+                case .ranked: rankedList
+                case .progress: progressList
+                case .valueList: valueRows
                 }
             }
         }
@@ -184,18 +312,186 @@ struct BusinessModuleCard: View {
 
     private var d: BusinessModuleData { instance.data }
 
+    /// Die zehn Kernmodule mit eigener Darstellung.
+    @ViewBuilder
+    private var core: some View {
+        switch instance.module {
+        case .auslastung: utilization
+        case .tagesplan: agenda
+        case .abos: subscriptions
+        case .offen: openItems
+        case .kurzinfo: facts
+        case .bestand: inventory
+        case .stimmen: reviews
+        case .personal: shift
+        case .startklar: readiness
+        default: revenue
+        }
+    }
+
+    // ─── Geteilte Layouts der Bibliothek ─────────────────────────────
+
+    /// Kennzahl oben: Eyebrow, große Zahl, optionaler Balken, Fußzeile.
+    private var hero: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(d.label ?? instance.displayLabel)
+                .font(.mfMono(11))
+                .tracking(0.9)
+                .textCase(.uppercase)
+                .foregroundStyle(MF.faint)
+            HStack(alignment: .firstTextBaseline, spacing: 7) {
+                Text(d.value ?? "—")
+                    .font(.system(size: 30, weight: .heavy))
+                    .tracking(-1)
+                    .foregroundStyle(MF.ink)
+                if let sub = d.goal {
+                    Text(sub).font(.system(size: 13.5)).foregroundStyle(MF.smoke)
+                }
+            }
+            .padding(.top, 5)
+            if let pct = d.pct {
+                BizBar(pct: pct, tint: (d.warn ?? false) ? MF.ember : MF.smoke).padding(.top, 12)
+            }
+            if d.left != nil || d.delta != nil {
+                HStack {
+                    Text(d.left ?? "").font(.system(size: 13)).foregroundStyle(MF.smoke)
+                    Spacer(minLength: 8)
+                    if let right = d.delta {
+                        Text(right).font(.mfMono(12)).foregroundStyle(MF.faint)
+                    }
+                }
+                .padding(.top, 8)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 15)
+        .padding(.bottom, 14)
+    }
+
+    /// Label/Wert-Liste mit optionaler Unterzeile.
+    private var factList: some View {
+        VStack(spacing: 0) {
+            ForEach(Array((d.facts ?? []).enumerated()), id: \.element.id) { index, row in
+                if index > 0 { BizHairline(inset: 16) }
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(row.label).font(.system(size: 14.5, weight: .medium)).foregroundStyle(MF.ink)
+                        if let sub = row.sub {
+                            Text(sub)
+                                .font(.system(size: 12.5))
+                                .foregroundStyle(row.warn ? MF.ember : MF.smoke)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    Spacer(minLength: 6)
+                    if !row.value.isEmpty {
+                        Text(row.value)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(row.warn ? MF.ember : MF.ink)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            }
+        }
+    }
+
+    /// Rangliste mit Balken — Topseller.
+    private var rankedList: some View {
+        VStack(spacing: 0) {
+            ForEach(Array((d.bars ?? []).enumerated()), id: \.element.id) { index, row in
+                if index > 0 { BizHairline(inset: 16) }
+                HStack(spacing: 12) {
+                    Text("\(index + 1)")
+                        .font(.mfMono(12))
+                        .foregroundStyle(MF.faint)
+                        .frame(width: 16, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(row.name).font(.system(size: 14.5, weight: .medium)).foregroundStyle(MF.ink)
+                        BizBar(pct: row.pct, height: 4)
+                    }
+                    if let value = row.value {
+                        Text(value)
+                            .font(.system(size: 13.5, weight: .semibold))
+                            .foregroundStyle(MF.ink)
+                            .frame(width: 62, alignment: .trailing)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            }
+        }
+    }
+
+    /// Zeilen mit Fortschrittsbalken — Projekte.
+    private var progressList: some View {
+        VStack(spacing: 0) {
+            ForEach(Array((d.bars ?? []).enumerated()), id: \.element.id) { index, row in
+                if index > 0 { BizHairline(inset: 16) }
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(row.name).font(.system(size: 14.5, weight: .semibold)).foregroundStyle(MF.ink)
+                        if let sub = row.sub {
+                            Text(sub).font(.system(size: 12.5)).foregroundStyle(MF.smoke)
+                        }
+                        BizBar(pct: row.pct, tint: row.pct > 85 ? MF.ember : MF.smoke, height: 4)
+                            .padding(.top, 8)
+                    }
+                    Text("\(row.pct)%")
+                        .font(.mfMono(12))
+                        .foregroundStyle(row.pct > 85 ? MF.ember : MF.faint)
+                        .frame(width: 40, alignment: .trailing)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            }
+        }
+    }
+
+    /// Zeile mit farbigem Wert — Kursbelegung (voll = gedämpft).
+    private var valueRows: some View {
+        VStack(spacing: 0) {
+            ForEach(Array((d.facts ?? []).enumerated()), id: \.element.id) { index, row in
+                if index > 0 { BizHairline(inset: 16) }
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(row.label).font(.system(size: 14.5, weight: .semibold)).foregroundStyle(MF.ink)
+                        if let sub = row.sub {
+                            Text(sub).font(.system(size: 12.5)).foregroundStyle(MF.smoke)
+                        }
+                    }
+                    Spacer(minLength: 6)
+                    Text(row.value)
+                        .font(.mfMono(13))
+                        .foregroundStyle(row.warn ? MF.smoke : MF.ember)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            }
+        }
+    }
+
     /// Ein Modul ohne Inhalt soll keinen leeren Kasten zeigen, sondern sagen,
     /// was ihm fehlt — sonst wirkt die Übersicht kaputt statt jung.
     private var isEmpty: Bool {
-        switch instance.module {
-        case .tagesplan: (d.agenda ?? []).isEmpty
-        case .kurzinfo, .offen: (d.facts ?? []).isEmpty
-        case .auslastung: (d.bars ?? []).isEmpty
-        case .abos, .bestand: (d.stats ?? []).isEmpty
-        case .stimmen: (d.score ?? "").isEmpty
-        case .personal: (d.today ?? "").isEmpty
-        case .umsatz: (d.value ?? "—") == "—" && (d.pct ?? 0) == 0
-        case .startklar: false
+        switch instance.module.layout {
+        case .heroSplit: (d.value ?? "").isEmpty && (d.stats ?? []).isEmpty
+        case .heroList: (d.value ?? "").isEmpty && (d.facts ?? []).isEmpty
+        case .splitList: (d.stats ?? []).isEmpty && (d.facts ?? []).isEmpty
+        case .stagesList: (d.stages ?? []).isEmpty && (d.facts ?? []).isEmpty
+        case .list, .valueList: (d.facts ?? []).isEmpty
+        case .ranked, .progress: (d.bars ?? []).isEmpty
+        case .custom:
+            switch instance.module {
+            case .tagesplan: (d.agenda ?? []).isEmpty
+            case .kurzinfo, .offen: (d.facts ?? []).isEmpty
+            case .auslastung: (d.bars ?? []).isEmpty
+            case .abos, .bestand: (d.stats ?? []).isEmpty
+            case .stimmen: (d.score ?? "").isEmpty
+            case .personal: (d.today ?? "").isEmpty
+            case .startklar: false
+            default: (d.value ?? "—") == "—" && (d.pct ?? 0) == 0
+            }
         }
     }
 
@@ -211,6 +507,27 @@ struct BusinessModuleCard: View {
         case .stimmen: "Noch keine Bewertungen verknüpft."
         case .personal: "Noch niemand für heute eingeteilt."
         case .startklar: ""
+        case .tageskasse: "Noch keine Kasse für heute."
+        case .wareneinsatz: "Sag mir deine Zielquote, dann rechne ich mit."
+        case .reservierungen: "Noch keine Reservierungen."
+        case .bestellungen: "Noch keine Bestellungen."
+        case .retouren: "Noch keine Retouren — gut so."
+        case .topseller: "Noch keine Verkäufe erfasst."
+        case .auftraege: "Noch keine Anfragen oder Aufträge."
+        case .zeiterfassung: "Noch keine Stunden erfasst."
+        case .material: "Noch kein Material hinterlegt."
+        case .fahrzeuge: "Noch keine Fahrzeuge eingetragen."
+        case .angebote: "Noch keine offenen Angebote."
+        case .projekte: "Noch keine laufenden Projekte."
+        case .stundenkonto: "Noch kein Retainer hinterlegt."
+        case .kursbelegung: "Noch keine Kurse angelegt."
+        case .warteliste: "Niemand wartet gerade auf einen Platz."
+        case .reichweite: "Verknüpf deine Kanäle, dann siehst du das hier."
+        case .shop: "Noch keine Shop-Daten verknüpft."
+        case .newsletter: "Noch kein Newsletter verknüpft."
+        case .liquiditaet: "Sag mir deinen Kontostand und die Fixkosten."
+        case .steuertermine: "Noch keine Fristen hinterlegt."
+        case .pflichten: "Noch keine Nachweise erfasst."
         }
     }
 
@@ -533,6 +850,35 @@ struct BizSplit: View {
                 .padding(.vertical, 12)
             }
         }
+    }
+}
+
+/// Drei Phasen nebeneinander, die vorderste in Ember (Anfragen → Angebote → in Arbeit).
+struct BizStages: View {
+    let stages: [BusinessStat]
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            ForEach(Array(stages.enumerated()), id: \.element.id) { index, stage in
+                VStack(alignment: .leading, spacing: 0) {
+                    Capsule()
+                        .fill(MF.ember.opacity(index == 0 ? 1 : max(0.15, 0.35 - Double(index) * 0.1)))
+                        .frame(height: 4)
+                    Text(stage.value)
+                        .font(.system(size: 17, weight: .bold))
+                        .tracking(-0.4)
+                        .foregroundStyle(MF.ink)
+                        .padding(.top, 8)
+                    Text(stage.label)
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(MF.smoke)
+                        .padding(.top, 1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
     }
 }
 

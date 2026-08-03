@@ -123,26 +123,26 @@ final class AppState: ObservableObject {
         let extras: [BusinessModuleID]
         switch industry {
         case "gastro":
-            selection = [.umsatz, .tagesplan, .auslastung, .bestand]
-            extras = [.personal, .stimmen]
+            selection = [.tageskasse, .tagesplan, .reservierungen, .wareneinsatz]
+            extras = [.personal, .stimmen, .liquiditaet]
         case "beauty", "gesundheit":
             selection = [.auslastung, .tagesplan, .umsatz, .stimmen]
-            extras = [.abos, .kurzinfo]
+            extras = [.abos, .kurzinfo, .warteliste]
         case "handwerk":
-            selection = [.tagesplan, .umsatz, .offen, .bestand]
-            extras = [.personal, .kurzinfo]
+            selection = [.auftraege, .tagesplan, .offen, .material]
+            extras = [.zeiterfassung, .fahrzeuge, .liquiditaet]
         case "handel":
-            selection = [.umsatz, .bestand, .offen, .stimmen]
-            extras = [.abos, .kurzinfo]
+            selection = [.bestellungen, .topseller, .umsatz, .retouren]
+            extras = [.shop, .offen, .newsletter]
         case "agentur", "beratung":
-            selection = [.umsatz, .tagesplan, .offen, .kurzinfo]
-            extras = [.abos, .stimmen]
+            selection = [.angebote, .projekte, .offen, .stundenkonto]
+            extras = [.umsatz, .liquiditaet, .reichweite]
         case "bildung":
-            selection = [.tagesplan, .auslastung, .umsatz, .abos]
-            extras = [.stimmen, .personal]
+            selection = [.kursbelegung, .tagesplan, .warteliste, .umsatz]
+            extras = [.abos, .stimmen, .personal]
         default:
             selection = [.umsatz, .tagesplan, .kurzinfo]
-            extras = [.stimmen, .offen]
+            extras = [.stimmen, .offen, .liquiditaet]
         }
 
         businessModules = selection.map {
@@ -169,6 +169,8 @@ final class AppState: ObservableObject {
         case .stimmen: "Die meisten Neukunden kommen über Bewertungen"
         case .personal: "Ab mehreren Leuten lohnt sich ein Schichtblick"
         case .startklar: "Zeigt, was bis zur Eröffnung noch fehlt"
+        // Die Branchenmodule tragen ihre Begründung schon im Hinweis.
+        default: module.hint
         }
     }
 
