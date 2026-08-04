@@ -1615,6 +1615,12 @@ struct CopilotView: View {
     // live an den Chat an — der Founder muss nichts tun.
     private func observeFollowUps() async {
         guard state.isAuthenticated else { return }
+        // Ohne den User-Token läuft das Realtime-Abo mit dem Anon-Key — die
+        // RLS-Regel auf copilot_messages filtert dann JEDE Zeile weg und es
+        // kommt nie ein Event an, obwohl das Backend brav schreibt.
+        if let token = await Backend.accessToken() {
+            await Backend.client.realtimeV2.setAuth(token)
+        }
         let channel = Backend.client.channel("copilot-followups")
         let inserts = channel.postgresChange(
             InsertAction.self,
