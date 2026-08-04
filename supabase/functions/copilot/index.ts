@@ -10,6 +10,8 @@ import {
   normalizeCards,
   type CopilotCard,
 } from "../_shared/cards.ts";
+import { searchBrave } from "../_shared/brave-search.ts";
+import { searchExa } from "../_shared/exa-search.ts";
 import {
   KIMI_PROMPTS,
   ROUTE_CATALOG,
@@ -769,31 +771,33 @@ function sourceScore(source: WebSource): number {
 }
 
 async function searchWeb(query: string): Promise<WebSource[]> {
-  const braveKey = Deno.env.get("BRAVE_SEARCH_API_KEY");
-  if (braveKey) {
-    const url = new URL("https://api.search.brave.com/res/v1/web/search");
-    url.searchParams.set("q", query);
-    url.searchParams.set("count", "5");
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(4_000),
-      headers: {
-        Accept: "application/json",
-        "X-Subscription-Token": braveKey,
-      },
-    });
-    if (res.ok) {
-      const data = await res.json();
-      return ((data?.web?.results ?? []) as Array<Record<string, unknown>>)
-        .map((item) =>
-          normalizeSource({
-            type: "Web",
-            title: item.title,
-            url: item.url,
-            snippet: item.description,
-          }),
-        )
-        .filter((item): item is WebSource => Boolean(item));
-    }
+  // Bei Ansprechpartner-/Kontaktfragen liefert Brave die strukturierten Daten
+  // (Infobox mit Adresse und Telefon, Unterseiten, extra_snippets mit Namen).
+  // Exa gibt dort meist nur die Startseite der Organisation zurück.
+  const wantsContact =
+    /ansprechpartner|kontakt|telefon|zustaendig|zuständig|berater|beratung|sprechzeit|termin vereinbaren/i
+      .test(query);
+
+  const runBrave = async (): Promise<WebSource[]> =>
+    (await searchBrave(query, { count: wantsContact ? 10 : 6, timeoutMs: 1_800 }))
+      .map((item) => normalizeSource({ type: "Web", ...item }))
+      .filter((item): item is WebSource => Boolean(item));
+
+  const runExa = async (): Promise<WebSource[]> =>
+    (await searchExa(query, { type: "fast", numResults: 6, timeoutMs: 1_400 }))
+      .map((item) => normalizeSource({ type: "Web", ...item }))
+      .filter((item): item is WebSource => Boolean(item));
+
+  if (wantsContact) {
+    const brave = await runBrave();
+    if (brave.length) return brave;
+    const exa = await runExa();
+    if (exa.length) return exa;
+  } else {
+    const exa = await runExa();
+    if (exa.length) return exa;
+    const brave = await runBrave();
+    if (brave.length) return brave;
   }
 
   const api = new URL("https://api.duckduckgo.com/");
