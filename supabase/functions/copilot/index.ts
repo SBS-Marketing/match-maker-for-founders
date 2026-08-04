@@ -783,8 +783,10 @@ async function searchWeb(query: string): Promise<WebSource[]> {
       .map((item) => normalizeSource({ type: "Web", ...item }))
       .filter((item): item is WebSource => Boolean(item));
 
+  // Die Recherche läuft im Hintergrund (Execution-Agent) — dort ist eine
+  // Sekunde mehr für bessere Treffer allemal richtig investiert.
   const runExa = async (): Promise<WebSource[]> =>
-    (await searchExa(query, { type: "fast", numResults: 6, timeoutMs: 1_400 }))
+    (await searchExa(query, { type: "auto", numResults: 8, timeoutMs: 3_500 }))
       .map((item) => normalizeSource({ type: "Web", ...item }))
       .filter((item): item is WebSource => Boolean(item));
 
