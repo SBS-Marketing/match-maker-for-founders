@@ -70,7 +70,7 @@ type RoleFilter = (typeof ROLE_FILTERS)[number]["value"];
 
 type SortKey = "none" | "completeness" | "tokens";
 
-const USER_COLS = "1.6fr 1fr 0.9fr 1fr 1.1fr 1.2fr 0.7fr";
+const USER_COLS = "2fr 1fr 1fr 1.5fr 1.2fr 0.7fr";
 const WAIT_COLS = "1.6fr 0.9fr 0.9fr 0.8fr 0.8fr";
 
 function AdminNutzer() {
