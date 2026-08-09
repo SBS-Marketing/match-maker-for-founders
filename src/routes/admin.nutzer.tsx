@@ -239,7 +239,6 @@ function AdminNutzer() {
                 head={[
                   "Profil",
                   "Branche · Ort",
-                  "Ort",
                   "Rolle",
                   <SortHead
                     key="c"
@@ -261,7 +260,7 @@ function AdminNutzer() {
                     key={u.user_id}
                     user={u}
                     completeness={profileCompleteness(fieldMap.get(u.user_id))}
-                    onOpen={() => setOpenUser(u)}
+                    onOpen={() => openSheet(u)}
                   />
                 ))}
               </AdminTable>
