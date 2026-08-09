@@ -47,9 +47,6 @@ const COLUMNS = [
   { key: "done", label: "Erledigt" },
 ] as const;
 
-
-
-
 type Draft = {
   id?: string;
   title: string;
