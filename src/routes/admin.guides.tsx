@@ -259,11 +259,7 @@ function AdminGuides() {
           title="Guides"
           sub="DB-Guides ergänzen die eingebauten Guides — veröffentlichte sind sofort für alle lesbar"
           right={
-            <AdminBtn
-              icon={Plus}
-              variant="ember"
-              onClick={openNew}
-            >
+            <AdminBtn icon={Plus} variant="ember" onClick={openNew}>
               Neuer Guide
             </AdminBtn>
           }
@@ -284,11 +280,7 @@ function AdminGuides() {
               Die statischen Guides der App bleiben davon unberührt — DB-Guides kommen zusätzlich
               dazu.
             </p>
-            <AdminBtn
-              icon={Plus}
-              variant="ember"
-              onClick={openNew}
-            >
+            <AdminBtn icon={Plus} variant="ember" onClick={openNew}>
               Ersten Guide anlegen
             </AdminBtn>
           </div>
