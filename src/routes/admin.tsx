@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Bell,
+  Bot,
   BookOpen,
   CalendarDays,
   CircleHelp,
@@ -107,6 +108,7 @@ const NAV: { group: string; items: NavItem[] }[] = [
     items: [
       { to: "/admin", label: "Übersicht", icon: LayoutGrid, exact: true },
       { to: "/admin/ki", label: "KI-Verbrauch", icon: Coins },
+      { to: "/admin/copilot", label: "Co-Pilot-Technik", icon: Bot },
     ],
   },
   {

@@ -6,23 +6,32 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  CalendarDays,
-  ImagePlus,
-  Pencil,
-  Plus,
-  Trash2,
-  Users,
-  X,
-} from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { CalendarDays, Check, ImagePlus, Plus, Ticket, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { uploadImage } from "@/lib/upload";
 import { SERVICES } from "@/data/services";
+import {
+  AdminBadge,
+  AdminBar,
+  AdminBtn,
+  AdminCard,
+  AdminCardHead,
+  AdminEmpty,
+  AdminKpi,
+  AdminLoading,
+  AdminRow,
+  AdminTable,
+  AdminToggle,
+} from "@/components/admin/ui";
+import { useSectionActions } from "@/components/admin/context";
+import { dateTimeDE, downloadCsv, relativeDE } from "@/lib/admin-format";
 
 export const Route = createFileRoute("/admin/events")({
+  head: () => ({ meta: [{ title: "Events — Admin · matchfoundr" }] }),
   component: AdminEvents,
 });
 
@@ -121,16 +130,20 @@ const PREVIEW_EVENTS: EventRow[] = [
   },
 ];
 
+const EVENT_COLS = "1.8fr 1.1fr 1.1fr 0.9fr 0.9fr 0.6fr 0.9fr";
+const REG_COLS = "1.2fr 1.4fr 0.9fr 0.8fr";
+
 function AdminEvents() {
   const auth = useAuth();
+  const queryClient = useQueryClient();
   const { isPreview, checking } = useIsAdmin();
   const [events, setEvents] = useState<EventRow[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [editing, setEditing] = useState<EventRow | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [regsFor, setRegsFor] = useState<string | null>(null);
   const [recurrence, setRecurrence] = useState<RecurrenceRule>("none");
   const [recurrenceUntil, setRecurrenceUntil] = useState<string>("");
   const [recurrenceCount, setRecurrenceCount] = useState<number>(8);
@@ -141,22 +154,7 @@ function AdminEvents() {
     if (checking) return;
     if (isPreview) {
       setEvents(PREVIEW_EVENTS);
-      setRegistrations([
-        {
-          id: "r1",
-          event_id: "demo-gruenderstammtisch",
-          name: "Lena K.",
-          email: "lena@example.com",
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: "r2",
-          event_id: "demo-gruenderstammtisch",
-          name: "Tarek B.",
-          email: "tarek@example.com",
-          created_at: new Date().toISOString(),
-        },
-      ]);
+      setRegistrations([]);
       return;
     }
     supabase
@@ -166,7 +164,12 @@ function AdminEvents() {
       )
       .order("starts_at", { ascending: true, nullsFirst: false })
       .then(({ data, error }) => {
-        if (error) toast.error(`Events laden fehlgeschlagen: ${error.message}`);
+        if (error) {
+          setLoadError(error.message);
+          toast.error(`Events laden fehlgeschlagen: ${error.message}`);
+        } else {
+          setLoadError(null);
+        }
         setEvents((data as EventRow[]) ?? []);
       });
     supabase
@@ -178,11 +181,89 @@ function AdminEvents() {
 
   useEffect(load, [isPreview, checking]);
 
-  const regCount = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const r of registrations) m.set(r.event_id, (m.get(r.event_id) ?? 0) + 1);
-    return m;
-  }, [registrations]);
+  const rows = useMemo(() => events ?? [], [events]);
+
+  const titleById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const e of rows) map.set(e.id, e.title);
+    return map;
+  }, [rows]);
+
+  /** Künftige Termine zuerst (aufsteigend), vergangene danach (absteigend). */
+  const sorted = useMemo(() => {
+    const now = Date.now();
+    const time = (e: EventRow) => (e.starts_at ? new Date(e.starts_at).getTime() : null);
+    const upcoming = rows
+      .filter((e) => (time(e) ?? now) >= now)
+      .sort((a, b) => (time(a) ?? 0) - (time(b) ?? 0));
+    const past = rows
+      .filter((e) => (time(e) ?? now) < now)
+      .sort((a, b) => (time(b) ?? 0) - (time(a) ?? 0));
+    return { upcoming, past };
+  }, [rows]);
+
+  const kpis = useMemo(() => {
+    const now = Date.now();
+    const live = rows.filter((e) => e.is_published);
+    const drafts = rows.length - live.length;
+    const week = Date.now() - 7 * 86_400_000;
+    const recentRegs = registrations.filter((r) => new Date(r.created_at).getTime() >= week).length;
+    const withSpots = live.filter((e) => e.spots > 0);
+    const fill = withSpots.length
+      ? Math.round(
+          (withSpots.reduce((sum, e) => sum + Math.min(1, e.taken / e.spots), 0) /
+            withSpots.length) *
+            100,
+        )
+      : 0;
+    const nearFull = withSpots.filter((e) => e.taken / e.spots >= 0.85).length;
+    const freeFuture = rows
+      .filter((e) => !e.starts_at || new Date(e.starts_at).getTime() >= now)
+      .reduce((sum, e) => sum + Math.max(0, e.spots - e.taken), 0);
+    return {
+      live: live.length,
+      drafts,
+      regs: registrations.length,
+      recentRegs,
+      fill,
+      nearFull,
+      freeFuture,
+    };
+  }, [rows, registrations]);
+
+  useSectionActions(
+    {
+      newLabel: "Neues Event",
+      onNew: () => openNew(),
+      onExport: () => exportRegistrations(),
+    },
+    [rows, registrations],
+  );
+
+  function openNew() {
+    setEditing({ ...EMPTY_FORM });
+    setIsNew(true);
+    setRecurrence("none");
+    setRecurrenceUntil("");
+    setRecurrenceCount(8);
+  }
+
+  function exportRegistrations() {
+    if (registrations.length === 0) {
+      toast.error("Noch keine Anmeldungen zum Exportieren.");
+      return;
+    }
+    downloadCsv(
+      "teilnehmerliste.csv",
+      ["Name", "E-Mail", "Event", "Angemeldet am"],
+      registrations.map((r) => [
+        r.name ?? "",
+        r.email ?? "",
+        titleById.get(r.event_id) ?? r.event_id,
+        r.created_at,
+      ]),
+    );
+  }
 
   function buildOccurrences(base: EventRow): EventRow[] {
     const startsBase = base.starts_at ? new Date(base.starts_at) : null;
@@ -246,24 +327,26 @@ function AdminEvents() {
     };
 
     const isRecurringNew = isNew && recurrence !== "none" && !!starts;
-    const rows = isRecurringNew ? buildOccurrences(baseRow) : [baseRow];
+    const rowsToSave = isRecurringNew ? buildOccurrences(baseRow) : [baseRow];
 
     if (isPreview) {
       setEvents((prev) => {
-        const rest = (prev ?? []).filter((e) => !rows.some((r) => r.id === e.id));
-        return [...rest, ...rows];
+        const rest = (prev ?? []).filter((e) => !rowsToSave.some((r) => r.id === e.id));
+        return [...rest, ...rowsToSave];
       });
       setEditing(null);
       toast.success(
         isRecurringNew
-          ? `Demo: ${rows.length} Termine lokal angelegt.`
+          ? `Demo: ${rowsToSave.length} Termine lokal angelegt.`
           : "Demo: Event nur lokal gespeichert.",
       );
       return;
     }
 
     setSaving(true);
-    const { error } = await supabase.from("community_events").upsert(rows, { onConflict: "id" });
+    const { error } = await supabase
+      .from("community_events")
+      .upsert(rowsToSave, { onConflict: "id" });
     setSaving(false);
     if (error) {
       toast.error(`Speichern fehlgeschlagen: ${error.message}`);
@@ -271,7 +354,7 @@ function AdminEvents() {
     }
     toast.success(
       isRecurringNew
-        ? `Serie angelegt: ${rows.length} Termine ${baseRow.is_published ? "live" : "als Entwurf"}.`
+        ? `Serie angelegt: ${rowsToSave.length} Termine ${baseRow.is_published ? "live" : "als Entwurf"}.`
         : baseRow.is_published
           ? isNew
             ? "Event veröffentlicht und in der App sichtbar."
@@ -281,7 +364,12 @@ function AdminEvents() {
             : "Event als Entwurf gespeichert.",
     );
     setEditing(null);
+    invalidateCounts();
     load();
+  }
+
+  function invalidateCounts() {
+    void queryClient.invalidateQueries({ queryKey: ["admin", "pending-counts"] });
   }
 
   async function remove(id: string) {
@@ -294,12 +382,13 @@ function AdminEvents() {
     if (error) toast.error(`Löschen fehlgeschlagen: ${error.message}`);
     else {
       toast.success("Event gelöscht.");
+      invalidateCounts();
       load();
     }
   }
 
   async function removeSeries(groupId: string) {
-    const count = (events ?? []).filter((e) => e.recurrence_group_id === groupId).length;
+    const count = rows.filter((e) => e.recurrence_group_id === groupId).length;
     if (
       !window.confirm(`Ganze Serie mit ${count} Terminen löschen? Anmeldungen werden mit entfernt.`)
     )
@@ -315,23 +404,56 @@ function AdminEvents() {
     if (error) toast.error(`Löschen fehlgeschlagen: ${error.message}`);
     else {
       toast.success("Serie gelöscht.");
+      invalidateCounts();
       load();
     }
   }
 
+  /** Optimistisch umschalten, bei Fehler zurückrollen. */
   async function togglePublish(ev: EventRow) {
-    if (isPreview) {
+    const next = !ev.is_published;
+    setEvents((prev) =>
+      (prev ?? []).map((e) => (e.id === ev.id ? { ...e, is_published: next } : e)),
+    );
+    if (isPreview) return;
+    const { error } = await supabase
+      .from("community_events")
+      .update({ is_published: next })
+      .eq("id", ev.id);
+    if (error) {
       setEvents((prev) =>
-        (prev ?? []).map((e) => (e.id === ev.id ? { ...e, is_published: !e.is_published } : e)),
+        (prev ?? []).map((e) => (e.id === ev.id ? { ...e, is_published: !next } : e)),
       );
+      toast.error(`Umschalten fehlgeschlagen: ${error.message}`);
+      return;
+    }
+    toast.success(next ? "Event ist jetzt in der App sichtbar." : "Event ist wieder ein Entwurf.");
+    invalidateCounts();
+  }
+
+  async function removeRegistration(reg: Registration) {
+    if (!window.confirm(`Anmeldung von „${reg.name || reg.email || "Gast"}“ entfernen?`)) return;
+    if (isPreview) {
+      setRegistrations((prev) => prev.filter((r) => r.id !== reg.id));
       return;
     }
     const { error } = await supabase
-      .from("community_events")
-      .update({ is_published: !ev.is_published })
-      .eq("id", ev.id);
-    if (error) toast.error(error.message);
-    else load();
+      .from("community_event_registrations")
+      .delete()
+      .eq("id", reg.id);
+    if (error) {
+      toast.error(`Entfernen fehlgeschlagen: ${error.message}`);
+      return;
+    }
+    const event = rows.find((e) => e.id === reg.event_id);
+    if (event) {
+      await supabase
+        .from("community_events")
+        .update({ taken: Math.max(0, event.taken - 1) })
+        .eq("id", event.id);
+    }
+    toast.success("Anmeldung entfernt, Platz wieder frei.");
+    load();
   }
 
   async function onBanner(file: File | undefined) {
@@ -349,140 +471,130 @@ function AdminEvents() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-[13px] text-[var(--smoke)]">
-          Live-Events erscheinen automatisch in der iOS-App (Community) und auf der Plattform.
-          Entwürfe bleiben nur hier.
-        </p>
-        <button
-          onClick={() => {
-            setEditing({ ...EMPTY_FORM });
-            setIsNew(true);
-            setRecurrence("none");
-            setRecurrenceUntil("");
-            setRecurrenceCount(8);
-          }}
-          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[var(--ink)] px-3.5 py-2 text-[13px] font-semibold text-white"
-        >
-          <Plus className="h-4 w-4" /> Neues Event
-        </button>
+    <div className="flex flex-col gap-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <AdminKpi
+          icon={CalendarDays}
+          accent="indigo"
+          label="Events live"
+          value={String(kpis.live)}
+          compare={`${kpis.drafts} Entwürfe`}
+        />
+        <AdminKpi
+          icon={Users}
+          accent="green"
+          label="Anmeldungen"
+          value={String(kpis.regs)}
+          delta={{ dir: kpis.recentRegs > 0 ? "up" : "flat", label: `+${kpis.recentRegs}` }}
+          compare="7 Tage"
+        />
+        <AdminKpi
+          icon={Check}
+          accent="amber"
+          label="Auslastung"
+          value={String(kpis.fill)}
+          unit="%"
+          compare={`${kpis.nearFull} fast voll`}
+        />
+        <AdminKpi
+          icon={Ticket}
+          accent="ember"
+          label="Freie Plätze gesamt"
+          value={String(kpis.freeFuture)}
+          compare="künftige Termine"
+        />
       </div>
 
-      {events === null ? (
-        <p className="py-8 text-center text-[13px] text-[var(--smoke)]">Lade…</p>
-      ) : events.length === 0 ? (
-        <div className="rounded-[18px] border border-dashed border-[var(--ruled)] p-8 text-center">
-          <CalendarDays className="mx-auto h-6 w-6 text-[var(--faint)]" />
-          <p className="mt-2 text-[13px] text-[var(--smoke)]">
-            Noch keine Events — leg das erste an.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-2.5">
-          {events.map((ev) => (
-            <div
-              key={ev.id}
-              className="overflow-hidden rounded-[18px] border border-[var(--ruled)] bg-[var(--surface)]"
-            >
-              {ev.banner_image_url && (
-                <img src={ev.banner_image_url} alt="" className="h-28 w-full object-cover" />
-              )}
-              <div className="flex flex-wrap items-center justify-between gap-2 p-3.5">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-[14px] font-bold text-[var(--ink)]">{ev.title}</p>
-                    <span
-                      className={
-                        ev.is_published
-                          ? "rounded-full bg-[var(--ember-tint)] px-2 py-0.5 text-[11px] font-bold text-[var(--ember-deep)]"
-                          : "rounded-full bg-[var(--canvas)] px-2 py-0.5 text-[11px] font-bold text-[var(--faint)]"
-                      }
-                    >
-                      {ev.is_published ? "Live" : "Entwurf"}
-                    </span>
-                    {ev.recurrence_group_id && (
-                      <span className="rounded-full border border-[var(--ruled)] px-2 py-0.5 text-[11px] font-bold text-[var(--smoke)]">
-                        Serie ·{" "}
-                        {RECURRENCE_LABELS[(ev.recurrence_rule as RecurrenceRule) || "weekly"]}
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-0.5 text-[12px] text-[var(--smoke)]">
-                    {[ev.kind, ev.date_label, ev.time_label && `${ev.time_label} Uhr`, ev.city]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setRegsFor(regsFor === ev.id ? null : ev.id)}
-                    className="flex items-center gap-1 rounded-lg border border-[var(--ruled)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--smoke)] hover:text-[var(--ink)]"
-                  >
-                    <Users className="h-3.5 w-3.5" /> {regCount.get(ev.id) ?? 0}
-                  </button>
-                  <button
-                    onClick={() => togglePublish(ev)}
-                    className="rounded-lg border border-[var(--ruled)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--smoke)] hover:text-[var(--ink)]"
-                  >
-                    {ev.is_published ? "Verbergen" : "Veröffentlichen"}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEditing({ ...ev });
-                      setIsNew(false);
-                    }}
-                    className="rounded-lg border border-[var(--ruled)] p-2 text-[var(--smoke)] hover:text-[var(--ink)]"
-                    aria-label="Bearbeiten"
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    onClick={() => remove(ev.id)}
-                    className="rounded-lg border border-[var(--ruled)] p-2 text-[var(--smoke)] hover:text-[var(--ember-deep)]"
-                    aria-label="Löschen"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                  {ev.recurrence_group_id && (
-                    <button
-                      onClick={() => removeSeries(ev.recurrence_group_id!)}
-                      className="rounded-lg border border-[var(--ruled)] px-2 py-1.5 text-[11px] font-semibold text-[var(--smoke)] hover:text-[var(--ember-deep)]"
-                      title="Ganze Serie löschen"
-                    >
-                      Serie löschen
-                    </button>
-                  )}
-                </div>
-              </div>
-              {regsFor === ev.id && (
-                <div className="border-t border-[var(--ruled)] bg-[var(--canvas)] px-3.5 py-3">
-                  <p className="mb-1.5 text-[12px] font-bold text-[var(--ink)]">
-                    Anmeldungen ({regCount.get(ev.id) ?? 0})
-                  </p>
-                  {(registrations.filter((r) => r.event_id === ev.id) ?? []).length === 0 ? (
-                    <p className="text-[12px] text-[var(--smoke)]">Noch keine Anmeldungen.</p>
-                  ) : (
-                    <ul className="space-y-1">
-                      {registrations
-                        .filter((r) => r.event_id === ev.id)
-                        .map((r) => (
-                          <li
-                            key={r.id}
-                            className="flex justify-between text-[12.5px] text-[var(--ink)]"
-                          >
-                            <span>{r.name || "Ohne Name"}</span>
-                            <span className="text-[var(--smoke)]">{r.email || "—"}</span>
-                          </li>
-                        ))}
-                    </ul>
-                  )}
-                </div>
-              )}
+      <AdminCard>
+        <AdminCardHead
+          icon={CalendarDays}
+          accent="indigo"
+          title="Events"
+          sub="Veröffentlichen schaltet das Event sofort in der App frei"
+          right={
+            <div className="flex items-center gap-2">
+              <AdminBtn icon={Plus} variant="ember" onClick={openNew}>
+                Neues Event
+              </AdminBtn>
             </div>
-          ))}
-        </div>
-      )}
+          }
+        />
+        {events === null ? (
+          <AdminLoading />
+        ) : loadError ? (
+          <AdminEmpty label={`Fehler: ${loadError}`} />
+        ) : rows.length === 0 ? (
+          <AdminEmpty label="Noch keine Events — leg das erste an." />
+        ) : (
+          <AdminTable
+            cols={EVENT_COLS}
+            head={["Event", "Wann", "Wo", "Host", "Plätze", "Live", "Aktion"]}
+          >
+            {[...sorted.upcoming, ...sorted.past].map((ev) => (
+              <EventTableRow
+                key={ev.id}
+                ev={ev}
+                past={sorted.past.some((p) => p.id === ev.id)}
+                onToggle={() => togglePublish(ev)}
+                onEdit={() => {
+                  setEditing({ ...ev });
+                  setIsNew(false);
+                }}
+                onDelete={() => remove(ev.id)}
+                onDeleteSeries={
+                  ev.recurrence_group_id
+                    ? () => removeSeries(ev.recurrence_group_id as string)
+                    : undefined
+                }
+              />
+            ))}
+          </AdminTable>
+        )}
+      </AdminCard>
+
+      <AdminCard>
+        <AdminCardHead
+          icon={Users}
+          accent="green"
+          title="Letzte Anmeldungen"
+          sub="community_event_registrations"
+          right={
+            <AdminBtn variant="quiet" onClick={exportRegistrations}>
+              Teilnehmerliste
+            </AdminBtn>
+          }
+        />
+        {registrations.length === 0 ? (
+          <AdminEmpty label="Noch keine Anmeldungen" />
+        ) : (
+          <AdminTable cols={REG_COLS} head={["Name", "Event", "Wann", "Aktion"]}>
+            {registrations.slice(0, 25).map((r) => (
+              <AdminRow
+                key={r.id}
+                cols={REG_COLS}
+                cells={[
+                  <span key="n" className="truncate" style={{ fontWeight: 600 }}>
+                    {r.name || r.email || "Ohne Namen"}
+                  </span>,
+                  <span key="e" className="truncate" style={{ color: "var(--a-smoke)" }}>
+                    {titleById.get(r.event_id) ?? r.event_id}
+                  </span>,
+                  <span
+                    key="w"
+                    style={{ color: "var(--a-smoke)" }}
+                    title={dateTimeDE(r.created_at)}
+                  >
+                    {relativeDE(r.created_at, "—")}
+                  </span>,
+                  <AdminBtn key="a" variant="quiet" onClick={() => removeRegistration(r)}>
+                    Entfernen
+                  </AdminBtn>,
+                ]}
+              />
+            ))}
+          </AdminTable>
+        )}
+      </AdminCard>
 
       {/* ── Editor ── */}
       {editing && (
@@ -611,9 +723,6 @@ function AdminEvents() {
                 />
               </Field>
 
-
-
-
               <Field label="Banner">
                 <div className="flex items-center gap-2.5">
                   {editing.banner_image_url ? (
@@ -652,7 +761,7 @@ function AdminEvents() {
               </Field>
 
               {isNew && (
-                <div className="rounded-2xl border border-[var(--ruled)] bg-[var(--canvas)] p-3 space-y-2.5">
+                <div className="space-y-2.5 rounded-2xl border border-[var(--ruled)] bg-[var(--canvas)] p-3">
                   <p className="text-[13px] font-bold text-[var(--ink)]">Wiederholung</p>
                   <p className="text-[12px] text-[var(--smoke)]">
                     Legt beim Speichern alle Termine der Serie auf einmal an (z. B. jeden Dienstag).
@@ -745,6 +854,87 @@ function AdminEvents() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function EventTableRow({
+  ev,
+  past,
+  onToggle,
+  onEdit,
+  onDelete,
+  onDeleteSeries,
+}: {
+  ev: EventRow;
+  past: boolean;
+  onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onDeleteSeries?: () => void;
+}) {
+  const pct = ev.spots > 0 ? Math.round((ev.taken / ev.spots) * 100) : 0;
+  const tight = pct >= 90;
+  return (
+    <div style={{ opacity: past ? 0.55 : 1 }}>
+      <AdminRow
+        cols={EVENT_COLS}
+        cells={[
+          <div key="t" className="min-w-0">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="truncate" style={{ fontWeight: 650 }}>
+                {ev.title}
+              </span>
+              <AdminBadge>{ev.kind}</AdminBadge>
+              {ev.recurrence_group_id && <AdminBadge variant="indigo">Serie</AdminBadge>}
+            </div>
+            <p className="truncate font-mono" style={{ fontSize: 11, color: "var(--a-faint)" }}>
+              {ev.id}
+            </p>
+          </div>,
+          <span key="w" style={{ color: "var(--a-smoke)" }}>
+            {ev.date_label ?? (ev.starts_at ? dateTimeDE(ev.starts_at) : "—")}
+            {ev.time_label ? ` · ${ev.time_label}` : ""}
+          </span>,
+          <div key="o" className="min-w-0">
+            <p className="truncate" style={{ color: "var(--a-smoke)" }}>
+              {ev.city ?? "—"}
+            </p>
+            {ev.venue && (
+              <p className="truncate" style={{ fontSize: 11.5, color: "var(--a-faint)" }}>
+                {ev.venue}
+              </p>
+            )}
+          </div>,
+          <span key="h" className="truncate" style={{ color: "var(--a-smoke)" }}>
+            {ev.host ?? "—"}
+          </span>,
+          <div key="p">
+            <p
+              className="admin-num"
+              style={{ fontWeight: 650, color: tight ? "var(--a-amber)" : "var(--a-ink)" }}
+            >
+              {ev.taken} / {ev.spots}
+            </p>
+            <AdminBar value={pct} color={tight ? "var(--a-amber)" : "var(--a-green)"} height={6} />
+          </div>,
+          <AdminToggle
+            key="l"
+            checked={ev.is_published}
+            onChange={onToggle}
+            label="Event veröffentlichen"
+          />,
+          <div key="a" className="flex items-center gap-1">
+            <AdminBtn onClick={onEdit}>Bearbeiten</AdminBtn>
+            <AdminBtn icon={Trash2} variant="quiet" title="Löschen" onClick={onDelete} />
+            {onDeleteSeries && (
+              <AdminBtn variant="quiet" title="Ganze Serie löschen" onClick={onDeleteSeries}>
+                Serie
+              </AdminBtn>
+            )}
+          </div>,
+        ]}
+      />
     </div>
   );
 }
