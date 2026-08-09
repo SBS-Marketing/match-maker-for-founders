@@ -104,6 +104,7 @@ function AdminGuides() {
   const [guides, setGuides] = useState<GuideRow[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [editing, setEditing] = useState<GuideRow | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [category, setCategory] = useState<string>("all");
 
@@ -158,13 +159,18 @@ function AdminGuides() {
   useSectionActions(
     {
       newLabel: "Neuer Guide",
-      onNew: () => setEditing({ ...EMPTY_GUIDE, sections: [{ h: "", body: "" }] }),
+      onNew: () => openNew(),
     },
     [],
   );
 
   function invalidateCounts() {
     void queryClient.invalidateQueries({ queryKey: ["admin", "pending-counts"] });
+  }
+
+  function openNew() {
+    setEditing({ ...EMPTY_GUIDE, sections: [{ h: "", body: "" }] });
+    setEditorOpen(true);
   }
 
   async function save() {
@@ -189,7 +195,7 @@ function AdminGuides() {
         { ...row, id: `demo-${Date.now()}`, updated_at: new Date().toISOString() },
         ...(prev ?? []).filter((g) => g.slug !== row.slug),
       ]);
-      setEditing(null);
+      setEditorOpen(false);
       toast.success("Demo: Guide nur lokal gespeichert.");
       return;
     }
@@ -205,7 +211,7 @@ function AdminGuides() {
       return;
     }
     toast.success(editing.id ? "Guide gespeichert." : "Guide angelegt.");
-    setEditing(null);
+    setEditorOpen(false);
     invalidateCounts();
     load();
   }
@@ -253,11 +259,7 @@ function AdminGuides() {
           title="Guides"
           sub="DB-Guides ergänzen die eingebauten Guides — veröffentlichte sind sofort für alle lesbar"
           right={
-            <AdminBtn
-              icon={Plus}
-              variant="ember"
-              onClick={() => setEditing({ ...EMPTY_GUIDE, sections: [{ h: "", body: "" }] })}
-            >
+            <AdminBtn icon={Plus} variant="ember" onClick={openNew}>
               Neuer Guide
             </AdminBtn>
           }
@@ -278,11 +280,7 @@ function AdminGuides() {
               Die statischen Guides der App bleiben davon unberührt — DB-Guides kommen zusätzlich
               dazu.
             </p>
-            <AdminBtn
-              icon={Plus}
-              variant="ember"
-              onClick={() => setEditing({ ...EMPTY_GUIDE, sections: [{ h: "", body: "" }] })}
-            >
+            <AdminBtn icon={Plus} variant="ember" onClick={openNew}>
               Ersten Guide anlegen
             </AdminBtn>
           </div>
@@ -327,12 +325,13 @@ function AdminGuides() {
                   />,
                   <div key="a" className="flex items-center gap-1">
                     <AdminBtn
-                      onClick={() =>
+                      onClick={() => {
                         setEditing({
                           ...g,
                           sections: g.sections.length ? [...g.sections] : [{ h: "", body: "" }],
-                        })
-                      }
+                        });
+                        setEditorOpen(true);
+                      }}
                     >
                       Öffnen
                     </AdminBtn>
@@ -369,7 +368,8 @@ function AdminGuides() {
 
       {/* ── Editor ── */}
       {/* prettier-ignore */}
-      <Dialog open={Boolean(editing)} onOpenChange={(open) => {
+      <Dialog open={editorOpen} onOpenChange={(open) => {
+        setEditorOpen(open);
         if (!open) setEditing(null);
       }}>
         <DialogContent className="admin-tokens max-h-[min(85vh,640px)] overflow-y-auto sm:max-w-xl">
@@ -485,7 +485,7 @@ function AdminGuides() {
 
               <div className="flex justify-end gap-2 pt-2">
                 <button
-                  onClick={() => setEditing(null)}
+                  onClick={() => setEditorOpen(false)}
                   className="rounded-xl border border-[var(--ruled)] px-4 py-2 text-[13px] font-semibold text-[var(--smoke)]"
                 >
                   Abbrechen

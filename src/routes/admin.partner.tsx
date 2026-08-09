@@ -166,6 +166,7 @@ function AdminPartner() {
   const [applications, setApplications] = useState<Application[] | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const [editing, setEditing] = useState<PartnerRow | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
   const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<"logo" | "banner" | null>(null);
@@ -254,6 +255,7 @@ function AdminPartner() {
   function openNew() {
     setEditing({ ...EMPTY_FORM, specialties: [], submitted_at: new Date().toISOString() });
     setIsNew(true);
+    setEditorOpen(true);
   }
 
   function invalidateCounts() {
@@ -279,7 +281,7 @@ function AdminPartner() {
 
     if (isPreview) {
       setPartners((prev) => [row, ...(prev ?? []).filter((p) => p.slug !== row.slug)]);
-      setEditing(null);
+      setEditorOpen(false);
       toast.success("Demo: Partner nur lokal gespeichert.");
       return;
     }
@@ -292,7 +294,7 @@ function AdminPartner() {
       return;
     }
     toast.success(isNew ? "Angebot angelegt." : "Angebot gespeichert.");
-    setEditing(null);
+    setEditorOpen(false);
     invalidateCounts();
     load();
   }
@@ -524,6 +526,7 @@ function AdminPartner() {
                             onClick={() => {
                               setEditing({ ...p, specialties: [...p.specialties] });
                               setIsNew(false);
+                              setEditorOpen(true);
                             }}
                           >
                             Bearbeiten
@@ -655,7 +658,8 @@ function AdminPartner() {
 
       {/* ── Editor ── */}
       {/* prettier-ignore */}
-      <Dialog open={Boolean(editing)} onOpenChange={(open) => {
+      <Dialog open={editorOpen} onOpenChange={(open) => {
+        setEditorOpen(open);
         if (!open) setEditing(null);
       }}>
         <DialogContent className="admin-tokens max-h-[min(85vh,640px)] overflow-y-auto sm:max-w-lg">
@@ -843,7 +847,7 @@ function AdminPartner() {
 
               <div className="flex justify-end gap-2 pt-2">
                 <button
-                  onClick={() => setEditing(null)}
+                  onClick={() => setEditorOpen(false)}
                   className="rounded-xl border border-[var(--ruled)] px-4 py-2 text-[13px] font-semibold text-[var(--smoke)]"
                 >
                   Abbrechen
