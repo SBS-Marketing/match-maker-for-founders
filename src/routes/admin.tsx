@@ -245,7 +245,6 @@ function AdminShell() {
               {sidebar}
             </div>
           </SheetContent>
-
         </Sheet>
 
         <div className="min-w-0 flex-1">

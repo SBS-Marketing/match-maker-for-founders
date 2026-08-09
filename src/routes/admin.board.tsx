@@ -467,7 +467,6 @@ function TaskDialog({
               <DialogTitle>{draft.id ? "Aufgabe bearbeiten" : "Neue Aufgabe"}</DialogTitle>
             </DialogHeader>
             <div className="admin-dialog-body flex flex-col gap-3 pr-1">
-
               <FormField label="Titel">
                 <Input
                   value={draft.title}
