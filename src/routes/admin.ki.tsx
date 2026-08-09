@@ -54,7 +54,17 @@ function AdminKi() {
       onExport: () =>
         downloadCsv(
           `ki-verbrauch-${days}d.csv`,
-          ["Zeitpunkt", "Task", "Modell", "Prompt", "Completion", "Kosten USD", "Latenz ms", "Status", "Fallback"],
+          [
+            "Zeitpunkt",
+            "Task",
+            "Modell",
+            "Prompt",
+            "Completion",
+            "Kosten USD",
+            "Latenz ms",
+            "Status",
+            "Fallback",
+          ],
           rows.map((r) => [
             r.created_at,
             r.task,
@@ -151,7 +161,9 @@ function AdminKi() {
                     <span className="min-w-0 flex-1 truncate font-mono" style={{ fontSize: 12 }}>
                       {m.name}
                     </span>
-                    {m.fallbacks > 0 && <AdminBadge variant="amber">{m.fallbacks} Fallback</AdminBadge>}
+                    {m.fallbacks > 0 && (
+                      <AdminBadge variant="amber">{m.fallbacks} Fallback</AdminBadge>
+                    )}
                     <span className="admin-num" style={{ fontSize: 12, color: "var(--a-smoke)" }}>
                       {formatUsd2(m.cost)}
                     </span>

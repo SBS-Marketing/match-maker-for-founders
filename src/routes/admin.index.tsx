@@ -5,15 +5,7 @@
 
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  BookOpen,
-  CalendarDays,
-  CheckCircle2,
-  Coins,
-  Layers,
-  Store,
-  Users,
-} from "lucide-react";
+import { BookOpen, CalendarDays, CheckCircle2, Coins, Layers, Store, Users } from "lucide-react";
 import {
   AdminBadge,
   AdminBtn,
@@ -92,7 +84,13 @@ function AdminOverview() {
         downloadCsv(
           `admin-aufgaben-${new Date().toISOString().slice(0, 10)}.csv`,
           ["Aufgabe", "Herkunft", "Quelle", "Wartet seit", "Status"],
-          (todos.data ?? []).map((t) => [t.title, t.origin, t.source, waitedSince(t.since), t.status]),
+          (todos.data ?? []).map((t) => [
+            t.title,
+            t.origin,
+            t.source,
+            waitedSince(t.since),
+            t.status,
+          ]),
         ),
     },
     [todos.data],
@@ -229,9 +227,7 @@ function AdminOverview() {
                 icon={BookOpen}
                 accent="amber"
                 label="Guides veröffentlicht"
-                value={
-                  platform.isLoading ? "–" : String(platform.data?.publishedGuides.total ?? 0)
-                }
+                value={platform.isLoading ? "–" : String(platform.data?.publishedGuides.total ?? 0)}
                 delta={
                   platform.data
                     ? delta(
@@ -287,7 +283,10 @@ function AdminOverview() {
                             background: TASK_COLORS[i % TASK_COLORS.length],
                           }}
                         />
-                        <span className="min-w-0 flex-1 truncate font-mono" style={{ fontSize: 12 }}>
+                        <span
+                          className="min-w-0 flex-1 truncate font-mono"
+                          style={{ fontSize: 12 }}
+                        >
                           {t.name}
                         </span>
                         <AdminBadge>
@@ -326,11 +325,7 @@ function AdminOverview() {
                 <AdminEmpty label="Noch keine Einträge" />
               ) : (
                 <>
-                  <AdminDotArea
-                    data={daily.values}
-                    labels={daily.labels}
-                    color="var(--a-indigo)"
-                  />
+                  <AdminDotArea data={daily.values} labels={daily.labels} color="var(--a-indigo)" />
                   <div className="mt-3 grid gap-2 sm:grid-cols-2">
                     {byModel.slice(0, 2).map((m) => (
                       <div
@@ -341,7 +336,10 @@ function AdminOverview() {
                           padding: "10px 12px",
                         }}
                       >
-                        <p className="truncate font-mono" style={{ fontSize: 11.5, color: "var(--a-faint)" }}>
+                        <p
+                          className="truncate font-mono"
+                          style={{ fontSize: 11.5, color: "var(--a-faint)" }}
+                        >
                           {m.name}
                         </p>
                         <p className="admin-num" style={{ fontSize: 20, fontWeight: 600 }}>
@@ -397,7 +395,11 @@ function AdminOverview() {
                       </p>
                     </div>
                   </div>,
-                  <span className="font-mono" style={{ fontSize: 12, color: "var(--a-smoke)" }} key="s">
+                  <span
+                    className="font-mono"
+                    style={{ fontSize: 12, color: "var(--a-smoke)" }}
+                    key="s"
+                  >
                     {t.source}
                   </span>,
                   <span style={{ fontSize: 12.5, color: "var(--a-smoke)" }} key="w">
@@ -449,7 +451,9 @@ function aggregateDaily(rows: UsageRow[], days: number): { values: number[]; lab
   const start = new Date();
   start.setHours(0, 0, 0, 0);
   for (const r of rows) {
-    const diff = Math.floor((start.getTime() - new Date(r.created_at).setHours(0, 0, 0, 0)) / 86_400_000);
+    const diff = Math.floor(
+      (start.getTime() - new Date(r.created_at).setHours(0, 0, 0, 0)) / 86_400_000,
+    );
     const idx = days - 1 - diff;
     if (idx >= 0 && idx < days) values[idx] += r.cost_usd;
   }

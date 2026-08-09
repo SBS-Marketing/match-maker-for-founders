@@ -313,8 +313,8 @@ function AdminShell() {
                 color: "var(--a-ember-deep)",
               }}
             >
-              Demo-Vorschau: Du siehst Beispieldaten. Echte Zahlen erscheinen mit einem
-              eingeloggten Admin-Account (Rolle „admin“ in Supabase).
+              Demo-Vorschau: Du siehst Beispieldaten. Echte Zahlen erscheinen mit einem eingeloggten
+              Admin-Account (Rolle „admin“ in Supabase).
             </div>
           )}
 

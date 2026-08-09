@@ -33,7 +33,6 @@ export type TokenGrant = {
   note: string | null;
 };
 
-
 export type AdminUser = {
   user_id: string;
   email: string | null;
@@ -88,10 +87,11 @@ const PREVIEW_USAGE: UsageRow[] = (() => {
           ? (prompt * 0.6 + completion * 2.5) / 1e6
           : (prompt * 3 + completion * 15) / 1e6,
         created_at: new Date(now - day * 86_400_000 - i * 3_600_000).toISOString(),
-        latency_ms: kimi ? 1400 + ((day * 53 + i * 97) % 2600) : 3200 + ((day * 71 + i * 41) % 4200),
+        latency_ms: kimi
+          ? 1400 + ((day * 53 + i * 97) % 2600)
+          : 3200 + ((day * 71 + i * 41) % 4200),
         status: (day + i) % 17 === 0 ? "error" : "ok",
         fallback: !kimi,
-
       });
     }
   }
@@ -183,7 +183,9 @@ export function useAiUsage(days: number) {
       if (isPreview) return PREVIEW_USAGE.filter((r) => r.created_at >= since);
       const { data, error } = await supabase
         .from("ai_usage")
-        .select("task,model,prompt_tokens,completion_tokens,cost_usd,created_at,latency_ms,status,fallback")
+        .select(
+          "task,model,prompt_tokens,completion_tokens,cost_usd,created_at,latency_ms,status,fallback",
+        )
         .gte("created_at", since)
         .order("created_at", { ascending: false })
         .limit(5000);
@@ -294,7 +296,6 @@ export function usePlatformStats(days: number) {
   });
 }
 
-
 export type ActionKpis = {
   offersInReview: number;
   offersNew7d: number;
@@ -321,11 +322,7 @@ export function useActionKpis() {
       }
       const nowIso = new Date().toISOString();
       const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
-      const monthStart = new Date(
-        new Date().getFullYear(),
-        new Date().getMonth(),
-        1,
-      ).toISOString();
+      const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
 
       const [review, review7d, futureEvents, usage] = await Promise.all([
         supabase
@@ -410,11 +407,7 @@ export function useAdminTodos() {
           .select("id,title,created_at")
           .eq("is_published", false)
           .limit(50),
-        supabase
-          .from("guides")
-          .select("id,title,created_at")
-          .eq("published", false)
-          .limit(50),
+        supabase.from("guides").select("id,title,created_at").eq("published", false).limit(50),
         supabase
           .from("ai_token_grants")
           .select("user_id,token_limit,tokens_used,note,updated_at")
@@ -549,7 +542,10 @@ export function useTokenGrants() {
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id,display_name")
-        .in("id", rows.map((r) => r.user_id));
+        .in(
+          "id",
+          rows.map((r) => r.user_id),
+        );
       const names = new Map((profiles ?? []).map((p) => [p.id, p.display_name]));
       return rows.map((r) => ({
         id: r.id,
