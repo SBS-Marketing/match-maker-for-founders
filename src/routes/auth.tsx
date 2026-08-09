@@ -121,7 +121,6 @@ function AuthPage() {
     // Bei Erfolg übernimmt Supabase die Weiterleitung zum Provider.
   };
 
-
   const skipAuth = () => {
     enterDemo();
     toast.success("Demo-Modus aktiviert");
