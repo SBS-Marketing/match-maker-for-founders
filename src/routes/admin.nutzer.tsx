@@ -485,7 +485,7 @@ function UserSheet({ user, onClose }: { user: AdminUser | null; onClose: () => v
 
   return (
     <Sheet open={Boolean(user)} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="admin-shell w-full overflow-y-auto sm:max-w-md">
+      <SheetContent side="right" className="admin-tokens w-full overflow-y-auto sm:max-w-md">
         {current && (
           <>
             <SheetHeader>
