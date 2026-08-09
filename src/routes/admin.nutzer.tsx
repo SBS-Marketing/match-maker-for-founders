@@ -149,7 +149,7 @@ function AdminNutzer() {
               u.industry,
               u.location,
               u.role,
-              profileCompleteness(fieldMap.get(u.user_id)),
+              profileCompleteness(fieldMap.get(u.user_id)) ?? "—",
               u.tokens_used ?? 0,
               u.token_limit ?? 0,
             ]),
