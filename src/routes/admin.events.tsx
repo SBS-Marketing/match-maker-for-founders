@@ -142,6 +142,7 @@ function AdminEvents() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [editing, setEditing] = useState<EventRow | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
   const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -243,6 +244,7 @@ function AdminEvents() {
 
   function openNew() {
     setEditing({ ...EMPTY_FORM });
+    setEditorOpen(true);
     setIsNew(true);
     setRecurrence("none");
     setRecurrenceUntil("");
@@ -335,7 +337,7 @@ function AdminEvents() {
         const rest = (prev ?? []).filter((e) => !rowsToSave.some((r) => r.id === e.id));
         return [...rest, ...rowsToSave];
       });
-      setEditing(null);
+      setEditorOpen(false);
       toast.success(
         isRecurringNew
           ? `Demo: ${rowsToSave.length} Termine lokal angelegt.`
@@ -364,7 +366,7 @@ function AdminEvents() {
             ? "Event als Entwurf angelegt."
             : "Event als Entwurf gespeichert.",
     );
-    setEditing(null);
+    setEditorOpen(false);
     invalidateCounts();
     load();
   }
@@ -540,6 +542,7 @@ function AdminEvents() {
                 onEdit={() => {
                   setEditing({ ...ev });
                   setIsNew(false);
+                  setEditorOpen(true);
                 }}
                 onDelete={() => remove(ev.id)}
                 onDeleteSeries={
@@ -599,7 +602,8 @@ function AdminEvents() {
 
       {/* ── Editor ── */}
       {/* prettier-ignore */}
-      <Dialog open={Boolean(editing)} onOpenChange={(open) => {
+      <Dialog open={editorOpen} onOpenChange={(open) => {
+        setEditorOpen(open);
         if (!open) setEditing(null);
       }}>
         <DialogContent className="admin-tokens max-h-[min(85vh,640px)] overflow-y-auto sm:max-w-lg">
@@ -832,7 +836,7 @@ function AdminEvents() {
 
               <div className="flex justify-end gap-2 pt-2">
                 <button
-                  onClick={() => setEditing(null)}
+                  onClick={() => setEditorOpen(false)}
                   className="rounded-xl border border-[var(--ruled)] px-4 py-2 text-[13px] font-semibold text-[var(--smoke)]"
                 >
                   Abbrechen

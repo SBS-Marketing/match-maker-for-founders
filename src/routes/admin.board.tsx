@@ -97,6 +97,7 @@ function AdminBoard() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
   const [person, setPerson] = useState<string>("all");
@@ -148,7 +149,10 @@ function AdminBoard() {
   useSectionActions(
     {
       newLabel: "Aufgabe",
-      onNew: () => setDraft({ ...EMPTY_DRAFT }),
+      onNew: () => {
+        setDraft({ ...EMPTY_DRAFT });
+        setDialogOpen(true);
+      },
       onExport: () =>
         downloadCsv(
           "team-board.csv",
@@ -203,7 +207,7 @@ function AdminBoard() {
       return;
     }
     toast.success(next.id ? "Aufgabe aktualisiert." : "Aufgabe angelegt.");
-    setDraft(null);
+    setDialogOpen(false);
     void queryClient.invalidateQueries({ queryKey: ["admin", "board-tasks"] });
   }
 
@@ -214,7 +218,7 @@ function AdminBoard() {
       return;
     }
     toast.success("Aufgabe gelöscht.");
-    setDraft(null);
+    setDialogOpen(false);
     void queryClient.invalidateQueries({ queryKey: ["admin", "board-tasks"] });
   }
 
@@ -308,7 +312,14 @@ function AdminBoard() {
               Partner-Angeboten automatisch ins Board.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-2">
-              <AdminBtn icon={Plus} variant="ember" onClick={() => setDraft({ ...EMPTY_DRAFT })}>
+              <AdminBtn
+                icon={Plus}
+                variant="ember"
+                onClick={() => {
+                  setDraft({ ...EMPTY_DRAFT });
+                  setDialogOpen(true);
+                }}
+              >
                 Erste Aufgabe anlegen
               </AdminBtn>
               <AdminBtn icon={Wand2} disabled={seeding} onClick={() => void seedFromBacklog()}>
@@ -319,10 +330,14 @@ function AdminBoard() {
         </AdminCard>
         <TaskDialog
           draft={draft}
+          open={dialogOpen}
           admins={admins}
           categories={categoryOptions}
           onChange={setDraft}
-          onClose={() => setDraft(null)}
+          onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) setDraft(null);
+          }}
           onSave={save}
           onDelete={remove}
         />
@@ -392,7 +407,10 @@ function AdminBoard() {
                     icon={Plus}
                     variant="quiet"
                     title="Aufgabe hinzufügen"
-                    onClick={() => setDraft({ ...EMPTY_DRAFT, board_column: col.key })}
+                    onClick={() => {
+                      setDraft({ ...EMPTY_DRAFT, board_column: col.key });
+                      setDialogOpen(true);
+                    }}
                   />
                 </div>
               </div>
@@ -422,7 +440,7 @@ function AdminBoard() {
                         draggable
                         onDragStart={() => setDragId(task.id)}
                         onDragEnd={() => setDragId(null)}
-                        onClick={() =>
+                        onClick={() => {
                           setDraft({
                             id: task.id,
                             title: task.title,
@@ -433,8 +451,9 @@ function AdminBoard() {
                             assignee_id: task.assignee_id ?? "",
                             assignee_name: task.assignee_name ?? "",
                             due_at: task.due_at ?? "",
-                          })
-                        }
+                          });
+                          setDialogOpen(true);
+                        }}
                         className="w-full text-left transition"
                         style={{
                           background: dragging ? "rgba(255,255,255,0.94)" : "var(--a-surface)",
@@ -523,10 +542,14 @@ function AdminBoard() {
 
       <TaskDialog
         draft={draft}
+        open={dialogOpen}
         admins={admins}
         categories={categoryOptions}
         onChange={setDraft}
-        onClose={() => setDraft(null)}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) setDraft(null);
+        }}
         onSave={save}
         onDelete={remove}
       />
@@ -540,28 +563,25 @@ const CUSTOM_OPTION = "__custom__";
 
 function TaskDialog({
   draft,
+  open,
   admins,
   categories,
   onChange,
-  onClose,
+  onOpenChange,
   onSave,
   onDelete,
 }: {
   draft: Draft | null;
+  open: boolean;
   admins: AdminOption[];
   categories: { label: string; hue: TaskAccent }[];
   onChange: (next: Draft) => void;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   onSave: (next: Draft) => void;
   onDelete: (id: string) => void;
 }) {
   return (
-    <Dialog
-      open={Boolean(draft)}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="admin-tokens sm:max-w-md">
         {draft && (
           <>
