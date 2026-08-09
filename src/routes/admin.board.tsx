@@ -226,7 +226,7 @@ function AdminBoard() {
         title,
         source,
         tag,
-        hue: categoryHue(tag),
+        hue: taskHue({ tag }),
       });
 
       const candidates: SeedRow[] = [
@@ -399,7 +399,7 @@ function AdminBoard() {
                   </p>
                 ) : (
                   list.map((task) => {
-                    const hue = categoryHue(task.tag);
+                    const hue = taskHue(task);
                     const dragging = dragId === task.id;
                     const due = task.due_at ? isDueSoon(task.due_at) : false;
                     return (
@@ -415,7 +415,8 @@ function AdminBoard() {
                             title: task.title,
                             board_column: task.board_column,
                             tag: task.tag ?? "",
-                            hue: task.hue,
+                            hue,
+                            custom: false,
                             assignee_id: task.assignee_id ?? "",
                             assignee_name: task.assignee_name ?? "",
                             due_at: task.due_at ?? "",
