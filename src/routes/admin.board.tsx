@@ -1,12 +1,14 @@
 // ─────────────────────────────────────────────────────────────
 // Admin → Team-Board: Kanban auf admin_tasks mit Drag & Drop.
+// Die Spalten entsprechen exakt der Check-Constraint auf
+// admin_tasks.board_column ('inbox','doing','review','done').
 // ─────────────────────────────────────────────────────────────
 
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Inbox, Plus, Trash2, Wand2 } from "lucide-react";
 import {
   AdminAvatar,
   AdminBadge,
@@ -14,8 +16,9 @@ import {
   AdminCard,
   AdminEmpty,
   AdminLoading,
+  AdminPills,
 } from "@/components/admin/ui";
-import { useBoardTasks, type BoardTask } from "@/hooks/admin/useAdminData";
+import { useAdminRoles, useBoardTasks, type BoardTask } from "@/hooks/admin/useAdminData";
 import { useSectionActions } from "@/components/admin/context";
 import { downloadCsv, dueLabelDE, isDueSoon } from "@/lib/admin-format";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,10 +38,11 @@ export const Route = createFileRoute("/admin/board")({
   component: AdminBoard,
 });
 
+// Muss deckungsgleich mit admin_tasks_board_column_check bleiben.
 const COLUMNS = [
   { key: "inbox", label: "Eingang" },
-  { key: "todo", label: "Geplant" },
   { key: "doing", label: "In Arbeit" },
+  { key: "review", label: "Review" },
   { key: "done", label: "Erledigt" },
 ] as const;
 
@@ -60,6 +64,7 @@ type Draft = {
   board_column: string;
   tag: string;
   hue: string;
+  assignee_id: string;
   assignee_name: string;
   due_at: string;
 };
@@ -69,30 +74,64 @@ const EMPTY_DRAFT: Draft = {
   board_column: "inbox",
   tag: "",
   hue: "ember",
+  assignee_id: "",
   assignee_name: "",
   due_at: "",
 };
 
+type SeedRow = {
+  title: string;
+  source: string;
+  tag: string;
+  hue: string;
+};
+
+function firstName(row: { display_name: string | null; email: string | null }): string {
+  const base = row.display_name?.trim() || row.email?.trim() || "Admin";
+  return base.split(/[\s@]/)[0] || base;
+}
+
 function AdminBoard() {
   const tasks = useBoardTasks();
+  const roles = useAdminRoles();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
+  const [person, setPerson] = useState<string>("all");
+  const [seeding, setSeeding] = useState(false);
 
   const rows = useMemo(() => tasks.data ?? [], [tasks.data]);
+
+  const admins = useMemo(() => (roles.data ?? []).filter((r) => r.role === "admin"), [roles.data]);
+
+  const personOptions = useMemo(
+    () => [
+      { value: "all", label: "Alle" },
+      ...admins.map((a) => ({ value: a.user_id, label: firstName(a) })),
+    ],
+    [admins],
+  );
+
+  const visible = useMemo(() => {
+    if (person === "all") return rows;
+    const admin = admins.find((a) => a.user_id === person);
+    if (!admin) return rows;
+    const name = admin.display_name?.trim() || admin.email?.trim() || "";
+    return rows.filter((t) => t.assignee_id === person || (name && t.assignee_name === name));
+  }, [rows, person, admins]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, BoardTask[]>();
     for (const col of COLUMNS) map.set(col.key, []);
-    for (const task of rows) {
+    for (const task of visible) {
       const key = map.has(task.board_column) ? task.board_column : "inbox";
       map.get(key)!.push(task);
     }
     for (const list of map.values()) list.sort((a, b) => a.position - b.position);
     return map;
-  }, [rows]);
+  }, [visible]);
 
   useSectionActions(
     {
@@ -135,6 +174,7 @@ function AdminBoard() {
       board_column: next.board_column,
       tag: next.tag.trim() || null,
       hue: next.hue,
+      assignee_id: next.assignee_id || null,
       assignee_name: next.assignee_name.trim() || null,
       due_at: next.due_at || null,
       due_label: dueLabelDE(next.due_at || null),
@@ -166,11 +206,127 @@ function AdminBoard() {
     void queryClient.invalidateQueries({ queryKey: ["admin", "board-tasks"] });
   }
 
+  /** Offene Vorgänge aus den anderen Sektionen als Inbox-Karten übernehmen. */
+  async function seedFromBacklog() {
+    setSeeding(true);
+    try {
+      const [offers, events, guides, applications] = await Promise.all([
+        supabase.from("partner_offers").select("name,firm").eq("review_status", "review"),
+        supabase.from("community_events").select("title").eq("is_published", false),
+        supabase.from("guides").select("title").eq("published", false),
+        supabase.from("partner_applications").select("company").eq("status", "neu"),
+      ]);
+      const firstError = offers.error ?? events.error ?? guides.error ?? applications.error ?? null;
+      if (firstError) {
+        toast.error(`Übernehmen fehlgeschlagen: ${firstError.message}`);
+        return;
+      }
+
+      const candidates: SeedRow[] = [
+        ...(offers.data ?? []).map((o) => ({
+          title: `Angebot freigeben: ${o.name}${o.firm ? ` (${o.firm})` : ""}`,
+          source: "partner_offers",
+          tag: "Freigabe",
+          hue: "amber",
+        })),
+        ...(events.data ?? []).map((e) => ({
+          title: `Event veröffentlichen: ${e.title}`,
+          source: "community_events",
+          tag: "Event",
+          hue: "indigo",
+        })),
+        ...(guides.data ?? []).map((g) => ({
+          title: `Guide fertigstellen: ${g.title}`,
+          source: "guides",
+          tag: "Inhalt",
+          hue: "ember",
+        })),
+        ...(applications.data ?? []).map((a) => ({
+          title: `Bewerbung prüfen: ${a.company}`,
+          source: "partner_applications",
+          tag: "Partner",
+          hue: "green",
+        })),
+      ];
+
+      // Nichts doppelt anlegen: gegen vorhandene source+title-Kombis abgleichen.
+      const existing = new Set(rows.map((t) => `${t.source ?? ""}::${t.title}`));
+      const fresh = candidates.filter((c) => !existing.has(`${c.source}::${c.title}`));
+      if (fresh.length === 0) {
+        toast.info("Aktuell nichts Offenes zum Übernehmen.");
+        return;
+      }
+
+      const base = (grouped.get("inbox")?.length ?? 0) + 1;
+      const { error } = await supabase.from("admin_tasks").insert(
+        fresh.map((c, i) => ({
+          ...c,
+          board_column: "inbox",
+          position: base + i,
+          created_by: user?.id ?? null,
+        })),
+      );
+      if (error) {
+        toast.error(`Anlegen fehlgeschlagen: ${error.message}`);
+        return;
+      }
+      toast.success(fresh.length === 1 ? "1 Karte angelegt." : `${fresh.length} Karten angelegt.`);
+      void queryClient.invalidateQueries({ queryKey: ["admin", "board-tasks"] });
+    } finally {
+      setSeeding(false);
+    }
+  }
+
   if (tasks.isLoading) return <AdminLoading />;
   if (tasks.isError) return <AdminEmpty label={`Fehler: ${(tasks.error as Error).message}`} />;
 
+  if (rows.length === 0) {
+    return (
+      <>
+        <AdminCard>
+          <div className="flex flex-col items-center gap-3 py-14 text-center">
+            <span
+              className="flex h-11 w-11 items-center justify-center rounded-2xl"
+              style={{ background: "var(--a-soft)", color: "var(--a-smoke)" }}
+            >
+              <Inbox size={18} strokeWidth={1.75} />
+            </span>
+            <p style={{ fontSize: 15, fontWeight: 650 }}>Noch keine Aufgaben</p>
+            <p style={{ fontSize: 13, color: "var(--a-smoke)", maxWidth: 420 }}>
+              Leg die erste Karte an oder zieh die aktuell offenen Freigaben aus Events, Guides und
+              Partner-Angeboten automatisch ins Board.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <AdminBtn icon={Plus} variant="ember" onClick={() => setDraft({ ...EMPTY_DRAFT })}>
+                Erste Aufgabe anlegen
+              </AdminBtn>
+              <AdminBtn icon={Wand2} disabled={seeding} onClick={() => void seedFromBacklog()}>
+                {seeding ? "Übernimmt…" : "Offene Freigaben übernehmen"}
+              </AdminBtn>
+            </div>
+          </div>
+        </AdminCard>
+        <TaskDialog
+          draft={draft}
+          admins={admins}
+          onChange={setDraft}
+          onClose={() => setDraft(null)}
+          onSave={save}
+          onDelete={remove}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <AdminPills options={personOptions} value={person} onChange={setPerson} />
+        <span style={{ fontSize: 12.5, color: "var(--a-smoke)" }}>
+          {visible.length === 1 ? "1 Aufgabe sichtbar" : `${visible.length} Aufgaben sichtbar`}
+        </span>
+      </div>
+
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {COLUMNS.map((col) => {
           const list = grouped.get(col.key) ?? [];
@@ -232,6 +388,7 @@ function AdminBoard() {
                             board_column: task.board_column,
                             tag: task.tag ?? "",
                             hue: task.hue,
+                            assignee_id: task.assignee_id ?? "",
                             assignee_name: task.assignee_name ?? "",
                             due_at: task.due_at ?? "",
                           })
@@ -274,6 +431,7 @@ function AdminBoard() {
 
       <TaskDialog
         draft={draft}
+        admins={admins}
         onChange={setDraft}
         onClose={() => setDraft(null)}
         onSave={save}
@@ -283,14 +441,18 @@ function AdminBoard() {
   );
 }
 
+type AdminOption = { user_id: string; display_name: string | null; email: string | null };
+
 function TaskDialog({
   draft,
+  admins,
   onChange,
   onClose,
   onSave,
   onDelete,
 }: {
   draft: Draft | null;
+  admins: AdminOption[];
   onChange: (next: Draft) => void;
   onClose: () => void;
   onSave: (next: Draft) => void;
@@ -360,11 +522,33 @@ function TaskDialog({
                 </FormField>
               </div>
               <FormField label="Verantwortlich">
-                <Input
-                  value={draft.assignee_name}
-                  onChange={(e) => onChange({ ...draft, assignee_name: e.target.value })}
-                  className="h-9 text-[13px]"
-                />
+                <select
+                  value={draft.assignee_id}
+                  onChange={(e) => {
+                    const match = admins.find((a) => a.user_id === e.target.value);
+                    onChange({
+                      ...draft,
+                      assignee_id: match?.user_id ?? "",
+                      assignee_name: match
+                        ? match.display_name?.trim() || match.email?.trim() || "Admin"
+                        : "",
+                    });
+                  }}
+                  className="h-9 w-full rounded-md border px-2 text-[13px]"
+                  style={{ borderColor: "var(--a-border)", background: "var(--a-surface-solid)" }}
+                >
+                  <option value="">Niemand</option>
+                  {admins.map((a) => (
+                    <option key={a.user_id} value={a.user_id}>
+                      {a.display_name?.trim() || a.email?.trim() || a.user_id.slice(0, 8)}
+                    </option>
+                  ))}
+                </select>
+                {admins.length === 0 && (
+                  <span style={{ fontSize: 11.5, color: "var(--a-faint)" }}>
+                    Keine Admins gefunden — Rollen unter „Datenquellen & Zugriff“ vergeben.
+                  </span>
+                )}
               </FormField>
             </div>
             <DialogFooter className="gap-2">
