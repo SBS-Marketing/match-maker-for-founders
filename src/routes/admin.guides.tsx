@@ -4,14 +4,31 @@
 // veröffentlichte DB-Guides sind über RLS öffentlich lesbar.
 // ─────────────────────────────────────────────────────────────
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { BookOpen, Pencil, Plus, Trash2, X } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { BookOpen, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
+import {
+  AdminBadge,
+  AdminBtn,
+  AdminCard,
+  AdminCardHead,
+  AdminEmpty,
+  AdminLoading,
+  AdminPills,
+  AdminRow,
+  AdminTable,
+  AdminToggle,
+  type Accent,
+} from "@/components/admin/ui";
+import { useSectionActions } from "@/components/admin/context";
+import { formatDateDE } from "@/lib/admin-format";
 
 export const Route = createFileRoute("/admin/guides")({
+  head: () => ({ meta: [{ title: "Guides — Admin · matchfoundr" }] }),
   component: AdminGuides,
 });
 
@@ -26,6 +43,7 @@ type GuideRow = {
   intro: string;
   sections: Section[];
   published: boolean;
+  updated_at?: string | null;
 };
 
 const CATEGORIES = [
@@ -35,6 +53,13 @@ const CATEGORIES = [
   { id: "finanzen", label: "Finanzen" },
   { id: "team", label: "Team" },
 ];
+
+const CATEGORY_ACCENT: Record<string, Accent> = {
+  gruendung: "ember",
+  foerderung: "green",
+  recht: "indigo",
+  finanzen: "amber",
+};
 
 const EMPTY_GUIDE: GuideRow = {
   id: null,
@@ -66,14 +91,20 @@ const PREVIEW_GUIDES: GuideRow[] = [
       },
     ],
     published: true,
+    updated_at: new Date().toISOString(),
   },
 ];
 
+const GUIDE_COLS = "2fr 0.9fr 0.7fr 0.8fr 0.6fr 0.9fr";
+
 function AdminGuides() {
   const { isPreview, checking } = useIsAdmin();
+  const queryClient = useQueryClient();
   const [guides, setGuides] = useState<GuideRow[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [editing, setEditing] = useState<GuideRow | null>(null);
   const [saving, setSaving] = useState(false);
+  const [category, setCategory] = useState<string>("all");
 
   const load = () => {
     // Warten bis der Admin-Check durch ist (verhindert Demo/Echt-Race).
@@ -84,10 +115,15 @@ function AdminGuides() {
     }
     supabase
       .from("guides")
-      .select("id,slug,title,category,minutes,intro,sections,published")
+      .select("id,slug,title,category,minutes,intro,sections,published,updated_at")
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
-        if (error) toast.error(`Guides laden fehlgeschlagen: ${error.message}`);
+        if (error) {
+          setLoadError(error.message);
+          toast.error(`Guides laden fehlgeschlagen: ${error.message}`);
+        } else {
+          setLoadError(null);
+        }
         setGuides(
           ((data ?? []) as Array<Omit<GuideRow, "sections"> & { sections: unknown }>).map((g) => ({
             ...g,
@@ -98,6 +134,37 @@ function AdminGuides() {
   };
 
   useEffect(load, [isPreview, checking]);
+
+  const rows = useMemo(() => guides ?? [], [guides]);
+
+  const pills = useMemo(() => {
+    const present = new Set(rows.map((g) => g.category));
+    const known = CATEGORIES.filter((c) => present.has(c.id)).map((c) => ({
+      value: c.id,
+      label: c.label,
+    }));
+    const extra = [...present]
+      .filter((c) => !CATEGORIES.some((k) => k.id === c))
+      .map((c) => ({ value: c, label: c }));
+    return [{ value: "all", label: "Alle" }, ...known, ...extra];
+  }, [rows]);
+
+  const visible = useMemo(
+    () => rows.filter((g) => category === "all" || g.category === category),
+    [rows, category],
+  );
+
+  useSectionActions(
+    {
+      newLabel: "Neuer Guide",
+      onNew: () => setEditing({ ...EMPTY_GUIDE, sections: [{ h: "", body: "" }] }),
+    },
+    [],
+  );
+
+  function invalidateCounts() {
+    void queryClient.invalidateQueries({ queryKey: ["admin", "pending-counts"] });
+  }
 
   async function save() {
     if (!editing) return;
@@ -118,7 +185,7 @@ function AdminGuides() {
 
     if (isPreview) {
       setGuides((prev) => [
-        { ...row, id: `demo-${Date.now()}` },
+        { ...row, id: `demo-${Date.now()}`, updated_at: new Date().toISOString() },
         ...(prev ?? []).filter((g) => g.slug !== row.slug),
       ]);
       setEditing(null);
@@ -138,6 +205,7 @@ function AdminGuides() {
     }
     toast.success(editing.id ? "Guide gespeichert." : "Guide angelegt.");
     setEditing(null);
+    invalidateCounts();
     load();
   }
 
@@ -151,102 +219,152 @@ function AdminGuides() {
     if (error) toast.error(error.message);
     else {
       toast.success("Guide gelöscht.");
+      invalidateCounts();
       load();
     }
   }
 
+  /** Optimistisch umschalten, bei Fehler zurückrollen. */
   async function togglePublish(guide: GuideRow) {
-    if (isPreview || !guide.id) {
+    const next = !guide.published;
+    setGuides((prev) =>
+      (prev ?? []).map((g) => (g.slug === guide.slug ? { ...g, published: next } : g)),
+    );
+    if (isPreview || !guide.id) return;
+    const { error } = await supabase.from("guides").update({ published: next }).eq("id", guide.id);
+    if (error) {
       setGuides((prev) =>
-        (prev ?? []).map((g) => (g.slug === guide.slug ? { ...g, published: !g.published } : g)),
+        (prev ?? []).map((g) => (g.slug === guide.slug ? { ...g, published: !next } : g)),
       );
+      toast.error(`Umschalten fehlgeschlagen: ${error.message}`);
       return;
     }
-    const { error } = await supabase
-      .from("guides")
-      .update({ published: !guide.published })
-      .eq("id", guide.id);
-    if (error) toast.error(error.message);
-    else load();
+    toast.success(next ? "Guide ist jetzt öffentlich lesbar." : "Guide ist wieder ein Entwurf.");
+    invalidateCounts();
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-[13px] text-[var(--smoke)]">
-          DB-Guides ergänzen die eingebauten Guides — veröffentlichte sind sofort für alle lesbar.
-        </p>
-        <button
-          onClick={() => setEditing({ ...EMPTY_GUIDE, sections: [{ h: "", body: "" }] })}
-          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[var(--ink)] px-3.5 py-2 text-[13px] font-semibold text-white"
-        >
-          <Plus className="h-4 w-4" /> Neuer Guide
-        </button>
-      </div>
-
-      {guides === null ? (
-        <p className="py-8 text-center text-[13px] text-[var(--smoke)]">Lade…</p>
-      ) : guides.length === 0 ? (
-        <div className="rounded-[18px] border border-dashed border-[var(--ruled)] p-8 text-center">
-          <BookOpen className="mx-auto h-6 w-6 text-[var(--faint)]" />
-          <p className="mt-2 text-[13px] text-[var(--smoke)]">Noch keine redaktionellen Guides.</p>
-        </div>
-      ) : (
-        <div className="space-y-2.5">
-          {guides.map((g) => (
-            <div
-              key={g.slug}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-[18px] border border-[var(--ruled)] bg-[var(--surface)] p-3.5"
+    <div className="flex flex-col gap-4">
+      <AdminCard>
+        <AdminCardHead
+          icon={BookOpen}
+          accent="ember"
+          title="Guides"
+          sub="DB-Guides ergänzen die eingebauten Guides — veröffentlichte sind sofort für alle lesbar"
+          right={
+            <AdminBtn
+              icon={Plus}
+              variant="ember"
+              onClick={() => setEditing({ ...EMPTY_GUIDE, sections: [{ h: "", body: "" }] })}
             >
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="truncate text-[14px] font-bold text-[var(--ink)]">{g.title}</p>
-                  <span
-                    className={
-                      g.published
-                        ? "rounded-full bg-[var(--ember-tint)] px-2 py-0.5 text-[11px] font-bold text-[var(--ember-deep)]"
-                        : "rounded-full bg-[var(--canvas)] px-2 py-0.5 text-[11px] font-bold text-[var(--faint)]"
-                    }
-                  >
-                    {g.published ? "Live" : "Entwurf"}
-                  </span>
-                </div>
-                <p className="mt-0.5 text-[12px] text-[var(--smoke)]">
-                  {CATEGORIES.find((c) => c.id === g.category)?.label ?? g.category} · {g.minutes}{" "}
-                  Min · {g.sections.length} Abschnitte
-                </p>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => togglePublish(g)}
-                  className="rounded-lg border border-[var(--ruled)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--smoke)] hover:text-[var(--ink)]"
-                >
-                  {g.published ? "Verbergen" : "Veröffentlichen"}
-                </button>
-                <button
-                  onClick={() =>
-                    setEditing({
-                      ...g,
-                      sections: g.sections.length ? [...g.sections] : [{ h: "", body: "" }],
-                    })
-                  }
-                  className="rounded-lg border border-[var(--ruled)] p-2 text-[var(--smoke)] hover:text-[var(--ink)]"
-                  aria-label="Bearbeiten"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  onClick={() => remove(g)}
-                  className="rounded-lg border border-[var(--ruled)] p-2 text-[var(--smoke)] hover:text-[var(--ember-deep)]"
-                  aria-label="Löschen"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+              Neuer Guide
+            </AdminBtn>
+          }
+        />
+        {rows.length > 0 && (
+          <div className="mb-3">
+            <AdminPills options={pills} value={category} onChange={setCategory} />
+          </div>
+        )}
+        {guides === null ? (
+          <AdminLoading />
+        ) : loadError ? (
+          <AdminEmpty label={`Fehler: ${loadError}`} />
+        ) : rows.length === 0 ? (
+          <div className="flex flex-col items-center gap-2.5 py-10 text-center">
+            <p style={{ fontSize: 14.5, fontWeight: 650 }}>Noch keine Guides in der Datenbank</p>
+            <p style={{ fontSize: 13, color: "var(--a-smoke)", maxWidth: 420 }}>
+              Die statischen Guides der App bleiben davon unberührt — DB-Guides kommen zusätzlich
+              dazu.
+            </p>
+            <AdminBtn
+              icon={Plus}
+              variant="ember"
+              onClick={() => setEditing({ ...EMPTY_GUIDE, sections: [{ h: "", body: "" }] })}
+            >
+              Ersten Guide anlegen
+            </AdminBtn>
+          </div>
+        ) : visible.length === 0 ? (
+          <AdminEmpty label="Keine Guides in dieser Kategorie" />
+        ) : (
+          <AdminTable
+            cols={GUIDE_COLS}
+            head={["Guide", "Kategorie", "Lesezeit", "Abschnitte", "Live", "Aktion"]}
+          >
+            {visible.map((g) => (
+              <AdminRow
+                key={g.slug}
+                cols={GUIDE_COLS}
+                cells={[
+                  <div key="t" className="min-w-0">
+                    <p className="truncate" style={{ fontWeight: 650 }}>
+                      {g.title}
+                    </p>
+                    <p
+                      className="truncate font-mono"
+                      style={{ fontSize: 11, color: "var(--a-faint)" }}
+                    >
+                      /{g.slug}
+                      {g.updated_at ? ` · geändert ${formatDateDE(g.updated_at)}` : ""}
+                    </p>
+                  </div>,
+                  <AdminBadge key="c" variant={CATEGORY_ACCENT[g.category] ?? "soft"}>
+                    {CATEGORIES.find((c) => c.id === g.category)?.label ?? g.category}
+                  </AdminBadge>,
+                  <span key="m" className="admin-num">
+                    {g.minutes} Min
+                  </span>,
+                  <span key="s" className="admin-num">
+                    {g.sections.length}
+                  </span>,
+                  <AdminToggle
+                    key="l"
+                    checked={g.published}
+                    onChange={() => togglePublish(g)}
+                    label="Guide veröffentlichen"
+                  />,
+                  <div key="a" className="flex items-center gap-1">
+                    <AdminBtn
+                      onClick={() =>
+                        setEditing({
+                          ...g,
+                          sections: g.sections.length ? [...g.sections] : [{ h: "", body: "" }],
+                        })
+                      }
+                    >
+                      Öffnen
+                    </AdminBtn>
+                    <AdminBtn
+                      icon={Trash2}
+                      variant="quiet"
+                      title="Löschen"
+                      onClick={() => remove(g)}
+                    />
+                  </div>,
+                ]}
+              />
+            ))}
+          </AdminTable>
+        )}
+      </AdminCard>
+
+      <div className="grid gap-3 lg:grid-cols-2">
+        <MostReadCard />
+        <AdminCard>
+          <AdminCardHead
+            icon={Sparkles}
+            accent="indigo"
+            title="Redaktions-Hinweis"
+            sub="Wie DB-Guides in der App landen"
+          />
+          <p style={{ fontSize: 13, color: "var(--a-smoke)", lineHeight: 1.6 }}>
+            Guides aus der Datenbank ergänzen die statischen Guides in der App. Nicht
+            veröffentlichte Entwürfe sind ausschließlich für Admins sichtbar — die RLS-Policy gibt
+            eine Zeile erst mit <span className="font-mono">published = true</span> für alle frei.
+          </p>
+        </AdminCard>
+      </div>
 
       {/* ── Editor ── */}
       {editing && (
@@ -399,6 +517,91 @@ function AdminGuides() {
       sections: editing.sections.map((s, i) => (i === index ? next : s)),
     });
   }
+}
+
+// ── Meistgelesen ─────────────────────────────────────────────
+
+type GuideView = { title: string; count: number };
+
+/** Rangliste aus activity_events — nur wenn dort Guide-Aufrufe protokolliert sind. */
+function MostReadCard() {
+  const { isPreview, checking } = useIsAdmin();
+  const views = useQuery<GuideView[]>({
+    queryKey: ["admin", "guide-views", isPreview],
+    enabled: !checking,
+    staleTime: 60_000,
+    queryFn: async () => {
+      if (isPreview) return [];
+      const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
+      const { data, error } = await supabase
+        .from("activity_events")
+        .select("title,type,created_at")
+        .like("type", "guide%")
+        .gte("created_at", since)
+        .limit(2000);
+      if (error) throw new Error(error.message);
+      const map = new Map<string, number>();
+      for (const row of data ?? []) {
+        const key = row.title || "Ohne Titel";
+        map.set(key, (map.get(key) ?? 0) + 1);
+      }
+      return [...map.entries()]
+        .map(([title, count]) => ({ title, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 8);
+    },
+  });
+
+  const rows = views.data ?? [];
+  const max = rows[0]?.count ?? 1;
+
+  return (
+    <AdminCard>
+      <AdminCardHead icon={BookOpen} accent="amber" title="Meistgelesen" sub="30 Tage" />
+      {views.isLoading ? (
+        <AdminLoading />
+      ) : views.isError ? (
+        <AdminEmpty label={`Fehler: ${(views.error as Error).message}`} />
+      ) : rows.length === 0 ? (
+        <p style={{ fontSize: 13, color: "var(--a-smoke)", lineHeight: 1.6 }}>
+          Noch keine Aufrufstatistik. Sobald Guide-Aufrufe in{" "}
+          <span className="font-mono">activity_events</span> protokolliert werden, erscheint hier
+          die Rangliste.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-2.5">
+          {rows.map((r) => (
+            <div key={r.title}>
+              <div className="mb-1 flex items-center justify-between gap-3">
+                <span className="truncate" style={{ fontSize: 13, fontWeight: 600 }}>
+                  {r.title}
+                </span>
+                <span className="admin-num" style={{ fontSize: 12.5, color: "var(--a-smoke)" }}>
+                  {r.count}
+                </span>
+              </div>
+              <div
+                style={{
+                  height: 6,
+                  borderRadius: 99,
+                  background: "var(--a-deep)",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${Math.round((r.count / max) * 100)}%`,
+                    background: "var(--a-amber)",
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </AdminCard>
+  );
 }
 
 const inputCls =

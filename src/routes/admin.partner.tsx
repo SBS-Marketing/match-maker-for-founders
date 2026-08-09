@@ -1,24 +1,44 @@
 // ─────────────────────────────────────────────────────────────
 // Admin → Partner: den Katalog der Entdecken-Sektion pflegen
 // (Tabelle partner_offers — iOS liest sie live, Web über die
-// generierten Dateien aus der Scraper-Pipeline).
+// generierten Dateien aus der Scraper-Pipeline). Dazu die
+// Bewerbungen aus partner_applications.
 // ─────────────────────────────────────────────────────────────
 
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ImagePlus, Pencil, Plus, Store, Trash2, X } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Check, ImagePlus, Plus, Sparkles, Store, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { uploadImage } from "@/lib/upload";
 import { SERVICES } from "@/data/services";
+import {
+  AdminBadge,
+  AdminBtn,
+  AdminCard,
+  AdminCardHead,
+  AdminEmpty,
+  AdminKpi,
+  AdminLoading,
+  AdminPills,
+  AdminRow,
+  AdminTable,
+  type Accent,
+} from "@/components/admin/ui";
+import { useSectionActions } from "@/components/admin/context";
+import { downloadCsv, formatDateDE } from "@/lib/admin-format";
 
 export const Route = createFileRoute("/admin/partner")({
+  head: () => ({ meta: [{ title: "Partner-Angebote — Admin · matchfoundr" }] }),
   component: AdminPartner,
 });
 
 type Specialty = { label: string; level: number };
+
+type ReviewStatus = "review" | "live" | "paused";
 
 type PartnerRow = {
   slug: string;
@@ -34,6 +54,22 @@ type PartnerRow = {
   banner_url: string | null;
   specialties: Specialty[];
   is_active: boolean;
+  review_status: string;
+  perk: string | null;
+  claims: number;
+  submitted_at: string;
+};
+
+type Application = {
+  id: string;
+  company: string;
+  field: string | null;
+  city: string | null;
+  contact_name: string | null;
+  email: string | null;
+  message: string | null;
+  status: string;
+  created_at: string;
 };
 
 // cofounder läuft über Swipe — Partner gibt es für die 7 Service-Kategorien.
@@ -53,6 +89,10 @@ const EMPTY_FORM: PartnerRow = {
   banner_url: null,
   specialties: [],
   is_active: true,
+  review_status: "live",
+  perk: null,
+  claims: 0,
+  submitted_at: new Date().toISOString(),
 };
 
 const PREVIEW_PARTNERS: PartnerRow[] = [
@@ -79,14 +119,51 @@ const PREVIEW_PARTNERS: PartnerRow[] = [
     blurb: "Kredite bis 25.000 € ohne Hausbank über Mikrofinanzinstitute.",
     fit: 90,
     is_active: false,
+    review_status: "review",
   },
 ];
 
+const STATUS_META: Record<ReviewStatus, { label: string; accent: Accent }> = {
+  review: { label: "Freigabe offen", accent: "amber" },
+  live: { label: "live", accent: "green" },
+  paused: { label: "pausiert", accent: "soft" },
+};
+
+const APP_STATUS: Record<string, Accent> = {
+  neu: "indigo",
+  geprueft: "soft",
+  angenommen: "green",
+  abgelehnt: "red",
+};
+
+const APP_STATUS_OPTIONS = ["neu", "geprueft", "angenommen", "abgelehnt"];
+
+const FILTERS = [
+  { value: "all", label: "Alle" },
+  { value: "review", label: "Zur Freigabe" },
+  { value: "live", label: "Live" },
+  { value: "paused", label: "Pausiert" },
+] as const;
+type Filter = (typeof FILTERS)[number]["value"];
+
+const OFFER_COLS = "1.7fr 1.1fr 1fr 0.7fr 0.9fr 1.2fr";
+const APP_COLS = "1.6fr 0.9fr 0.8fr 0.7fr 0.8fr 1.1fr";
+
+function daysSince(iso: string | null): number {
+  if (!iso) return 0;
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return 0;
+  return Math.max(0, Math.floor((Date.now() - t) / 86_400_000));
+}
+
 function AdminPartner() {
   const auth = useAuth();
+  const queryClient = useQueryClient();
   const { isPreview, checking } = useIsAdmin();
   const [partners, setPartners] = useState<PartnerRow[] | null>(null);
-  const [filter, setFilter] = useState<string>("all");
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [applications, setApplications] = useState<Application[] | null>(null);
+  const [filter, setFilter] = useState<Filter>("all");
   const [editing, setEditing] = useState<PartnerRow | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -97,17 +174,23 @@ function AdminPartner() {
     if (checking) return;
     if (isPreview) {
       setPartners(PREVIEW_PARTNERS);
+      setApplications([]);
       return;
     }
     supabase
       .from("partner_offers")
       .select(
-        "slug,name,firm,service_id,city,blurb,fit,source_url,booking_url,logo_url,banner_url,specialties,is_active",
+        "slug,name,firm,service_id,city,blurb,fit,source_url,booking_url,logo_url,banner_url,specialties,is_active,review_status,perk,claims,submitted_at",
       )
       .order("service_id")
       .order("fit", { ascending: false })
       .then(({ data, error }) => {
-        if (error) toast.error(`Partner laden fehlgeschlagen: ${error.message}`);
+        if (error) {
+          setLoadError(error.message);
+          toast.error(`Partner laden fehlgeschlagen: ${error.message}`);
+        } else {
+          setLoadError(null);
+        }
         setPartners(
           ((data ?? []) as Array<Omit<PartnerRow, "specialties"> & { specialties: unknown }>).map(
             (p) => ({
@@ -117,20 +200,64 @@ function AdminPartner() {
           ),
         );
       });
+    supabase
+      .from("partner_applications")
+      .select("id,company,field,city,contact_name,email,message,status,created_at")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setApplications((data as Application[]) ?? []));
   };
 
   useEffect(load, [isPreview, checking]);
 
+  const rows = useMemo(() => partners ?? [], [partners]);
+  const apps = useMemo(() => applications ?? [], [applications]);
+
   const visible = useMemo(
-    () => (partners ?? []).filter((p) => filter === "all" || p.service_id === filter),
-    [partners, filter],
+    () => rows.filter((p) => filter === "all" || p.review_status === filter),
+    [rows, filter],
   );
 
-  const countByService = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const p of partners ?? []) m.set(p.service_id, (m.get(p.service_id) ?? 0) + 1);
-    return m;
-  }, [partners]);
+  const kpis = useMemo(() => {
+    const inReview = rows.filter((p) => p.review_status === "review");
+    const oldest = inReview
+      .map((p) => daysSince(p.submitted_at))
+      .reduce((max, d) => Math.max(max, d), 0);
+    const live = rows.filter((p) => p.review_status === "live" && p.is_active);
+    const month = Date.now() - 30 * 86_400_000;
+    const liveRecent = live.filter((p) => new Date(p.submitted_at).getTime() >= month).length;
+    return {
+      review: inReview.length,
+      oldest,
+      live: live.length,
+      liveRecent,
+      claims: rows.reduce((sum, p) => sum + (p.claims ?? 0), 0),
+      apps: apps.length,
+      appsNew: apps.filter((a) => a.status === "neu").length,
+    };
+  }, [rows, apps]);
+
+  useSectionActions(
+    {
+      newLabel: "Angebot anlegen",
+      onNew: () => openNew(),
+      onExport: () =>
+        downloadCsv(
+          "partner-angebote.csv",
+          ["Angebot", "Partner", "Ort", "Vorteil", "Einlösungen", "Status"],
+          rows.map((p) => [p.name, p.firm, p.city, p.perk, p.claims, p.review_status]),
+        ),
+    },
+    [rows],
+  );
+
+  function openNew() {
+    setEditing({ ...EMPTY_FORM, specialties: [], submitted_at: new Date().toISOString() });
+    setIsNew(true);
+  }
+
+  function invalidateCounts() {
+    void queryClient.invalidateQueries({ queryKey: ["admin", "pending-counts"] });
+  }
 
   async function save() {
     if (!editing) return;
@@ -163,13 +290,14 @@ function AdminPartner() {
       toast.error(`Speichern fehlgeschlagen: ${error.message}`);
       return;
     }
-    toast.success(isNew ? "Partner angelegt." : "Partner gespeichert.");
+    toast.success(isNew ? "Angebot angelegt." : "Angebot gespeichert.");
     setEditing(null);
+    invalidateCounts();
     load();
   }
 
   async function remove(slug: string) {
-    if (!window.confirm("Partner wirklich löschen? (Deaktivieren reicht meist.)")) return;
+    if (!window.confirm("Angebot wirklich löschen? (Pausieren reicht meist.)")) return;
     if (isPreview) {
       setPartners((prev) => (prev ?? []).filter((p) => p.slug !== slug));
       return;
@@ -177,24 +305,53 @@ function AdminPartner() {
     const { error } = await supabase.from("partner_offers").delete().eq("slug", slug);
     if (error) toast.error(error.message);
     else {
-      toast.success("Partner gelöscht.");
+      toast.success("Angebot gelöscht.");
+      invalidateCounts();
       load();
     }
   }
 
-  async function toggleActive(p: PartnerRow) {
-    if (isPreview) {
-      setPartners((prev) =>
-        (prev ?? []).map((x) => (x.slug === p.slug ? { ...x, is_active: !x.is_active } : x)),
-      );
-      return;
-    }
+  /** Status optimistisch setzen, bei Fehler zurückrollen. */
+  async function setStatus(p: PartnerRow, next: ReviewStatus, message: string) {
+    const active = next === "live";
+    const before = { review_status: p.review_status, is_active: p.is_active };
+    setPartners((prev) =>
+      (prev ?? []).map((x) =>
+        x.slug === p.slug ? { ...x, review_status: next, is_active: active } : x,
+      ),
+    );
+    if (isPreview) return;
     const { error } = await supabase
       .from("partner_offers")
-      .update({ is_active: !p.is_active })
+      .update({ review_status: next, is_active: active })
       .eq("slug", p.slug);
-    if (error) toast.error(error.message);
-    else load();
+    if (error) {
+      setPartners((prev) => (prev ?? []).map((x) => (x.slug === p.slug ? { ...x, ...before } : x)));
+      toast.error(`Änderung fehlgeschlagen: ${error.message}`);
+      return;
+    }
+    toast.success(message);
+    invalidateCounts();
+  }
+
+  async function setApplicationStatus(app: Application, next: string) {
+    const before = app.status;
+    setApplications((prev) =>
+      (prev ?? []).map((a) => (a.id === app.id ? { ...a, status: next } : a)),
+    );
+    if (isPreview) return;
+    const { error } = await supabase
+      .from("partner_applications")
+      .update({ status: next })
+      .eq("id", app.id);
+    if (error) {
+      setApplications((prev) =>
+        (prev ?? []).map((a) => (a.id === app.id ? { ...a, status: before } : a)),
+      );
+      toast.error(`Status setzen fehlgeschlagen: ${error.message}`);
+      return;
+    }
+    toast.success("Status aktualisiert.");
   }
 
   async function onImage(kind: "logo" | "banner", file: File | undefined) {
@@ -212,119 +369,287 @@ function AdminPartner() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-[13px] text-[var(--smoke)]">
-          Der Katalog hinter „Entdecken“ — aktive Partner erscheinen in iOS-App und Marktplatz.
-        </p>
-        <button
-          onClick={() => {
-            setEditing({ ...EMPTY_FORM, specialties: [] });
-            setIsNew(true);
-          }}
-          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[var(--ink)] px-3.5 py-2 text-[13px] font-semibold text-white"
-        >
-          <Plus className="h-4 w-4" /> Neuer Partner
-        </button>
+    <div className="flex flex-col gap-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <AdminKpi
+          icon={Store}
+          accent="amber"
+          label="Zur Freigabe"
+          value={String(kpis.review)}
+          compare={kpis.review > 0 ? `längste ${kpis.oldest} Tage` : "nichts offen"}
+        />
+        <AdminKpi
+          icon={Check}
+          accent="green"
+          label="Live-Angebote"
+          value={String(kpis.live)}
+          delta={{ dir: kpis.liveRecent > 0 ? "up" : "flat", label: `+${kpis.liveRecent}` }}
+          compare="30 Tage"
+        />
+        <AdminKpi
+          icon={Sparkles}
+          accent="ember"
+          label="Einlösungen"
+          value={String(kpis.claims)}
+          compare="gesamt"
+        />
+        <AdminKpi
+          icon={Users}
+          accent="indigo"
+          label="Bewerbungen"
+          value={String(kpis.apps)}
+          compare={`${kpis.appsNew} neu`}
+        />
       </div>
 
-      {/* Kategorie-Filter */}
-      <div className="flex flex-wrap gap-1.5">
-        <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
-          Alle ({partners?.length ?? 0})
-        </FilterChip>
-        {PARTNER_SERVICES.map((s) => (
-          <FilterChip key={s.id} active={filter === s.id} onClick={() => setFilter(s.id)}>
-            {s.short} ({countByService.get(s.id) ?? 0})
-          </FilterChip>
-        ))}
-      </div>
-
-      {partners === null ? (
-        <p className="py-8 text-center text-[13px] text-[var(--smoke)]">Lade…</p>
-      ) : visible.length === 0 ? (
-        <div className="rounded-[18px] border border-dashed border-[var(--ruled)] p-8 text-center">
-          <Store className="mx-auto h-6 w-6 text-[var(--faint)]" />
-          <p className="mt-2 text-[13px] text-[var(--smoke)]">
-            {partners.length === 0
-              ? "Noch keine Partner — die Scraper-Pipeline füllt den Katalog (siehe Insights) oder leg manuell an."
-              : "Keine Partner in dieser Kategorie."}
-          </p>
+      <AdminCard>
+        <AdminCardHead
+          icon={Store}
+          accent="ember"
+          title="Partner-Angebote"
+          sub="Freigeben schaltet das Angebot in der Deals-Welt frei"
+          right={
+            <AdminBtn icon={Plus} variant="ember" onClick={openNew}>
+              Angebot anlegen
+            </AdminBtn>
+          }
+        />
+        <div className="mb-3">
+          <AdminPills options={[...FILTERS]} value={filter} onChange={setFilter} />
         </div>
-      ) : (
-        <div className="space-y-2.5">
-          {visible.map((p) => (
-            <div
-              key={p.slug}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-[18px] border border-[var(--ruled)] bg-[var(--surface)] p-3.5"
-            >
-              <div className="flex min-w-0 items-center gap-2.5">
-                {p.logo_url ? (
-                  <img
-                    src={p.logo_url}
-                    alt=""
-                    loading="lazy"
-                    className="h-9 w-9 shrink-0 rounded-lg border border-[var(--ruled)] bg-white object-contain p-0.5"
-                  />
-                ) : (
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--canvas)] text-[var(--faint)]">
-                    <Store className="h-4 w-4" />
-                  </span>
-                )}
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-[14px] font-bold text-[var(--ink)]">{p.name}</p>
-                    <span
-                      className={
-                        p.is_active
-                          ? "rounded-full bg-[var(--ember-tint)] px-2 py-0.5 text-[11px] font-bold text-[var(--ember-deep)]"
-                          : "rounded-full bg-[var(--canvas)] px-2 py-0.5 text-[11px] font-bold text-[var(--faint)]"
-                      }
+        {partners === null ? (
+          <AdminLoading />
+        ) : loadError ? (
+          <AdminEmpty label={`Fehler: ${loadError}`} />
+        ) : visible.length === 0 ? (
+          <AdminEmpty
+            label={
+              rows.length === 0
+                ? "Noch keine Angebote — die Scraper-Pipeline füllt den Katalog oder leg manuell an."
+                : "Keine Angebote in dieser Ansicht"
+            }
+          />
+        ) : (
+          <AdminTable
+            cols={OFFER_COLS}
+            head={["Angebot", "Partner", "Vorteil", "Einlösungen", "Status", "Aktion"]}
+          >
+            {visible.map((p) => {
+              const status = (STATUS_META[p.review_status as ReviewStatus] ??
+                STATUS_META.paused) as { label: string; accent: Accent };
+              return (
+                <AdminRow
+                  key={p.slug}
+                  cols={OFFER_COLS}
+                  cells={[
+                    <div key="n" className="flex min-w-0 items-center gap-2">
+                      {p.logo_url ? (
+                        <img
+                          src={p.logo_url}
+                          alt=""
+                          loading="lazy"
+                          className="h-8 w-8 shrink-0 rounded-lg bg-white object-contain p-0.5"
+                          style={{ border: "1px solid var(--a-border-soft)" }}
+                        />
+                      ) : (
+                        <span
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                          style={{ background: "var(--a-soft)", color: "var(--a-faint)" }}
+                        >
+                          <Store className="h-3.5 w-3.5" />
+                        </span>
+                      )}
+                      <div className="min-w-0">
+                        <p className="truncate" style={{ fontWeight: 650 }}>
+                          {p.name}
+                        </p>
+                        <p
+                          className="truncate font-mono"
+                          style={{ fontSize: 11, color: "var(--a-faint)" }}
+                        >
+                          {p.service_id} ·{" "}
+                          {p.review_status === "review"
+                            ? `seit ${daysSince(p.submitted_at)} Tagen offen`
+                            : `seit ${formatDateDE(p.submitted_at)}`}
+                        </p>
+                      </div>
+                    </div>,
+                    <div key="f" className="min-w-0">
+                      <p className="truncate" style={{ fontWeight: 600 }}>
+                        {p.firm}
+                      </p>
+                      <p className="truncate" style={{ fontSize: 11.5, color: "var(--a-faint)" }}>
+                        {p.city}
+                      </p>
+                    </div>,
+                    <span key="v" className="truncate" style={{ color: "var(--a-smoke)" }}>
+                      {p.perk?.trim() || "—"}
+                    </span>,
+                    <span key="c" className="admin-num" style={{ fontWeight: 600 }}>
+                      {p.claims ?? 0}
+                    </span>,
+                    <AdminBadge key="s" variant={status.accent}>
+                      {status.label}
+                    </AdminBadge>,
+                    <div key="a" className="flex flex-wrap items-center gap-1">
+                      {p.review_status === "review" ? (
+                        <>
+                          <AdminBtn
+                            icon={Check}
+                            variant="primary"
+                            onClick={() =>
+                              setStatus(p, "live", "Angebot ist jetzt öffentlich sichtbar.")
+                            }
+                          >
+                            Freigeben
+                          </AdminBtn>
+                          <AdminBtn
+                            variant="quiet"
+                            onClick={() => {
+                              if (!window.confirm(`Angebot „${p.name}“ ablehnen?`)) return;
+                              void setStatus(
+                                p,
+                                "paused",
+                                "Angebot abgelehnt und nicht mehr sichtbar.",
+                              );
+                            }}
+                          >
+                            Ablehnen
+                          </AdminBtn>
+                        </>
+                      ) : (
+                        <>
+                          <AdminBtn
+                            onClick={() => {
+                              setEditing({ ...p, specialties: [...p.specialties] });
+                              setIsNew(false);
+                            }}
+                          >
+                            Bearbeiten
+                          </AdminBtn>
+                          {p.review_status === "live" ? (
+                            <AdminBtn
+                              variant="quiet"
+                              onClick={() =>
+                                setStatus(p, "paused", "Angebot pausiert — nicht mehr sichtbar.")
+                              }
+                            >
+                              Pausieren
+                            </AdminBtn>
+                          ) : (
+                            <AdminBtn
+                              variant="quiet"
+                              onClick={() =>
+                                setStatus(p, "live", "Angebot ist wieder öffentlich sichtbar.")
+                              }
+                            >
+                              Reaktivieren
+                            </AdminBtn>
+                          )}
+                        </>
+                      )}
+                      <AdminBtn
+                        icon={Trash2}
+                        variant="quiet"
+                        title="Löschen"
+                        onClick={() => remove(p.slug)}
+                      />
+                    </div>,
+                  ]}
+                />
+              );
+            })}
+          </AdminTable>
+        )}
+      </AdminCard>
+
+      <AdminCard>
+        <AdminCardHead
+          icon={Users}
+          accent="indigo"
+          title="Partner-Bewerbungen"
+          sub="partner_applications"
+        />
+        {applications === null ? (
+          <AdminLoading />
+        ) : apps.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-10 text-center">
+            <p style={{ fontSize: 14.5, fontWeight: 650 }}>Noch keine Bewerbungen</p>
+            <p style={{ fontSize: 13, color: "var(--a-smoke)", maxWidth: 420 }}>
+              Bewerbungen über das öffentliche Partner-Formular landen automatisch in{" "}
+              <span className="font-mono">partner_applications</span> und erscheinen hier.
+            </p>
+          </div>
+        ) : (
+          <AdminTable
+            cols={APP_COLS}
+            head={["Firma", "Bereich", "Ort", "Eingang", "Status", "Aktion"]}
+          >
+            {apps.map((a) => (
+              <AdminRow
+                key={a.id}
+                cols={APP_COLS}
+                cells={[
+                  <div key="c" className="min-w-0">
+                    <p className="truncate" style={{ fontWeight: 650 }}>
+                      {a.company}
+                    </p>
+                    <p
+                      className="truncate font-mono"
+                      style={{ fontSize: 11, color: "var(--a-faint)" }}
                     >
-                      {p.is_active ? "Aktiv" : "Aus"}
-                    </span>
-                  </div>
-                  <p className="mt-0.5 text-[12px] text-[var(--smoke)]">
-                    {[
-                      PARTNER_SERVICES.find((s) => s.id === p.service_id)?.short ?? p.service_id,
-                      p.firm,
-                      p.city,
-                      `Fit ${p.fit}`,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => toggleActive(p)}
-                  className="rounded-lg border border-[var(--ruled)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--smoke)] hover:text-[var(--ink)]"
-                >
-                  {p.is_active ? "Deaktivieren" : "Aktivieren"}
-                </button>
-                <button
-                  onClick={() => {
-                    setEditing({ ...p, specialties: [...p.specialties] });
-                    setIsNew(false);
-                  }}
-                  className="rounded-lg border border-[var(--ruled)] p-2 text-[var(--smoke)] hover:text-[var(--ink)]"
-                  aria-label="Bearbeiten"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  onClick={() => remove(p.slug)}
-                  className="rounded-lg border border-[var(--ruled)] p-2 text-[var(--smoke)] hover:text-[var(--ember-deep)]"
-                  aria-label="Löschen"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+                      {[a.contact_name, a.email].filter(Boolean).join(" · ") || "keine Kontaktdaten"}
+                    </p>
+                  </div>,
+                  <span key="f" style={{ color: "var(--a-smoke)" }}>
+                    {a.field ?? "—"}
+                  </span>,
+                  <span key="o" style={{ color: "var(--a-smoke)" }}>
+                    {a.city ?? "—"}
+                  </span>,
+                  <span key="d" style={{ color: "var(--a-smoke)" }}>
+                    {formatDateDE(a.created_at)}
+                  </span>,
+                  <AdminBadge key="s" variant={APP_STATUS[a.status] ?? "soft"}>
+                    {a.status}
+                  </AdminBadge>,
+                  <div key="a" className="flex items-center gap-1.5">
+                    <AdminBtn
+                      variant="ghost"
+                      disabled={!a.email}
+                      onClick={() => {
+                        if (!a.email) return;
+                        window.location.href = `mailto:${a.email}?subject=${encodeURIComponent(
+                          "Deine Partner-Anfrage bei matchfoundr",
+                        )}`;
+                      }}
+                    >
+                      Antworten
+                    </AdminBtn>
+                    <select
+                      value={a.status}
+                      onChange={(e) => setApplicationStatus(a, e.target.value)}
+                      className="h-8 rounded-lg px-1.5 text-[12px]"
+                      style={{
+                        border: "1px solid var(--a-border-soft)",
+                        background: "var(--a-surface-solid)",
+                        color: "var(--a-ink)",
+                      }}
+                      aria-label="Status setzen"
+                    >
+                      {APP_STATUS_OPTIONS.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>,
+                ]}
+              />
+            ))}
+          </AdminTable>
+        )}
+      </AdminCard>
 
       {/* ── Editor ── */}
       {editing && (
@@ -332,7 +657,7 @@ function AdminPartner() {
           <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[22px] bg-[var(--surface)] p-5 sm:rounded-[22px]">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-[16px] font-bold text-[var(--ink)]">
-                {isNew ? "Neuer Partner" : "Partner bearbeiten"}
+                {isNew ? "Neues Angebot" : "Angebot bearbeiten"}
               </h2>
               <button
                 onClick={() => setEditing(null)}
@@ -386,6 +711,15 @@ function AdminPartner() {
                   />
                 </Field>
               </div>
+
+              <Field label="Vorteil / Perk">
+                <input
+                  value={editing.perk ?? ""}
+                  onChange={(e) => setEditing({ ...editing, perk: e.target.value || null })}
+                  className={inputCls}
+                  placeholder="20 % Rabatt im ersten Jahr"
+                />
+              </Field>
 
               <Field label="Kurzbeschreibung">
                 <textarea
@@ -493,15 +827,23 @@ function AdminPartner() {
                 </div>
               </Field>
 
-              <label className="flex items-center gap-2 text-[13px] font-semibold text-[var(--ink)]">
-                <input
-                  type="checkbox"
-                  checked={editing.is_active}
-                  onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })}
-                  className="h-4 w-4 accent-[var(--ember)]"
-                />
-                Aktiv (sichtbar in App & Web)
-              </label>
+              <Field label="Freigabe-Status">
+                <select
+                  value={editing.review_status}
+                  onChange={(e) =>
+                    setEditing({
+                      ...editing,
+                      review_status: e.target.value,
+                      is_active: e.target.value === "live",
+                    })
+                  }
+                  className={inputCls}
+                >
+                  <option value="review">Freigabe offen</option>
+                  <option value="live">live</option>
+                  <option value="paused">pausiert</option>
+                </select>
+              </Field>
 
               <div className="flex justify-end gap-2 pt-2">
                 <button
@@ -523,29 +865,6 @@ function AdminPartner() {
         </div>
       )}
     </div>
-  );
-}
-
-function FilterChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={
-        active
-          ? "rounded-full bg-[var(--ink)] px-3 py-1.5 text-[12px] font-semibold text-white"
-          : "rounded-full border border-[var(--ruled)] bg-[var(--surface)] px-3 py-1.5 text-[12px] font-semibold text-[var(--smoke)] hover:text-[var(--ink)]"
-      }
-    >
-      {children}
-    </button>
   );
 }
 
