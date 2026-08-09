@@ -595,7 +595,7 @@ function AdminPalette({
   const { data } = useAdminSearchIndex(open);
 
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
+    <CommandDialog open={open} onOpenChange={onOpenChange} contentClassName="admin-tokens">
       <CommandInput placeholder="Sektion, Nutzer, Event, Guide oder Angebot…" />
       <CommandList>
         <CommandEmpty>Nichts gefunden.</CommandEmpty>
