@@ -577,38 +577,35 @@ function TaskDialog({
                     ))}
                   </select>
                 </FormField>
-                <FormField label="Farbe">
+                <FormField label="Kategorie">
                   <select
-                    value={draft.hue}
-                    onChange={(e) => onChange({ ...draft, hue: e.target.value })}
+                    value={draft.tag}
+                    onChange={(e) =>
+                      onChange({ ...draft, tag: e.target.value, hue: categoryHue(e.target.value) })
+                    }
                     className="h-9 w-full rounded-md border px-2 text-[13px]"
                     style={{ borderColor: "var(--a-border)", background: "var(--a-surface-solid)" }}
                   >
-                    {Object.keys(HUES).map((h) => (
-                      <option key={h} value={h}>
-                        {h}
+                    {!TASK_CATEGORIES.some((c) => c.label === draft.tag) && (
+                      <option value={draft.tag}>{draft.tag || "Keine"}</option>
+                    )}
+                    {TASK_CATEGORIES.map((c) => (
+                      <option key={c.label} value={c.label}>
+                        {c.label}
                       </option>
                     ))}
                   </select>
                 </FormField>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <FormField label="Tag">
-                  <Input
-                    value={draft.tag}
-                    onChange={(e) => onChange({ ...draft, tag: e.target.value })}
-                    className="h-9 text-[13px]"
-                  />
-                </FormField>
-                <FormField label="Fällig">
-                  <Input
-                    type="date"
-                    value={draft.due_at}
-                    onChange={(e) => onChange({ ...draft, due_at: e.target.value })}
-                    className="h-9 text-[13px]"
-                  />
-                </FormField>
-              </div>
+              <FormField label="Fällig">
+                <Input
+                  type="date"
+                  value={draft.due_at}
+                  onChange={(e) => onChange({ ...draft, due_at: e.target.value })}
+                  className="h-9 text-[13px]"
+                />
+              </FormField>
+
               <FormField label="Verantwortlich">
                 <select
                   value={draft.assignee_id}
