@@ -65,7 +65,6 @@ function categoryHue(tag: string | null | undefined): Accent {
   return TASK_CATEGORIES.find((c) => c.label === tag)?.hue ?? "soft";
 }
 
-
 type Draft = {
   id?: string;
   title: string;
@@ -255,7 +254,6 @@ function AdminBoard() {
           seed(`Bewerbung prüfen: ${a.company}`, "partner_applications", "Partner"),
         ),
       ];
-
 
       // Nichts doppelt anlegen: gegen vorhandene source+title-Kombis abgleichen.
       const existing = new Set(rows.map((t) => `${t.source ?? ""}::${t.title}`));
@@ -511,7 +509,6 @@ function AdminBoard() {
                   })
                 )}
               </div>
-
             </div>
           );
         })}
