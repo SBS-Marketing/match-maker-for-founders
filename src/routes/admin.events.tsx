@@ -8,7 +8,6 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   CalendarDays,
-  ExternalLink,
   ImagePlus,
   Pencil,
   Plus,
@@ -43,8 +42,6 @@ type EventRow = {
   blurb: string | null;
   agenda: string[];
   banner_image_url: string | null;
-  source_url: string | null;
-  booking_url: string | null;
   is_published: boolean;
   recurrence_group_id?: string | null;
   recurrence_rule?: string | null;
@@ -85,8 +82,6 @@ const EMPTY_FORM: EventRow = {
   blurb: null,
   agenda: [],
   banner_image_url: null,
-  source_url: null,
-  booking_url: null,
   is_published: true,
   recurrence_group_id: null,
   recurrence_rule: null,
@@ -107,7 +102,6 @@ const PREVIEW_EVENTS: EventRow[] = [
     host: "matchfoundr Team",
     blurb: "Lockerer Austausch für kleine Gründer — Padelhalle bis Webdesign-Agentur.",
     agenda: ["Ankommen & Kennenlernen", "3 Kurz-Pitches", "Offenes Netzwerken"],
-    booking_url: "https://www.startplatz.de/events/",
     is_published: true,
   },
   {
@@ -168,7 +162,7 @@ function AdminEvents() {
     supabase
       .from("community_events")
       .select(
-        "id,title,kind,service_id,starts_at,date_label,time_label,city,venue,spots,taken,host,blurb,agenda,banner_image_url,source_url,booking_url,is_published,recurrence_group_id,recurrence_rule",
+        "id,title,kind,service_id,starts_at,date_label,time_label,city,venue,spots,taken,host,blurb,agenda,banner_image_url,is_published,recurrence_group_id,recurrence_rule",
       )
       .order("starts_at", { ascending: true, nullsFirst: false })
       .then(({ data, error }) => {
@@ -238,8 +232,6 @@ function AdminEvents() {
       ...editing,
       id,
       title,
-      source_url: editing.source_url?.trim() || null,
-      booking_url: editing.booking_url?.trim() || null,
       date_label:
         editing.date_label?.trim() ||
         (starts
@@ -413,11 +405,6 @@ function AdminEvents() {
                       <span className="rounded-full border border-[var(--ruled)] px-2 py-0.5 text-[11px] font-bold text-[var(--smoke)]">
                         Serie ·{" "}
                         {RECURRENCE_LABELS[(ev.recurrence_rule as RecurrenceRule) || "weekly"]}
-                      </span>
-                    )}
-                    {(ev.booking_url || ev.source_url) && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-[var(--ruled)] px-2 py-0.5 text-[11px] font-bold text-[var(--smoke)]">
-                        <ExternalLink className="h-3 w-3" /> extern
                       </span>
                     )}
                   </div>
@@ -624,28 +611,8 @@ function AdminEvents() {
                 />
               </Field>
 
-              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                <Field label="Buchungs-URL">
-                  <input
-                    type="url"
-                    value={editing.booking_url ?? ""}
-                    onChange={(e) =>
-                      setEditing({ ...editing, booking_url: e.target.value || null })
-                    }
-                    className={inputCls}
-                    placeholder="https://anbieter.de/anmelden"
-                  />
-                </Field>
-                <Field label="Quellen-URL">
-                  <input
-                    type="url"
-                    value={editing.source_url ?? ""}
-                    onChange={(e) => setEditing({ ...editing, source_url: e.target.value || null })}
-                    className={inputCls}
-                    placeholder="https://anbieter.de/event"
-                  />
-                </Field>
-              </div>
+
+
 
               <Field label="Banner">
                 <div className="flex items-center gap-2.5">

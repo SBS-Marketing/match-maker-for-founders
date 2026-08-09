@@ -192,3 +192,53 @@
     box-shadow: var(--shadow-lg);
   }
 }
+
+/* ===== Admin Panel · Warm Signal ===== */
+.admin-shell {
+  --a-canvas: #FAF8F3;
+  --a-surface: rgba(255, 255, 255, 0.68);
+  --a-surface-solid: #FFFFFF;
+  --a-soft: rgba(23, 21, 15, 0.035);
+  --a-deep: rgba(23, 21, 15, 0.055);
+  --a-ink: #17150F;
+  --a-ink-soft: #2A251F;
+  --a-smoke: #6E665C;
+  --a-faint: #9A9286;
+  --a-ember: #E2511C;
+  --a-ember-deep: #B23B0E;
+  --a-ember-tint: rgba(226, 81, 28, 0.13);
+  --a-indigo: #3756C4;
+  --a-indigo-tint: rgba(55, 86, 196, 0.13);
+  --a-green: #13957A;
+  --a-green-tint: rgba(19, 149, 122, 0.14);
+  --a-amber: #C98A12;
+  --a-amber-tint: rgba(201, 138, 18, 0.16);
+  --a-red: #C33A2B;
+  --a-red-tint: rgba(195, 58, 43, 0.14);
+  --a-border: rgba(255, 255, 255, 0.6);
+  --a-border-soft: rgba(23, 21, 15, 0.06);
+  --a-shadow: 0 2px 6px rgba(23, 21, 15, 0.05), 0 20px 40px -30px rgba(23, 21, 15, 0.35);
+  position: relative;
+  min-height: 100vh;
+  background: var(--a-canvas);
+  color: var(--a-ink);
+  overflow-x: hidden;
+}
+.admin-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  filter: blur(30px);
+  background:
+    radial-gradient(38rem 26rem at 12% 4%, rgba(226, 81, 28, 0.20), transparent 70%),
+    radial-gradient(34rem 24rem at 88% 0%, rgba(55, 86, 196, 0.18), transparent 70%),
+    radial-gradient(32rem 24rem at 78% 92%, rgba(19, 149, 122, 0.16), transparent 70%),
+    radial-gradient(30rem 22rem at 6% 88%, rgba(201, 138, 18, 0.16), transparent 70%);
+}
+.admin-shell > * { position: relative; }
+.admin-glass {
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+}
+.admin-num { font-variant-numeric: tabular-nums; }

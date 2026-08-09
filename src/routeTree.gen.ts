@@ -59,10 +59,14 @@ import { Route as AuthWaitlistConfirmRouteImport } from './routes/auth.waitlist-
 import { Route as AuthUpdatePasswordRouteImport } from './routes/auth.update-password'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ApiSttRouteImport } from './routes/api/stt'
+import { Route as AdminSystemRouteImport } from './routes/admin.system'
 import { Route as AdminPartnerRouteImport } from './routes/admin.partner'
+import { Route as AdminNutzerRouteImport } from './routes/admin.nutzer'
+import { Route as AdminKiRouteImport } from './routes/admin.ki'
 import { Route as AdminGuidesRouteImport } from './routes/admin.guides'
 import { Route as AdminEventsRouteImport } from './routes/admin.events'
 import { Route as AdminCopilotRouteImport } from './routes/admin.copilot'
+import { Route as AdminBoardRouteImport } from './routes/admin.board'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -318,9 +322,24 @@ const ApiSttRoute = ApiSttRouteImport.update({
   path: '/api/stt',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSystemRoute = AdminSystemRouteImport.update({
+  id: '/system',
+  path: '/system',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPartnerRoute = AdminPartnerRouteImport.update({
   id: '/partner',
   path: '/partner',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNutzerRoute = AdminNutzerRouteImport.update({
+  id: '/nutzer',
+  path: '/nutzer',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminKiRoute = AdminKiRouteImport.update({
+  id: '/ki',
+  path: '/ki',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminGuidesRoute = AdminGuidesRouteImport.update({
@@ -336,6 +355,11 @@ const AdminEventsRoute = AdminEventsRouteImport.update({
 const AdminCopilotRoute = AdminCopilotRouteImport.update({
   id: '/copilot',
   path: '/copilot',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBoardRoute = AdminBoardRouteImport.update({
+  id: '/board',
+  path: '/board',
   getParentRoute: () => AdminRoute,
 } as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
@@ -391,10 +415,14 @@ export interface FileRoutesByFullPath {
   '/unterlagen': typeof UnterlagenRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin/board': typeof AdminBoardRoute
   '/admin/copilot': typeof AdminCopilotRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/guides': typeof AdminGuidesRoute
+  '/admin/ki': typeof AdminKiRoute
+  '/admin/nutzer': typeof AdminNutzerRoute
   '/admin/partner': typeof AdminPartnerRoute
+  '/admin/system': typeof AdminSystemRoute
   '/api/stt': typeof ApiSttRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
@@ -445,10 +473,14 @@ export interface FileRoutesByTo {
   '/unterlagen': typeof UnterlagenRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin/board': typeof AdminBoardRoute
   '/admin/copilot': typeof AdminCopilotRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/guides': typeof AdminGuidesRoute
+  '/admin/ki': typeof AdminKiRoute
+  '/admin/nutzer': typeof AdminNutzerRoute
   '/admin/partner': typeof AdminPartnerRoute
+  '/admin/system': typeof AdminSystemRoute
   '/api/stt': typeof ApiSttRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
@@ -506,10 +538,14 @@ export interface FileRoutesById {
   '/unterlagen': typeof UnterlagenRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin/board': typeof AdminBoardRoute
   '/admin/copilot': typeof AdminCopilotRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/guides': typeof AdminGuidesRoute
+  '/admin/ki': typeof AdminKiRoute
+  '/admin/nutzer': typeof AdminNutzerRoute
   '/admin/partner': typeof AdminPartnerRoute
+  '/admin/system': typeof AdminSystemRoute
   '/api/stt': typeof ApiSttRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
@@ -568,10 +604,14 @@ export interface FileRouteTypes {
     | '/unterlagen'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/admin/board'
     | '/admin/copilot'
     | '/admin/events'
     | '/admin/guides'
+    | '/admin/ki'
+    | '/admin/nutzer'
     | '/admin/partner'
+    | '/admin/system'
     | '/api/stt'
     | '/auth/callback'
     | '/auth/update-password'
@@ -622,10 +662,14 @@ export interface FileRouteTypes {
     | '/unterlagen'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/admin/board'
     | '/admin/copilot'
     | '/admin/events'
     | '/admin/guides'
+    | '/admin/ki'
+    | '/admin/nutzer'
     | '/admin/partner'
+    | '/admin/system'
     | '/api/stt'
     | '/auth/callback'
     | '/auth/update-password'
@@ -682,10 +726,14 @@ export interface FileRouteTypes {
     | '/unterlagen'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/admin/board'
     | '/admin/copilot'
     | '/admin/events'
     | '/admin/guides'
+    | '/admin/ki'
+    | '/admin/nutzer'
     | '/admin/partner'
+    | '/admin/system'
     | '/api/stt'
     | '/auth/callback'
     | '/auth/update-password'
@@ -1109,11 +1157,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSttRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/system': {
+      id: '/admin/system'
+      path: '/system'
+      fullPath: '/admin/system'
+      preLoaderRoute: typeof AdminSystemRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/partner': {
       id: '/admin/partner'
       path: '/partner'
       fullPath: '/admin/partner'
       preLoaderRoute: typeof AdminPartnerRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/nutzer': {
+      id: '/admin/nutzer'
+      path: '/nutzer'
+      fullPath: '/admin/nutzer'
+      preLoaderRoute: typeof AdminNutzerRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/ki': {
+      id: '/admin/ki'
+      path: '/ki'
+      fullPath: '/admin/ki'
+      preLoaderRoute: typeof AdminKiRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/guides': {
@@ -1135,6 +1204,13 @@ declare module '@tanstack/react-router' {
       path: '/copilot'
       fullPath: '/admin/copilot'
       preLoaderRoute: typeof AdminCopilotRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/board': {
+      id: '/admin/board'
+      path: '/board'
+      fullPath: '/admin/board'
+      preLoaderRoute: typeof AdminBoardRouteImport
       parentRoute: typeof AdminRoute
     }
     '/.well-known/oauth-protected-resource': {
@@ -1169,18 +1245,26 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminBoardRoute: typeof AdminBoardRoute
   AdminCopilotRoute: typeof AdminCopilotRoute
   AdminEventsRoute: typeof AdminEventsRoute
   AdminGuidesRoute: typeof AdminGuidesRoute
+  AdminKiRoute: typeof AdminKiRoute
+  AdminNutzerRoute: typeof AdminNutzerRoute
   AdminPartnerRoute: typeof AdminPartnerRoute
+  AdminSystemRoute: typeof AdminSystemRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminBoardRoute: AdminBoardRoute,
   AdminCopilotRoute: AdminCopilotRoute,
   AdminEventsRoute: AdminEventsRoute,
   AdminGuidesRoute: AdminGuidesRoute,
+  AdminKiRoute: AdminKiRoute,
+  AdminNutzerRoute: AdminNutzerRoute,
   AdminPartnerRoute: AdminPartnerRoute,
+  AdminSystemRoute: AdminSystemRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
