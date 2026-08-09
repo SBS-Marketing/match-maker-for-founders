@@ -365,20 +365,23 @@ function UserRow({
         <span key="i" className="truncate" style={{ color: "var(--a-smoke)" }}>
           {[user.industry, user.location].filter(Boolean).join(" · ") || "—"}
         </span>,
-        <span key="o" className="truncate" style={{ color: "var(--a-smoke)" }}>
-          {user.location ?? "—"}
-        </span>,
         <span key="r" className="flex flex-wrap items-center gap-1">
           <AdminBadge mono>{user.founder_type ?? "—"}</AdminBadge>
           {user.role === "admin" && <AdminBadge variant="ember">admin</AdminBadge>}
         </span>,
-        <div key="c">
-          <AdminBar
-            value={completeness}
-            color={completeness >= 80 ? "var(--a-green)" : "var(--a-amber)"}
-          />
-          <span style={{ fontSize: 11.5, color: "var(--a-faint)" }}>{completeness} %</span>
-        </div>,
+        completeness === null ? (
+          <span key="c" style={{ color: "var(--a-faint)" }}>
+            —
+          </span>
+        ) : (
+          <div key="c">
+            <AdminBar
+              value={completeness}
+              color={completeness >= 80 ? "var(--a-green)" : "var(--a-amber)"}
+            />
+            <span style={{ fontSize: 11.5, color: "var(--a-faint)" }}>{completeness} %</span>
+          </div>
+        ),
         limit > 0 ? (
           <div key="t">
             <AdminBar value={pct} color={pct >= 100 ? "var(--a-red)" : "var(--a-ember)"} />
