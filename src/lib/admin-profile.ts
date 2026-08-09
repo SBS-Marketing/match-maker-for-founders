@@ -5,8 +5,9 @@
 
 import type { ProfileFields } from "@/hooks/admin/useAdminData";
 
-export function profileCompleteness(user: ProfileFields | undefined): number {
-  if (!user) return 0;
+/** null = keine Profilfelder vorhanden, also keine Aussage möglich. */
+export function profileCompleteness(user: ProfileFields | undefined): number | null {
+  if (!user) return null;
   const filled = [
     user.display_name,
     user.photo_url,
@@ -19,3 +20,4 @@ export function profileCompleteness(user: ProfileFields | undefined): number {
   ].filter((v) => typeof v === "string" && v.trim().length > 0).length;
   return Math.round((filled / 8) * 100);
 }
+
