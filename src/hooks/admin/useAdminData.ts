@@ -88,6 +88,10 @@ const PREVIEW_USAGE: UsageRow[] = (() => {
           ? (prompt * 0.6 + completion * 2.5) / 1e6
           : (prompt * 3 + completion * 15) / 1e6,
         created_at: new Date(now - day * 86_400_000 - i * 3_600_000).toISOString(),
+        latency_ms: kimi ? 1400 + ((day * 53 + i * 97) % 2600) : 3200 + ((day * 71 + i * 41) % 4200),
+        status: (day + i) % 17 === 0 ? "error" : "ok",
+        fallback: !kimi,
+
       });
     }
   }
