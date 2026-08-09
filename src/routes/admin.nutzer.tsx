@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Bot, Check, List, ShieldCheck, Upload, Users } from "lucide-react";
+import { Bot, Check, List, ShieldCheck, Users } from "lucide-react";
 import {
   AdminAvatar,
   AdminBadge,
@@ -210,9 +210,6 @@ function AdminNutzer() {
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <AdminPills options={[...TABS]} value={tab} onChange={setTab} />
           <div className="flex items-center gap-2">
-            <AdminBtn variant="ghost" icon={Upload} onClick={() => {}}>
-              CSV
-            </AdminBtn>
             <AdminBtn variant="primary" icon={ShieldCheck} onClick={() => setRoleDialog(true)}>
               Rolle vergeben
             </AdminBtn>
