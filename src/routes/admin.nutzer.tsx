@@ -70,7 +70,7 @@ type RoleFilter = (typeof ROLE_FILTERS)[number]["value"];
 
 type SortKey = "none" | "completeness" | "tokens";
 
-const USER_COLS = "1.6fr 1fr 0.9fr 1fr 1.1fr 1.2fr 0.7fr";
+const USER_COLS = "2fr 1fr 1fr 1.5fr 1.2fr 0.7fr";
 const WAIT_COLS = "1.6fr 0.9fr 0.9fr 0.8fr 0.8fr";
 
 function AdminNutzer() {
@@ -82,7 +82,15 @@ function AdminNutzer() {
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [sort, setSort] = useState<SortKey>("none");
   const [openUser, setOpenUser] = useState<AdminUser | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [roleDialog, setRoleDialog] = useState(false);
+
+  // Sichtbarkeit und Auswahl bewusst getrennt: derselbe Nutzer lässt sich
+  // erneut öffnen, ohne dass sich `openUser` ändern müsste.
+  function openSheet(user: AdminUser) {
+    setOpenUser(user);
+    setSheetOpen(true);
+  }
 
   const fieldMap = useMemo(() => {
     const map = new Map<string, ProfileFields>();
@@ -105,8 +113,8 @@ function AdminNutzer() {
     if (sort === "completeness") {
       return [...list].sort(
         (a, b) =>
-          profileCompleteness(fieldMap.get(b.user_id)) -
-          profileCompleteness(fieldMap.get(a.user_id)),
+          (profileCompleteness(fieldMap.get(b.user_id)) ?? -1) -
+          (profileCompleteness(fieldMap.get(a.user_id)) ?? -1),
       );
     }
     if (sort === "tokens") {
@@ -149,7 +157,7 @@ function AdminNutzer() {
               u.industry,
               u.location,
               u.role,
-              profileCompleteness(fieldMap.get(u.user_id)),
+              profileCompleteness(fieldMap.get(u.user_id)) ?? "—",
               u.tokens_used ?? 0,
               u.token_limit ?? 0,
             ]),
@@ -239,7 +247,6 @@ function AdminNutzer() {
                 head={[
                   "Profil",
                   "Branche · Ort",
-                  "Ort",
                   "Rolle",
                   <SortHead
                     key="c"
@@ -261,7 +268,7 @@ function AdminNutzer() {
                     key={u.user_id}
                     user={u}
                     completeness={profileCompleteness(fieldMap.get(u.user_id))}
-                    onOpen={() => setOpenUser(u)}
+                    onOpen={() => openSheet(u)}
                   />
                 ))}
               </AdminTable>
@@ -285,7 +292,14 @@ function AdminNutzer() {
         )}
       </AdminCard>
 
-      <UserSheet user={openUser} onClose={() => setOpenUser(null)} />
+      <UserSheet
+        user={openUser}
+        open={sheetOpen}
+        onClose={() => {
+          setSheetOpen(false);
+          setOpenUser(null);
+        }}
+      />
       <GrantRoleDialog open={roleDialog} onOpenChange={setRoleDialog} />
     </div>
   );
@@ -327,7 +341,7 @@ function UserRow({
   onOpen,
 }: {
   user: AdminUser;
-  completeness: number;
+  completeness: number | null;
   onOpen: () => void;
 }) {
   const limit = user.token_limit ?? 0;
@@ -351,20 +365,23 @@ function UserRow({
         <span key="i" className="truncate" style={{ color: "var(--a-smoke)" }}>
           {[user.industry, user.location].filter(Boolean).join(" · ") || "—"}
         </span>,
-        <span key="o" className="truncate" style={{ color: "var(--a-smoke)" }}>
-          {user.location ?? "—"}
-        </span>,
         <span key="r" className="flex flex-wrap items-center gap-1">
           <AdminBadge mono>{user.founder_type ?? "—"}</AdminBadge>
           {user.role === "admin" && <AdminBadge variant="ember">admin</AdminBadge>}
         </span>,
-        <div key="c">
-          <AdminBar
-            value={completeness}
-            color={completeness >= 80 ? "var(--a-green)" : "var(--a-amber)"}
-          />
-          <span style={{ fontSize: 11.5, color: "var(--a-faint)" }}>{completeness} %</span>
-        </div>,
+        completeness === null ? (
+          <span key="c" style={{ color: "var(--a-faint)" }}>
+            —
+          </span>
+        ) : (
+          <div key="c">
+            <AdminBar
+              value={completeness}
+              color={completeness >= 80 ? "var(--a-green)" : "var(--a-amber)"}
+            />
+            <span style={{ fontSize: 11.5, color: "var(--a-faint)" }}>{completeness} %</span>
+          </div>
+        ),
         limit > 0 ? (
           <div key="t">
             <AdminBar value={pct} color={pct >= 100 ? "var(--a-red)" : "var(--a-ember)"} />
@@ -434,7 +451,15 @@ function WaitRow({ row }: { row: WaitlistRow }) {
   );
 }
 
-function UserSheet({ user, onClose }: { user: AdminUser | null; onClose: () => void }) {
+function UserSheet({
+  user,
+  open,
+  onClose,
+}: {
+  user: AdminUser | null;
+  open: boolean;
+  onClose: () => void;
+}) {
   const queryClient = useQueryClient();
   const [limit, setLimit] = useState("");
   const [busy, setBusy] = useState(false);
@@ -484,7 +509,7 @@ function UserSheet({ user, onClose }: { user: AdminUser | null; onClose: () => v
   }
 
   return (
-    <Sheet open={Boolean(user)} onOpenChange={(open) => !open && onClose()}>
+    <Sheet open={open && Boolean(user)} onOpenChange={(next) => !next && onClose()}>
       <SheetContent side="right" className="admin-tokens w-full overflow-y-auto sm:max-w-md">
         {current && (
           <>

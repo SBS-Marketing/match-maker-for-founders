@@ -575,6 +575,33 @@ export type ProfileFields = {
   founder_type: string | null;
 };
 
+// Demo-Profilfelder passend zu PREVIEW_USERS: einer nahezu vollständig,
+// einer mit erkennbaren Lücken.
+const PREVIEW_PROFILE_FIELDS: ProfileFields[] = [
+  {
+    id: "preview-founder-1",
+    display_name: "Marvin Demo",
+    photo_url: "https://i.pravatar.cc/160?img=12",
+    location: "Köln",
+    industry: "Handwerk",
+    skills: ["Elektro", "Kalkulation", "Vertrieb"],
+    vision: "Digitaler Handwerksbetrieb mit fester Servicequote im Rheinland.",
+    looking_for: "Operativer Partner für Einsatzplanung",
+    founder_type: "skill_partner",
+  },
+  {
+    id: "preview-founder-2",
+    display_name: "Aylin Studio",
+    photo_url: null,
+    location: "Essen",
+    industry: "Beauty",
+    skills: [],
+    vision: null,
+    looking_for: "Co-Founder für Marketing",
+    founder_type: "owner",
+  },
+];
+
 export function useProfileFields() {
   const { isPreview, checking } = useIsAdmin();
   return useQuery<ProfileFields[]>({
@@ -582,7 +609,7 @@ export function useProfileFields() {
     enabled: !checking,
     staleTime: 60_000,
     queryFn: async () => {
-      if (isPreview) return [];
+      if (isPreview) return PREVIEW_PROFILE_FIELDS;
       const { data, error } = await supabase
         .from("profiles")
         .select(
