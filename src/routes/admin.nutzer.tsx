@@ -105,8 +105,8 @@ function AdminNutzer() {
     if (sort === "completeness") {
       return [...list].sort(
         (a, b) =>
-          profileCompleteness(fieldMap.get(b.user_id)) -
-          profileCompleteness(fieldMap.get(a.user_id)),
+          (profileCompleteness(fieldMap.get(b.user_id)) ?? -1) -
+          (profileCompleteness(fieldMap.get(a.user_id)) ?? -1),
       );
     }
     if (sort === "tokens") {
