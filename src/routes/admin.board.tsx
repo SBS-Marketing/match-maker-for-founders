@@ -80,8 +80,8 @@ type Draft = {
 const EMPTY_DRAFT: Draft = {
   title: "",
   board_column: "inbox",
-  tag: "",
-  hue: "ember",
+  tag: TASK_CATEGORIES[0].label,
+  hue: TASK_CATEGORIES[0].hue,
   assignee_id: "",
   assignee_name: "",
   due_at: "",
