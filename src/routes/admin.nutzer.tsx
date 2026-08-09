@@ -81,14 +81,14 @@ function AdminNutzer() {
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [sort, setSort] = useState<SortKey>("none");
-  const [openUser, setOpenUser] = useState<AdminUser | null>(null);
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [roleDialog, setRoleDialog] = useState(false);
 
   // Sichtbarkeit und Auswahl bewusst getrennt: derselbe Nutzer lässt sich
   // erneut öffnen, ohne dass sich `openUser` ändern müsste.
-  function openSheet(user: AdminUser) {
-    setOpenUser(user);
+  function openUser(user: AdminUser) {
+    setSelectedUser(user);
     setSheetOpen(true);
   }
 
@@ -268,7 +268,7 @@ function AdminNutzer() {
                     key={u.user_id}
                     user={u}
                     completeness={profileCompleteness(fieldMap.get(u.user_id))}
-                    onOpen={() => openSheet(u)}
+                    onOpen={() => openUser(u)}
                   />
                 ))}
               </AdminTable>
@@ -293,11 +293,11 @@ function AdminNutzer() {
       </AdminCard>
 
       <UserSheet
-        user={openUser}
+        user={selectedUser}
         open={sheetOpen}
         onOpenChange={(next) => {
           setSheetOpen(next);
-          if (!next) setOpenUser(null);
+          if (!next) setSelectedUser(null);
         }}
       />
       <GrantRoleDialog open={roleDialog} onOpenChange={setRoleDialog} />
