@@ -353,36 +353,65 @@ function AdminBoard() {
                 if (dragId) void moveTo(dragId, col.key);
                 setDragId(null);
               }}
+              style={{
+                background: active ? "rgba(226,81,28,0.07)" : "rgba(255,255,255,0.34)",
+                border: `1px solid ${active ? "rgba(226,81,28,0.35)" : "var(--a-border)"}`,
+                borderRadius: 16,
+                padding: 10,
+                minHeight: 320,
+                backdropFilter: "blur(20px) saturate(1.5)",
+                transition: "background 160ms ease, border-color 160ms ease",
+              }}
             >
-              <AdminCard
-                padding={12}
-                style={
-                  active
-                    ? { borderColor: "var(--a-ember)", background: "var(--a-ember-tint)" }
-                    : undefined
-                }
+              <div
+                className="flex items-center justify-between gap-2"
+                style={{ padding: "4px 6px 10px" }}
               >
-                <div className="mb-2.5 flex items-center justify-between gap-2">
-                  <span style={{ fontSize: 13.5, fontWeight: 650 }}>{col.label}</span>
-                  <div className="flex items-center gap-1.5">
-                    <AdminBadge>{list.length}</AdminBadge>
-                    <AdminBtn
-                      icon={Plus}
-                      title="Aufgabe hinzufügen"
-                      onClick={() => setDraft({ ...EMPTY_DRAFT, board_column: col.key })}
-                    />
-                  </div>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--a-ink)" }}>
+                  {col.label}
+                </span>
+                <div className="flex items-center gap-1">
+                  <span
+                    style={{
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      color: "var(--a-smoke)",
+                      background: "var(--a-deep)",
+                      borderRadius: 99,
+                      padding: "2px 8px",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {list.length}
+                  </span>
+                  <AdminBtn
+                    icon={Plus}
+                    variant="quiet"
+                    title="Aufgabe hinzufügen"
+                    onClick={() => setDraft({ ...EMPTY_DRAFT, board_column: col.key })}
+                  />
                 </div>
-                <div className="flex flex-col gap-2">
-                  {list.length === 0 ? (
-                    <p
-                      className="py-6 text-center"
-                      style={{ fontSize: 12.5, color: "var(--a-faint)" }}
-                    >
-                      Nichts hier
-                    </p>
-                  ) : (
-                    list.map((task) => (
+              </div>
+              <div className="flex flex-col" style={{ gap: 9 }}>
+                {list.length === 0 ? (
+                  <p
+                    className="text-center"
+                    style={{
+                      border: "1px dashed var(--a-border-soft)",
+                      borderRadius: 12,
+                      padding: "18px 10px",
+                      fontSize: 12,
+                      color: "var(--a-faint)",
+                    }}
+                  >
+                    Karte hierher ziehen
+                  </p>
+                ) : (
+                  list.map((task) => {
+                    const hue = categoryHue(task.tag);
+                    const dragging = dragId === task.id;
+                    const due = task.due_at ? isDueSoon(task.due_at) : false;
+                    return (
                       <button
                         key={task.id}
                         type="button"
@@ -403,35 +432,86 @@ function AdminBoard() {
                         }
                         className="w-full text-left transition"
                         style={{
-                          background: "var(--a-surface-solid)",
-                          border: "1px solid var(--a-border-soft)",
-                          borderLeft: `3px solid ${hueColor(task.hue)}`,
-                          borderRadius: 11,
-                          padding: "10px 11px",
-                          opacity: dragId === task.id ? 0.45 : 1,
+                          background: dragging ? "rgba(255,255,255,0.94)" : "var(--a-surface)",
+                          backdropFilter: "blur(20px) saturate(1.5)",
+                          border: "1px solid var(--a-border)",
+                          outline: "1px solid var(--a-border-soft)",
+                          outlineOffset: -1,
+                          borderRadius: 13,
+                          padding: "11px 12px",
+                          boxShadow: "var(--a-shadow)",
+                          opacity: dragging ? 0.55 : 1,
                           cursor: "grab",
                         }}
                       >
-                        <p style={{ fontSize: 13, fontWeight: 600 }}>{task.title}</p>
-                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                          {task.tag && <AdminBadge>{task.tag}</AdminBadge>}
-                          {task.source && <AdminBadge variant="indigo">{task.source}</AdminBadge>}
-                          {task.due_at && (
-                            <AdminBadge variant={isDueSoon(task.due_at) ? "red" : "soft"}>
-                              {dueLabelDE(task.due_at)}
-                            </AdminBadge>
-                          )}
-                          {task.assignee_name && (
-                            <span className="ml-auto">
-                              <AdminAvatar name={task.assignee_name} size={22} />
-                            </span>
-                          )}
-                        </div>
+                        {task.tag && (
+                          <div style={{ marginBottom: 7 }}>
+                            <AdminBadge variant={hue}>{task.tag}</AdminBadge>
+                          </div>
+                        )}
+                        <p
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            lineHeight: 1.35,
+                            textWrap: "pretty",
+                          }}
+                        >
+                          {task.title}
+                        </p>
+                        {task.source && (
+                          <p
+                            className="font-mono"
+                            style={{
+                              marginTop: 5,
+                              fontSize: 10.5,
+                              color: "var(--a-faint)",
+                              overflowWrap: "anywhere",
+                            }}
+                          >
+                            {task.source}
+                          </p>
+                        )}
+                        {(task.assignee_name || task.due_at) && (
+                          <div
+                            className="flex items-center justify-between gap-2"
+                            style={{ marginTop: 10 }}
+                          >
+                            {task.assignee_name ? (
+                              <span className="flex min-w-0 items-center gap-1.5">
+                                <AdminAvatar name={task.assignee_name} size={22} />
+                                <span
+                                  className="truncate"
+                                  style={{ fontSize: 11.5, color: "var(--a-smoke)" }}
+                                >
+                                  {task.assignee_name.split(/[\s@]/)[0] || task.assignee_name}
+                                </span>
+                              </span>
+                            ) : (
+                              <span />
+                            )}
+                            {task.due_at && (
+                              <span
+                                className="flex items-center gap-1"
+                                style={{
+                                  fontSize: 11.5,
+                                  fontWeight: 600,
+                                  whiteSpace: "nowrap",
+                                  color: due ? "var(--a-ember)" : "var(--a-faint)",
+                                }}
+                              >
+                                <Clock size={12} strokeWidth={2} />
+                                {dueLabelDE(task.due_at)}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </button>
-                    ))
-                  )}
-                </div>
-              </AdminCard>
+                    );
+                  })
+                )}
+              </div>
+
             </div>
           );
         })}
