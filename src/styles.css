@@ -253,6 +253,6 @@
 .admin-shell > * { position: relative; }
 .admin-glass {
   backdrop-filter: blur(20px) saturate(1.5);
-  -webkit-backdrop-filter: blur(20px) saturate(1.5);
 }
+
 .admin-num { font-variant-numeric: tabular-nums; }
