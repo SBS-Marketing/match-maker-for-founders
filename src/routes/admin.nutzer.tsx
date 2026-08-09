@@ -82,7 +82,15 @@ function AdminNutzer() {
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [sort, setSort] = useState<SortKey>("none");
   const [openUser, setOpenUser] = useState<AdminUser | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [roleDialog, setRoleDialog] = useState(false);
+
+  // Sichtbarkeit und Auswahl bewusst getrennt: derselbe Nutzer lässt sich
+  // erneut öffnen, ohne dass sich `openUser` ändern müsste.
+  function openSheet(user: AdminUser) {
+    setOpenUser(user);
+    setSheetOpen(true);
+  }
 
   const fieldMap = useMemo(() => {
     const map = new Map<string, ProfileFields>();
