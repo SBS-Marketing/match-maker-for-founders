@@ -60,7 +60,9 @@ type Draft = {
   title: string;
   board_column: string;
   tag: string;
-  hue: string;
+  hue: TaskAccent;
+  /** Eigene Kategorie: Name und Farbe werden frei gewählt. */
+  custom: boolean;
   assignee_id: string;
   assignee_name: string;
   due_at: string;
@@ -69,8 +71,9 @@ type Draft = {
 const EMPTY_DRAFT: Draft = {
   title: "",
   board_column: "inbox",
-  tag: TASK_CATEGORIES[0].label,
-  hue: TASK_CATEGORIES[0].hue,
+  tag: "",
+  hue: "soft",
+  custom: false,
   assignee_id: "",
   assignee_name: "",
   due_at: "",
