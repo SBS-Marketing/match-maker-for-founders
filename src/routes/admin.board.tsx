@@ -526,7 +526,12 @@ function TaskDialog({
   onDelete: (id: string) => void;
 }) {
   return (
-    <Dialog open={Boolean(draft)} onOpenChange={(open) => !open && onClose()}>
+    <Dialog
+      open={Boolean(draft)}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className="admin-tokens sm:max-w-md">
         {draft && (
           <>
@@ -617,7 +622,13 @@ function TaskDialog({
             </div>
             <DialogFooter className="gap-2">
               {draft.id && (
-                <AdminBtn variant="quiet" icon={Trash2} onClick={() => onDelete(draft.id!)}>
+                <AdminBtn
+                  variant="quiet"
+                  icon={Trash2}
+                  onClick={() => {
+                    if (draft.id) onDelete(draft.id);
+                  }}
+                >
                   Löschen
                 </AdminBtn>
               )}

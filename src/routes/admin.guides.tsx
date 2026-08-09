@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { BookOpen, Plus, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
@@ -26,6 +26,7 @@ import {
 } from "@/components/admin/ui";
 import { useSectionActions } from "@/components/admin/context";
 import { formatDateDE } from "@/lib/admin-format";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/admin/guides")({
   head: () => ({ meta: [{ title: "Guides — Admin · matchfoundr" }] }),
@@ -367,22 +368,16 @@ function AdminGuides() {
       </div>
 
       {/* ── Editor ── */}
-      {editing && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-6">
-          <div className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-t-[22px] bg-[var(--surface)] p-5 sm:rounded-[22px]">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-[16px] font-bold text-[var(--ink)]">
-                {editing.id ? "Guide bearbeiten" : "Neuer Guide"}
-              </h2>
-              <button
-                onClick={() => setEditing(null)}
-                className="rounded-lg p-1.5 text-[var(--smoke)]"
-                aria-label="Schließen"
-              >
-                <X className="h-4.5 w-4.5" />
-              </button>
-            </div>
-
+      {/* prettier-ignore */}
+      <Dialog open={Boolean(editing)} onOpenChange={(open) => {
+        if (!open) setEditing(null);
+      }}>
+        <DialogContent className="admin-tokens max-h-[min(85vh,640px)] overflow-y-auto sm:max-w-xl">
+          {editing && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{editing.id ? "Guide bearbeiten" : "Neuer Guide"}</DialogTitle>
+              </DialogHeader>
             <div className="space-y-3">
               <Field label="Titel *">
                 <input
@@ -504,9 +499,10 @@ function AdminGuides() {
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 

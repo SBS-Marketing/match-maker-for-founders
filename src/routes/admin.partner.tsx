@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, ImagePlus, Plus, Sparkles, Store, Trash2, Users, X } from "lucide-react";
+import { Check, ImagePlus, Plus, Sparkles, Store, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -30,6 +30,7 @@ import {
 } from "@/components/admin/ui";
 import { useSectionActions } from "@/components/admin/context";
 import { downloadCsv, formatDateDE } from "@/lib/admin-format";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/admin/partner")({
   head: () => ({ meta: [{ title: "Partner-Angebote — Admin · matchfoundr" }] }),
@@ -653,22 +654,16 @@ function AdminPartner() {
       </AdminCard>
 
       {/* ── Editor ── */}
-      {editing && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-6">
-          <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[22px] bg-[var(--surface)] p-5 sm:rounded-[22px]">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-[16px] font-bold text-[var(--ink)]">
-                {isNew ? "Neues Angebot" : "Angebot bearbeiten"}
-              </h2>
-              <button
-                onClick={() => setEditing(null)}
-                className="rounded-lg p-1.5 text-[var(--smoke)]"
-                aria-label="Schließen"
-              >
-                <X className="h-4.5 w-4.5" />
-              </button>
-            </div>
-
+      {/* prettier-ignore */}
+      <Dialog open={Boolean(editing)} onOpenChange={(open) => {
+        if (!open) setEditing(null);
+      }}>
+        <DialogContent className="admin-tokens max-h-[min(85vh,640px)] overflow-y-auto sm:max-w-lg">
+          {editing && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{isNew ? "Neues Angebot" : "Angebot bearbeiten"}</DialogTitle>
+              </DialogHeader>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2.5">
                 <Field label="Name / Angebot *">
@@ -862,9 +857,10 @@ function AdminPartner() {
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

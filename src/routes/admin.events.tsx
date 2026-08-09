@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Check, ImagePlus, Plus, Ticket, Trash2, Users, X } from "lucide-react";
+import { CalendarDays, Check, ImagePlus, Plus, Ticket, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,6 +29,7 @@ import {
 } from "@/components/admin/ui";
 import { useSectionActions } from "@/components/admin/context";
 import { dateTimeDE, downloadCsv, relativeDE } from "@/lib/admin-format";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/admin/events")({
   head: () => ({ meta: [{ title: "Events — Admin · matchfoundr" }] }),
@@ -597,22 +598,16 @@ function AdminEvents() {
       </AdminCard>
 
       {/* ── Editor ── */}
-      {editing && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-6">
-          <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[22px] bg-[var(--surface)] p-5 sm:rounded-[22px]">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-[16px] font-bold text-[var(--ink)]">
-                {isNew ? "Neues Event" : "Event bearbeiten"}
-              </h2>
-              <button
-                onClick={() => setEditing(null)}
-                className="rounded-lg p-1.5 text-[var(--smoke)]"
-                aria-label="Schließen"
-              >
-                <X className="h-4.5 w-4.5" />
-              </button>
-            </div>
-
+      {/* prettier-ignore */}
+      <Dialog open={Boolean(editing)} onOpenChange={(open) => {
+        if (!open) setEditing(null);
+      }}>
+        <DialogContent className="admin-tokens max-h-[min(85vh,640px)] overflow-y-auto sm:max-w-lg">
+          {editing && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{isNew ? "Neues Event" : "Event bearbeiten"}</DialogTitle>
+              </DialogHeader>
             <div className="space-y-3">
               <Field label="Titel *">
                 <input
@@ -851,9 +846,10 @@ function AdminEvents() {
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
