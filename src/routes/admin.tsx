@@ -8,7 +8,9 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Bell,
+  Bot,
   BookOpen,
+
   CalendarDays,
   CircleHelp,
   Coins,
