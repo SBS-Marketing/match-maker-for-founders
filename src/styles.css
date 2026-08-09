@@ -194,6 +194,9 @@
 }
 
 /* ===== Admin Panel · Warm Signal ===== */
+/* Nur Design-Tokens — kein Layout, kein Hintergrund, kein Filter.
+   Für Portal-Inhalte (Dialog, Sheet, Popover, …) verwenden. */
+.admin-tokens,
 .admin-shell {
   --a-canvas: #FAF8F3;
   --a-surface: rgba(255, 255, 255, 0.68);
@@ -218,12 +221,23 @@
   --a-border: rgba(255, 255, 255, 0.6);
   --a-border-soft: rgba(23, 21, 15, 0.06);
   --a-shadow: 0 2px 6px rgba(23, 21, 15, 0.05), 0 20px 40px -30px rgba(23, 21, 15, 0.35);
+}
+.admin-tokens {
+  color: var(--a-ink);
+}
+.admin-shell {
   position: relative;
   min-height: 100vh;
   background: var(--a-canvas);
   color: var(--a-ink);
   overflow-x: hidden;
 }
+/* Scrollbarer Inhaltsbereich in Admin-Dialogen */
+.admin-dialog-body {
+  max-height: min(85vh, 640px);
+  overflow-y: auto;
+}
+
 .admin-shell::before {
   content: "";
   position: fixed;
