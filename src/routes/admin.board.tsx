@@ -32,7 +32,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TASK_CATEGORIES, categoryHue } from "@/lib/admin-task-categories";
+import {
+  ACCENT_DOTS,
+  ACCENT_LABELS,
+  TASK_ACCENTS,
+  TASK_CATEGORIES,
+  isTaskAccent,
+  taskHue,
+  type TaskAccent,
+} from "@/lib/admin-task-categories";
 
 export const Route = createFileRoute("/admin/board")({
   head: () => ({ meta: [{ title: "Team-Board — Admin · matchfoundr" }] }),
