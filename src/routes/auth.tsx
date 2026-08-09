@@ -37,6 +37,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState<"google" | "apple" | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -93,18 +94,32 @@ function AuthPage() {
   };
 
   const oauth = async (provider: "google" | "apple") => {
-    const { lovable } = await import("@/integrations/lovable/index");
-    const result = await lovable.auth.signInWithOAuth(provider, {
-      redirect_uri: next ? `${window.location.origin}${next}` : `${window.location.origin}/auth/callback`,
+    if (oauthLoading) return;
+    setOauthLoading(provider);
+    const redirectTo = next
+      ? `${window.location.origin}${next}`
+      : `${window.location.origin}/auth/callback`;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo,
+        ...(provider === "google"
+          ? { queryParams: { access_type: "offline", prompt: "consent" } }
+          : {}),
+      },
     });
-    if (result.error) {
-      toast.error(result.error.message ?? "Login fehlgeschlagen");
-      return;
+    if (error) {
+      // Supabase meldet einen nicht aktivierten Provider als "provider is not enabled".
+      const notEnabled = /not enabled|unsupported provider/i.test(error.message);
+      toast.error(
+        notEnabled
+          ? `${provider === "google" ? "Google" : "Apple"}-Login ist im Supabase-Projekt noch nicht aktiviert.`
+          : (error.message ?? "Login fehlgeschlagen"),
+      );
+      setOauthLoading(null);
     }
-    if (result.redirected) return;
-    navigate({ to: "/heute" });
+    // Bei Erfolg übernimmt Supabase die Weiterleitung zum Provider.
   };
-
 
   const skipAuth = () => {
     enterDemo();
@@ -147,17 +162,19 @@ function AuthPage() {
           variant="outline"
           className="h-11 w-full gap-2 rounded-xl border-white/60 bg-white/40 backdrop-blur"
           onClick={() => oauth("google")}
+          disabled={oauthLoading !== null}
         >
           <GoogleIcon className="h-4 w-4" />
-          Mit Google fortfahren
+          {oauthLoading === "google" ? "Weiterleiten…" : "Mit Google fortfahren"}
         </Button>
         <Button
           variant="outline"
           className="mt-2 h-11 w-full gap-2 rounded-xl border-white/60 bg-white/40 backdrop-blur"
           onClick={() => oauth("apple")}
+          disabled={oauthLoading !== null}
         >
           <AppleIcon className="h-4 w-4" />
-          Mit Apple fortfahren
+          {oauthLoading === "apple" ? "Weiterleiten…" : "Mit Apple fortfahren"}
         </Button>
         <div className="my-5 flex items-center gap-3 text-[11px] font-mono uppercase tracking-[0.18em] text-[var(--smoke)]">
           <div className="h-px flex-1 bg-[var(--ruled)]" /> oder{" "}
