@@ -295,9 +295,9 @@ function AdminNutzer() {
       <UserSheet
         user={openUser}
         open={sheetOpen}
-        onClose={() => {
-          setSheetOpen(false);
-          setOpenUser(null);
+        onOpenChange={(next) => {
+          setSheetOpen(next);
+          if (!next) setOpenUser(null);
         }}
       />
       <GrantRoleDialog open={roleDialog} onOpenChange={setRoleDialog} />
@@ -454,11 +454,11 @@ function WaitRow({ row }: { row: WaitlistRow }) {
 function UserSheet({
   user,
   open,
-  onClose,
+  onOpenChange,
 }: {
   user: AdminUser | null;
   open: boolean;
-  onClose: () => void;
+  onOpenChange: (next: boolean) => void;
 }) {
   const queryClient = useQueryClient();
   const [limit, setLimit] = useState("");
@@ -505,11 +505,11 @@ function UserSheet({
     toast.success(isAdmin ? "Admin-Rolle entzogen." : "Admin-Rolle vergeben.");
     void queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
     void queryClient.invalidateQueries({ queryKey: ["admin", "roles"] });
-    onClose();
+    onOpenChange(false);
   }
 
   return (
-    <Sheet open={open && Boolean(user)} onOpenChange={(next) => !next && onClose()}>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="admin-tokens w-full overflow-y-auto sm:max-w-md">
         {current && (
           <>

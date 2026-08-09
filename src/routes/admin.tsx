@@ -163,6 +163,16 @@ function AdminShell() {
     setCollapsed(localStorage.getItem("mf_admin_sidebar") === "collapsed");
   }, []);
 
+  useEffect(
+    () => () => {
+      if (document.body.style.pointerEvents === "none") {
+        document.body.style.removeProperty("pointer-events");
+        if (!document.body.getAttribute("style")) document.body.removeAttribute("style");
+      }
+    },
+    [],
+  );
+
   function toggleCollapsed() {
     setCollapsed((prev) => {
       localStorage.setItem("mf_admin_sidebar", prev ? "open" : "collapsed");
