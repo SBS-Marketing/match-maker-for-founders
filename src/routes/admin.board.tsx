@@ -230,32 +230,32 @@ function AdminBoard() {
         return;
       }
 
+      const seed = (title: string, source: string, tag: string): SeedRow => ({
+        title,
+        source,
+        tag,
+        hue: categoryHue(tag),
+      });
+
       const candidates: SeedRow[] = [
-        ...(offers.data ?? []).map((o) => ({
-          title: `Angebot freigeben: ${o.name}${o.firm ? ` (${o.firm})` : ""}`,
-          source: "partner_offers",
-          tag: "Freigabe",
-          hue: "amber",
-        })),
-        ...(events.data ?? []).map((e) => ({
-          title: `Event veröffentlichen: ${e.title}`,
-          source: "community_events",
-          tag: "Event",
-          hue: "indigo",
-        })),
-        ...(guides.data ?? []).map((g) => ({
-          title: `Guide fertigstellen: ${g.title}`,
-          source: "guides",
-          tag: "Inhalt",
-          hue: "ember",
-        })),
-        ...(applications.data ?? []).map((a) => ({
-          title: `Bewerbung prüfen: ${a.company}`,
-          source: "partner_applications",
-          tag: "Partner",
-          hue: "green",
-        })),
+        ...(offers.data ?? []).map((o) =>
+          seed(
+            `Angebot freigeben: ${o.name}${o.firm ? ` (${o.firm})` : ""}`,
+            "partner_offers",
+            "Freigabe",
+          ),
+        ),
+        ...(events.data ?? []).map((e) =>
+          seed(`Event veröffentlichen: ${e.title}`, "community_events", "Event"),
+        ),
+        ...(guides.data ?? []).map((g) =>
+          seed(`Guide fertigstellen: ${g.title}`, "guides", "Inhalt"),
+        ),
+        ...(applications.data ?? []).map((a) =>
+          seed(`Bewerbung prüfen: ${a.company}`, "partner_applications", "Partner"),
+        ),
       ];
+
 
       // Nichts doppelt anlegen: gegen vorhandene source+title-Kombis abgleichen.
       const existing = new Set(rows.map((t) => `${t.source ?? ""}::${t.title}`));
