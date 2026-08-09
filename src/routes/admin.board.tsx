@@ -46,24 +46,8 @@ const COLUMNS = [
   { key: "done", label: "Erledigt" },
 ] as const;
 
-type Accent = "soft" | "ember" | "indigo" | "green" | "amber" | "red";
+import { TASK_CATEGORIES, categoryHue } from "@/lib/admin-task-categories";
 
-/** Kategorie und Farbe liegen bewusst an einer Stelle zusammen. */
-export const TASK_CATEGORIES: { label: string; hue: Accent }[] = [
-  { label: "Freigabe", hue: "amber" },
-  { label: "Event", hue: "green" },
-  { label: "Inhalt", hue: "indigo" },
-  { label: "Partner", hue: "ember" },
-  { label: "Community", hue: "green" },
-  { label: "Daten", hue: "indigo" },
-  { label: "Co-Pilot", hue: "indigo" },
-  { label: "System", hue: "soft" },
-];
-
-/** Altbestände ohne bekannte Kategorie werden neutral dargestellt. */
-function categoryHue(tag: string | null | undefined): Accent {
-  return TASK_CATEGORIES.find((c) => c.label === tag)?.hue ?? "soft";
-}
 
 type Draft = {
   id?: string;
