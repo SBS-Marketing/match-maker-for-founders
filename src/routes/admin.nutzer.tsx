@@ -448,7 +448,15 @@ function WaitRow({ row }: { row: WaitlistRow }) {
   );
 }
 
-function UserSheet({ user, onClose }: { user: AdminUser | null; onClose: () => void }) {
+function UserSheet({
+  user,
+  open,
+  onClose,
+}: {
+  user: AdminUser | null;
+  open: boolean;
+  onClose: () => void;
+}) {
   const queryClient = useQueryClient();
   const [limit, setLimit] = useState("");
   const [busy, setBusy] = useState(false);
