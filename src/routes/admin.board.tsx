@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TASK_CATEGORIES, categoryHue } from "@/lib/admin-task-categories";
 
 export const Route = createFileRoute("/admin/board")({
   head: () => ({ meta: [{ title: "Team-Board — Admin · matchfoundr" }] }),
@@ -46,7 +47,7 @@ const COLUMNS = [
   { key: "done", label: "Erledigt" },
 ] as const;
 
-import { TASK_CATEGORIES, categoryHue } from "@/lib/admin-task-categories";
+
 
 
 type Draft = {
