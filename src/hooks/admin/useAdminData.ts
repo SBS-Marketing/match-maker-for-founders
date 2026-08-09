@@ -18,7 +18,21 @@ export type UsageRow = {
   completion_tokens: number;
   cost_usd: number;
   created_at: string;
+  latency_ms: number;
+  status: string;
+  fallback: boolean;
 };
+
+export type TokenGrant = {
+  id: string;
+  user_id: string;
+  display_name: string | null;
+  token_limit: number;
+  tokens_used: number;
+  period: string;
+  note: string | null;
+};
+
 
 export type AdminUser = {
   user_id: string;
