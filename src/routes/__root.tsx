@@ -147,7 +147,9 @@ function RootComponent() {
 
   // Landing + öffentliche Firmenprofile (/s/…) = eigene Seiten ohne App-Chrome.
   // Auth/Onboarding = bildschirmfüllende Flows. Alles andere = App-Shell.
-  const isBare = pathname === "/" || pathname.startsWith("/s/");
+  // Admin ist ein eigenständiger Vollbild-Screen ohne App-Navigation/Topbar/Co-Pilot-Dock.
+  const isBare =
+    pathname === "/" || pathname.startsWith("/s/") || pathname.startsWith("/admin");
   const isOnboarding = pathname.startsWith("/onboarding");
   const isFlow = pathname.startsWith("/auth") || isOnboarding;
 
