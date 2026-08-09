@@ -559,3 +559,147 @@ export function useTokenGrants() {
     },
   });
 }
+
+// ── Schritt 2: Nutzer, Warteliste, Board, System ──────────────
+
+/** Profilfelder für die Vollständigkeits-Berechnung. */
+export type ProfileFields = {
+  id: string;
+  display_name: string | null;
+  photo_url: string | null;
+  location: string | null;
+  industry: string | null;
+  skills: string[] | null;
+  vision: string | null;
+  looking_for: string | null;
+  founder_type: string | null;
+};
+
+export function useProfileFields() {
+  const { isPreview, checking } = useIsAdmin();
+  return useQuery<ProfileFields[]>({
+    queryKey: ["admin", "profile-fields", isPreview],
+    enabled: !checking,
+    staleTime: 60_000,
+    queryFn: async () => {
+      if (isPreview) return [];
+      const { data, error } = await supabase
+        .from("profiles")
+        .select(
+          "id,display_name,photo_url,location,industry,skills,vision,looking_for,founder_type",
+        )
+        .limit(2000);
+      if (error) fail("Profile laden fehlgeschlagen", error.message);
+      return (data ?? []) as ProfileFields[];
+    },
+  });
+}
+
+export type WaitlistRow = {
+  id: string;
+  email: string;
+  name: string | null;
+  status: string;
+  confirmed_at: string | null;
+  created_at: string;
+  metadata: unknown;
+};
+
+export function useWaitlist() {
+  const { isPreview, checking } = useIsAdmin();
+  return useQuery<WaitlistRow[]>({
+    queryKey: ["admin", "waitlist", isPreview],
+    enabled: !checking,
+    staleTime: 60_000,
+    queryFn: async () => {
+      if (isPreview) return [];
+      const { data, error } = await supabase
+        .from("waitlist")
+        .select("id,email,name,status,confirmed_at,created_at,metadata")
+        .order("created_at", { ascending: false })
+        .limit(1000);
+      if (error) fail("Warteliste laden fehlgeschlagen", error.message);
+      return (data ?? []) as WaitlistRow[];
+    },
+  });
+}
+
+export type BoardTask = {
+  id: string;
+  title: string;
+  board_column: string;
+  source: string | null;
+  tag: string | null;
+  hue: string;
+  assignee_id: string | null;
+  assignee_name: string | null;
+  due_at: string | null;
+  due_label: string | null;
+  position: number;
+};
+
+export function useBoardTasks() {
+  const { isPreview, checking } = useIsAdmin();
+  return useQuery<BoardTask[]>({
+    queryKey: ["admin", "board-tasks", isPreview],
+    enabled: !checking,
+    staleTime: 30_000,
+    queryFn: async () => {
+      if (isPreview) return [];
+      const { data, error } = await supabase
+        .from("admin_tasks")
+        .select(
+          "id,title,board_column,source,tag,hue,assignee_id,assignee_name,due_at,due_label,position",
+        )
+        .order("position", { ascending: true })
+        .limit(500);
+      if (error) fail("Aufgaben laden fehlgeschlagen", error.message);
+      return (data ?? []) as BoardTask[];
+    },
+  });
+}
+
+export type AdminRoleRow = {
+  user_id: string;
+  email: string | null;
+  display_name: string | null;
+  role: string;
+  since: string;
+};
+
+export function useAdminRoles() {
+  const { isPreview, checking } = useIsAdmin();
+  return useQuery<AdminRoleRow[]>({
+    queryKey: ["admin", "roles", isPreview],
+    enabled: !checking,
+    staleTime: 60_000,
+    queryFn: async () => {
+      if (isPreview) return [];
+      const { data, error } = await supabase.rpc("admin_list_roles");
+      if (error) fail("Rollen laden fehlgeschlagen", error.message);
+      return (data ?? []) as AdminRoleRow[];
+    },
+  });
+}
+
+export type ConnectorStat = {
+  name: string;
+  source_table: string;
+  users: number;
+  state: string;
+};
+
+export function useConnectorStats() {
+  const { isPreview, checking } = useIsAdmin();
+  return useQuery<ConnectorStat[]>({
+    queryKey: ["admin", "connectors", isPreview],
+    enabled: !checking,
+    staleTime: 60_000,
+    queryFn: async () => {
+      if (isPreview) return [];
+      const { data, error } = await supabase.rpc("admin_connector_stats");
+      if (error) fail("Konnektoren laden fehlgeschlagen", error.message);
+      return (data ?? []) as ConnectorStat[];
+    },
+  });
+}
