@@ -32,7 +32,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TASK_CATEGORIES, categoryHue } from "@/lib/admin-task-categories";
+import {
+  ACCENT_DOTS,
+  ACCENT_LABELS,
+  TASK_ACCENTS,
+  TASK_CATEGORIES,
+  isTaskAccent,
+  taskHue,
+  type TaskAccent,
+} from "@/lib/admin-task-categories";
 
 export const Route = createFileRoute("/admin/board")({
   head: () => ({ meta: [{ title: "Team-Board — Admin · matchfoundr" }] }),
@@ -52,7 +60,9 @@ type Draft = {
   title: string;
   board_column: string;
   tag: string;
-  hue: string;
+  hue: TaskAccent;
+  /** Eigene Kategorie: Name und Farbe werden frei gewählt. */
+  custom: boolean;
   assignee_id: string;
   assignee_name: string;
   due_at: string;
@@ -61,8 +71,9 @@ type Draft = {
 const EMPTY_DRAFT: Draft = {
   title: "",
   board_column: "inbox",
-  tag: TASK_CATEGORIES[0].label,
-  hue: TASK_CATEGORIES[0].hue,
+  tag: "",
+  hue: "soft",
+  custom: false,
   assignee_id: "",
   assignee_name: "",
   due_at: "",
@@ -94,6 +105,18 @@ function AdminBoard() {
   const rows = useMemo(() => tasks.data ?? [], [tasks.data]);
 
   const admins = useMemo(() => (roles.data ?? []).filter((r) => r.role === "admin"), [roles.data]);
+
+  /** Vorgaben plus alle Kategorien, die bereits in der Datenbank vorkommen. */
+  const categoryOptions = useMemo(() => {
+    const map = new Map<string, TaskAccent>();
+    for (const c of TASK_CATEGORIES) map.set(c.label, c.hue);
+    for (const task of rows) {
+      const tag = task.tag?.trim();
+      if (!tag || map.has(tag)) continue;
+      map.set(tag, taskHue(task));
+    }
+    return [...map].map(([label, hue]) => ({ label, hue }));
+  }, [rows]);
 
   const personOptions = useMemo(
     () => [
@@ -215,7 +238,7 @@ function AdminBoard() {
         title,
         source,
         tag,
-        hue: categoryHue(tag),
+        hue: taskHue({ tag }),
       });
 
       const candidates: SeedRow[] = [
@@ -297,6 +320,7 @@ function AdminBoard() {
         <TaskDialog
           draft={draft}
           admins={admins}
+          categories={categoryOptions}
           onChange={setDraft}
           onClose={() => setDraft(null)}
           onSave={save}
@@ -388,7 +412,7 @@ function AdminBoard() {
                   </p>
                 ) : (
                   list.map((task) => {
-                    const hue = categoryHue(task.tag);
+                    const hue = taskHue(task);
                     const dragging = dragId === task.id;
                     const due = task.due_at ? isDueSoon(task.due_at) : false;
                     return (
@@ -404,7 +428,8 @@ function AdminBoard() {
                             title: task.title,
                             board_column: task.board_column,
                             tag: task.tag ?? "",
-                            hue: task.hue,
+                            hue,
+                            custom: false,
                             assignee_id: task.assignee_id ?? "",
                             assignee_name: task.assignee_name ?? "",
                             due_at: task.due_at ?? "",
@@ -499,6 +524,7 @@ function AdminBoard() {
       <TaskDialog
         draft={draft}
         admins={admins}
+        categories={categoryOptions}
         onChange={setDraft}
         onClose={() => setDraft(null)}
         onSave={save}
@@ -510,9 +536,12 @@ function AdminBoard() {
 
 type AdminOption = { user_id: string; display_name: string | null; email: string | null };
 
+const CUSTOM_OPTION = "__custom__";
+
 function TaskDialog({
   draft,
   admins,
+  categories,
   onChange,
   onClose,
   onSave,
@@ -520,6 +549,7 @@ function TaskDialog({
 }: {
   draft: Draft | null;
   admins: AdminOption[];
+  categories: { label: string; hue: TaskAccent }[];
   onChange: (next: Draft) => void;
   onClose: () => void;
   onSave: (next: Draft) => void;
@@ -563,24 +593,70 @@ function TaskDialog({
                 </FormField>
                 <FormField label="Kategorie">
                   <select
-                    value={draft.tag}
-                    onChange={(e) =>
-                      onChange({ ...draft, tag: e.target.value, hue: categoryHue(e.target.value) })
-                    }
+                    value={draft.custom ? CUSTOM_OPTION : draft.tag}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === CUSTOM_OPTION) {
+                        onChange({ ...draft, custom: true });
+                        return;
+                      }
+                      onChange({
+                        ...draft,
+                        custom: false,
+                        tag: value,
+                        hue: taskHue({
+                          tag: value,
+                          hue: categories.find((c) => c.label === value)?.hue,
+                        }),
+                      });
+                    }}
                     className="h-9 w-full rounded-md border px-2 text-[13px]"
                     style={{ borderColor: "var(--a-border)", background: "var(--a-surface-solid)" }}
                   >
-                    {!TASK_CATEGORIES.some((c) => c.label === draft.tag) && (
-                      <option value={draft.tag}>{draft.tag || "Keine"}</option>
-                    )}
-                    {TASK_CATEGORIES.map((c) => (
-                      <option key={c.label} value={c.label}>
-                        {c.label}
+                    <option value="">Keine Kategorie</option>
+                    {categories.map((c) => (
+                      <option key={c.label} value={c.label} style={{ color: ACCENT_DOTS[c.hue] }}>
+                        ● {c.label}
                       </option>
                     ))}
+                    <option value={CUSTOM_OPTION}>Eigene Kategorie…</option>
                   </select>
                 </FormField>
               </div>
+              {draft.custom && (
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField label="Name">
+                    <Input
+                      value={draft.tag}
+                      placeholder="z. B. QA"
+                      onChange={(e) => onChange({ ...draft, tag: e.target.value })}
+                      className="h-9 text-[13px]"
+                    />
+                  </FormField>
+                  <FormField label="Farbe">
+                    <select
+                      value={draft.hue}
+                      onChange={(e) =>
+                        onChange({
+                          ...draft,
+                          hue: isTaskAccent(e.target.value) ? e.target.value : "soft",
+                        })
+                      }
+                      className="h-9 w-full rounded-md border px-2 text-[13px]"
+                      style={{
+                        borderColor: "var(--a-border)",
+                        background: "var(--a-surface-solid)",
+                      }}
+                    >
+                      {TASK_ACCENTS.map((accent) => (
+                        <option key={accent} value={accent} style={{ color: ACCENT_DOTS[accent] }}>
+                          ● {ACCENT_LABELS[accent]}
+                        </option>
+                      ))}
+                    </select>
+                  </FormField>
+                </div>
+              )}
               <FormField label="Fällig">
                 <Input
                   type="date"
