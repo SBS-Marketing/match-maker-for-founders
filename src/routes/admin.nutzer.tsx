@@ -367,10 +367,7 @@ function UserRow({
         </div>,
         limit > 0 ? (
           <div key="t">
-            <AdminBar
-              value={pct}
-              color={pct >= 100 ? "var(--a-red)" : "var(--a-ember)"}
-            />
+            <AdminBar value={pct} color={pct >= 100 ? "var(--a-red)" : "var(--a-ember)"} />
             <span style={{ fontSize: 11.5, color: "var(--a-faint)" }}>
               {formatTokens(used)} / {formatTokens(limit)}
             </span>

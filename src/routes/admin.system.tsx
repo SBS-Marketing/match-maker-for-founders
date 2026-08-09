@@ -67,8 +67,7 @@ function AdminSystem() {
               : Array.isArray(json.grants)
                 ? json.grants
                 : [];
-        const generatedAt =
-          typeof json.generated_at === "string" ? json.generated_at : null;
+        const generatedAt = typeof json.generated_at === "string" ? json.generated_at : null;
         return { ok: true, generatedAt, count: items.length };
       },
     })),
@@ -132,7 +131,10 @@ function AdminSystem() {
                 cells={[
                   <span key="n" style={{ fontWeight: 600 }}>
                     {s.label}
-                    <span className="ml-1.5 font-mono" style={{ fontSize: 11, color: "var(--a-faint)" }}>
+                    <span
+                      className="ml-1.5 font-mono"
+                      style={{ fontSize: 11, color: "var(--a-faint)" }}
+                    >
                       {s.file}
                     </span>
                   </span>,
@@ -178,10 +180,7 @@ function AdminSystem() {
         ) : (connectors.data ?? []).length === 0 ? (
           <AdminEmpty label="Noch keine Konnektoren verbunden" />
         ) : (
-          <AdminTable
-            cols={CONNECTOR_COLS}
-            head={["Konnektor", "Tabelle", "Nutzer", "Status"]}
-          >
+          <AdminTable cols={CONNECTOR_COLS} head={["Konnektor", "Tabelle", "Nutzer", "Status"]}>
             {(connectors.data ?? []).map((c) => (
               <AdminRow
                 key={`${c.name}-${c.source_table}`}
@@ -190,7 +189,11 @@ function AdminSystem() {
                   <span key="n" style={{ fontWeight: 600 }}>
                     {c.name}
                   </span>,
-                  <span key="t" className="font-mono" style={{ fontSize: 12, color: "var(--a-smoke)" }}>
+                  <span
+                    key="t"
+                    className="font-mono"
+                    style={{ fontSize: 12, color: "var(--a-smoke)" }}
+                  >
                     {c.source_table}
                   </span>,
                   <span key="u" className="admin-num">

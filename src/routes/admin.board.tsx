@@ -167,8 +167,7 @@ function AdminBoard() {
   }
 
   if (tasks.isLoading) return <AdminLoading />;
-  if (tasks.isError)
-    return <AdminEmpty label={`Fehler: ${(tasks.error as Error).message}`} />;
+  if (tasks.isError) return <AdminEmpty label={`Fehler: ${(tasks.error as Error).message}`} />;
 
   return (
     <div className="flex flex-col gap-4">
