@@ -506,7 +506,7 @@ function UserSheet({
   }
 
   return (
-    <Sheet open={Boolean(user)} onOpenChange={(open) => !open && onClose()}>
+    <Sheet open={open && Boolean(user)} onOpenChange={(next) => !next && onClose()}>
       <SheetContent side="right" className="admin-tokens w-full overflow-y-auto sm:max-w-md">
         {current && (
           <>
