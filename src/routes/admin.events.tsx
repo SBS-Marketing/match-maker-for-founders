@@ -207,9 +207,7 @@ function AdminEvents() {
     const live = rows.filter((e) => e.is_published);
     const drafts = rows.length - live.length;
     const week = Date.now() - 7 * 86_400_000;
-    const recentRegs = registrations.filter(
-      (r) => new Date(r.created_at).getTime() >= week,
-    ).length;
+    const recentRegs = registrations.filter((r) => new Date(r.created_at).getTime() >= week).length;
     const withSpots = live.filter((e) => e.spots > 0);
     const fill = withSpots.length
       ? Math.round(
@@ -414,7 +412,9 @@ function AdminEvents() {
   /** Optimistisch umschalten, bei Fehler zurückrollen. */
   async function togglePublish(ev: EventRow) {
     const next = !ev.is_published;
-    setEvents((prev) => (prev ?? []).map((e) => (e.id === ev.id ? { ...e, is_published: next } : e)));
+    setEvents((prev) =>
+      (prev ?? []).map((e) => (e.id === ev.id ? { ...e, is_published: next } : e)),
+    );
     if (isPreview) return;
     const { error } = await supabase
       .from("community_events")
@@ -579,7 +579,11 @@ function AdminEvents() {
                   <span key="e" className="truncate" style={{ color: "var(--a-smoke)" }}>
                     {titleById.get(r.event_id) ?? r.event_id}
                   </span>,
-                  <span key="w" style={{ color: "var(--a-smoke)" }} title={dateTimeDE(r.created_at)}>
+                  <span
+                    key="w"
+                    style={{ color: "var(--a-smoke)" }}
+                    title={dateTimeDE(r.created_at)}
+                  >
                     {relativeDE(r.created_at, "—")}
                   </span>,
                   <AdminBtn key="a" variant="quiet" onClick={() => removeRegistration(r)}>
@@ -770,11 +774,13 @@ function AdminEvents() {
                         onChange={(e) => setRecurrence(e.target.value as RecurrenceRule)}
                         className={inputCls}
                       >
-                        {(["none", "weekly", "biweekly", "monthly"] as RecurrenceRule[]).map((r) => (
-                          <option key={r} value={r}>
-                            {RECURRENCE_LABELS[r]}
-                          </option>
-                        ))}
+                        {(["none", "weekly", "biweekly", "monthly"] as RecurrenceRule[]).map(
+                          (r) => (
+                            <option key={r} value={r}>
+                              {RECURRENCE_LABELS[r]}
+                            </option>
+                          ),
+                        )}
                       </select>
                     </Field>
                     {recurrence !== "none" && (

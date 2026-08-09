@@ -598,7 +598,8 @@ function AdminPartner() {
                       className="truncate font-mono"
                       style={{ fontSize: 11, color: "var(--a-faint)" }}
                     >
-                      {[a.contact_name, a.email].filter(Boolean).join(" · ") || "keine Kontaktdaten"}
+                      {[a.contact_name, a.email].filter(Boolean).join(" · ") ||
+                        "keine Kontaktdaten"}
                     </p>
                   </div>,
                   <span key="f" style={{ color: "var(--a-smoke)" }}>
