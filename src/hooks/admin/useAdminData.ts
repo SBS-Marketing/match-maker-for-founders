@@ -622,7 +622,6 @@ export function useProfileFields() {
   });
 }
 
-
 export type WaitlistRow = {
   id: string;
   email: string;

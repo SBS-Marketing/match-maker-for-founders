@@ -20,4 +20,3 @@ export function profileCompleteness(user: ProfileFields | undefined): number | n
   ].filter((v) => typeof v === "string" && v.trim().length > 0).length;
   return Math.round((filled / 8) * 100);
 }
-
