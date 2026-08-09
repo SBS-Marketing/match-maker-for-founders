@@ -106,6 +106,18 @@ function AdminBoard() {
 
   const admins = useMemo(() => (roles.data ?? []).filter((r) => r.role === "admin"), [roles.data]);
 
+  /** Vorgaben plus alle Kategorien, die bereits in der Datenbank vorkommen. */
+  const categoryOptions = useMemo(() => {
+    const map = new Map<string, TaskAccent>();
+    for (const c of TASK_CATEGORIES) map.set(c.label, c.hue);
+    for (const task of rows) {
+      const tag = task.tag?.trim();
+      if (!tag || map.has(tag)) continue;
+      map.set(tag, taskHue(task));
+    }
+    return [...map].map(([label, hue]) => ({ label, hue }));
+  }, [rows]);
+
   const personOptions = useMemo(
     () => [
       { value: "all", label: "Alle" },
@@ -308,6 +320,7 @@ function AdminBoard() {
         <TaskDialog
           draft={draft}
           admins={admins}
+          categories={categoryOptions}
           onChange={setDraft}
           onClose={() => setDraft(null)}
           onSave={save}
