@@ -8,7 +8,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Inbox, Plus, Trash2, Wand2 } from "lucide-react";
+import { Clock, Inbox, Plus, Trash2, Wand2 } from "lucide-react";
 import {
   AdminAvatar,
   AdminBadge,
@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TASK_CATEGORIES, categoryHue } from "@/lib/admin-task-categories";
 
 export const Route = createFileRoute("/admin/board")({
   head: () => ({ meta: [{ title: "Team-Board — Admin · matchfoundr" }] }),
@@ -45,18 +46,6 @@ const COLUMNS = [
   { key: "review", label: "Review" },
   { key: "done", label: "Erledigt" },
 ] as const;
-
-const HUES: Record<string, string> = {
-  ember: "var(--a-ember)",
-  indigo: "var(--a-indigo)",
-  green: "var(--a-green)",
-  amber: "var(--a-amber)",
-  red: "var(--a-red)",
-};
-
-function hueColor(hue: string): string {
-  return HUES[hue] ?? "var(--a-smoke)";
-}
 
 type Draft = {
   id?: string;
@@ -72,8 +61,8 @@ type Draft = {
 const EMPTY_DRAFT: Draft = {
   title: "",
   board_column: "inbox",
-  tag: "",
-  hue: "ember",
+  tag: TASK_CATEGORIES[0].label,
+  hue: TASK_CATEGORIES[0].hue,
   assignee_id: "",
   assignee_name: "",
   due_at: "",
@@ -222,31 +211,30 @@ function AdminBoard() {
         return;
       }
 
+      const seed = (title: string, source: string, tag: string): SeedRow => ({
+        title,
+        source,
+        tag,
+        hue: categoryHue(tag),
+      });
+
       const candidates: SeedRow[] = [
-        ...(offers.data ?? []).map((o) => ({
-          title: `Angebot freigeben: ${o.name}${o.firm ? ` (${o.firm})` : ""}`,
-          source: "partner_offers",
-          tag: "Freigabe",
-          hue: "amber",
-        })),
-        ...(events.data ?? []).map((e) => ({
-          title: `Event veröffentlichen: ${e.title}`,
-          source: "community_events",
-          tag: "Event",
-          hue: "indigo",
-        })),
-        ...(guides.data ?? []).map((g) => ({
-          title: `Guide fertigstellen: ${g.title}`,
-          source: "guides",
-          tag: "Inhalt",
-          hue: "ember",
-        })),
-        ...(applications.data ?? []).map((a) => ({
-          title: `Bewerbung prüfen: ${a.company}`,
-          source: "partner_applications",
-          tag: "Partner",
-          hue: "green",
-        })),
+        ...(offers.data ?? []).map((o) =>
+          seed(
+            `Angebot freigeben: ${o.name}${o.firm ? ` (${o.firm})` : ""}`,
+            "partner_offers",
+            "Freigabe",
+          ),
+        ),
+        ...(events.data ?? []).map((e) =>
+          seed(`Event veröffentlichen: ${e.title}`, "community_events", "Event"),
+        ),
+        ...(guides.data ?? []).map((g) =>
+          seed(`Guide fertigstellen: ${g.title}`, "guides", "Inhalt"),
+        ),
+        ...(applications.data ?? []).map((a) =>
+          seed(`Bewerbung prüfen: ${a.company}`, "partner_applications", "Partner"),
+        ),
       ];
 
       // Nichts doppelt anlegen: gegen vorhandene source+title-Kombis abgleichen.
@@ -345,36 +333,65 @@ function AdminBoard() {
                 if (dragId) void moveTo(dragId, col.key);
                 setDragId(null);
               }}
+              style={{
+                background: active ? "rgba(226,81,28,0.07)" : "rgba(255,255,255,0.34)",
+                border: `1px solid ${active ? "rgba(226,81,28,0.35)" : "var(--a-border)"}`,
+                borderRadius: 16,
+                padding: 10,
+                minHeight: 320,
+                backdropFilter: "blur(20px) saturate(1.5)",
+                transition: "background 160ms ease, border-color 160ms ease",
+              }}
             >
-              <AdminCard
-                padding={12}
-                style={
-                  active
-                    ? { borderColor: "var(--a-ember)", background: "var(--a-ember-tint)" }
-                    : undefined
-                }
+              <div
+                className="flex items-center justify-between gap-2"
+                style={{ padding: "4px 6px 10px" }}
               >
-                <div className="mb-2.5 flex items-center justify-between gap-2">
-                  <span style={{ fontSize: 13.5, fontWeight: 650 }}>{col.label}</span>
-                  <div className="flex items-center gap-1.5">
-                    <AdminBadge>{list.length}</AdminBadge>
-                    <AdminBtn
-                      icon={Plus}
-                      title="Aufgabe hinzufügen"
-                      onClick={() => setDraft({ ...EMPTY_DRAFT, board_column: col.key })}
-                    />
-                  </div>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--a-ink)" }}>
+                  {col.label}
+                </span>
+                <div className="flex items-center gap-1">
+                  <span
+                    style={{
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      color: "var(--a-smoke)",
+                      background: "var(--a-deep)",
+                      borderRadius: 99,
+                      padding: "2px 8px",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {list.length}
+                  </span>
+                  <AdminBtn
+                    icon={Plus}
+                    variant="quiet"
+                    title="Aufgabe hinzufügen"
+                    onClick={() => setDraft({ ...EMPTY_DRAFT, board_column: col.key })}
+                  />
                 </div>
-                <div className="flex flex-col gap-2">
-                  {list.length === 0 ? (
-                    <p
-                      className="py-6 text-center"
-                      style={{ fontSize: 12.5, color: "var(--a-faint)" }}
-                    >
-                      Nichts hier
-                    </p>
-                  ) : (
-                    list.map((task) => (
+              </div>
+              <div className="flex flex-col" style={{ gap: 9 }}>
+                {list.length === 0 ? (
+                  <p
+                    className="text-center"
+                    style={{
+                      border: "1px dashed var(--a-border-soft)",
+                      borderRadius: 12,
+                      padding: "18px 10px",
+                      fontSize: 12,
+                      color: "var(--a-faint)",
+                    }}
+                  >
+                    Karte hierher ziehen
+                  </p>
+                ) : (
+                  list.map((task) => {
+                    const hue = categoryHue(task.tag);
+                    const dragging = dragId === task.id;
+                    const due = task.due_at ? isDueSoon(task.due_at) : false;
+                    return (
                       <button
                         key={task.id}
                         type="button"
@@ -395,35 +412,85 @@ function AdminBoard() {
                         }
                         className="w-full text-left transition"
                         style={{
-                          background: "var(--a-surface-solid)",
-                          border: "1px solid var(--a-border-soft)",
-                          borderLeft: `3px solid ${hueColor(task.hue)}`,
-                          borderRadius: 11,
-                          padding: "10px 11px",
-                          opacity: dragId === task.id ? 0.45 : 1,
+                          background: dragging ? "rgba(255,255,255,0.94)" : "var(--a-surface)",
+                          backdropFilter: "blur(20px) saturate(1.5)",
+                          border: "1px solid var(--a-border)",
+                          outline: "1px solid var(--a-border-soft)",
+                          outlineOffset: -1,
+                          borderRadius: 13,
+                          padding: "11px 12px",
+                          boxShadow: "var(--a-shadow)",
+                          opacity: dragging ? 0.55 : 1,
                           cursor: "grab",
                         }}
                       >
-                        <p style={{ fontSize: 13, fontWeight: 600 }}>{task.title}</p>
-                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                          {task.tag && <AdminBadge>{task.tag}</AdminBadge>}
-                          {task.source && <AdminBadge variant="indigo">{task.source}</AdminBadge>}
-                          {task.due_at && (
-                            <AdminBadge variant={isDueSoon(task.due_at) ? "red" : "soft"}>
-                              {dueLabelDE(task.due_at)}
-                            </AdminBadge>
-                          )}
-                          {task.assignee_name && (
-                            <span className="ml-auto">
-                              <AdminAvatar name={task.assignee_name} size={22} />
-                            </span>
-                          )}
-                        </div>
+                        {task.tag && (
+                          <div style={{ marginBottom: 7 }}>
+                            <AdminBadge variant={hue}>{task.tag}</AdminBadge>
+                          </div>
+                        )}
+                        <p
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            lineHeight: 1.35,
+                            textWrap: "pretty",
+                          }}
+                        >
+                          {task.title}
+                        </p>
+                        {task.source && (
+                          <p
+                            className="font-mono"
+                            style={{
+                              marginTop: 5,
+                              fontSize: 10.5,
+                              color: "var(--a-faint)",
+                              overflowWrap: "anywhere",
+                            }}
+                          >
+                            {task.source}
+                          </p>
+                        )}
+                        {(task.assignee_name || task.due_at) && (
+                          <div
+                            className="flex items-center justify-between gap-2"
+                            style={{ marginTop: 10 }}
+                          >
+                            {task.assignee_name ? (
+                              <span className="flex min-w-0 items-center gap-1.5">
+                                <AdminAvatar name={task.assignee_name} size={22} />
+                                <span
+                                  className="truncate"
+                                  style={{ fontSize: 11.5, color: "var(--a-smoke)" }}
+                                >
+                                  {task.assignee_name.split(/[\s@]/)[0] || task.assignee_name}
+                                </span>
+                              </span>
+                            ) : (
+                              <span />
+                            )}
+                            {task.due_at && (
+                              <span
+                                className="flex items-center gap-1"
+                                style={{
+                                  fontSize: 11.5,
+                                  fontWeight: 600,
+                                  whiteSpace: "nowrap",
+                                  color: due ? "var(--a-ember)" : "var(--a-faint)",
+                                }}
+                              >
+                                <Clock size={12} strokeWidth={2} />
+                                {dueLabelDE(task.due_at)}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </button>
-                    ))
-                  )}
-                </div>
-              </AdminCard>
+                    );
+                  })
+                )}
+              </div>
             </div>
           );
         })}
@@ -489,38 +556,35 @@ function TaskDialog({
                     ))}
                   </select>
                 </FormField>
-                <FormField label="Farbe">
+                <FormField label="Kategorie">
                   <select
-                    value={draft.hue}
-                    onChange={(e) => onChange({ ...draft, hue: e.target.value })}
+                    value={draft.tag}
+                    onChange={(e) =>
+                      onChange({ ...draft, tag: e.target.value, hue: categoryHue(e.target.value) })
+                    }
                     className="h-9 w-full rounded-md border px-2 text-[13px]"
                     style={{ borderColor: "var(--a-border)", background: "var(--a-surface-solid)" }}
                   >
-                    {Object.keys(HUES).map((h) => (
-                      <option key={h} value={h}>
-                        {h}
+                    {!TASK_CATEGORIES.some((c) => c.label === draft.tag) && (
+                      <option value={draft.tag}>{draft.tag || "Keine"}</option>
+                    )}
+                    {TASK_CATEGORIES.map((c) => (
+                      <option key={c.label} value={c.label}>
+                        {c.label}
                       </option>
                     ))}
                   </select>
                 </FormField>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <FormField label="Tag">
-                  <Input
-                    value={draft.tag}
-                    onChange={(e) => onChange({ ...draft, tag: e.target.value })}
-                    className="h-9 text-[13px]"
-                  />
-                </FormField>
-                <FormField label="Fällig">
-                  <Input
-                    type="date"
-                    value={draft.due_at}
-                    onChange={(e) => onChange({ ...draft, due_at: e.target.value })}
-                    className="h-9 text-[13px]"
-                  />
-                </FormField>
-              </div>
+              <FormField label="Fällig">
+                <Input
+                  type="date"
+                  value={draft.due_at}
+                  onChange={(e) => onChange({ ...draft, due_at: e.target.value })}
+                  className="h-9 text-[13px]"
+                />
+              </FormField>
+
               <FormField label="Verantwortlich">
                 <select
                   value={draft.assignee_id}
