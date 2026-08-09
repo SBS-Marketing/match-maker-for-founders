@@ -622,3 +622,29 @@ export function AdminEmpty({ label = "Noch keine Einträge" }: { label?: string 
     </p>
   );
 }
+
+export function AdminSoon({
+  icon: Icon,
+  title,
+  text,
+}: {
+  icon: LucideIcon;
+  title: string;
+  text: string;
+}) {
+  return (
+    <AdminCard>
+      <div className="flex flex-col items-center gap-2.5 py-12 text-center">
+        <span
+          className="flex items-center justify-center"
+          style={{ width: 40, height: 40, borderRadius: 12, background: "var(--a-soft)" }}
+        >
+          <Icon size={18} strokeWidth={1.75} color="var(--a-ember)" />
+        </span>
+        <p style={{ fontSize: 15, fontWeight: 650 }}>{title}</p>
+        <p style={{ fontSize: 13, color: "var(--a-smoke)", maxWidth: 380 }}>{text}</p>
+        <AdminBadge variant="amber">kommt gleich</AdminBadge>
+      </div>
+    </AdminCard>
+  );
+}
