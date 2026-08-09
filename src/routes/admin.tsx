@@ -240,9 +240,12 @@ function AdminShell() {
         </aside>
 
         <Sheet open={drawer} onOpenChange={setDrawer}>
-          <SheetContent side="left" className="w-[252px] p-0">
-            <div className="admin-shell h-full">{sidebar}</div>
+          <SheetContent side="left" className="admin-tokens w-[252px] p-0">
+            <div className="h-full" style={{ background: "var(--a-canvas)" }}>
+              {sidebar}
+            </div>
           </SheetContent>
+
         </Sheet>
 
         <div className="min-w-0 flex-1">
