@@ -156,7 +156,10 @@ function AdminKi() {
                       {formatUsd2(m.cost)}
                     </span>
                   </div>
-                  <AdminBar value={m.cost} max={models[0].cost} color="var(--a-ember)" />
+                  <AdminBar
+                    value={(m.cost / Math.max(models[0].cost, 1e-9)) * 100}
+                    color="var(--a-ember)"
+                  />
                   <p className="mt-1" style={{ fontSize: 11.5, color: "var(--a-faint)" }}>
                     {m.requests} Anfragen · Ø {Math.round(m.latency / Math.max(1, m.requests))} ms
                   </p>
@@ -243,8 +246,7 @@ function AdminKi() {
                     </span>,
                     <AdminBar
                       key="b"
-                      value={g.tokens_used}
-                      max={Math.max(1, g.token_limit)}
+                      value={pct}
                       color={pct > 85 ? "var(--a-red)" : "var(--a-green)"}
                     />,
                     <AdminBadge key="p">{g.period}</AdminBadge>,

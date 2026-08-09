@@ -183,7 +183,7 @@ export function useAiUsage(days: number) {
       if (isPreview) return PREVIEW_USAGE.filter((r) => r.created_at >= since);
       const { data, error } = await supabase
         .from("ai_usage")
-        .select("task,model,prompt_tokens,completion_tokens,cost_usd,created_at")
+        .select("task,model,prompt_tokens,completion_tokens,cost_usd,created_at,latency_ms,status,fallback")
         .gte("created_at", since)
         .order("created_at", { ascending: false })
         .limit(5000);
@@ -513,6 +513,53 @@ export function useAdminSearchIndex(enabled: boolean) {
         guides: guides.data ?? [],
         offers: offers.data ?? [],
       };
+    },
+  });
+}
+
+/** Token-Kontingente inkl. Anzeigename. */
+export function useTokenGrants() {
+  const { isPreview, checking } = useIsAdmin();
+  return useQuery<TokenGrant[]>({
+    queryKey: ["admin", "token-grants", isPreview],
+    enabled: !checking,
+    staleTime: 60_000,
+    queryFn: async () => {
+      if (isPreview) {
+        return [
+          {
+            id: "demo-grant-1",
+            user_id: "preview-founder-1",
+            display_name: "Marvin Demo",
+            token_limit: 50_000,
+            tokens_used: 14_800,
+            period: "monat",
+            note: "Pro-Testphase",
+          },
+        ];
+      }
+      const { data, error } = await supabase
+        .from("ai_token_grants")
+        .select("id,user_id,token_limit,tokens_used,period,note")
+        .order("tokens_used", { ascending: false })
+        .limit(100);
+      if (error) fail("Kontingente laden fehlgeschlagen", error.message);
+      const rows = data ?? [];
+      if (rows.length === 0) return [];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id,display_name")
+        .in("id", rows.map((r) => r.user_id));
+      const names = new Map((profiles ?? []).map((p) => [p.id, p.display_name]));
+      return rows.map((r) => ({
+        id: r.id,
+        user_id: r.user_id,
+        display_name: names.get(r.user_id) ?? null,
+        token_limit: r.token_limit,
+        tokens_used: r.tokens_used,
+        period: r.period,
+        note: r.note,
+      }));
     },
   });
 }
