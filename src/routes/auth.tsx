@@ -163,17 +163,19 @@ function AuthPage() {
           variant="outline"
           className="h-11 w-full gap-2 rounded-xl border-white/60 bg-white/40 backdrop-blur"
           onClick={() => oauth("google")}
+          disabled={oauthLoading !== null}
         >
           <GoogleIcon className="h-4 w-4" />
-          Mit Google fortfahren
+          {oauthLoading === "google" ? "Weiterleiten…" : "Mit Google fortfahren"}
         </Button>
         <Button
           variant="outline"
           className="mt-2 h-11 w-full gap-2 rounded-xl border-white/60 bg-white/40 backdrop-blur"
           onClick={() => oauth("apple")}
+          disabled={oauthLoading !== null}
         >
           <AppleIcon className="h-4 w-4" />
-          Mit Apple fortfahren
+          {oauthLoading === "apple" ? "Weiterleiten…" : "Mit Apple fortfahren"}
         </Button>
         <div className="my-5 flex items-center gap-3 text-[11px] font-mono uppercase tracking-[0.18em] text-[var(--smoke)]">
           <div className="h-px flex-1 bg-[var(--ruled)]" /> oder{" "}
