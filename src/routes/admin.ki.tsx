@@ -47,7 +47,8 @@ function AdminKi() {
   const usage = useAiUsage(days);
   const grants = useTokenGrants();
 
-  const rows = usage.data ?? [];
+  const usageData = usage.data;
+  const rows = useMemo(() => usageData ?? [], [usageData]);
 
   useSectionActions(
     {
