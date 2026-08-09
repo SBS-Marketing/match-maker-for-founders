@@ -511,6 +511,7 @@ function AdminBoard() {
       <TaskDialog
         draft={draft}
         admins={admins}
+        categories={categoryOptions}
         onChange={setDraft}
         onClose={() => setDraft(null)}
         onSave={save}
@@ -522,9 +523,12 @@ function AdminBoard() {
 
 type AdminOption = { user_id: string; display_name: string | null; email: string | null };
 
+const CUSTOM_OPTION = "__custom__";
+
 function TaskDialog({
   draft,
   admins,
+  categories,
   onChange,
   onClose,
   onSave,
@@ -532,6 +536,7 @@ function TaskDialog({
 }: {
   draft: Draft | null;
   admins: AdminOption[];
+  categories: { label: string; hue: TaskAccent }[];
   onChange: (next: Draft) => void;
   onClose: () => void;
   onSave: (next: Draft) => void;
