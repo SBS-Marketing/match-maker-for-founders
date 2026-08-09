@@ -485,7 +485,7 @@ function UserSheet({ user, onClose }: { user: AdminUser | null; onClose: () => v
 
   return (
     <Sheet open={Boolean(user)} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="admin-shell w-full overflow-y-auto sm:max-w-md">
+      <SheetContent side="right" className="admin-tokens w-full overflow-y-auto sm:max-w-md">
         {current && (
           <>
             <SheetHeader>
@@ -586,11 +586,11 @@ function GrantRoleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="admin-shell sm:max-w-sm">
+      <DialogContent className="admin-tokens sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Rolle vergeben</DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col gap-3">
+        <div className="admin-dialog-body flex flex-col gap-3 pr-1">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="role-email" className="text-[12px]">
               E-Mail

@@ -240,8 +240,10 @@ function AdminShell() {
         </aside>
 
         <Sheet open={drawer} onOpenChange={setDrawer}>
-          <SheetContent side="left" className="w-[252px] p-0">
-            <div className="admin-shell h-full">{sidebar}</div>
+          <SheetContent side="left" className="admin-tokens w-[252px] p-0">
+            <div className="h-full" style={{ background: "var(--a-canvas)" }}>
+              {sidebar}
+            </div>
           </SheetContent>
         </Sheet>
 
@@ -592,7 +594,7 @@ function AdminPalette({
   const { data } = useAdminSearchIndex(open);
 
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
+    <CommandDialog open={open} onOpenChange={onOpenChange} contentClassName="admin-tokens">
       <CommandInput placeholder="Sektion, Nutzer, Event, Guide oder Angebot…" />
       <CommandList>
         <CommandEmpty>Nichts gefunden.</CommandEmpty>

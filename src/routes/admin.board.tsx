@@ -460,13 +460,13 @@ function TaskDialog({
 }) {
   return (
     <Dialog open={Boolean(draft)} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="admin-shell sm:max-w-md">
+      <DialogContent className="admin-tokens sm:max-w-md">
         {draft && (
           <>
             <DialogHeader>
               <DialogTitle>{draft.id ? "Aufgabe bearbeiten" : "Neue Aufgabe"}</DialogTitle>
             </DialogHeader>
-            <div className="flex flex-col gap-3">
+            <div className="admin-dialog-body flex flex-col gap-3 pr-1">
               <FormField label="Titel">
                 <Input
                   value={draft.title}
