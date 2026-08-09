@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
+  ArrowLeft,
   Bell,
   Bot,
   BookOpen,
@@ -16,6 +17,7 @@ import {
   Database,
   Kanban,
   LayoutGrid,
+  LogOut,
   Menu,
   PanelLeft,
   Plus,
@@ -147,7 +149,7 @@ function AdminShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { isPreview } = useIsAdmin();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { data: pending } = usePendingCounts();
   const [actions, setActionsState] = useState<SectionActions>({});
   const [collapsed, setCollapsed] = useState(false);
@@ -204,6 +206,11 @@ function AdminShell() {
     (pending?.partnerReview ?? 0) + (pending?.eventDrafts ?? 0) + (pending?.guideDrafts ?? 0);
   const adminName = isPreview ? "Demo-Admin" : (profile?.display_name ?? user?.email ?? "Admin");
 
+  async function handleSignOut() {
+    await signOut();
+    void navigate({ to: "/auth" });
+  }
+
   const sidebar = (
     <AdminSidebar
       pathname={pathname}
@@ -213,6 +220,7 @@ function AdminShell() {
       onSearch={() => setPaletteOpen(true)}
       adminName={adminName}
       onNavigate={() => setDrawer(false)}
+      onSignOut={handleSignOut}
     />
   );
 
@@ -348,6 +356,7 @@ function AdminSidebar({
   onSearch,
   adminName,
   onNavigate,
+  onSignOut,
 }: {
   pathname: string;
   pending: { partnerReview: number; eventDrafts: number; guideDrafts: number } | undefined;
@@ -356,6 +365,7 @@ function AdminSidebar({
   onSearch: () => void;
   adminName: string;
   onNavigate: () => void;
+  onSignOut: () => void;
 }) {
   function badgeFor(item: NavItem): { count: number; ember: boolean } | null {
     if (!item.badge || !pending) return null;
@@ -491,7 +501,28 @@ function AdminSidebar({
         ))}
       </nav>
 
-      <div className="mt-4 space-y-0.5">
+      <div className="mt-4">
+        <Link
+          to="/heute"
+          onClick={onNavigate}
+          title="Zurück zur Plattform"
+          className="flex items-center gap-2.5 px-2.5 py-2 transition-colors hover:bg-[var(--a-soft)]"
+          style={{
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 550,
+            color: "var(--a-smoke)",
+            justifyContent: collapsed ? "center" : "flex-start",
+          }}
+        >
+          <ArrowLeft size={16} strokeWidth={1.75} color="var(--a-faint)" />
+          {!collapsed && <span className="truncate">Zurück zur Plattform</span>}
+        </Link>
+      </div>
+      <div
+        className="mt-3 space-y-0.5 pt-3"
+        style={{ borderTop: "1px solid var(--a-border-soft)" }}
+      >
         <SidebarLeaf icon={SunMedium} label="Darstellung" collapsed={collapsed} />
         <SidebarLeaf icon={CircleHelp} label="Hilfe & Support" collapsed={collapsed} />
       </div>
@@ -501,13 +532,23 @@ function AdminSidebar({
       >
         <AdminAvatar name={adminName} size={30} accent="indigo" />
         {!collapsed && (
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="truncate" style={{ fontSize: 12.5, fontWeight: 650 }}>
               {adminName}
             </p>
             <p style={{ fontSize: 11, color: "var(--a-faint)" }}>Rolle: admin</p>
           </div>
         )}
+        <button
+          type="button"
+          onClick={onSignOut}
+          title="Abmelden"
+          aria-label="Abmelden"
+          className="flex items-center justify-center transition-colors hover:bg-[var(--a-soft)]"
+          style={{ width: 30, height: 30, borderRadius: 9, color: "var(--a-red)" }}
+        >
+          <LogOut size={16} strokeWidth={1.75} />
+        </button>
       </div>
     </div>
   );
