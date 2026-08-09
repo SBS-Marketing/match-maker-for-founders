@@ -292,7 +292,14 @@ function AdminNutzer() {
         )}
       </AdminCard>
 
-      <UserSheet user={openUser} onClose={() => setOpenUser(null)} />
+      <UserSheet
+        user={openUser}
+        open={sheetOpen}
+        onClose={() => {
+          setSheetOpen(false);
+          setOpenUser(null);
+        }}
+      />
       <GrantRoleDialog open={roleDialog} onOpenChange={setRoleDialog} />
     </div>
   );
