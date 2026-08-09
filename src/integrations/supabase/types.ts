@@ -41,6 +41,57 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_tasks: {
+        Row: {
+          assignee_id: string | null
+          assignee_name: string | null
+          board_column: string
+          created_at: string
+          created_by: string | null
+          due_at: string | null
+          due_label: string | null
+          hue: string
+          id: string
+          position: number
+          source: string | null
+          tag: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          assignee_name?: string | null
+          board_column?: string
+          created_at?: string
+          created_by?: string | null
+          due_at?: string | null
+          due_label?: string | null
+          hue?: string
+          id?: string
+          position?: number
+          source?: string | null
+          tag?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          assignee_name?: string | null
+          board_column?: string
+          created_at?: string
+          created_by?: string | null
+          due_at?: string | null
+          due_label?: string | null
+          hue?: string
+          id?: string
+          position?: number
+          source?: string | null
+          tag?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       advisor_recommendations: {
         Row: {
           advisor_id: string | null
@@ -171,6 +222,32 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_typing: {
+        Row: {
+          match_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          match_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          match_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_typing_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_event_registrations: {
         Row: {
           created_at: string
@@ -211,7 +288,6 @@ export type Database = {
           agenda: string[]
           banner_image_url: string | null
           blurb: string | null
-          booking_url: string | null
           city: string | null
           created_at: string
           date_label: string | null
@@ -223,7 +299,6 @@ export type Database = {
           recurrence_group_id: string | null
           recurrence_rule: string | null
           service_id: string
-          source_url: string | null
           spots: number
           starts_at: string | null
           taken: number
@@ -236,7 +311,6 @@ export type Database = {
           agenda?: string[]
           banner_image_url?: string | null
           blurb?: string | null
-          booking_url?: string | null
           city?: string | null
           created_at?: string
           date_label?: string | null
@@ -248,7 +322,6 @@ export type Database = {
           recurrence_group_id?: string | null
           recurrence_rule?: string | null
           service_id?: string
-          source_url?: string | null
           spots?: number
           starts_at?: string | null
           taken?: number
@@ -261,7 +334,6 @@ export type Database = {
           agenda?: string[]
           banner_image_url?: string | null
           blurb?: string | null
-          booking_url?: string | null
           city?: string | null
           created_at?: string
           date_label?: string | null
@@ -273,7 +345,6 @@ export type Database = {
           recurrence_group_id?: string | null
           recurrence_rule?: string | null
           service_id?: string
-          source_url?: string | null
           spots?: number
           starts_at?: string | null
           taken?: number
@@ -476,8 +547,183 @@ export type Database = {
           },
         ]
       }
+      copilot_execution_agents: {
+        Row: {
+          agent_key: string
+          created_at: string
+          id: string
+          last_used_at: string
+          name: string
+          purpose: string
+          status: string
+          updated_at: string
+          user_id: string
+          working_memory: Json
+        }
+        Insert: {
+          agent_key: string
+          created_at?: string
+          id?: string
+          last_used_at?: string
+          name: string
+          purpose?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          working_memory?: Json
+        }
+        Update: {
+          agent_key?: string
+          created_at?: string
+          id?: string
+          last_used_at?: string
+          name?: string
+          purpose?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          working_memory?: Json
+        }
+        Relationships: []
+      }
+      copilot_execution_events: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          id: number
+          job_id: string
+          kind: string
+          payload: Json
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          id?: number
+          job_id: string
+          kind: string
+          payload?: Json
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          id?: number
+          job_id?: string
+          kind?: string
+          payload?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "copilot_execution_events_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "copilot_execution_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "copilot_execution_events_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "copilot_execution_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      copilot_execution_jobs: {
+        Row: {
+          agent_id: string | null
+          assignment: string
+          attempts: number
+          completed_at: string | null
+          created_at: string
+          current_step: number
+          error: string | null
+          failure_count: number
+          id: string
+          last_heartbeat_at: string | null
+          max_steps: number
+          next_run_at: string
+          progress_text: string | null
+          request_message: string
+          result: Json | null
+          result_sent_at: string | null
+          session_id: string
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          working_memory: Json
+        }
+        Insert: {
+          agent_id?: string | null
+          assignment?: string
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          current_step?: number
+          error?: string | null
+          failure_count?: number
+          id?: string
+          last_heartbeat_at?: string | null
+          max_steps?: number
+          next_run_at?: string
+          progress_text?: string | null
+          request_message: string
+          result?: Json | null
+          result_sent_at?: string | null
+          session_id: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          working_memory?: Json
+        }
+        Update: {
+          agent_id?: string | null
+          assignment?: string
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          current_step?: number
+          error?: string | null
+          failure_count?: number
+          id?: string
+          last_heartbeat_at?: string | null
+          max_steps?: number
+          next_run_at?: string
+          progress_text?: string | null
+          request_message?: string
+          result?: Json | null
+          result_sent_at?: string | null
+          session_id?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          working_memory?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "copilot_execution_jobs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "copilot_execution_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "copilot_execution_jobs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "copilot_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       copilot_messages: {
         Row: {
+          cards: Json
           content: string
           created_at: string
           id: string
@@ -488,6 +734,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cards?: Json
           content: string
           created_at?: string
           id?: string
@@ -498,6 +745,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cards?: Json
           content?: string
           created_at?: string
           id?: string
@@ -528,6 +776,8 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          summary: string | null
+          summary_updated_at: string | null
           title: string
           updated_at: string
           user_id: string
@@ -535,6 +785,8 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          summary?: string | null
+          summary_updated_at?: string | null
           title?: string
           updated_at?: string
           user_id: string
@@ -542,6 +794,8 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          summary?: string | null
+          summary_updated_at?: string | null
           title?: string
           updated_at?: string
           user_id?: string
@@ -681,6 +935,56 @@ export type Database = {
           },
           {
             foreignKeyName: "deadlines_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_assets: {
+        Row: {
+          file_name: string
+          id: string
+          imported_at: string
+          kind: string
+          size_bytes: number
+          storage_path: string | null
+          text_content: string
+          text_preview: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          file_name: string
+          id: string
+          imported_at?: string
+          kind?: string
+          size_bytes?: number
+          storage_path?: string | null
+          text_content?: string
+          text_preview?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          file_name?: string
+          id?: string
+          imported_at?: string
+          kind?: string
+          size_bytes?: number
+          storage_path?: string | null
+          text_content?: string
+          text_preview?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_assets_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -838,12 +1142,118 @@ export type Database = {
         }
         Relationships: []
       }
+      mcp_connections: {
+        Row: {
+          account_label: string | null
+          capabilities: Json
+          connected_at: string | null
+          connector_id: string
+          id: string
+          metadata: Json
+          scopes: string[]
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_label?: string | null
+          capabilities?: Json
+          connected_at?: string | null
+          connector_id: string
+          id?: string
+          metadata?: Json
+          scopes?: string[]
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_label?: string | null
+          capabilities?: Json
+          connected_at?: string | null
+          connector_id?: string
+          id?: string
+          metadata?: Json
+          scopes?: string[]
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mcp_oauth_tokens: {
+        Row: {
+          access_token: string
+          connector_id: string
+          expires_at: string | null
+          metadata: Json
+          refresh_token: string | null
+          scope: string | null
+          token_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          connector_id: string
+          expires_at?: string | null
+          metadata?: Json
+          refresh_token?: string | null
+          scope?: string | null
+          token_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          connector_id?: string
+          expires_at?: string | null
+          metadata?: Json
+          refresh_token?: string | null
+          scope?: string | null
+          token_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      meeting_transcription_usage: {
+        Row: {
+          created_at: string
+          duration_seconds: number
+          id: string
+          mode: string
+          provider: string
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          mode?: string
+          provider?: string
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          mode?: string
+          provider?: string
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           body: string
           created_at: string
           id: string
           match_id: string
+          read_at: string | null
           sender_id: string
         }
         Insert: {
@@ -851,6 +1261,7 @@ export type Database = {
           created_at?: string
           id?: string
           match_id: string
+          read_at?: string | null
           sender_id: string
         }
         Update: {
@@ -858,6 +1269,7 @@ export type Database = {
           created_at?: string
           id?: string
           match_id?: string
+          read_at?: string | null
           sender_id?: string
         }
         Relationships: [
@@ -891,12 +1303,52 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_applications: {
+        Row: {
+          city: string | null
+          company: string
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          field: string | null
+          id: string
+          message: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          company: string
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          field?: string | null
+          id?: string
+          message?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          company?: string
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          field?: string | null
+          id?: string
+          message?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       partner_offers: {
         Row: {
           banner_url: string | null
           blurb: string
           booking_url: string | null
           city: string
+          claims: number
           created_at: string
           firm: string
           fit: number
@@ -904,11 +1356,14 @@ export type Database = {
           logo_url: string | null
           name: string
           packages: Json
+          perk: string | null
+          review_status: string
           scrape_status: string | null
           service_id: string
           slug: string
           source_url: string | null
           specialties: Json
+          submitted_at: string
           updated_at: string
           vouches: Json
           why: Json
@@ -918,6 +1373,7 @@ export type Database = {
           blurb: string
           booking_url?: string | null
           city?: string
+          claims?: number
           created_at?: string
           firm: string
           fit?: number
@@ -925,11 +1381,14 @@ export type Database = {
           logo_url?: string | null
           name: string
           packages?: Json
+          perk?: string | null
+          review_status?: string
           scrape_status?: string | null
           service_id: string
           slug: string
           source_url?: string | null
           specialties?: Json
+          submitted_at?: string
           updated_at?: string
           vouches?: Json
           why?: Json
@@ -939,6 +1398,7 @@ export type Database = {
           blurb?: string
           booking_url?: string | null
           city?: string
+          claims?: number
           created_at?: string
           firm?: string
           fit?: number
@@ -946,11 +1406,14 @@ export type Database = {
           logo_url?: string | null
           name?: string
           packages?: Json
+          perk?: string | null
+          review_status?: string
           scrape_status?: string | null
           service_id?: string
           slug?: string
           source_url?: string | null
           specialties?: Json
+          submitted_at?: string
           updated_at?: string
           vouches?: Json
           why?: Json
@@ -966,6 +1429,7 @@ export type Database = {
           id: string
           industry: string | null
           is_onboarded: boolean
+          is_visible: boolean
           location: string | null
           looking_for: string | null
           onboarded_at: string | null
@@ -987,6 +1451,7 @@ export type Database = {
           id: string
           industry?: string | null
           is_onboarded?: boolean
+          is_visible?: boolean
           location?: string | null
           looking_for?: string | null
           onboarded_at?: string | null
@@ -1008,6 +1473,7 @@ export type Database = {
           id?: string
           industry?: string | null
           is_onboarded?: boolean
+          is_visible?: boolean
           location?: string | null
           looking_for?: string | null
           onboarded_at?: string | null
@@ -1020,6 +1486,33 @@ export type Database = {
           updated_at?: string
           venture_term?: string | null
           vision?: string | null
+        }
+        Relationships: []
+      }
+      push_tokens: {
+        Row: {
+          environment: string
+          id: string
+          platform: string
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          environment?: string
+          id?: string
+          platform?: string
+          token: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          environment?: string
+          id?: string
+          platform?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1106,6 +1599,91 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_connector_stats: {
+        Args: never
+        Returns: {
+          name: string
+          source_table: string
+          state: string
+          users: number
+        }[]
+      }
+      admin_grant_role: {
+        Args: {
+          p_email: string
+          p_role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: string
+      }
+      admin_list_roles: {
+        Args: never
+        Returns: {
+          display_name: string
+          email: string
+          role: string
+          since: string
+          user_id: string
+        }[]
+      }
+      admin_list_users: {
+        Args: never
+        Returns: {
+          created_at: string
+          display_name: string
+          email: string
+          founder_type: string
+          grant_note: string
+          industry: string
+          is_onboarded: boolean
+          last_sign_in: string
+          location: string
+          role: string
+          token_limit: number
+          tokens_used: number
+          updated_at: string
+          user_id: string
+        }[]
+      }
+      admin_revoke_role: {
+        Args: {
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      claim_copilot_execution_job: {
+        Args: { requested_job_id?: string }
+        Returns: {
+          agent_id: string | null
+          assignment: string
+          attempts: number
+          completed_at: string | null
+          created_at: string
+          current_step: number
+          error: string | null
+          failure_count: number
+          id: string
+          last_heartbeat_at: string | null
+          max_steps: number
+          next_run_at: string
+          progress_text: string | null
+          request_message: string
+          result: Json | null
+          result_sent_at: string | null
+          session_id: string
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          working_memory: Json
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "copilot_execution_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       confirm_waitlist_entry: { Args: { p_token: string }; Returns: boolean }
       has_role: {
         Args: {
