@@ -575,24 +575,67 @@ function TaskDialog({
                 </FormField>
                 <FormField label="Kategorie">
                   <select
-                    value={draft.tag}
-                    onChange={(e) =>
-                      onChange({ ...draft, tag: e.target.value, hue: categoryHue(e.target.value) })
-                    }
+                    value={draft.custom ? CUSTOM_OPTION : draft.tag}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === CUSTOM_OPTION) {
+                        onChange({ ...draft, custom: true });
+                        return;
+                      }
+                      onChange({
+                        ...draft,
+                        custom: false,
+                        tag: value,
+                        hue: taskHue({ tag: value, hue: categories.find((c) => c.label === value)?.hue }),
+                      });
+                    }}
                     className="h-9 w-full rounded-md border px-2 text-[13px]"
                     style={{ borderColor: "var(--a-border)", background: "var(--a-surface-solid)" }}
                   >
-                    {!TASK_CATEGORIES.some((c) => c.label === draft.tag) && (
-                      <option value={draft.tag}>{draft.tag || "Keine"}</option>
-                    )}
-                    {TASK_CATEGORIES.map((c) => (
-                      <option key={c.label} value={c.label}>
-                        {c.label}
+                    <option value="">Keine Kategorie</option>
+                    {categories.map((c) => (
+                      <option key={c.label} value={c.label} style={{ color: ACCENT_DOTS[c.hue] }}>
+                        ● {c.label}
                       </option>
                     ))}
+                    <option value={CUSTOM_OPTION}>Eigene Kategorie…</option>
                   </select>
                 </FormField>
               </div>
+              {draft.custom && (
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField label="Name">
+                    <Input
+                      value={draft.tag}
+                      placeholder="z. B. QA"
+                      onChange={(e) => onChange({ ...draft, tag: e.target.value })}
+                      className="h-9 text-[13px]"
+                    />
+                  </FormField>
+                  <FormField label="Farbe">
+                    <select
+                      value={draft.hue}
+                      onChange={(e) =>
+                        onChange({
+                          ...draft,
+                          hue: isTaskAccent(e.target.value) ? e.target.value : "soft",
+                        })
+                      }
+                      className="h-9 w-full rounded-md border px-2 text-[13px]"
+                      style={{
+                        borderColor: "var(--a-border)",
+                        background: "var(--a-surface-solid)",
+                      }}
+                    >
+                      {TASK_ACCENTS.map((accent) => (
+                        <option key={accent} value={accent} style={{ color: ACCENT_DOTS[accent] }}>
+                          ● {ACCENT_LABELS[accent]}
+                        </option>
+                      ))}
+                    </select>
+                  </FormField>
+                </div>
+              )}
               <FormField label="Fällig">
                 <Input
                   type="date"
