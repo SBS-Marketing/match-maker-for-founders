@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
+  ArrowLeft,
   Bell,
   Bot,
   BookOpen,
@@ -16,6 +17,7 @@ import {
   Database,
   Kanban,
   LayoutGrid,
+  LogOut,
   Menu,
   PanelLeft,
   Plus,
@@ -147,7 +149,7 @@ function AdminShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const { isPreview } = useIsAdmin();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { data: pending } = usePendingCounts();
   const [actions, setActionsState] = useState<SectionActions>({});
   const [collapsed, setCollapsed] = useState(false);
@@ -204,6 +206,11 @@ function AdminShell() {
     (pending?.partnerReview ?? 0) + (pending?.eventDrafts ?? 0) + (pending?.guideDrafts ?? 0);
   const adminName = isPreview ? "Demo-Admin" : (profile?.display_name ?? user?.email ?? "Admin");
 
+  async function handleSignOut() {
+    await signOut();
+    void navigate({ to: "/auth" });
+  }
+
   const sidebar = (
     <AdminSidebar
       pathname={pathname}
@@ -213,6 +220,7 @@ function AdminShell() {
       onSearch={() => setPaletteOpen(true)}
       adminName={adminName}
       onNavigate={() => setDrawer(false)}
+      onSignOut={handleSignOut}
     />
   );
 
@@ -348,6 +356,7 @@ function AdminSidebar({
   onSearch,
   adminName,
   onNavigate,
+  onSignOut,
 }: {
   pathname: string;
   pending: { partnerReview: number; eventDrafts: number; guideDrafts: number } | undefined;
@@ -356,6 +365,7 @@ function AdminSidebar({
   onSearch: () => void;
   adminName: string;
   onNavigate: () => void;
+  onSignOut: () => void;
 }) {
   function badgeFor(item: NavItem): { count: number; ember: boolean } | null {
     if (!item.badge || !pending) return null;
