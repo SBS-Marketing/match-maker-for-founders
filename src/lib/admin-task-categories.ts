@@ -51,4 +51,3 @@ export function taskHue(task: { tag?: string | null; hue?: string | null }): Tas
   if (isTaskAccent(task.hue)) return task.hue;
   return "soft";
 }
-

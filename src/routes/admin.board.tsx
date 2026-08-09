@@ -604,7 +604,10 @@ function TaskDialog({
                         ...draft,
                         custom: false,
                         tag: value,
-                        hue: taskHue({ tag: value, hue: categories.find((c) => c.label === value)?.hue }),
+                        hue: taskHue({
+                          tag: value,
+                          hue: categories.find((c) => c.label === value)?.hue,
+                        }),
                       });
                     }}
                     className="h-9 w-full rounded-md border px-2 text-[13px]"
