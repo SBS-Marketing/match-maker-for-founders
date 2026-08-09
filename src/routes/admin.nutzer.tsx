@@ -341,7 +341,7 @@ function UserRow({
   onOpen,
 }: {
   user: AdminUser;
-  completeness: number;
+  completeness: number | null;
   onOpen: () => void;
 }) {
   const limit = user.token_limit ?? 0;
