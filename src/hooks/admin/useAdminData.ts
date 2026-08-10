@@ -663,6 +663,12 @@ export type BoardTask = {
   due_at: string | null;
   due_label: string | null;
   position: number;
+  github_repo: string | null;
+  github_issue_number: number | null;
+  github_url: string | null;
+  github_state: string | null;
+  github_labels: string[];
+  github_synced_at: string | null;
 };
 
 export function useBoardTasks() {
@@ -676,7 +682,7 @@ export function useBoardTasks() {
       const { data, error } = await supabase
         .from("admin_tasks")
         .select(
-          "id,title,board_column,source,tag,hue,assignee_id,assignee_name,due_at,due_label,position",
+          "id,title,board_column,source,tag,hue,assignee_id,assignee_name,due_at,due_label,position,github_repo,github_issue_number,github_url,github_state,github_labels,github_synced_at",
         )
         .order("position", { ascending: true })
         .limit(500);
@@ -685,6 +691,7 @@ export function useBoardTasks() {
     },
   });
 }
+
 
 export type AdminRoleRow = {
   user_id: string;
