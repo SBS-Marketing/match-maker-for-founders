@@ -89,7 +89,6 @@ const EMPTY_DRAFT: Draft = {
   github: null,
 };
 
-
 type SeedRow = {
   title: string;
   source: string;
@@ -147,7 +146,6 @@ function AdminBoard() {
     const name = admin.display_name?.trim() || admin.email?.trim() || "";
     return rows.filter((t) => t.assignee_id === person || (name && t.assignee_name === name));
   }, [rows, person, admins]);
-
 
   const grouped = useMemo(() => {
     const map = new Map<string, BoardTask[]>();
@@ -344,7 +342,6 @@ function AdminBoard() {
               Verknüpfte GitHub-Issues (Label „board“) erscheinen hier automatisch, sobald der
               Webhook eingerichtet ist.
             </p>
-
           </div>
         </AdminCard>
         <TaskDialog
@@ -521,8 +518,7 @@ function AdminBoard() {
                                   className="flex items-center gap-1 font-mono hover:underline"
                                   style={{ fontSize: 10.5, color: "var(--a-smoke)" }}
                                 >
-                                  <Github size={12} strokeWidth={1.9} />#
-                                  {task.github_issue_number}
+                                  <Github size={12} strokeWidth={1.9} />#{task.github_issue_number}
                                 </a>
                               </span>
                             )}
@@ -849,7 +845,6 @@ function GithubRow({ label, children }: { label: string; children: React.ReactNo
     </div>
   );
 }
-
 
 function FormField({ label, children }: { label: string; children: React.ReactNode }) {
   return (

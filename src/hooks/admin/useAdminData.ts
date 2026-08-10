@@ -692,7 +692,6 @@ export function useBoardTasks() {
   });
 }
 
-
 export type AdminRoleRow = {
   user_id: string;
   email: string | null;
