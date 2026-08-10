@@ -3993,7 +3993,7 @@ function LFooter() {
                 {c.items.map((it) => (
                   <a
                     key={it}
-                    href="#"
+                    href={it === "Datenschutz" ? "/datenschutz" : it === "Impressum" ? "/impressum" : "#"}
                     style={{
                       fontSize: 14,
                       color: "rgba(251,250,247,0.85)",

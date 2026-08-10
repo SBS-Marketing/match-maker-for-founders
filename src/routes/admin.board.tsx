@@ -207,20 +207,41 @@ function AdminBoard() {
       due_at: next.due_at || null,
       due_label: dueLabelDE(next.due_at || null),
     };
-    const { error } = next.id
-      ? await supabase.from("admin_tasks").update(payload).eq("id", next.id)
-      : await supabase.from("admin_tasks").insert({
+    let taskId = next.id;
+    if (next.id) {
+      const { error } = await supabase.from("admin_tasks").update(payload).eq("id", next.id);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+    } else {
+      const { data, error } = await supabase
+        .from("admin_tasks")
+        .insert({
           ...payload,
           position: (grouped.get(next.board_column)?.length ?? 0) + 1,
           created_by: user?.id ?? null,
-        });
-    if (error) {
-      toast.error(error.message);
-      return;
+        })
+        .select("id")
+        .single();
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      taskId = data.id;
     }
     toast.success(next.id ? "Aufgabe aktualisiert." : "Aufgabe angelegt.");
     setDialogOpen(false);
     void queryClient.invalidateQueries({ queryKey: ["admin", "board-tasks"] });
+
+    // Supabase synchronisiert die Karte serverseitig nach GitHub und startet
+    // Hermes nur, wenn die Karte ihm zugewiesen ist.
+    if (taskId) {
+      const { error: syncError } = await supabase.functions.invoke("github-sync", {
+        body: { task_id: taskId },
+      });
+      if (syncError) toast.error(`GitHub-Sync fehlgeschlagen: ${syncError.message}`);
+    }
   }
 
   async function remove(id: string) {
