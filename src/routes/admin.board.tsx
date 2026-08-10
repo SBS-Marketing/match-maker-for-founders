@@ -771,7 +771,10 @@ function TaskDialog({
                   </span>
                 )}
               </FormField>
+
+              {draft.github && <GithubPanel link={draft.github} />}
             </div>
+
             <DialogFooter className="gap-2">
               {draft.id && (
                 <AdminBtn
