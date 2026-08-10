@@ -798,6 +798,59 @@ function TaskDialog({
   );
 }
 
+/** Schreibgeschützte Übersicht der GitHub-Verknüpfung einer Karte. */
+function GithubPanel({ link }: { link: GithubLink }) {
+  const closed = link.state === "closed";
+  return (
+    <div style={{ background: "var(--a-soft)", borderRadius: 12, padding: 12 }}>
+      <div
+        className="flex items-center gap-1.5"
+        style={{ fontSize: 12, fontWeight: 650, color: "var(--a-ink)" }}
+      >
+        <Github size={13} strokeWidth={1.9} />
+        Verknüpft mit GitHub
+      </div>
+      <div className="flex flex-col gap-1.5" style={{ marginTop: 9 }}>
+        <GithubRow label="Issue">
+          <a
+            href={link.url ?? undefined}
+            target="_blank"
+            rel="noreferrer"
+            className="font-mono hover:underline"
+            style={{ fontSize: 11.5, color: "var(--a-smoke)", overflowWrap: "anywhere" }}
+          >
+            {link.repo ? `${link.repo} #${link.issue}` : `#${link.issue}`}
+          </a>
+        </GithubRow>
+        <GithubRow label="Status">
+          <AdminBadge variant={closed ? "soft" : "green"}>
+            {closed ? "geschlossen" : "offen"}
+          </AdminBadge>
+        </GithubRow>
+        <GithubRow label="Zuletzt synchronisiert">
+          <span style={{ fontSize: 11.5, color: "var(--a-smoke)" }}>
+            {relativeDE(link.synced_at, "noch nie")}
+          </span>
+        </GithubRow>
+      </div>
+      <p style={{ marginTop: 9, fontSize: 11, color: "var(--a-faint)", lineHeight: 1.45 }}>
+        Spalte und Titel werden automatisch zurück zu GitHub gemeldet. Andere Felder
+        (Verantwortlich, Fällig, Kategorie) bleiben nur im Board.
+      </p>
+    </div>
+  );
+}
+
+function GithubRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span style={{ fontSize: 11.5, color: "var(--a-faint)" }}>{label}</span>
+      {children}
+    </div>
+  );
+}
+
+
 function FormField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
