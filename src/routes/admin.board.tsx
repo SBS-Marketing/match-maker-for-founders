@@ -55,6 +55,14 @@ const COLUMNS = [
   { key: "done", label: "Erledigt" },
 ] as const;
 
+type GithubLink = {
+  repo: string | null;
+  issue: number;
+  url: string | null;
+  state: string | null;
+  synced_at: string | null;
+};
+
 type Draft = {
   id?: string;
   title: string;
@@ -66,6 +74,7 @@ type Draft = {
   assignee_id: string;
   assignee_name: string;
   due_at: string;
+  github?: GithubLink | null;
 };
 
 const EMPTY_DRAFT: Draft = {
@@ -77,7 +86,9 @@ const EMPTY_DRAFT: Draft = {
   assignee_id: "",
   assignee_name: "",
   due_at: "",
+  github: null,
 };
+
 
 type SeedRow = {
   title: string;
