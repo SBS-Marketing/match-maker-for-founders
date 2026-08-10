@@ -470,6 +470,16 @@ function AdminBoard() {
                             assignee_id: task.assignee_id ?? "",
                             assignee_name: task.assignee_name ?? "",
                             due_at: task.due_at ?? "",
+                            github:
+                              task.github_issue_number !== null
+                                ? {
+                                    repo: task.github_repo,
+                                    issue: task.github_issue_number,
+                                    url: task.github_url,
+                                    state: task.github_state,
+                                    synced_at: task.github_synced_at,
+                                  }
+                                : null,
                           });
                           setDialogOpen(true);
                         }}
@@ -487,11 +497,38 @@ function AdminBoard() {
                           cursor: "grab",
                         }}
                       >
-                        {task.tag && (
-                          <div style={{ marginBottom: 7 }}>
-                            <AdminBadge variant={hue}>{task.tag}</AdminBadge>
+                        {(task.tag || task.github_issue_number !== null) && (
+                          <div
+                            className="flex flex-wrap items-center gap-2"
+                            style={{ marginBottom: 7 }}
+                          >
+                            {task.tag && <AdminBadge variant={hue}>{task.tag}</AdminBadge>}
+                            {task.github_issue_number !== null && (
+                              <span className="flex items-center gap-1">
+                                {task.github_state === "closed" && (
+                                  <Check
+                                    size={11}
+                                    strokeWidth={2.5}
+                                    style={{ color: "var(--a-green)" }}
+                                    aria-label="Issue geschlossen"
+                                  />
+                                )}
+                                <a
+                                  href={task.github_url ?? undefined}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="flex items-center gap-1 font-mono hover:underline"
+                                  style={{ fontSize: 10.5, color: "var(--a-smoke)" }}
+                                >
+                                  <Github size={12} strokeWidth={1.9} />#
+                                  {task.github_issue_number}
+                                </a>
+                              </span>
+                            )}
                           </div>
                         )}
+
                         <p
                           style={{
                             fontSize: 13,
