@@ -220,7 +220,7 @@ function TodayPage() {
   );
 
   return (
-    <div className="mx-auto max-w-4xl px-4 pt-6 pb-24 sm:px-6">
+    <div className="mf-page max-w-4xl pb-24">
       {/* Kopfzeile — klein und ruhig */}
       <div className="flex items-center justify-between gap-3">
         <div>
@@ -256,7 +256,7 @@ function TodayPage() {
         <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/75">
           Dein nächster Schritt
         </div>
-        <h2 className="mt-2 text-[21px] font-semibold leading-snug tracking-tight">
+        <h2 className="mt-2 text-[21px] font-semibold leading-snug">
           {nextFocus?.title || "Alles erledigt für heute."}
         </h2>
         {nextFocus?.desc && (
@@ -293,7 +293,7 @@ function TodayPage() {
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         {/* Kompakte Tagesliste */}
-        <section className="rounded-[18px] border border-[var(--ruled)] bg-[var(--surface)] p-4">
+        <section className="mf-card p-4">
           <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--smoke)]">
             Heute
           </div>
@@ -345,7 +345,7 @@ function TodayPage() {
         </section>
 
         {/* Mini Co-Pilot */}
-        <section className="flex flex-col rounded-[18px] border border-[var(--ruled)] bg-[var(--surface)] p-4">
+        <section className="mf-card flex flex-col p-4">
           <div className="flex items-center gap-2">
             <span
               className="flex h-7 w-7 items-center justify-center rounded-lg text-white"

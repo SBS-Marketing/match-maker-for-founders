@@ -22,6 +22,17 @@ function safeNext(next: string | undefined | null): string | null {
 const emailSchema = z.string().trim().email("Bitte gültige E-Mail eingeben").max(255);
 const passwordSchema = z.string().min(8, "Mindestens 8 Zeichen").max(72);
 
+function isExistingAccountError(error: unknown): boolean {
+  const value = error as { message?: string; code?: string } | null;
+  const text = `${value?.code ?? ""} ${value?.message ?? ""}`.toLowerCase();
+  return (
+    text.includes("already registered") ||
+    text.includes("already exists") ||
+    text.includes("user_already_exists") ||
+    text.includes("email_exists")
+  );
+}
+
 function AuthShell() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   if (pathname !== "/auth") return <Outlet />;
@@ -46,7 +57,8 @@ function AuthPage() {
     }
   }, [user, navigate, next]);
 
-  const postAuthRedirect = next ?? `${window.location.origin}/auth/callback`;
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  const postAuthRedirect = next ?? `${origin}/auth/callback`;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +71,7 @@ function AuthPage() {
     try {
       if (mode === "signup") {
         if (!pR.success) return;
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: eR.data,
           password: password,
           options: {
@@ -68,7 +80,23 @@ function AuthPage() {
               : `${window.location.origin}/auth/callback`,
           },
         });
-        if (error) throw error;
+        if (error) {
+          if (isExistingAccountError(error)) {
+            setPassword("");
+            setMode("signin");
+            toast.info("Mit dieser E-Mail gibt es bereits ein Konto. Melde dich jetzt an.");
+            return;
+          }
+          throw error;
+        }
+        // Supabase obfuscates existing confirmed users when email confirmation is enabled.
+        // Such a response has an empty identities array instead of a normal email identity.
+        if (data.user?.identities?.length === 0) {
+          setPassword("");
+          setMode("signin");
+          toast.info("Mit dieser E-Mail gibt es bereits ein Konto. Melde dich jetzt an.");
+          return;
+        }
         toast.success("Konto erstellt. Bestätige deine E-Mail.");
       } else if (mode === "signin") {
         if (!pR.success) return;
