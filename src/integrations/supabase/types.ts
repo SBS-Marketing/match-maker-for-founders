@@ -50,6 +50,12 @@ export type Database = {
           created_by: string | null
           due_at: string | null
           due_label: string | null
+          github_issue_number: number | null
+          github_labels: string[]
+          github_repo: string | null
+          github_state: string | null
+          github_synced_at: string | null
+          github_url: string | null
           hue: string
           id: string
           position: number
@@ -66,6 +72,12 @@ export type Database = {
           created_by?: string | null
           due_at?: string | null
           due_label?: string | null
+          github_issue_number?: number | null
+          github_labels?: string[]
+          github_repo?: string | null
+          github_state?: string | null
+          github_synced_at?: string | null
+          github_url?: string | null
           hue?: string
           id?: string
           position?: number
@@ -82,6 +94,12 @@ export type Database = {
           created_by?: string | null
           due_at?: string | null
           due_label?: string | null
+          github_issue_number?: number | null
+          github_labels?: string[]
+          github_repo?: string | null
+          github_state?: string | null
+          github_synced_at?: string | null
+          github_url?: string | null
           hue?: string
           id?: string
           position?: number
@@ -1599,6 +1617,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_apply_github_issue: {
+        Args: {
+          p_has_board_label: boolean
+          p_issue_number: number
+          p_labels: string[]
+          p_repo: string
+          p_state: string
+          p_title: string
+          p_url: string
+        }
+        Returns: undefined
+      }
       admin_connector_stats: {
         Args: never
         Returns: {
@@ -1685,6 +1715,10 @@ export type Database = {
         }
       }
       confirm_waitlist_entry: { Args: { p_token: string }; Returns: boolean }
+      github_issue_to_column: {
+        Args: { p_labels: string[]; p_state: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

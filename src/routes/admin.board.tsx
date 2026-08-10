@@ -8,7 +8,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Clock, Inbox, Plus, Trash2, Wand2 } from "lucide-react";
+import { Check, Clock, Github, Inbox, Plus, Trash2, Wand2 } from "lucide-react";
 import {
   AdminAvatar,
   AdminBadge,
@@ -20,7 +20,7 @@ import {
 } from "@/components/admin/ui";
 import { useAdminRoles, useBoardTasks, type BoardTask } from "@/hooks/admin/useAdminData";
 import { useSectionActions } from "@/components/admin/context";
-import { downloadCsv, dueLabelDE, isDueSoon } from "@/lib/admin-format";
+import { downloadCsv, dueLabelDE, isDueSoon, relativeDE } from "@/lib/admin-format";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -55,6 +55,14 @@ const COLUMNS = [
   { key: "done", label: "Erledigt" },
 ] as const;
 
+type GithubLink = {
+  repo: string | null;
+  issue: number;
+  url: string | null;
+  state: string | null;
+  synced_at: string | null;
+};
+
 type Draft = {
   id?: string;
   title: string;
@@ -66,6 +74,7 @@ type Draft = {
   assignee_id: string;
   assignee_name: string;
   due_at: string;
+  github?: GithubLink | null;
 };
 
 const EMPTY_DRAFT: Draft = {
@@ -77,6 +86,7 @@ const EMPTY_DRAFT: Draft = {
   assignee_id: "",
   assignee_name: "",
   due_at: "",
+  github: null,
 };
 
 type SeedRow = {
@@ -122,6 +132,7 @@ function AdminBoard() {
   const personOptions = useMemo(
     () => [
       { value: "all", label: "Alle" },
+      { value: "github", label: "Nur GitHub" },
       ...admins.map((a) => ({ value: a.user_id, label: firstName(a) })),
     ],
     [admins],
@@ -129,6 +140,7 @@ function AdminBoard() {
 
   const visible = useMemo(() => {
     if (person === "all") return rows;
+    if (person === "github") return rows.filter((t) => t.github_issue_number !== null);
     const admin = admins.find((a) => a.user_id === person);
     if (!admin) return rows;
     const name = admin.display_name?.trim() || admin.email?.trim() || "";
@@ -326,6 +338,10 @@ function AdminBoard() {
                 {seeding ? "Übernimmt…" : "Offene Freigaben übernehmen"}
               </AdminBtn>
             </div>
+            <p style={{ fontSize: 11.5, color: "var(--a-faint)", maxWidth: 420 }}>
+              Verknüpfte GitHub-Issues (Label „board“) erscheinen hier automatisch, sobald der
+              Webhook eingerichtet ist.
+            </p>
           </div>
         </AdminCard>
         <TaskDialog
@@ -451,6 +467,16 @@ function AdminBoard() {
                             assignee_id: task.assignee_id ?? "",
                             assignee_name: task.assignee_name ?? "",
                             due_at: task.due_at ?? "",
+                            github:
+                              task.github_issue_number !== null
+                                ? {
+                                    repo: task.github_repo,
+                                    issue: task.github_issue_number,
+                                    url: task.github_url,
+                                    state: task.github_state,
+                                    synced_at: task.github_synced_at,
+                                  }
+                                : null,
                           });
                           setDialogOpen(true);
                         }}
@@ -468,11 +494,37 @@ function AdminBoard() {
                           cursor: "grab",
                         }}
                       >
-                        {task.tag && (
-                          <div style={{ marginBottom: 7 }}>
-                            <AdminBadge variant={hue}>{task.tag}</AdminBadge>
+                        {(task.tag || task.github_issue_number !== null) && (
+                          <div
+                            className="flex flex-wrap items-center gap-2"
+                            style={{ marginBottom: 7 }}
+                          >
+                            {task.tag && <AdminBadge variant={hue}>{task.tag}</AdminBadge>}
+                            {task.github_issue_number !== null && (
+                              <span className="flex items-center gap-1">
+                                {task.github_state === "closed" && (
+                                  <Check
+                                    size={11}
+                                    strokeWidth={2.5}
+                                    style={{ color: "var(--a-green)" }}
+                                    aria-label="Issue geschlossen"
+                                  />
+                                )}
+                                <a
+                                  href={task.github_url ?? undefined}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="flex items-center gap-1 font-mono hover:underline"
+                                  style={{ fontSize: 10.5, color: "var(--a-smoke)" }}
+                                >
+                                  <Github size={12} strokeWidth={1.9} />#{task.github_issue_number}
+                                </a>
+                              </span>
+                            )}
                           </div>
                         )}
+
                         <p
                           style={{
                             fontSize: 13,
@@ -715,7 +767,10 @@ function TaskDialog({
                   </span>
                 )}
               </FormField>
+
+              {draft.github && <GithubPanel link={draft.github} />}
             </div>
+
             <DialogFooter className="gap-2">
               {draft.id && (
                 <AdminBtn
@@ -736,6 +791,58 @@ function TaskDialog({
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Schreibgeschützte Übersicht der GitHub-Verknüpfung einer Karte. */
+function GithubPanel({ link }: { link: GithubLink }) {
+  const closed = link.state === "closed";
+  return (
+    <div style={{ background: "var(--a-soft)", borderRadius: 12, padding: 12 }}>
+      <div
+        className="flex items-center gap-1.5"
+        style={{ fontSize: 12, fontWeight: 650, color: "var(--a-ink)" }}
+      >
+        <Github size={13} strokeWidth={1.9} />
+        Verknüpft mit GitHub
+      </div>
+      <div className="flex flex-col gap-1.5" style={{ marginTop: 9 }}>
+        <GithubRow label="Issue">
+          <a
+            href={link.url ?? undefined}
+            target="_blank"
+            rel="noreferrer"
+            className="font-mono hover:underline"
+            style={{ fontSize: 11.5, color: "var(--a-smoke)", overflowWrap: "anywhere" }}
+          >
+            {link.repo ? `${link.repo} #${link.issue}` : `#${link.issue}`}
+          </a>
+        </GithubRow>
+        <GithubRow label="Status">
+          <AdminBadge variant={closed ? "soft" : "green"}>
+            {closed ? "geschlossen" : "offen"}
+          </AdminBadge>
+        </GithubRow>
+        <GithubRow label="Zuletzt synchronisiert">
+          <span style={{ fontSize: 11.5, color: "var(--a-smoke)" }}>
+            {relativeDE(link.synced_at, "noch nie")}
+          </span>
+        </GithubRow>
+      </div>
+      <p style={{ marginTop: 9, fontSize: 11, color: "var(--a-faint)", lineHeight: 1.45 }}>
+        Spalte und Titel werden automatisch zurück zu GitHub gemeldet. Andere Felder
+        (Verantwortlich, Fällig, Kategorie) bleiben nur im Board.
+      </p>
+    </div>
+  );
+}
+
+function GithubRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span style={{ fontSize: 11.5, color: "var(--a-faint)" }}>{label}</span>
+      {children}
+    </div>
   );
 }
 
