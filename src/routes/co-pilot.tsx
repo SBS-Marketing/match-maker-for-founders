@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthGate } from "@/components/AuthGate";
 import { CopilotMark, AITag, ThinkingTrace } from "@/components/Copilot";
+import { useResearchWaitHint } from "@/hooks/useResearchWaitHint";
 import { ArrowRight, Send, Save, Pencil, FileText, Globe, Database, X } from "lucide-react";
 import { toast } from "sonner";
 import { readPlanContext } from "@/lib/plan-draft";
@@ -71,6 +72,7 @@ function CoPilotPage() {
   const [editingCtx, setEditingCtx] = useState(false);
   const [ctxDraft, setCtxDraft] = useState("");
   const [memory, setMemory] = useState<string[]>(() => readCopilotMemory());
+  const waitHint = useResearchWaitHint(sending);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // bootstrap: session + context + messages
@@ -317,26 +319,23 @@ function CoPilotPage() {
   return (
     <div
       className="h-[calc(100svh-9.5rem)] w-full overflow-hidden sm:min-h-[calc(100vh-4rem)] sm:overflow-visible"
-      style={{ background: "var(--indigo-grad)", color: "var(--surface)" }}
+      style={{ background: "var(--canvas)", color: "var(--ink)" }}
     >
       <div className="mx-auto h-full max-w-7xl px-3 py-3 sm:h-auto sm:px-6 sm:py-6">
         <div className="grid h-full gap-5 lg:grid-cols-[65fr_35fr]">
           {/* LEFT — Chat */}
-          <div
-            className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 sm:h-[82vh] sm:min-h-[520px]"
-            style={{ background: "rgba(255,255,255,0.02)" }}
-          >
+          <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[22px] border border-[var(--ruled)] bg-[var(--surface)] shadow-warm-lg sm:h-[82vh] sm:min-h-[520px]">
             {/* Header */}
-            <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3 sm:px-5 sm:py-4">
+            <div className="flex items-center gap-3 border-b border-[var(--ruled-soft)] px-4 py-3 sm:px-5 sm:py-4">
               <span
                 className="flex h-10 w-10 items-center justify-center rounded-xl"
-                style={{ background: "rgba(255,255,255,0.14)" }}
+                style={{ background: "var(--indigo-grad)", boxShadow: "var(--indigo-glow)" }}
               >
-                <CopilotMark size={18} color="var(--cream)" spark="var(--cream)" />
+                <CopilotMark size={18} color="white" spark="white" />
               </span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-[15px] font-semibold tracking-tight">Co-Pilot</span>
+                  <span className="text-[15px] font-semibold">Co-Pilot</span>
                   <AITag tone="dark">online</AITag>
                 </div>
                 {editingTitle ? (
@@ -346,12 +345,12 @@ function CoPilotPage() {
                     onChange={(e) => setSessionTitle(e.target.value)}
                     onBlur={saveSessionTitle}
                     onKeyDown={(e) => e.key === "Enter" && saveSessionTitle()}
-                    className="mt-0.5 w-full bg-transparent font-mono text-[10.5px] uppercase tracking-[0.12em] text-white/70 outline-none"
+                    className="mt-0.5 w-full bg-transparent font-mono text-[10.5px] uppercase tracking-[0.12em] text-[var(--smoke)] outline-none"
                   />
                 ) : (
                   <button
                     onClick={() => setEditingTitle(true)}
-                    className="mt-0.5 truncate text-left font-mono text-[10.5px] uppercase tracking-[0.12em] text-white/55 hover:text-white/80"
+                    className="mt-0.5 truncate text-left font-mono text-[10.5px] uppercase tracking-[0.12em] text-[var(--faint)] hover:text-[var(--ink)]"
                   >
                     Session · {sessionTitle}
                   </button>
@@ -359,7 +358,7 @@ function CoPilotPage() {
               </div>
               <button
                 onClick={saveSessionTitle}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-white/85 hover:bg-white/10 sm:w-auto sm:px-3 sm:py-1.5 sm:text-[11.5px] sm:font-semibold"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-[13px] border border-[var(--ruled)] bg-[var(--surface-soft)] text-[var(--smoke)] hover:bg-[var(--indigo-tint)] hover:text-[var(--indigo-ink)] sm:w-auto sm:px-3 sm:py-1.5 sm:text-[11.5px] sm:font-semibold"
                 aria-label="Session speichern"
               >
                 <Save className="h-3.5 w-3.5" />
@@ -370,12 +369,12 @@ function CoPilotPage() {
             {/* Messages */}
             <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
               {messages.length === 0 && !sending && (
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-[14px] text-white/70">
-                  <div className="mb-1 text-[var(--cream)]">
+                <div className="rounded-[18px] border border-[var(--ruled)] bg-[var(--surface-soft)] p-5 text-[14px] text-[var(--smoke)]">
+                  <div className="mb-1 text-[var(--ink)]">
                     „Erzähl mir kurz, was du gerade baust und wo du stehst — ich höre zu und mache
                     dir einen konkreten nächsten Schritt."
                   </div>
-                  <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white/40">
+                  <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--faint)]">
                     Co-Pilot · bereit
                   </div>
                 </div>
@@ -386,17 +385,21 @@ function CoPilotPage() {
                   <div key={m.id} className="ml-auto max-w-[88%] sm:max-w-[78%]">
                     <div
                       className="rounded-2xl rounded-br-sm px-4 py-3 text-[14px] leading-snug"
-                      style={{ background: "var(--surface)", color: "var(--indigo-deep)" }}
+                      style={{
+                        background: "var(--indigo-grad)",
+                        color: "white",
+                        boxShadow: "var(--indigo-glow)",
+                      }}
                     >
                       {m.content}
                     </div>
-                    <div className="mt-1 text-right font-mono text-[10px] text-white/40">
+                    <div className="mt-1 text-right font-mono text-[10px] text-[var(--faint)]">
                       {formatTime(m.created_at)}
                     </div>
                   </div>
                 ) : (
                   <div key={m.id} className="max-w-[96%] sm:max-w-[90%]">
-                    <div className="rounded-2xl rounded-bl-sm border border-white/10 bg-white/5 px-4 py-3.5 text-[15px] leading-snug text-[var(--cream)] whitespace-pre-wrap">
+                    <div className="rounded-2xl rounded-bl-sm border border-[var(--ruled)] bg-[var(--surface)] px-4 py-3.5 text-[15px] leading-snug text-[var(--ink-soft)] shadow-warm whitespace-pre-wrap">
                       {m.content}
                     </div>
                     {m.navigation && m.navigation.length > 0 && (
@@ -405,7 +408,7 @@ function CoPilotPage() {
                           <button
                             key={nav.to + nav.label}
                             onClick={() => router.navigate({ to: nav.to })}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-semibold text-[var(--indigo-deep)] hover:bg-white/90"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-[var(--indigo-tint)] px-3 py-1.5 text-[12px] font-semibold text-[var(--indigo-ink)] hover:brightness-95"
                           >
                             {nav.label} <ArrowRight className="h-3 w-3" />
                           </button>
@@ -419,7 +422,7 @@ function CoPilotPage() {
                         ))}
                       </div>
                     )}
-                    <div className="mt-1 font-mono text-[10px] text-white/40">
+                    <div className="mt-1 font-mono text-[10px] text-[var(--faint)]">
                       Co-Pilot · {formatTime(m.created_at)}
                     </div>
                   </div>
@@ -428,22 +431,20 @@ function CoPilotPage() {
 
               {sending && (
                 <div className="max-w-[60%]">
-                  <ThinkingTrace tone="dark">
-                    analysiere · rufe Quellen ab · formuliere Antwort
-                  </ThinkingTrace>
+                  <ThinkingTrace tone="dark">{waitHint}</ThinkingTrace>
                 </div>
               )}
             </div>
 
             {/* Composer */}
-            <div className="border-t border-white/10 p-4">
+            <div className="border-t border-[var(--ruled-soft)] p-4">
               <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
                 {quickActions.slice(0, 4).map((s) => (
                   <button
                     key={s}
                     onClick={() => send(s)}
                     disabled={sending}
-                    className="shrink-0 rounded-full border border-white/12 bg-white/5 px-3 py-1 text-[11.5px] text-white/75 hover:bg-white/10 disabled:opacity-50"
+                    className="shrink-0 rounded-full border border-[var(--ruled)] bg-[var(--surface-soft)] px-3 py-1 text-[11.5px] text-[var(--smoke)] hover:text-[var(--ink)] disabled:opacity-50"
                   >
                     {s}
                   </button>
@@ -467,13 +468,13 @@ function CoPilotPage() {
                   }}
                   rows={1}
                   placeholder="Frag etwas — oder lass mich den Plan ausarbeiten…"
-                  className="flex-1 resize-none rounded-xl border border-white/12 bg-white/5 px-4 py-3 text-[14px] text-[var(--cream)] placeholder:text-white/40 focus:border-white/25 focus:outline-none"
+                  className="flex-1 resize-none rounded-[16px] border border-[var(--ruled)] bg-[var(--surface)] px-4 py-3 text-[14px] text-[var(--ink)] placeholder:text-[var(--faint)] focus:border-[var(--indigo)] focus:outline-none"
                   style={{ maxHeight: 160 }}
                 />
                 <button
                   type="submit"
                   disabled={sending || !input.trim()}
-                  className="flex h-11 w-11 items-center justify-center rounded-xl text-[var(--cream)] disabled:opacity-50"
+                  className="flex h-11 w-11 items-center justify-center rounded-[16px] text-white disabled:opacity-50"
                   style={{ background: "var(--indigo-grad)", boxShadow: "var(--indigo-glow)" }}
                   aria-label="Senden"
                 >
@@ -485,12 +486,9 @@ function CoPilotPage() {
 
           {/* RIGHT — Context panel */}
           <div className="hidden flex-col gap-4 lg:flex">
-            <div
-              className="rounded-2xl border border-white/10 p-5"
-              style={{ background: "rgba(255,255,255,0.03)" }}
-            >
+            <div className="mf-card p-5">
               <div className="flex items-center justify-between">
-                <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/55">
+                <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--faint)]">
                   So habe ich dich verstanden
                 </div>
                 <button
@@ -498,7 +496,7 @@ function CoPilotPage() {
                     setEditingCtx((v) => !v);
                     setCtxDraft("");
                   }}
-                  className="inline-flex items-center gap-1 text-[11px] text-white/60 hover:text-white/90"
+                  className="inline-flex items-center gap-1 text-[11px] text-[var(--smoke)] hover:text-[var(--ink)]"
                 >
                   <Pencil className="h-3 w-3" /> Etwas korrigieren
                 </button>
@@ -512,18 +510,18 @@ function CoPilotPage() {
                     onChange={(e) => setCtxDraft(e.target.value)}
                     rows={5}
                     placeholder="Beschreibe kurz dich, deine Idee, Stand, Stadt, Ziel, Risiko…"
-                    className="w-full resize-none rounded-lg border border-white/15 bg-white/5 p-3 text-[13px] text-white/85 placeholder:text-white/40 focus:outline-none"
+                    className="w-full resize-none rounded-[13px] border border-[var(--ruled)] bg-[var(--surface-soft)] p-3 text-[13px] text-[var(--ink)] placeholder:text-[var(--faint)] focus:outline-none"
                   />
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() => setEditingCtx(false)}
-                      className="rounded-lg px-3 py-1.5 text-[11.5px] text-white/60 hover:text-white/90"
+                      className="rounded-lg px-3 py-1.5 text-[11.5px] text-[var(--smoke)] hover:text-[var(--ink)]"
                     >
                       Abbrechen
                     </button>
                     <button
                       onClick={reparseContext}
-                      className="rounded-lg px-3 py-1.5 text-[11.5px] font-semibold text-[var(--cream)]"
+                      className="rounded-lg px-3 py-1.5 text-[11.5px] font-semibold text-white"
                       style={{ background: "var(--indigo)" }}
                     >
                       Speichern
@@ -542,15 +540,12 @@ function CoPilotPage() {
               )}
             </div>
 
-            <div
-              className="rounded-2xl border border-white/10 p-5"
-              style={{ background: "rgba(255,255,255,0.03)" }}
-            >
-              <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/55">
+            <div className="mf-card p-5">
+              <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--faint)]">
                 Was ich mir gemerkt habe
               </div>
               {memory.length === 0 ? (
-                <p className="mt-3 text-[12px] leading-relaxed text-white/40">
+                <p className="mt-3 text-[12px] leading-relaxed text-[var(--smoke)]">
                   Noch nichts — erzähl mir Entscheidungen, Zahlen oder Deadlines, ich merke sie mir
                   und nutze sie in jedem Gespräch.
                 </p>
@@ -559,13 +554,13 @@ function CoPilotPage() {
                   {memory.map((fact) => (
                     <li
                       key={fact}
-                      className="group flex items-start justify-between gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[12.5px] leading-snug text-white/80"
+                      className="group flex items-start justify-between gap-2 rounded-lg border border-[var(--ruled)] bg-[var(--surface-soft)] px-3 py-2 text-[12.5px] leading-snug text-[var(--ink-soft)]"
                     >
                       <span className="min-w-0">{fact}</span>
                       <button
                         onClick={() => forgetFact(fact)}
                         aria-label="Fakt vergessen"
-                        className="mt-0.5 shrink-0 text-white/30 transition hover:text-white/80"
+                        className="mt-0.5 shrink-0 text-[var(--faint)] transition hover:text-[var(--ink)]"
                       >
                         <X className="h-3.5 w-3.5" />
                       </button>
@@ -575,19 +570,18 @@ function CoPilotPage() {
               )}
             </div>
 
-            <div
-              className="rounded-2xl border border-white/10 p-5"
-              style={{ background: "rgba(255,255,255,0.03)" }}
-            >
-              <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/55">
+            <div className="mf-card p-5">
+              <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--faint)]">
                 Quellen, auf die ich mich stütze
               </div>
               <ul className="mt-4 space-y-2">
                 {allSources.length === 0 && (
-                  <li className="text-[12px] text-white/40">Noch keine Quellen — frag etwas.</li>
+                  <li className="text-[12px] text-[var(--smoke)]">
+                    Noch keine Quellen — frag etwas.
+                  </li>
                 )}
                 {allSources.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-[12.5px] text-white/75">
+                  <li key={i} className="flex items-start gap-2 text-[12.5px] text-[var(--smoke)]">
                     <SourceIcon source={s} />
                     <span className="min-w-0 truncate">{s.titel || s.title || s.url}</span>
                   </li>
@@ -604,11 +598,11 @@ function CoPilotPage() {
 function Field({ label, value }: { label: string; value?: string | null }) {
   return (
     <div>
-      <div className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-white/40">
+      <div className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-[var(--faint)]">
         {label}
       </div>
-      <div className="mt-0.5 text-[13.5px] leading-snug text-white/85">
-        {value || <span className="text-white/35">— noch unbekannt —</span>}
+      <div className="mt-0.5 text-[13.5px] leading-snug text-[var(--ink-soft)]">
+        {value || <span className="text-[var(--faint)]">— noch unbekannt —</span>}
       </div>
     </div>
   );
@@ -619,7 +613,7 @@ function SourcePill({ source }: { source: Source }) {
   const label = sourceLabel(source);
   return (
     <span
-      className="inline-flex max-w-[230px] items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-white/70"
+      className="inline-flex max-w-[230px] items-center gap-1 rounded-full border border-[var(--ruled)] bg-[var(--surface-soft)] px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--smoke)]"
       title={source.url}
     >
       <SourceIcon source={source} />
