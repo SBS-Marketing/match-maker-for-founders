@@ -308,56 +308,47 @@ function SwipeCard({
       transition={{ type: "spring", stiffness: 300, damping: 25 }}
     >
       <div
-        className="relative h-full w-full overflow-hidden rounded-3xl"
+        className="relative flex h-full w-full flex-col overflow-hidden rounded-[22px]"
         style={{
-          background: "var(--cream)",
+          background: "var(--surface)",
           boxShadow: "0 25px 60px -20px rgba(21,20,15,0.25), 0 8px 20px -8px rgba(21,20,15,0.1)",
           border: "1px solid rgba(21,20,15,0.06)",
         }}
       >
-        {/* Photo / Avatar Area */}
-        <div className="relative h-[55%] w-full overflow-hidden" style={{ background: bg }}>
-          {profile.photo_url ? (
-            <img src={profile.photo_url} alt={name} className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center">
-              <span className="text-6xl font-bold" style={{ color: "rgba(255,255,255,0.3)" }}>
-                {initials(name)}
+        <div className="flex items-start justify-between gap-4 p-6 pb-4">
+          <div className="flex min-w-0 items-center gap-4">
+            <div
+              className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full text-[18px] font-bold sm:h-20 sm:w-20 sm:text-[22px]"
+              style={{ background: `${bg}22`, color: bg, border: `3px solid ${bg}` }}
+            >
+              {profile.photo_url ? (
+                <img src={profile.photo_url} alt={name} className="h-full w-full object-cover" />
+              ) : (
+                initials(name)
+              )}
+            </div>
+            <div className="min-w-0">
+              <h2 className="truncate text-[23px] font-bold text-[var(--ink)] sm:text-[25px]">{name}</h2>
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-[var(--smoke)]">
+                {profile.role && <span>{roleLabel(profile.role)}</span>}
+                {profile.city && (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="h-3 w-3" /> {profile.city}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          {profile.match_score !== undefined && (
+            <div className="flex h-[74px] w-[74px] shrink-0 flex-col items-center justify-center rounded-[20px] bg-[var(--ember-tint)] text-[var(--ember-deep)]">
+              <span className="text-[28px] font-bold leading-none">
+                {Math.round(profile.match_score)}
+              </span>
+              <span className="mt-1 font-mono text-[9px] font-semibold uppercase tracking-[0.16em]">
+                Fit
               </span>
             </div>
           )}
-          {/* Gradient overlay */}
-          <div
-            className="absolute inset-x-0 bottom-0 h-32"
-            style={{
-              background: "linear-gradient(to top, rgba(21,20,15,0.7), transparent)",
-            }}
-          />
-          {/* Name overlay */}
-          <div className="absolute bottom-4 left-5 right-5">
-            <div className="flex items-end justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-white">{name}</h2>
-                <div className="mt-1 flex items-center gap-2 text-[13px] text-white/80">
-                  {profile.city && (
-                    <>
-                      <MapPin className="h-3 w-3" /> {profile.city}
-                    </>
-                  )}
-                  {profile.role && (
-                    <>
-                      <Briefcase className="h-3 w-3" /> {roleLabel(profile.role)}
-                    </>
-                  )}
-                </div>
-              </div>
-              {profile.match_score !== undefined && (
-                <div className="flex flex-col items-center">
-                  <FitRing score={profile.match_score} size={56} />
-                </div>
-              )}
-            </div>
-          </div>
           {/* Swipe indicators */}
           {isTop && (
             <>
@@ -377,8 +368,7 @@ function SwipeCard({
           )}
         </div>
 
-        {/* Info Area */}
-        <div className="flex h-[45%] flex-col p-5">
+        <div className="flex flex-1 flex-col px-6 pb-5">
           <div className="flex flex-wrap gap-2">
             {profile.stage && <Chip>{stageLabel(profile.stage)}</Chip>}
             {profile.commitment && <Chip muted>{commitLabel(profile.commitment)}</Chip>}
@@ -389,22 +379,19 @@ function SwipeCard({
           </div>
 
           {profile.vision && (
-            <p
-              className="mt-3 line-clamp-3 text-[14px] leading-relaxed"
-              style={{ color: "var(--ink-soft)" }}
-            >
+            <p className="mt-4 line-clamp-4 text-[16px] italic leading-relaxed text-[var(--ink-soft)] sm:mt-5 sm:text-[18px]">
               „{profile.vision}"
             </p>
           )}
 
           {profile.skills && profile.skills.length > 0 && (
-            <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
-              {profile.skills.slice(0, 6).map((s) => (
+            <div className="mt-4 flex flex-wrap gap-1.5">
+                {profile.skills.slice(0, 4).map((s) => (
                 <span
                   key={s}
-                  className="rounded-full px-2.5 py-1 text-[11px] font-medium"
+                  className="rounded-full px-3 py-1.5 text-[12px] font-medium"
                   style={{
-                    background: "rgba(21,20,15,0.06)",
+                    background: "var(--surface-soft)",
                     color: "var(--smoke)",
                   }}
                 >
@@ -413,6 +400,14 @@ function SwipeCard({
               ))}
             </div>
           )}
+          <div className="mt-auto flex items-center gap-2 pt-6 text-[13px] text-[var(--smoke)]">
+            <Briefcase className="h-4 w-4" /> {commitLabel(profile.commitment)}
+          </div>
+          <ActionButtons
+            onPass={() => onSwipe("pass")}
+            onSave={() => onSwipe("save")}
+            onLike={() => onSwipe("like")}
+          />
         </div>
       </div>
     </motion.div>
@@ -445,44 +440,44 @@ function ActionButtons({
   onLike: () => void;
 }) {
   return (
-    <div className="flex items-center justify-center gap-4 py-4">
+    <div className="flex items-center justify-center gap-5 pt-5">
       <button
         onClick={onPass}
         className="flex h-14 w-14 items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-95"
         style={{
           background: "#fff",
-          boxShadow: "0 4px 16px rgba(239,68,68,0.2)",
-          border: "2px solid rgba(239,68,68,0.3)",
+          boxShadow: "var(--shadow-soft)",
+          border: "1px solid var(--ruled)",
         }}
         aria-label="Pass"
       >
-        <X className="h-6 w-6 text-red-500" />
+        <X className="h-6 w-6 text-[var(--smoke)]" />
       </button>
 
       <button
         onClick={onSave}
         className="flex h-12 w-12 items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-95"
         style={{
-          background: "#fff",
-          boxShadow: "0 4px 16px rgba(245,158,11,0.2)",
-          border: "2px solid rgba(245,158,11,0.3)",
+          background: "var(--indigo)",
+          boxShadow: "var(--indigo-glow)",
+          border: "0",
         }}
         aria-label="Save"
       >
-        <Star className="h-5 w-5 text-amber-500" />
+        <Star className="h-5 w-5 text-white" />
       </button>
 
       <button
         onClick={onLike}
         className="flex h-14 w-14 items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-95"
         style={{
-          background: "#fff",
-          boxShadow: "0 4px 16px rgba(34,197,94,0.2)",
-          border: "2px solid rgba(34,197,94,0.3)",
+          background: "var(--ember)",
+          boxShadow: "var(--ember-glow)",
+          border: "0",
         }}
         aria-label="Like"
       >
-        <Heart className="h-6 w-6 text-green-500" fill="currentColor" />
+        <Heart className="h-6 w-6 text-white" fill="currentColor" />
       </button>
     </div>
   );
@@ -550,7 +545,7 @@ export function SparkView({ profiles, onSwipe, loading }: SparkViewProps) {
     <div className="mx-auto flex max-w-5xl gap-6 px-4 py-6">
       {/* Card Stack */}
       <div className="relative flex-1">
-        <div className="relative mx-auto h-[580px] w-full max-w-md">
+        <div className="relative mx-auto h-[470px] w-full max-w-md sm:h-[580px]">
           <AnimatePresence mode="popLayout">
             {/* Next card (behind) */}
             {nextProfile && (
@@ -575,13 +570,6 @@ export function SparkView({ profiles, onSwipe, loading }: SparkViewProps) {
             />
           </AnimatePresence>
         </div>
-
-        {/* Action Buttons */}
-        <ActionButtons
-          onPass={() => handleSwipe("pass")}
-          onSave={() => handleSwipe("save")}
-          onLike={() => handleSwipe("like")}
-        />
       </div>
 
       {/* KI Reasoning Sidebar (desktop) */}

@@ -236,6 +236,7 @@ function Discover() {
     const { data: profs, error } = await supabase
       .from("profiles")
       .select("*")
+      .neq("id", user.id)
       .not("onboarded_at", "is", null)
       .limit(50);
     if (error) {

@@ -56,6 +56,7 @@ const MOBILE_PRIMARY: NavItem[] = [
   { to: "/heute", label: "Heute", short: "Heute", icon: Home },
   { to: "/discover", label: "Swipe", short: "Swipe", icon: Compass },
   { to: "/matches", label: "Chats", short: "Chats", icon: MessageCircle },
+  { to: "/guides", label: "Guides", short: "Guides", icon: BookOpen },
   { to: "/co-pilot", label: "Co-Pilot", short: "Pilot", icon: Sparkles },
 ];
 
@@ -235,9 +236,12 @@ function SidebarLink({ item, active }: { item: NavItem; active: boolean }) {
 
 function Topbar({ title }: { title: string }) {
   const { user } = useAuth();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const moreActive = MOBILE_MORE.some((item) => pathname.startsWith(item.to));
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b border-[var(--ruled-soft)] bg-[rgba(250,248,243,0.92)] px-4 backdrop-blur-xl sm:px-6">
+    <header className="sticky top-0 z-20 flex h-[68px] items-center justify-between gap-3 border-b border-[var(--ruled-soft)] bg-[rgba(250,248,243,0.92)] px-4 backdrop-blur-xl sm:px-6 lg:h-16">
       <div className="flex min-w-0 items-center gap-2.5">
         {/* Mobile brand (sidebar hidden) */}
         <Link to="/heute" className="flex items-center lg:hidden" aria-label="matchfoundr">
@@ -259,7 +263,7 @@ function Topbar({ title }: { title: string }) {
             <circle cx="70" cy="50" r="6" fill="var(--ink)" />
           </svg>
         </Link>
-        <h1 className="truncate text-[16px] font-semibold tracking-tight text-[var(--ink)]">
+        <h1 className="sr-only truncate text-[16px] font-semibold text-[var(--ink)] lg:not-sr-only">
           {title}
         </h1>
       </div>
@@ -267,6 +271,55 @@ function Topbar({ title }: { title: string }) {
       <div className="flex items-center gap-1.5">
         {user ? (
           <>
+            <div className="relative lg:hidden">
+              <button
+                type="button"
+                aria-label="Weitere Bereiche öffnen"
+                aria-expanded={moreOpen}
+                onClick={() => setMoreOpen((current) => !current)}
+                className={`flex h-9 w-9 items-center justify-center rounded-[13px] border text-[var(--smoke)] transition hover:text-[var(--ink)] ${
+                  moreOpen || moreActive
+                    ? "border-[var(--ember)] bg-[var(--ember-tint)] text-[var(--ember-deep)]"
+                    : "border-[var(--ruled)] bg-[var(--surface)]"
+                }`}
+              >
+                <MoreHorizontal className="h-[18px] w-[18px]" />
+              </button>
+              {moreOpen && (
+                <div className="absolute right-0 top-11 z-50 w-72 rounded-[18px] border border-[var(--ruled)] bg-[rgba(255,255,255,0.97)] p-2 shadow-warm-lg backdrop-blur-xl">
+                  <div className="mb-1 flex items-center justify-between px-2 py-1">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--faint)]">
+                      Weitere Bereiche
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setMoreOpen(false)}
+                      className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--smoke)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink)]"
+                      aria-label="Weitere Bereiche schließen"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1">
+                    {MOBILE_MORE.map(({ to, label, icon: Icon }) => (
+                      <Link
+                        key={to}
+                        to={to}
+                        onClick={() => setMoreOpen(false)}
+                        className={`flex min-h-10 items-center gap-2 rounded-[13px] px-3 text-[12px] font-semibold transition ${
+                          pathname.startsWith(to)
+                            ? "bg-[var(--ember-tint)] text-[var(--ember-deep)]"
+                            : "text-[var(--smoke)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink)]"
+                        }`}
+                      >
+                        <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        <span className="truncate">{label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             <Link
               to="/matches"
               aria-label="Benachrichtigungen"
@@ -299,86 +352,33 @@ function Topbar({ title }: { title: string }) {
 
 export function MobileBottomNav({ pathname }: { pathname: string }) {
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
   if (!user) return null;
-
-  const moreActive = MOBILE_MORE.some((item) => pathname.startsWith(item.to));
 
   return (
     <nav aria-label="Hauptnavigation" className="fixed inset-x-0 bottom-0 z-50 lg:hidden">
-      {open && (
-        <div className="mx-auto mb-2 max-w-[34rem] px-3">
-          <div className="rounded-[18px] border border-[var(--ruled)] bg-[rgba(255,255,255,0.96)] p-2 shadow-warm-lg backdrop-blur-xl">
-            <div className="mb-1 flex items-center justify-between px-2 py-1">
-              <span className="text-[12px] font-semibold text-[var(--smoke)]">Mehr Bereiche</span>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--smoke)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink)]"
-                aria-label="Mehr-Menü schließen"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-1">
-              {MOBILE_MORE.map(({ to, label, icon: Icon }) => {
-                const active = pathname.startsWith(to);
-                return (
-                  <Link
-                    key={to}
-                    to={to}
-                    onClick={() => setOpen(false)}
-                    className={[
-                      "flex min-h-11 items-center gap-2 rounded-[13px] px-3 text-[13px] font-semibold transition",
-                      active
-                        ? "bg-[var(--ember-tint)] text-[var(--ember-deep)]"
-                        : "text-[var(--smoke)] hover:bg-[var(--surface-soft)] hover:text-[var(--ink)]",
-                    ].join(" ")}
-                  >
-                    <Icon className="h-[17px] w-[17px] shrink-0" aria-hidden="true" />
-                    <span className="truncate">{label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-      <div className="mx-auto grid h-[74px] max-w-[34rem] grid-cols-5 items-start gap-1 border-t border-[var(--ruled-soft)] bg-[rgba(255,255,255,0.92)] px-2 pt-2 pb-[18px] shadow-warm backdrop-blur-xl">
+      <div className="mx-auto grid h-[82px] max-w-[34rem] grid-cols-5 items-start gap-1 border-t border-[var(--ruled-soft)] bg-[rgba(255,255,255,0.92)] px-2 pt-2 pb-[18px] shadow-warm backdrop-blur-xl">
         {MOBILE_PRIMARY.map(({ to, short, icon: Icon }) => {
           const active = pathname.startsWith(to);
           return (
             <Link
               key={to}
               to={to}
-              onClick={() => setOpen(false)}
               className={[
                 "flex min-w-0 flex-col items-center justify-center gap-1 rounded-[13px] px-1 py-1.5 text-[10px] leading-none transition",
                 active
-                  ? "bg-[var(--ember-tint)] font-bold text-[var(--ember-deep)]"
+                  ? "font-bold text-[var(--ember)]"
                   : "font-medium text-[var(--faint)] hover:text-[var(--ink)]",
               ].join(" ")}
             >
-              <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+              <span
+                className={`flex h-8 w-11 items-center justify-center rounded-[10px] ${active ? "bg-[var(--ember-tint)]" : ""}`}
+              >
+                <Icon className="h-[19px] w-[19px]" aria-hidden="true" />
+              </span>
               <span className="max-w-full truncate">{short}</span>
             </Link>
           );
         })}
-        <button
-          type="button"
-          onClick={() => setOpen((current) => !current)}
-          className={[
-            "flex min-w-0 flex-col items-center justify-center gap-1 rounded-[13px] px-1 py-1.5 text-[10px] leading-none transition",
-            open || moreActive
-              ? "bg-[var(--ember-tint)] font-bold text-[var(--ember-deep)]"
-              : "font-medium text-[var(--faint)] hover:text-[var(--ink)]",
-          ].join(" ")}
-          aria-expanded={open}
-          aria-label="Mehr Navigation öffnen"
-        >
-          <MoreHorizontal className="h-[18px] w-[18px]" aria-hidden="true" />
-          <span>Mehr</span>
-        </button>
       </div>
     </nav>
   );

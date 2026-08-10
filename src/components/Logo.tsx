@@ -41,7 +41,7 @@ export function Wordmark({ size = 22, className }: Props) {
         fontFamily: "var(--font-sans)",
         fontWeight: 700,
         fontSize: size,
-        letterSpacing: "-0.035em",
+        letterSpacing: 0,
         color: "var(--ink)",
         lineHeight: 1,
         whiteSpace: "nowrap",
