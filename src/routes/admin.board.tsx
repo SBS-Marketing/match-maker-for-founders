@@ -133,6 +133,7 @@ function AdminBoard() {
   const personOptions = useMemo(
     () => [
       { value: "all", label: "Alle" },
+      { value: "github", label: "Nur GitHub" },
       ...admins.map((a) => ({ value: a.user_id, label: firstName(a) })),
     ],
     [admins],
@@ -140,11 +141,13 @@ function AdminBoard() {
 
   const visible = useMemo(() => {
     if (person === "all") return rows;
+    if (person === "github") return rows.filter((t) => t.github_issue_number !== null);
     const admin = admins.find((a) => a.user_id === person);
     if (!admin) return rows;
     const name = admin.display_name?.trim() || admin.email?.trim() || "";
     return rows.filter((t) => t.assignee_id === person || (name && t.assignee_name === name));
   }, [rows, person, admins]);
+
 
   const grouped = useMemo(() => {
     const map = new Map<string, BoardTask[]>();
