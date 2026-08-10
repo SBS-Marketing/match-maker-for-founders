@@ -340,6 +340,11 @@ function AdminBoard() {
                 {seeding ? "Übernimmt…" : "Offene Freigaben übernehmen"}
               </AdminBtn>
             </div>
+            <p style={{ fontSize: 11.5, color: "var(--a-faint)", maxWidth: 420 }}>
+              Verknüpfte GitHub-Issues (Label „board“) erscheinen hier automatisch, sobald der
+              Webhook eingerichtet ist.
+            </p>
+
           </div>
         </AdminCard>
         <TaskDialog
