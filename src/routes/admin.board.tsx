@@ -20,7 +20,7 @@ import {
 } from "@/components/admin/ui";
 import { useAdminRoles, useBoardTasks, type BoardTask } from "@/hooks/admin/useAdminData";
 import { useSectionActions } from "@/components/admin/context";
-import { downloadCsv, dueLabelDE, isDueSoon } from "@/lib/admin-format";
+import { downloadCsv, dueLabelDE, isDueSoon, relativeDE } from "@/lib/admin-format";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
