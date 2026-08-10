@@ -8,7 +8,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Clock, Inbox, Plus, Trash2, Wand2 } from "lucide-react";
+import { Check, Clock, Github, Inbox, Plus, Trash2, Wand2 } from "lucide-react";
 import {
   AdminAvatar,
   AdminBadge,
