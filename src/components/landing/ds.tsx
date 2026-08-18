@@ -91,6 +91,8 @@ export function L2H({ children, size = 'clamp(38px, 4.6vw, 62px)', color, style 
 
 // ── Buttons ──────────────────────────────────────────────────────────────
 export function L2Btn({ children, href = '#', kind = 'primary', accent = 'ember', size = 'md' }) {
+  // CTAs der Vorlage zeigen auf Platzhalter-Anker — hier auf die echte Anmeldung geroutet.
+  if (href === '#cta' || href === '#login') href = '/auth';
   const A = accent === 'indigo' ? T.indigo : T.ember;
   const AD = accent === 'indigo' ? T.indigoDeep : T.emberDeep;
   const pads = { md: '14px 22px', lg: '17px 28px' };

@@ -38,7 +38,7 @@ export function L2Nav() {
           ))}
         </nav>
         <div style={{ flex: 1 }}/>
-        <a className="l2-signin" href="#login" style={{ fontSize: 14, fontWeight: 500, color: T.smoke, textDecoration: 'none' }}>Anmelden</a>
+        <a className="l2-signin" href="/auth" style={{ fontSize: 14, fontWeight: 500, color: T.smoke, textDecoration: 'none' }}>Anmelden</a>
         <L2Btn href="#cta" kind="dark">Kostenlos starten</L2Btn>
       </div>
     </div>
