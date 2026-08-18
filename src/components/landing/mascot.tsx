@@ -1,6 +1,7 @@
 // @ts-nocheck
 /* eslint-disable */
 import React from "react";
+import { MFMascot } from "@/lib/mfMascot";
 import { L2 } from "./ds";
 
 // matchfoundr · Maskottchen als React-Baustein für Landing v2.
