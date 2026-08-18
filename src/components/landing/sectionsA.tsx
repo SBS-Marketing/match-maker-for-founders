@@ -25,9 +25,9 @@ export function L2Nav() {
       backdropFilter: 'blur(14px)', borderBottom: `1px solid ${T.lineSoft}` }}>
       <div className="l2-nav" style={{ maxWidth: 1200, margin: '0 auto', padding: '14px 40px',
         display: 'flex', alignItems: 'center', gap: 32 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
           <IconMF size={22}/>
-          <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.03em' }}>
+          <span style={{ fontWeight: 700, fontSize: 18, letterSpacing: '-0.03em', whiteSpace: 'nowrap' }}>
             matchfoundr<MFWordmarkDot/>
           </span>
         </div>

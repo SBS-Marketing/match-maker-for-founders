@@ -14,6 +14,7 @@ import { MFDot } from "./mascot";
 const T = L2;
 
 const COPILOT_CSS = `
+@media(max-width:560px){.cp-hero-dot{transform:scale(.7);margin-bottom:14px!important}}
 @keyframes cpFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
 @keyframes cpUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @keyframes cpPop{0%{opacity:0;transform:scale(.82)}60%{transform:scale(1.05)}100%{opacity:1;transform:scale(1)}}
@@ -242,7 +243,7 @@ export function L2Copilot() {
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 40px', position: 'relative' }}>
         {/* intro */}
         <div style={{ textAlign: 'center', maxWidth: 780, margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 30 }}>
+          <div className="cp-hero-dot" style={{ display: 'flex', justifyContent: 'center', marginBottom: 30 }}>
             <MFDot size={96} ink={T.indigo} paper={T.canvas} follow intro
               cycle={['idle', 'thinking', 'wink', 'notify', 'orbit', 'idle']}/>
           </div>

@@ -106,7 +106,7 @@ export function L2Btn({ children, href = '#', kind = 'primary', accent = 'ember'
   return (
     <a href={href} style={{ display: 'inline-flex', alignItems: 'center', gap: 10,
       padding: pads[size], borderRadius: 13, fontWeight: 620, fontSize: size === 'lg' ? 16 : 14.5,
-      textDecoration: 'none', letterSpacing: '-0.01em', ...styles[kind] }}>
+      textDecoration: 'none', whiteSpace: 'nowrap', letterSpacing: '-0.01em', ...styles[kind] }}>
       {children}
       <MFServiceIcon name="arrowR" size={size === 'lg' ? 16 : 14}
         color={kind === 'primary' ? '#fff' : (kind === 'dark' || kind === 'ghostLight' ? '#F5F2EC' : T.ink)} stroke={2.2}/>
