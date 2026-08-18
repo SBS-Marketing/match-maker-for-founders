@@ -411,7 +411,7 @@ export function L2Pricing() {
                   </div>
                 ))}
               </div>
-              <a href="#cta" style={{ marginTop: 'auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              <a href="/auth" style={{ marginTop: 'auto', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 padding: '14px 18px', borderRadius: 12, fontWeight: 620, fontSize: 14.5, textDecoration: 'none',
                 background: feat ? T.ember : (i === 2 ? T.surface : T.ink), color: feat ? '#fff' : (i === 2 ? T.ink : '#F5F2EC'),
                 border: i === 2 ? `1px solid ${T.line}` : 'none',
