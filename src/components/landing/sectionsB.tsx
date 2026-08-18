@@ -27,7 +27,7 @@ const L2MCP_CSS = `
   .l2mcp-handoff{grid-template-columns:1fr!important;gap:14px!important;min-height:0!important}
   .l2mcp-handoff > div{width:auto!important;margin-left:0!important}
   .l2mcp-fly{display:none!important}
-  .l2mcp-hub{transform:scale(.74);transform-origin:top center;height:236px!important}
+  .l2mcp-hub{max-width:320px!important}
   .l2mcp-tabs > *{font-size:12px!important}
 }
 `;
@@ -103,10 +103,16 @@ function L2VizHandoff() {
 
 // —— Visual 2 · Offene MCP (Hub mit Live-Leitungen) ————————————————————————
 function L2VizMcp() {
-  const clients = [{ n:'Claude', logo:'claude', x:56, y:64 },{ n:'ChatGPT', logo:'openai', x:454, y:60 },{ n:'Cursor', logo:'cursor', x:210, y:256 }];
+  // Koordinaten im viewBox-System (420x300) — Chips werden prozentual daraus positioniert.
+  const clients = [
+    { n:'Claude',  logo:'claude', x:74,  y:60,  anchor:'left' },
+    { n:'ChatGPT', logo:'openai', x:346, y:60,  anchor:'right' },
+    { n:'Cursor',  logo:'cursor', x:210, y:250, anchor:'center' },
+  ];
+  const VB_W = 420, VB_H = 300;
   return (
-    <div className="l2mcp-anim l2mcp-hub" style={{ position:'relative', width:'100%', maxWidth:420, margin:'0 auto', height:300 }}>
-      <svg viewBox="0 0 420 300" style={{ position:'absolute', inset:0, width:'100%', height:'100%' }}>
+    <div className="l2mcp-anim l2mcp-hub" style={{ position:'relative', width:'100%', maxWidth:420, margin:'0 auto', aspectRatio:'420 / 300' }}>
+      <svg viewBox={`0 0 ${VB_W} ${VB_H}`} preserveAspectRatio="xMidYMid meet" style={{ position:'absolute', inset:0, width:'100%', height:'100%', overflow:'visible' }}>
         {clients.map((c,i)=>(
           <g key={i}>
             <line x1="210" y1="150" x2={c.x} y2={c.y} stroke={T.indigo} strokeOpacity="0.35" strokeWidth="2" className="l2mcp-wire" style={{ animationDelay:`${i*0.2}s` }}/>
@@ -121,14 +127,22 @@ function L2VizMcp() {
         <div style={{ fontSize:11.5, fontWeight:640, color:'#F5F2EC' }}>matchfoundr</div>
         <div style={{ fontFamily:T.mono, fontSize:8.5, letterSpacing:'.1em', textTransform:'uppercase', color:'rgba(245,242,236,.5)', marginTop:1 }}>mcp · oauth</div>
       </div>
-      {clients.map((c,i)=>(
-        <div key={i} className="l2mcp-anim" style={{ animationDelay:`${0.2+i*0.12}s`, position:'absolute', left:c.x, top:c.y, transform:'translate(-50%,-50%)', zIndex:2, display:'inline-flex', alignItems:'center', gap:8, padding:'7px 13px 7px 10px', borderRadius:999, background:T.surface, border:`1px solid ${T.line}`, boxShadow:T.shadowSoft, fontSize:12, fontWeight:600, color:T.ink, whiteSpace:'nowrap' }}>
-          <L2Logo name={c.logo} size={15}/>{c.n}
-        </div>
-      ))}
+      {clients.map((c,i)=>{
+        const pos = c.anchor === 'left'
+          ? { left:0, transform:'translateY(-50%)' }
+          : c.anchor === 'right'
+            ? { right:0, transform:'translateY(-50%)' }
+            : { left:'50%', transform:'translate(-50%,-50%)' };
+        return (
+          <div key={i} className="l2mcp-anim" style={{ animationDelay:`${0.2+i*0.12}s`, position:'absolute', top:`${(c.y/VB_H)*100}%`, ...pos, zIndex:2, display:'inline-flex', alignItems:'center', gap:8, padding:'7px 13px 7px 10px', borderRadius:999, background:T.surface, border:`1px solid ${T.line}`, boxShadow:T.shadowSoft, fontSize:12, fontWeight:600, color:T.ink, whiteSpace:'nowrap', maxWidth:'46%' }}>
+            <L2Logo name={c.logo} size={15}/>{c.n}
+          </div>
+        );
+      })}
     </div>
   );
 }
+
 
 // —— Visual 3 · Konnektoren ohne Ende ————————————————————————————————————
 function L2VizConnectors() {
