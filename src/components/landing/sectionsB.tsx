@@ -27,7 +27,7 @@ const L2MCP_CSS = `
   .l2mcp-handoff{grid-template-columns:1fr!important;gap:14px!important;min-height:0!important}
   .l2mcp-handoff > div{width:auto!important;margin-left:0!important}
   .l2mcp-fly{display:none!important}
-  .l2mcp-hub{transform:scale(.74);transform-origin:top center;height:236px!important}
+  .l2mcp-hub{max-width:320px!important}
   .l2mcp-tabs > *{font-size:12px!important}
 }
 `;
