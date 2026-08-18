@@ -23,6 +23,13 @@ const L2MCP_CSS = `
 @keyframes l2mcpDraw{from{stroke-dashoffset:26}to{stroke-dashoffset:0}}
 .l2mcp-anim{animation:l2mcpUp .5s cubic-bezier(.2,.7,.3,1) both}
 .l2mcp-wire{stroke-dasharray:5 7;animation:l2mcpWire 1s linear infinite}
+@media(max-width:640px){
+  .l2mcp-handoff{grid-template-columns:1fr!important;gap:14px!important;min-height:0!important}
+  .l2mcp-handoff > div{width:auto!important;margin-left:0!important}
+  .l2mcp-fly{display:none!important}
+  .l2mcp-hub{transform:scale(.74);transform-origin:top center;height:236px!important}
+  .l2mcp-tabs > *{font-size:12px!important}
+}
 `;
 
 // —— Echte Brand-Logos (simple-icons, MIT) + handgezeichnet für OpenAI/Slack —
@@ -59,7 +66,7 @@ export function L2Logo({ name, size = 22 }) {
 // —— Visual 1 · Nahtloser Hand-off ————————————————————————————————————————
 function L2VizHandoff() {
   return (
-    <div style={{ position:'relative', display:'grid', gridTemplateColumns:'1fr 1fr', gap:0, alignItems:'center', minHeight:300 }}>
+    <div className="l2mcp-handoff" style={{ position:'relative', display:'grid', gridTemplateColumns:'1fr 1fr', gap:0, alignItems:'center', minHeight:300 }}>
       <div className="l2mcp-anim" style={{ position:'relative', zIndex:2, borderRadius:18, background:T.surface, border:`1px solid ${T.line}`, boxShadow:T.shadowSoft, padding:16, width:196 }}>
         <div style={{ display:'flex', alignItems:'center', gap:9, marginBottom:12 }}>
           <span style={{ width:28, height:28, borderRadius:8, background:T.ember, display:'inline-flex', alignItems:'center', justifyContent:'center' }}><IconMF size={14} color="#fff" spark="#fff"/></span>
@@ -72,7 +79,7 @@ function L2VizHandoff() {
           </div>
         ))}
       </div>
-      <div style={{ position:'absolute', left:'44%', top:'50%', transform:'translateY(-50%)', zIndex:3, animation:'l2mcpFly 2.6s cubic-bezier(.5,0,.3,1) infinite' }}>
+      <div className="l2mcp-fly" style={{ position:'absolute', left:'44%', top:'50%', transform:'translateY(-50%)', zIndex:3, animation:'l2mcpFly 2.6s cubic-bezier(.5,0,.3,1) infinite' }}>
         <span style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'6px 11px', borderRadius:999, background:T.indigo, color:'#fff', fontSize:11, fontWeight:600, boxShadow:`0 10px 22px -8px ${T.indigoDeep}` }}>
           <MFServiceIcon name="spark2" size={12} color="#fff" stroke={2.4}/> dein Kontext
         </span>
@@ -98,7 +105,7 @@ function L2VizHandoff() {
 function L2VizMcp() {
   const clients = [{ n:'Claude', logo:'claude', x:56, y:64 },{ n:'ChatGPT', logo:'openai', x:454, y:60 },{ n:'Cursor', logo:'cursor', x:210, y:256 }];
   return (
-    <div className="l2mcp-anim" style={{ position:'relative', width:'100%', maxWidth:420, margin:'0 auto', height:300 }}>
+    <div className="l2mcp-anim l2mcp-hub" style={{ position:'relative', width:'100%', maxWidth:420, margin:'0 auto', height:300 }}>
       <svg viewBox="0 0 420 300" style={{ position:'absolute', inset:0, width:'100%', height:'100%' }}>
         {clients.map((c,i)=>(
           <g key={i}>
