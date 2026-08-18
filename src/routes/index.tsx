@@ -53,7 +53,13 @@ html { scroll-behavior: smooth; }
 }
 @media (max-width: 560px) {
   .l2-footer-grid { grid-template-columns: 1fr !important; }
+  .l2-nav { padding: 10px 16px !important; }
+  .l2-nav a { font-size: 13px !important; padding: 10px 14px !important; }
+  .l2-hero-grid { padding: 36px 16px 24px !important; }
+  .l2-root div[style*="padding: 0 40px"] { padding-left: 16px !important; padding-right: 16px !important; }
 }
+.l2-root { overflow-x: hidden; }
+
 `;
 
 function Landing() {
