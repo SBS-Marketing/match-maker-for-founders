@@ -22,6 +22,7 @@ import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as KapitalRouteImport } from './routes/kapital'
 import { Route as KanbanRouteImport } from './routes/kanban'
 import { Route as KalenderRouteImport } from './routes/kalender'
+import { Route as ImpressumRouteImport } from './routes/impressum'
 import { Route as HeuteRouteImport } from './routes/heute'
 import { Route as GrowthRouteImport } from './routes/growth'
 import { Route as FirmaRouteImport } from './routes/firma'
@@ -29,6 +30,7 @@ import { Route as EventsRouteImport } from './routes/events'
 import { Route as EntdeckenRouteImport } from './routes/entdecken'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as DealsRouteImport } from './routes/deals'
+import { Route as DatenschutzRouteImport } from './routes/datenschutz'
 import { Route as CoPilotRouteImport } from './routes/co-pilot'
 import { Route as CoFounderRouteImport } from './routes/co-founder'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -137,6 +139,11 @@ const KalenderRoute = KalenderRouteImport.update({
   path: '/kalender',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ImpressumRoute = ImpressumRouteImport.update({
+  id: '/impressum',
+  path: '/impressum',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HeuteRoute = HeuteRouteImport.update({
   id: '/heute',
   path: '/heute',
@@ -170,6 +177,11 @@ const DiscoverRoute = DiscoverRouteImport.update({
 const DealsRoute = DealsRouteImport.update({
   id: '/deals',
   path: '/deals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DatenschutzRoute = DatenschutzRouteImport.update({
+  id: '/datenschutz',
+  path: '/datenschutz',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoPilotRoute = CoPilotRouteImport.update({
@@ -393,6 +405,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRouteWithChildren
   '/co-founder': typeof CoFounderRoute
   '/co-pilot': typeof CoPilotRoute
+  '/datenschutz': typeof DatenschutzRoute
   '/deals': typeof DealsRoute
   '/discover': typeof DiscoverRoute
   '/entdecken': typeof EntdeckenRoute
@@ -400,6 +413,7 @@ export interface FileRoutesByFullPath {
   '/firma': typeof FirmaRoute
   '/growth': typeof GrowthRouteWithChildren
   '/heute': typeof HeuteRoute
+  '/impressum': typeof ImpressumRoute
   '/kalender': typeof KalenderRoute
   '/kanban': typeof KanbanRoute
   '/kapital': typeof KapitalRouteWithChildren
@@ -456,12 +470,14 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRouteWithChildren
   '/co-founder': typeof CoFounderRoute
   '/co-pilot': typeof CoPilotRoute
+  '/datenschutz': typeof DatenschutzRoute
   '/deals': typeof DealsRoute
   '/discover': typeof DiscoverRoute
   '/entdecken': typeof EntdeckenRoute
   '/events': typeof EventsRoute
   '/firma': typeof FirmaRoute
   '/heute': typeof HeuteRoute
+  '/impressum': typeof ImpressumRoute
   '/kalender': typeof KalenderRoute
   '/kanban': typeof KanbanRoute
   '/marketplace': typeof MarketplaceRoute
@@ -516,6 +532,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRouteWithChildren
   '/co-founder': typeof CoFounderRoute
   '/co-pilot': typeof CoPilotRoute
+  '/datenschutz': typeof DatenschutzRoute
   '/deals': typeof DealsRoute
   '/discover': typeof DiscoverRoute
   '/entdecken': typeof EntdeckenRoute
@@ -523,6 +540,7 @@ export interface FileRoutesById {
   '/firma': typeof FirmaRoute
   '/growth': typeof GrowthRouteWithChildren
   '/heute': typeof HeuteRoute
+  '/impressum': typeof ImpressumRoute
   '/kalender': typeof KalenderRoute
   '/kanban': typeof KanbanRoute
   '/kapital': typeof KapitalRouteWithChildren
@@ -582,6 +600,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/co-founder'
     | '/co-pilot'
+    | '/datenschutz'
     | '/deals'
     | '/discover'
     | '/entdecken'
@@ -589,6 +608,7 @@ export interface FileRouteTypes {
     | '/firma'
     | '/growth'
     | '/heute'
+    | '/impressum'
     | '/kalender'
     | '/kanban'
     | '/kapital'
@@ -645,12 +665,14 @@ export interface FileRouteTypes {
     | '/auth'
     | '/co-founder'
     | '/co-pilot'
+    | '/datenschutz'
     | '/deals'
     | '/discover'
     | '/entdecken'
     | '/events'
     | '/firma'
     | '/heute'
+    | '/impressum'
     | '/kalender'
     | '/kanban'
     | '/marketplace'
@@ -704,6 +726,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/co-founder'
     | '/co-pilot'
+    | '/datenschutz'
     | '/deals'
     | '/discover'
     | '/entdecken'
@@ -711,6 +734,7 @@ export interface FileRouteTypes {
     | '/firma'
     | '/growth'
     | '/heute'
+    | '/impressum'
     | '/kalender'
     | '/kanban'
     | '/kapital'
@@ -769,6 +793,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRouteWithChildren
   CoFounderRoute: typeof CoFounderRoute
   CoPilotRoute: typeof CoPilotRoute
+  DatenschutzRoute: typeof DatenschutzRoute
   DealsRoute: typeof DealsRoute
   DiscoverRoute: typeof DiscoverRoute
   EntdeckenRoute: typeof EntdeckenRoute
@@ -776,6 +801,7 @@ export interface RootRouteChildren {
   FirmaRoute: typeof FirmaRoute
   GrowthRoute: typeof GrowthRouteWithChildren
   HeuteRoute: typeof HeuteRoute
+  ImpressumRoute: typeof ImpressumRoute
   KalenderRoute: typeof KalenderRoute
   KanbanRoute: typeof KanbanRoute
   KapitalRoute: typeof KapitalRouteWithChildren
@@ -898,6 +924,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KalenderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/impressum': {
+      id: '/impressum'
+      path: '/impressum'
+      fullPath: '/impressum'
+      preLoaderRoute: typeof ImpressumRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/heute': {
       id: '/heute'
       path: '/heute'
@@ -945,6 +978,13 @@ declare module '@tanstack/react-router' {
       path: '/deals'
       fullPath: '/deals'
       preLoaderRoute: typeof DealsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/datenschutz': {
+      id: '/datenschutz'
+      path: '/datenschutz'
+      fullPath: '/datenschutz'
+      preLoaderRoute: typeof DatenschutzRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/co-pilot': {
@@ -1357,6 +1397,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRouteWithChildren,
   CoFounderRoute: CoFounderRoute,
   CoPilotRoute: CoPilotRoute,
+  DatenschutzRoute: DatenschutzRoute,
   DealsRoute: DealsRoute,
   DiscoverRoute: DiscoverRoute,
   EntdeckenRoute: EntdeckenRoute,
@@ -1364,6 +1405,7 @@ const rootRouteChildren: RootRouteChildren = {
   FirmaRoute: FirmaRoute,
   GrowthRoute: GrowthRouteWithChildren,
   HeuteRoute: HeuteRoute,
+  ImpressumRoute: ImpressumRoute,
   KalenderRoute: KalenderRoute,
   KanbanRoute: KanbanRoute,
   KapitalRoute: KapitalRouteWithChildren,
