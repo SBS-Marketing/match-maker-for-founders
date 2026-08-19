@@ -10,12 +10,12 @@ export const Route = createFileRoute("/beta")({
       {
         name: "description",
         content:
-          "matchfoundr bringt Gründer, Experten und Kapital zusammen. Sichere dir jetzt einen Platz in Welle 1 der privaten Beta.",
+          "matchfoundr verbindet Gründer, Experten und Kapital. Sichere dir jetzt einen Platz in Welle 1 der privaten Beta.",
       },
       { property: "og:title", content: "Beta-Zugang — matchfoundr für die ersten 500 Gründer" },
       {
         property: "og:description",
-        content: "Wir öffnen in Wellen. Trag dich ein und du bist in der ersten dabei.",
+        content: "Wir öffnen in Wellen. Trag dich ein und sei dabei.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -36,17 +36,6 @@ const C = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const WORLDS: Array<[string, string]> = [
-  ["Recht", "#13957A"],
-  ["Steuern", "#D79014"],
-  ["Funding", "#E03A2E"],
-  ["Kapital", "#3A6FD6"],
-  ["Mentoring", "#8A55D2"],
-  ["Talent", "#2E9E50"],
-  ["Growth", "#DB4B93"],
-  ["Founder", "#E2511C"],
-];
-
 const CSS = `
 .mfb-root{min-height:100vh;background:${C.canvas};color:${C.ink};font-family:"Geist",system-ui,-apple-system,sans-serif;
   display:flex;flex-direction:column;align-items:center;padding:22px 20px 18px;overflow-x:hidden}
@@ -62,7 +51,7 @@ const CSS = `
 .mfb-badge i{width:7px;height:7px;border-radius:99px;background:${C.ember};animation:mfb-pulse 1.8s ease-in-out infinite}
 .mfb-hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:13px;padding:6px 0 14px}
 .mfb-h1{font-size:clamp(34px,5.4vw,62px);font-weight:700;letter-spacing:-.038em;line-height:1.02;margin:0}
-.mfb-lead{max-width:46ch;color:${C.muted};font-size:15px;line-height:1.55;margin:0}
+.mfb-lead{max-width:44ch;color:${C.muted};font-size:15.5px;line-height:1.55;margin:0}
 .mfb-form{display:flex;gap:10px;width:100%;max-width:460px;margin-top:4px}
 .mfb-input{flex:1;height:52px;border-radius:14px;border:1px solid rgba(23,21,15,.1);background:#fff;
   padding:0 16px;font-size:15px;font-family:inherit;color:${C.ink};outline:none;transition:box-shadow .18s,border-color .18s}
@@ -77,29 +66,28 @@ const CSS = `
 .mfb-done{background:#fff;border-radius:16px;box-shadow:0 12px 34px rgba(23,21,15,.07);border:1px solid ${C.line};
   padding:20px 24px;max-width:460px;animation:mfb-pop .5s cubic-bezier(.2,.7,.3,1) both}
 .mfb-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.mfb-card{background:#fff;border-radius:18px;border:1px solid ${C.line};padding:16px;text-align:left;
-  transition:transform .22s,border-color .22s,box-shadow .22s}
+.mfb-card{background:#fff;border-radius:18px;border:1px solid ${C.line};padding:18px;text-align:left;
+  transition:transform .22s,border-color .22s,box-shadow .22s;display:flex;flex-direction:column;gap:10px}
 .mfb-card:hover{transform:translateY(-4px);border-color:rgba(226,81,28,.4);box-shadow:0 14px 30px rgba(23,21,15,.06)}
-.mfb-tile{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;padding:5px}
-.mfb-ct{font-size:14.5px;font-weight:700;letter-spacing:-.02em;margin:11px 0 3px}
-.mfb-cd{font-size:13px;color:${C.muted};line-height:1.5;margin:0}
-.mfb-demo{margin-top:12px;border-radius:12px;padding:11px 12px}
-.mfb-bar{height:4px;border-radius:99px;background:rgba(23,21,15,.08);overflow:hidden;margin:8px 0 7px}
-.mfb-bar>span{display:block;height:100%;border-radius:99px;background:${C.ember};width:0;transition:width 1.4s ease}
-.mfb-chip{font-size:11.5px;font-weight:600;border-radius:99px;padding:5px 11px;display:inline-block}
+.mfb-tile{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mfb-ct{font-size:15px;font-weight:700;letter-spacing:-.02em;margin:0;line-height:1.2}
+.mfb-cd{font-size:13.5px;color:${C.muted};line-height:1.5;margin:0}
+.mfb-hint{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:${C.faint};margin-top:auto;padding-top:4px}
+.mfb-hint i{width:5px;height:5px;border-radius:99px;background:currentColor;opacity:.6}
 .mfb-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;
   text-transform:uppercase;letter-spacing:.14em;color:#B5AEA3;padding-top:18px}
 .mfb-foot a{color:inherit;text-decoration:none;text-transform:none;letter-spacing:0;font-size:12px}
 @media (max-width:760px){
   .mfb-cards{grid-template-columns:1fr}
   .mfb-form{flex-direction:column}
+  .mfb-input{width:100%;min-width:0}
   .mfb-btn{width:100%}
   .mfb-root{padding-bottom:28px}
+  .mfb-hero{gap:12px;padding-top:12px}
 }
 @media (prefers-reduced-motion:reduce){
   .mfb-rise,.mfb-done{animation:none!important;opacity:1!important;transform:none!important}
   .mfb-badge i{animation:none}
-  .mfb-bar>span{transition:none}
 }
 `;
 
@@ -120,12 +108,9 @@ function BetaPage() {
   const typeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const backTimers = useRef<Array<ReturnType<typeof setTimeout>>>([]);
   const submitted = useRef(false);
-  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const t = setTimeout(() => setProgress(92), 700);
     return () => {
-      clearTimeout(t);
       if (typeTimer.current) clearTimeout(typeTimer.current);
       backTimers.current.forEach(clearTimeout);
     };
@@ -209,15 +194,15 @@ function BetaPage() {
 
           <Rise delay={0.18}>
             <h1 className="mfb-h1">
-              Beta-Zugang für die ersten{" "}
-              <span style={{ color: C.ember }}>500 Gründer</span>.
+              Sicher dir Beta-Zugang.
+              <br />
+              <span style={{ color: C.ember }}>500 Gründer. Welle 1.</span>
             </h1>
           </Rise>
 
           <Rise delay={0.28} style={{ display: "flex", justifyContent: "center" }}>
             <p className="mfb-lead">
-              matchfoundr bringt Gründer, Experten und Kapital zusammen. Wir öffnen in Wellen — trag dich ein und du
-              bist in der ersten dabei.
+              matchfoundr verbindet Gründer, Experten und Kapital. Wir öffnen in Wellen — trag dich ein und sei dabei.
             </p>
           </Rise>
 
@@ -228,8 +213,7 @@ function BetaPage() {
                   Du bist auf der Liste.
                 </p>
                 <p style={{ margin: "6px 0 0", fontSize: 13.5, color: C.muted, lineHeight: 1.55 }}>
-                  Wir melden uns, sobald Welle 1 öffnet. Bis dahin sortiert der Co-Pilot schon mal passende Founder für
-                  dich vor.
+                  Wir melden uns, sobald Welle 1 öffnet. Bis dahin sortiert der Co-Pilot passende Founder für dich vor.
                 </p>
               </div>
             </Rise>
@@ -278,34 +262,10 @@ function BetaPage() {
                 />
               </div>
               <h2 className="mfb-ct">Co-Founder-Matching</h2>
-              <p className="mfb-cd">Vorschläge nach Rolle, Branche und Tempo. Nicht nach Zufall.</p>
-              <div className="mfb-demo" style={{ background: "#F7F3EC" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span
-                    style={{
-                      width: 26,
-                      height: 26,
-                      borderRadius: 99,
-                      background: "#fff",
-                      display: "grid",
-                      placeItems: "center",
-                      fontSize: 10.5,
-                      fontWeight: 700,
-                      color: C.muted,
-                    }}
-                  >
-                    LK
-                  </span>
-                  <span style={{ fontSize: 12.5, color: C.muted }}>
-                    <strong style={{ color: C.ink }}>Lena K.</strong> · CTO-Profil
-                  </span>
-                  <span style={{ marginLeft: "auto", fontSize: 12.5, fontWeight: 700, color: C.ember }}>92 %</span>
-                </div>
-                <div className="mfb-bar">
-                  <span style={{ width: `${progress}%` }} />
-                </div>
-                <div style={{ fontSize: 11.5, color: C.faint }}>Tech · Berlin · Vollzeit ab Q4</div>
-              </div>
+              <p className="mfb-cd">Finde den richtigen Co-Founder nach Rolle, Stack und Tempo — nicht nach Zufall.</p>
+              <span className="mfb-hint">
+                <i style={{ background: C.ember }} />92 % Match-Genauigkeit in Vorabtests
+              </span>
             </article>
 
             <article className="mfb-card">
@@ -318,20 +278,10 @@ function BetaPage() {
                 />
               </div>
               <h2 className="mfb-ct">Dein Co-Pilot</h2>
-              <p className="mfb-cd">Fragt nach, sortiert vor und schreibt die erste Nachricht mit.</p>
-              <div className="mfb-demo" style={{ background: "#EEF1FB" }}>
-                <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.5, color: "#273F96" }}>
-                  Lena sucht genau deinen Stack. Soll ich die erste Nachricht entwerfen?
-                </p>
-                <div style={{ display: "flex", gap: 7, marginTop: 9 }}>
-                  <span className="mfb-chip" style={{ background: C.indigo, color: "#fff" }}>
-                    Ja, entwerfen
-                  </span>
-                  <span className="mfb-chip" style={{ background: "#fff", color: C.indigo }}>
-                    Später
-                  </span>
-                </div>
-              </div>
+              <p className="mfb-cd">Stellt die richtigen Fragen, sortiert vor und entwirft die erste Nachricht für dich.</p>
+              <span className="mfb-hint">
+                <i style={{ background: C.indigo }} />Schreibt mit, nicht nur für dich
+              </span>
             </article>
 
             <article className="mfb-card">
@@ -343,24 +293,11 @@ function BetaPage() {
                   style={{ width: "100%", height: "100%" }}
                 />
               </div>
-              <h2 className="mfb-ct">Acht Service-Welten</h2>
-              <p className="mfb-cd">Geprüfte Partner, direkt aus dem Profil beauftragt.</p>
-              <div
-                className="mfb-demo"
-                style={{
-                  background: "#F7F3EC",
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "7px 10px",
-                }}
-              >
-                {WORLDS.map(([name, color]) => (
-                  <span key={name} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: C.muted }}>
-                    <i style={{ width: 7, height: 7, borderRadius: 99, background: color, display: "inline-block" }} />
-                    {name}
-                  </span>
-                ))}
-              </div>
+              <h2 className="mfb-ct">Service-Welten</h2>
+              <p className="mfb-cd">Von Recht bis Funding: geprüfte Partner, direkt aus dem Profil beauftragt.</p>
+              <span className="mfb-hint">
+                <i style={{ background: "#13957A" }} />8 Welten, ein Checkout
+              </span>
             </article>
           </div>
         </Rise>
