@@ -232,13 +232,13 @@ function BetaPage() {
             <h1 className="mfb-h1">
               Sicher dir deinen Beta-Zugang.
               <br />
-              <span style={{ color: C.ember }}>500 Gründer. Welle 1.</span>
+              <span style={{ color: C.ember }}>Nur 500 Plätze.</span>
             </h1>
           </Rise>
 
           <Rise delay={0.28} style={{ display: "flex", justifyContent: "center" }}>
             <p className="mfb-lead">
-              matchfoundr verbindet Gründer, Experten und Kapital. Wir öffnen in Wellen — trag dich ein und sei dabei.
+              matchfoundr verbindet Gründer, Experten und Kapital. Trag deine Mail ein und sei von Anfang an dabei.
             </p>
           </Rise>
 
