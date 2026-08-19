@@ -136,6 +136,7 @@ function useReveal() {
 
 function BetaPage() {
   const mascot = useRef<MascotHandle>(null);
+  const cardsRef = useReveal();
   const [email, setEmail] = useState("");
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
