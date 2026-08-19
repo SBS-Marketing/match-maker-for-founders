@@ -209,7 +209,7 @@ function BetaPage() {
             </span>
             <span className="mfb-badge">
               <i />
-              Private Beta · Welle 1
+              Private Beta · Limitierte Plätze
             </span>
           </header>
         </Rise>
