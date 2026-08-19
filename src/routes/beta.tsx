@@ -10,12 +10,12 @@ export const Route = createFileRoute("/beta")({
       {
         name: "description",
         content:
-          "matchfoundr verbindet Gründer, Experten und Kapital. Sichere dir jetzt einen Platz in Welle 1 der privaten Beta.",
+          "matchfoundr verbindet Gründer, Experten und Kapital. Sichere dir einen der ersten 500 Plätze in der privaten Beta.",
       },
       { property: "og:title", content: "Beta-Zugang — matchfoundr für die ersten 500 Gründer" },
       {
         property: "og:description",
-        content: "Wir öffnen in Wellen. Trag dich ein und sei dabei.",
+        content: "Private Beta, limitierte Plätze. Trag dich ein und sei von Anfang an dabei.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -66,14 +66,23 @@ const CSS = `
 .mfb-done{background:#fff;border-radius:16px;box-shadow:0 12px 34px rgba(23,21,15,.07);border:1px solid ${C.line};
   padding:20px 24px;max-width:460px;animation:mfb-pop .5s cubic-bezier(.2,.7,.3,1) both}
 .mfb-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.mfb-card{background:#fff;border-radius:18px;border:1px solid ${C.line};padding:18px;text-align:left;
-  transition:transform .22s,border-color .22s,box-shadow .22s;display:flex;flex-direction:column;gap:10px}
-.mfb-card:hover{transform:translateY(-4px);border-color:rgba(226,81,28,.4);box-shadow:0 14px 30px rgba(23,21,15,.06)}
-.mfb-tile{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mfb-card{position:relative;overflow:hidden;background:#fff;border-radius:18px;border:1px solid ${C.line};padding:18px;text-align:left;
+  display:flex;flex-direction:column;gap:10px;opacity:0;transform:translateY(26px) scale(.985);
+  transition:transform .5s cubic-bezier(.2,.7,.3,1),opacity .5s ease,border-color .3s,box-shadow .45s}
+.mfb-card.in{opacity:1;transform:none}
+.mfb-card::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.65) 50%,transparent 62%);
+  transform:translateX(-120%);transition:transform .8s cubic-bezier(.3,.7,.3,1)}
+.mfb-card:hover::after{transform:translateX(120%)}
+.mfb-card:hover{transform:translateY(-6px);border-color:rgba(226,81,28,.42);box-shadow:0 18px 38px rgba(23,21,15,.09)}
+.mfb-card:hover .mfb-tile{transform:translateY(-2px) rotate(-4deg) scale(1.06)}
+.mfb-card:hover .mfb-hint i{transform:scale(1.9);opacity:1}
+.mfb-tile{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:transform .45s cubic-bezier(.2,.8,.3,1)}
 .mfb-ct{font-size:15px;font-weight:700;letter-spacing:-.02em;margin:0;line-height:1.2}
 .mfb-cd{font-size:13.5px;color:${C.muted};line-height:1.5;margin:0}
 .mfb-hint{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:${C.faint};margin-top:auto;padding-top:4px}
-.mfb-hint i{width:5px;height:5px;border-radius:99px;background:currentColor;opacity:.6}
+.mfb-hint i{width:5px;height:5px;border-radius:99px;background:currentColor;opacity:.6;transition:transform .35s cubic-bezier(.2,.8,.3,1),opacity .35s}
 .mfb-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;
   text-transform:uppercase;letter-spacing:.14em;color:#B5AEA3;padding-top:18px}
 .mfb-foot a{color:inherit;text-decoration:none;text-transform:none;letter-spacing:0;font-size:12px}
@@ -87,6 +96,8 @@ const CSS = `
 }
 @media (prefers-reduced-motion:reduce){
   .mfb-rise,.mfb-done{animation:none!important;opacity:1!important;transform:none!important}
+  .mfb-card{opacity:1!important;transform:none!important;transition:none}
+  .mfb-card::after{display:none}
   .mfb-badge i{animation:none}
 }
 `;
@@ -99,8 +110,33 @@ function Rise({ delay, children, style }: { delay: number; children: React.React
   );
 }
 
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const root = ref.current;
+    if (!root) return;
+    const cards = Array.from(root.querySelectorAll<HTMLElement>(".mfb-card"));
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const el = entry.target as HTMLElement;
+          el.style.transitionDelay = `${cards.indexOf(el) * 0.11}s`;
+          el.classList.add("in");
+          io.unobserve(el);
+        });
+      },
+      { threshold: 0.2, rootMargin: "0px 0px -8% 0px" },
+    );
+    cards.forEach((c) => io.observe(c));
+    return () => io.disconnect();
+  }, []);
+  return ref;
+}
+
 function BetaPage() {
   const mascot = useRef<MascotHandle>(null);
+  const cardsRef = useReveal();
   const [email, setEmail] = useState("");
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -173,7 +209,7 @@ function BetaPage() {
             </span>
             <span className="mfb-badge">
               <i />
-              Private Beta · Welle 1
+              Private Beta · Limitierte Plätze
             </span>
           </header>
         </Rise>
@@ -196,13 +232,13 @@ function BetaPage() {
             <h1 className="mfb-h1">
               Sicher dir deinen Beta-Zugang.
               <br />
-              <span style={{ color: C.ember }}>500 Gründer. Welle 1.</span>
+              <span style={{ color: C.ember }}>Nur 500 Plätze.</span>
             </h1>
           </Rise>
 
           <Rise delay={0.28} style={{ display: "flex", justifyContent: "center" }}>
             <p className="mfb-lead">
-              matchfoundr verbindet Gründer, Experten und Kapital. Wir öffnen in Wellen — trag dich ein und sei dabei.
+              matchfoundr verbindet Gründer, Experten und Kapital. Trag deine Mail ein und sei von Anfang an dabei.
             </p>
           </Rise>
 
@@ -213,7 +249,8 @@ function BetaPage() {
                   Du bist auf der Liste.
                 </p>
                 <p style={{ margin: "6px 0 0", fontSize: 13.5, color: C.muted, lineHeight: 1.55 }}>
-                  Wir melden uns, sobald Welle 1 öffnet. Bis dahin sortiert der Co-Pilot passende Founder für dich vor.
+                  Wir melden uns, sobald dein Zugang bereit ist. Bis dahin sortiert der Co-Pilot passende Gründer für
+                  dich vor.
                 </p>
               </div>
             </Rise>
@@ -251,7 +288,7 @@ function BetaPage() {
         </section>
 
         <Rise delay={0.58}>
-          <div className="mfb-cards">
+          <div className="mfb-cards" ref={cardsRef}>
             <article className="mfb-card">
               <div className="mfb-tile" style={{ background: "#FCE6DA" }}>
                 <Mascot
