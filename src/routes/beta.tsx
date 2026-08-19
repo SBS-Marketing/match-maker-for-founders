@@ -288,7 +288,7 @@ function BetaPage() {
         </section>
 
         <Rise delay={0.58}>
-          <div className="mfb-cards">
+          <div className="mfb-cards" ref={cardsRef}>
             <article className="mfb-card">
               <div className="mfb-tile" style={{ background: "#FCE6DA" }}>
                 <Mascot
