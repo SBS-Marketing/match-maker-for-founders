@@ -82,7 +82,7 @@ const CSS = `
 .mfb-ct{font-size:15px;font-weight:700;letter-spacing:-.02em;margin:0;line-height:1.2}
 .mfb-cd{font-size:13.5px;color:${C.muted};line-height:1.5;margin:0}
 .mfb-hint{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:${C.faint};margin-top:auto;padding-top:4px}
-.mfb-hint i{width:5px;height:5px;border-radius:99px;background:currentColor;opacity:.6}
+.mfb-hint i{width:5px;height:5px;border-radius:99px;background:currentColor;opacity:.6;transition:transform .35s cubic-bezier(.2,.8,.3,1),opacity .35s}
 .mfb-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;
   text-transform:uppercase;letter-spacing:.14em;color:#B5AEA3;padding-top:18px}
 .mfb-foot a{color:inherit;text-decoration:none;text-transform:none;letter-spacing:0;font-size:12px}
