@@ -60,7 +60,7 @@ const CSS = `
 .mfb-badge{display:inline-flex;align-items:center;gap:7px;font-size:11px;text-transform:uppercase;
   letter-spacing:.16em;color:${C.faint};font-weight:600}
 .mfb-badge i{width:7px;height:7px;border-radius:99px;background:${C.ember};animation:mfb-pulse 1.8s ease-in-out infinite}
-.mfb-hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;padding:14px 0 22px}
+.mfb-hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:13px;padding:6px 0 14px}
 .mfb-h1{font-size:clamp(34px,5.4vw,62px);font-weight:700;letter-spacing:-.038em;line-height:1.02;margin:0}
 .mfb-lead{max-width:46ch;color:${C.muted};font-size:15px;line-height:1.55;margin:0}
 .mfb-form{display:flex;gap:10px;width:100%;max-width:460px;margin-top:4px}
