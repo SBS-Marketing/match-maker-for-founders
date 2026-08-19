@@ -10,12 +10,12 @@ export const Route = createFileRoute("/beta")({
       {
         name: "description",
         content:
-          "matchfoundr verbindet Gründer, Experten und Kapital. Sichere dir jetzt einen Platz in Welle 1 der privaten Beta.",
+          "matchfoundr verbindet Gründer, Experten und Kapital. Sichere dir einen der ersten 500 Plätze in der privaten Beta.",
       },
       { property: "og:title", content: "Beta-Zugang — matchfoundr für die ersten 500 Gründer" },
       {
         property: "og:description",
-        content: "Wir öffnen in Wellen. Trag dich ein und sei dabei.",
+        content: "Private Beta, limitierte Plätze. Trag dich ein und sei von Anfang an dabei.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
