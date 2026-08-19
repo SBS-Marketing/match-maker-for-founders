@@ -194,7 +194,7 @@ function BetaPage() {
 
           <Rise delay={0.18}>
             <h1 className="mfb-h1">
-              Sicher dir Beta-Zugang.
+              Sicher dir deinen Beta-Zugang.
               <br />
               <span style={{ color: C.ember }}>500 Gründer. Welle 1.</span>
             </h1>
