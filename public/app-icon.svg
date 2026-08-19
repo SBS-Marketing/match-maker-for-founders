@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="mfEmber" x1="0" y1="0" x2="0.62" y2="1">
+      <stop offset="0" stop-color="#F2622A"/>
+      <stop offset="0.48" stop-color="#E2511C"/>
+      <stop offset="1" stop-color="#B83C10"/>
+    </linearGradient>
+    <clipPath id="mfTile"><rect x="0" y="0" width="512" height="512" rx="120.32" ry="120.32"/></clipPath>
+  </defs>
+  <g clip-path="url(#mfTile)">
+    <rect x="0" y="0" width="512" height="512" fill="url(#mfEmber)"/>
+    <circle cx="353" cy="174" r="243" fill="#FAF8F3"/>
+    <g fill="#B83C10">
+      <rect x="-22" y="-50" width="44" height="100" rx="22" transform="translate(378 108) rotate(-14) scale(1 0.92)"/>
+      <rect x="-22" y="-50" width="44" height="100" rx="22" transform="translate(474 82) rotate(-14) scale(0.72 0.92)"/>
+    </g>
+  </g>
+</svg>

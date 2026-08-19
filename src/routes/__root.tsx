@@ -112,7 +112,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "icon", type: "image/svg+xml", href: "/app-icon.svg" },
+      { rel: "apple-touch-icon", href: "/app-icon.svg" },
+      { rel: "manifest", href: "/site.webmanifest" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -148,7 +150,7 @@ function RootComponent() {
   // Landing + öffentliche Firmenprofile (/s/…) = eigene Seiten ohne App-Chrome.
   // Auth/Onboarding = bildschirmfüllende Flows. Alles andere = App-Shell.
   // Admin ist ein eigenständiger Vollbild-Screen ohne App-Navigation/Topbar/Co-Pilot-Dock.
-  const isBare = pathname === "/" || pathname === "/datenschutz" || pathname === "/impressum" || pathname.startsWith("/s/") || pathname.startsWith("/admin");
+  const isBare = pathname === "/" || pathname === "/beta" || pathname === "/datenschutz" || pathname === "/impressum" || pathname.startsWith("/s/") || pathname.startsWith("/admin");
   const isOnboarding = pathname.startsWith("/onboarding");
   const isFlow = pathname.startsWith("/auth") || isOnboarding;
 

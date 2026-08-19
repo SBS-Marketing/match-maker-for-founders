@@ -33,6 +33,7 @@ import { Route as DealsRouteImport } from './routes/deals'
 import { Route as DatenschutzRouteImport } from './routes/datenschutz'
 import { Route as CoPilotRouteImport } from './routes/co-pilot'
 import { Route as CoFounderRouteImport } from './routes/co-founder'
+import { Route as BetaRouteImport } from './routes/beta'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AufgabenRouteImport } from './routes/aufgaben'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -192,6 +193,11 @@ const CoPilotRoute = CoPilotRouteImport.update({
 const CoFounderRoute = CoFounderRouteImport.update({
   id: '/co-founder',
   path: '/co-founder',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BetaRoute = BetaRouteImport.update({
+  id: '/beta',
+  path: '/beta',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -403,6 +409,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/aufgaben': typeof AufgabenRoute
   '/auth': typeof AuthRouteWithChildren
+  '/beta': typeof BetaRoute
   '/co-founder': typeof CoFounderRoute
   '/co-pilot': typeof CoPilotRoute
   '/datenschutz': typeof DatenschutzRoute
@@ -468,6 +475,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/aufgaben': typeof AufgabenRoute
   '/auth': typeof AuthRouteWithChildren
+  '/beta': typeof BetaRoute
   '/co-founder': typeof CoFounderRoute
   '/co-pilot': typeof CoPilotRoute
   '/datenschutz': typeof DatenschutzRoute
@@ -530,6 +538,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/aufgaben': typeof AufgabenRoute
   '/auth': typeof AuthRouteWithChildren
+  '/beta': typeof BetaRoute
   '/co-founder': typeof CoFounderRoute
   '/co-pilot': typeof CoPilotRoute
   '/datenschutz': typeof DatenschutzRoute
@@ -598,6 +607,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/aufgaben'
     | '/auth'
+    | '/beta'
     | '/co-founder'
     | '/co-pilot'
     | '/datenschutz'
@@ -663,6 +673,7 @@ export interface FileRouteTypes {
     | '/'
     | '/aufgaben'
     | '/auth'
+    | '/beta'
     | '/co-founder'
     | '/co-pilot'
     | '/datenschutz'
@@ -724,6 +735,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/aufgaben'
     | '/auth'
+    | '/beta'
     | '/co-founder'
     | '/co-pilot'
     | '/datenschutz'
@@ -791,6 +803,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AufgabenRoute: typeof AufgabenRoute
   AuthRoute: typeof AuthRouteWithChildren
+  BetaRoute: typeof BetaRoute
   CoFounderRoute: typeof CoFounderRoute
   CoPilotRoute: typeof CoPilotRoute
   DatenschutzRoute: typeof DatenschutzRoute
@@ -999,6 +1012,13 @@ declare module '@tanstack/react-router' {
       path: '/co-founder'
       fullPath: '/co-founder'
       preLoaderRoute: typeof CoFounderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/beta': {
+      id: '/beta'
+      path: '/beta'
+      fullPath: '/beta'
+      preLoaderRoute: typeof BetaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -1395,6 +1415,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AufgabenRoute: AufgabenRoute,
   AuthRoute: AuthRouteWithChildren,
+  BetaRoute: BetaRoute,
   CoFounderRoute: CoFounderRoute,
   CoPilotRoute: CoPilotRoute,
   DatenschutzRoute: DatenschutzRoute,
