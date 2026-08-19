@@ -96,6 +96,8 @@ const CSS = `
 }
 @media (prefers-reduced-motion:reduce){
   .mfb-rise,.mfb-done{animation:none!important;opacity:1!important;transform:none!important}
+  .mfb-card{opacity:1!important;transform:none!important;transition:none}
+  .mfb-card::after{display:none}
   .mfb-badge i{animation:none}
 }
 `;
@@ -106,6 +108,30 @@ function Rise({ delay, children, style }: { delay: number; children: React.React
       {children}
     </div>
   );
+}
+
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const root = ref.current;
+    if (!root) return;
+    const cards = Array.from(root.querySelectorAll<HTMLElement>(".mfb-card"));
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const el = entry.target as HTMLElement;
+          el.style.transitionDelay = `${cards.indexOf(el) * 0.11}s`;
+          el.classList.add("in");
+          io.unobserve(el);
+        });
+      },
+      { threshold: 0.2, rootMargin: "0px 0px -8% 0px" },
+    );
+    cards.forEach((c) => io.observe(c));
+    return () => io.disconnect();
+  }, []);
+  return ref;
 }
 
 function BetaPage() {
