@@ -66,10 +66,19 @@ const CSS = `
 .mfb-done{background:#fff;border-radius:16px;box-shadow:0 12px 34px rgba(23,21,15,.07);border:1px solid ${C.line};
   padding:20px 24px;max-width:460px;animation:mfb-pop .5s cubic-bezier(.2,.7,.3,1) both}
 .mfb-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.mfb-card{background:#fff;border-radius:18px;border:1px solid ${C.line};padding:18px;text-align:left;
-  transition:transform .22s,border-color .22s,box-shadow .22s;display:flex;flex-direction:column;gap:10px}
-.mfb-card:hover{transform:translateY(-4px);border-color:rgba(226,81,28,.4);box-shadow:0 14px 30px rgba(23,21,15,.06)}
-.mfb-tile{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mfb-card{position:relative;overflow:hidden;background:#fff;border-radius:18px;border:1px solid ${C.line};padding:18px;text-align:left;
+  display:flex;flex-direction:column;gap:10px;opacity:0;transform:translateY(26px) scale(.985);
+  transition:transform .5s cubic-bezier(.2,.7,.3,1),opacity .5s ease,border-color .3s,box-shadow .45s}
+.mfb-card.in{opacity:1;transform:none}
+.mfb-card::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.65) 50%,transparent 62%);
+  transform:translateX(-120%);transition:transform .8s cubic-bezier(.3,.7,.3,1)}
+.mfb-card:hover::after{transform:translateX(120%)}
+.mfb-card:hover{transform:translateY(-6px);border-color:rgba(226,81,28,.42);box-shadow:0 18px 38px rgba(23,21,15,.09)}
+.mfb-card:hover .mfb-tile{transform:translateY(-2px) rotate(-4deg) scale(1.06)}
+.mfb-card:hover .mfb-hint i{transform:scale(1.9);opacity:1}
+.mfb-tile{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:transform .45s cubic-bezier(.2,.8,.3,1)}
 .mfb-ct{font-size:15px;font-weight:700;letter-spacing:-.02em;margin:0;line-height:1.2}
 .mfb-cd{font-size:13.5px;color:${C.muted};line-height:1.5;margin:0}
 .mfb-hint{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:${C.faint};margin-top:auto;padding-top:4px}
