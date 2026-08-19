@@ -249,7 +249,8 @@ function BetaPage() {
                   Du bist auf der Liste.
                 </p>
                 <p style={{ margin: "6px 0 0", fontSize: 13.5, color: C.muted, lineHeight: 1.55 }}>
-                  Wir melden uns, sobald Welle 1 öffnet. Bis dahin sortiert der Co-Pilot passende Founder für dich vor.
+                  Wir melden uns, sobald dein Zugang bereit ist. Bis dahin sortiert der Co-Pilot passende Gründer für
+                  dich vor.
                 </p>
               </div>
             </Rise>
