@@ -6,16 +6,16 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/beta")({
   head: () => ({
     meta: [
-      { title: "Beta-Zugang — matchfoundr" },
+      { title: "matchfoundr — Dein Gründer-Netzwerk" },
       {
         name: "description",
         content:
-          "Sichere dir einen der ersten 500 Plätze in der matchfoundr Beta.",
+          "matchfoundr bringt Gründer, Experten und Kapital zusammen. Sichere dir einen der ersten Beta-Plätze.",
       },
-      { property: "og:title", content: "Beta-Zugang — matchfoundr" },
+      { property: "og:title", content: "matchfoundr — Dein Gründer-Netzwerk" },
       {
         property: "og:description",
-        content: "Private Beta, limitierte Plätze. Trag dich ein.",
+        content: "Gründer, Experten und Kapital an einem Ort. Jetzt Beta-Platz sichern.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -40,7 +40,7 @@ const CSS = `
 .mfb-root{min-height:100vh;background:${C.canvas};color:${C.ink};font-family:"Geist",system-ui,-apple-system,sans-serif;
   display:flex;flex-direction:column;align-items:center;padding:22px 20px 18px;overflow-x:hidden}
 .mfb-wrap{width:100%;max-width:720px;display:flex;flex-direction:column;flex:1}
-.mfb-rise{opacity:0;transform:translateY(16px);animation:mfb-rise .7s cubic-bezier(.2,.7,.3,1) forwards}
+.mfb-rise{opacity:0;transform:translateY(18px);animation:mfb-rise .7s cubic-bezier(.2,.7,.3,1) forwards}
 @keyframes mfb-rise{to{opacity:1;transform:translateY(0)}}
 @keyframes mfb-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
 @keyframes mfb-pop{0%{opacity:0;transform:scale(.94)}100%{opacity:1;transform:scale(1)}}
@@ -49,10 +49,15 @@ const CSS = `
 .mfb-badge{display:inline-flex;align-items:center;gap:7px;font-size:11px;text-transform:uppercase;
   letter-spacing:.16em;color:${C.faint};font-weight:600}
 .mfb-badge i{width:7px;height:7px;border-radius:99px;background:${C.ember};animation:mfb-pulse 1.8s ease-in-out infinite}
-.mfb-hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;padding:28px 0}
-.mfb-h1{font-size:clamp(32px,6vw,56px);font-weight:700;letter-spacing:-.04em;line-height:1.05;margin:0}
-.mfb-lead{max-width:38ch;color:${C.muted};font-size:16px;line-height:1.55;margin:0}
-.mfb-form{display:flex;gap:10px;width:100%;max-width:420px;margin-top:4px}
+.mfb-hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;padding:28px 0}
+.mfb-h1{font-size:clamp(30px,5.6vw,52px);font-weight:700;letter-spacing:-.04em;line-height:1.08;margin:0}
+.mfb-h1 em{font-style:normal;color:${C.ember}}
+.mfb-lead{max-width:42ch;color:${C.muted};font-size:16px;line-height:1.6;margin:0}
+.mfb-points{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;max-width:520px;margin-top:2px}
+.mfb-point{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:${C.ink};
+  background:#fff;border:1px solid ${C.line};border-radius:99px;padding:8px 14px;box-shadow:0 2px 10px rgba(23,21,15,.04)}
+.mfb-point span{width:6px;height:6px;border-radius:99px;background:${C.ember};flex-shrink:0}
+.mfb-form{display:flex;gap:10px;width:100%;max-width:420px;margin-top:8px}
 .mfb-input{flex:1;height:52px;border-radius:14px;border:1px solid rgba(23,21,15,.1);background:#fff;
   padding:0 16px;font-size:15px;font-family:inherit;color:${C.ink};outline:none;transition:box-shadow .18s,border-color .18s}
 .mfb-input::placeholder{color:${C.faint}}
@@ -72,8 +77,10 @@ const CSS = `
   .mfb-form{flex-direction:column}
   .mfb-input{width:100%;min-width:0}
   .mfb-btn{width:100%}
-  .mfb-hero{padding:18px 0 28px}
+  .mfb-hero{padding:18px 0 28px;gap:16px}
   .mfb-head{flex-direction:column;gap:8px}
+  .mfb-points{gap:8px}
+  .mfb-point{font-size:12.5px;padding:7px 12px}
 }
 @media (prefers-reduced-motion:reduce){
   .mfb-rise,.mfb-done{animation:none!important;opacity:1!important;transform:none!important}
@@ -178,22 +185,30 @@ function BetaPage() {
               paper={C.canvas}
               notif={C.indigo}
               cycle={["idle", "orbit", "idle", "wink", "comet", "idle", "thinking", "swirl"]}
-              style={{ width: "clamp(160px,22vw,220px)", height: "clamp(160px,22vw,220px)" }}
+              style={{ width: "clamp(150px,20vw,200px)", height: "clamp(150px,20vw,200px)" }}
             />
           </Rise>
 
           <Rise delay={0.18}>
             <h1 className="mfb-h1">
-              Gründer, Experten, Kapital.
+              Dein Netzwerk für
               <br />
-              <span style={{ color: C.ember }}>An einem Ort.</span>
+              <em>Gründer, Experten & Kapital.</em>
             </h1>
           </Rise>
 
           <Rise delay={0.28} style={{ display: "flex", justifyContent: "center" }}>
             <p className="mfb-lead">
-              Sichere dir einen der ersten 500 Plätze in der Beta. Wir melden uns, sobald dein Zugang bereit ist.
+              matchfoundr bringt die richtigen Menschen zusammen. Mit einem KI-Co-Pilot, der dich von der ersten Idee bis zum Funding begleitet.
             </p>
+          </Rise>
+
+          <Rise delay={0.38}>
+            <div className="mfb-points">
+              <span className="mfb-point"><span />Co-Finder finden</span>
+              <span className="mfb-point"><span />Experten buchen</span>
+              <span className="mfb-point"><span />Funding vorbereiten</span>
+            </div>
           </Rise>
 
           {done ? (
@@ -209,7 +224,7 @@ function BetaPage() {
             </Rise>
           ) : (
             <>
-              <Rise delay={0.38} style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+              <Rise delay={0.48} style={{ display: "flex", justifyContent: "center", width: "100%" }}>
                 <form className="mfb-form" onSubmit={submit} noValidate>
                   <input
                     ref={inputRef}
@@ -227,11 +242,11 @@ function BetaPage() {
                     }}
                   />
                   <button className="mfb-btn" type="submit" disabled={busy}>
-                    Platz sichern
+                    Beta-Platz sichern
                   </button>
                 </form>
               </Rise>
-              <Rise delay={0.48}>
+              <Rise delay={0.58}>
                 <p className="mfb-fine">
                   <strong style={{ color: C.muted }}>Kein Spam.</strong> Nur eine Mail, wenn es losgeht.
                 </p>
@@ -240,7 +255,7 @@ function BetaPage() {
           )}
         </section>
 
-        <Rise delay={0.58}>
+        <Rise delay={0.68}>
           <footer className="mfb-foot">
             <a href="mailto:hallo@matchfoundr.de">Fragen? hallo@matchfoundr.de</a>
           </footer>
