@@ -205,7 +205,7 @@ function BetaPage() {
 
           <Rise delay={0.38}>
             <div className="mfb-points">
-              <span className="mfb-point"><span />Co-Finder finden</span>
+              <span className="mfb-point"><span />Co-Founder finden</span>
               <span className="mfb-point"><span />Experten buchen</span>
               <span className="mfb-point"><span />Funding vorbereiten</span>
             </div>
