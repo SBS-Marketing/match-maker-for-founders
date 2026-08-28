@@ -260,7 +260,15 @@ function BetaPage() {
 
         <Rise delay={0.68}>
           <footer className="mfb-foot">
-            <a href="mailto:hallo@matchfoundr.de">Fragen? hallo@matchfoundr.de</a>
+            <div className="mfb-foot__links">
+              <a href="/impressum">Impressum</a>
+              <span />
+              <a href="/datenschutz">Datenschutz</a>
+              <span />
+              <a href="/agb">AGB</a>
+            </div>
+            <a href="mailto:hallo@matchfoundr.de">hallo@matchfoundr.de</a>
+            <span>© {new Date().getFullYear()} matchfoundr</span>
           </footer>
         </Rise>
       </div>
