@@ -14,6 +14,7 @@ import { Route as TeamRouteImport } from './routes/team'
 import { Route as TalentRouteImport } from './routes/talent'
 import { Route as SteuerRouteImport } from './routes/steuer'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PotentialanalyseRouteImport } from './routes/potentialanalyse'
 import { Route as PlanRouteImport } from './routes/plan'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MentorenRouteImport } from './routes/mentoren'
@@ -98,6 +99,11 @@ const SteuerRoute = SteuerRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PotentialanalyseRoute = PotentialanalyseRouteImport.update({
+  id: '/potentialanalyse',
+  path: '/potentialanalyse',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlanRoute = PlanRouteImport.update({
@@ -429,6 +435,7 @@ export interface FileRoutesByFullPath {
   '/mentoren': typeof MentorenRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
+  '/potentialanalyse': typeof PotentialanalyseRoute
   '/profile': typeof ProfileRoute
   '/steuer': typeof SteuerRouteWithChildren
   '/talent': typeof TalentRouteWithChildren
@@ -492,6 +499,7 @@ export interface FileRoutesByTo {
   '/mcp': typeof McpRoute
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
+  '/potentialanalyse': typeof PotentialanalyseRoute
   '/profile': typeof ProfileRoute
   '/team': typeof TeamRoute
   '/unterlagen': typeof UnterlagenRoute
@@ -558,6 +566,7 @@ export interface FileRoutesById {
   '/mentoren': typeof MentorenRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/plan': typeof PlanRoute
+  '/potentialanalyse': typeof PotentialanalyseRoute
   '/profile': typeof ProfileRoute
   '/steuer': typeof SteuerRouteWithChildren
   '/talent': typeof TalentRouteWithChildren
@@ -627,6 +636,7 @@ export interface FileRouteTypes {
     | '/mentoren'
     | '/onboarding'
     | '/plan'
+    | '/potentialanalyse'
     | '/profile'
     | '/steuer'
     | '/talent'
@@ -690,6 +700,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/onboarding'
     | '/plan'
+    | '/potentialanalyse'
     | '/profile'
     | '/team'
     | '/unterlagen'
@@ -755,6 +766,7 @@ export interface FileRouteTypes {
     | '/mentoren'
     | '/onboarding'
     | '/plan'
+    | '/potentialanalyse'
     | '/profile'
     | '/steuer'
     | '/talent'
@@ -823,6 +835,7 @@ export interface RootRouteChildren {
   MentorenRoute: typeof MentorenRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
   PlanRoute: typeof PlanRoute
+  PotentialanalyseRoute: typeof PotentialanalyseRoute
   ProfileRoute: typeof ProfileRoute
   SteuerRoute: typeof SteuerRouteWithChildren
   TalentRoute: typeof TalentRouteWithChildren
@@ -879,6 +892,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/potentialanalyse': {
+      id: '/potentialanalyse'
+      path: '/potentialanalyse'
+      fullPath: '/potentialanalyse'
+      preLoaderRoute: typeof PotentialanalyseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/plan': {
@@ -1435,6 +1455,7 @@ const rootRouteChildren: RootRouteChildren = {
   MentorenRoute: MentorenRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
   PlanRoute: PlanRoute,
+  PotentialanalyseRoute: PotentialanalyseRoute,
   ProfileRoute: ProfileRoute,
   SteuerRoute: SteuerRouteWithChildren,
   TalentRoute: TalentRouteWithChildren,
