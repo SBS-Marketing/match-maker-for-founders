@@ -6,16 +6,16 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/beta")({
   head: () => ({
     meta: [
-      { title: "Beta-Zugang — matchfoundr für die ersten 500 Gründer" },
+      { title: "Beta-Zugang — matchfoundr" },
       {
         name: "description",
         content:
-          "matchfoundr verbindet Gründer, Experten und Kapital. Sichere dir einen der ersten 500 Plätze in der privaten Beta.",
+          "Sichere dir einen der ersten 500 Plätze in der matchfoundr Beta.",
       },
-      { property: "og:title", content: "Beta-Zugang — matchfoundr für die ersten 500 Gründer" },
+      { property: "og:title", content: "Beta-Zugang — matchfoundr" },
       {
         property: "og:description",
-        content: "Private Beta, limitierte Plätze. Trag dich ein und sei von Anfang an dabei.",
+        content: "Private Beta, limitierte Plätze. Trag dich ein.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -39,8 +39,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CSS = `
 .mfb-root{min-height:100vh;background:${C.canvas};color:${C.ink};font-family:"Geist",system-ui,-apple-system,sans-serif;
   display:flex;flex-direction:column;align-items:center;padding:22px 20px 18px;overflow-x:hidden}
-.mfb-wrap{width:100%;max-width:1120px;display:flex;flex-direction:column;flex:1}
-.mfb-rise{opacity:0;transform:translateY(16px);animation:mfb-rise .8s cubic-bezier(.2,.7,.3,1) forwards}
+.mfb-wrap{width:100%;max-width:720px;display:flex;flex-direction:column;flex:1}
+.mfb-rise{opacity:0;transform:translateY(16px);animation:mfb-rise .7s cubic-bezier(.2,.7,.3,1) forwards}
 @keyframes mfb-rise{to{opacity:1;transform:translateY(0)}}
 @keyframes mfb-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
 @keyframes mfb-pop{0%{opacity:0;transform:scale(.94)}100%{opacity:1;transform:scale(1)}}
@@ -49,10 +49,10 @@ const CSS = `
 .mfb-badge{display:inline-flex;align-items:center;gap:7px;font-size:11px;text-transform:uppercase;
   letter-spacing:.16em;color:${C.faint};font-weight:600}
 .mfb-badge i{width:7px;height:7px;border-radius:99px;background:${C.ember};animation:mfb-pulse 1.8s ease-in-out infinite}
-.mfb-hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:13px;padding:6px 0 14px}
-.mfb-h1{font-size:clamp(34px,5.4vw,62px);font-weight:700;letter-spacing:-.038em;line-height:1.02;margin:0}
-.mfb-lead{max-width:44ch;color:${C.muted};font-size:15.5px;line-height:1.55;margin:0}
-.mfb-form{display:flex;gap:10px;width:100%;max-width:460px;margin-top:4px}
+.mfb-hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;padding:28px 0}
+.mfb-h1{font-size:clamp(32px,6vw,56px);font-weight:700;letter-spacing:-.04em;line-height:1.05;margin:0}
+.mfb-lead{max-width:38ch;color:${C.muted};font-size:16px;line-height:1.55;margin:0}
+.mfb-form{display:flex;gap:10px;width:100%;max-width:420px;margin-top:4px}
 .mfb-input{flex:1;height:52px;border-radius:14px;border:1px solid rgba(23,21,15,.1);background:#fff;
   padding:0 16px;font-size:15px;font-family:inherit;color:${C.ink};outline:none;transition:box-shadow .18s,border-color .18s}
 .mfb-input::placeholder{color:${C.faint}}
@@ -64,40 +64,19 @@ const CSS = `
 .mfb-btn[disabled]{opacity:.65;cursor:default;transform:none}
 .mfb-fine{font-size:12.5px;color:${C.faint};margin:0}
 .mfb-done{background:#fff;border-radius:16px;box-shadow:0 12px 34px rgba(23,21,15,.07);border:1px solid ${C.line};
-  padding:20px 24px;max-width:460px;animation:mfb-pop .5s cubic-bezier(.2,.7,.3,1) both}
-.mfb-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.mfb-card{position:relative;overflow:hidden;background:#fff;border-radius:18px;border:1px solid ${C.line};padding:18px;text-align:left;
-  display:flex;flex-direction:column;gap:10px;opacity:0;transform:translateY(26px) scale(.985);
-  transition:transform .5s cubic-bezier(.2,.7,.3,1),opacity .5s ease,border-color .3s,box-shadow .45s}
-.mfb-card.in{opacity:1;transform:none}
-.mfb-card::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
-  background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.65) 50%,transparent 62%);
-  transform:translateX(-120%);transition:transform .8s cubic-bezier(.3,.7,.3,1)}
-.mfb-card:hover::after{transform:translateX(120%)}
-.mfb-card:hover{transform:translateY(-6px);border-color:rgba(226,81,28,.42);box-shadow:0 18px 38px rgba(23,21,15,.09)}
-.mfb-card:hover .mfb-tile{transform:translateY(-2px) rotate(-4deg) scale(1.06)}
-.mfb-card:hover .mfb-hint i{transform:scale(1.9);opacity:1}
-.mfb-tile{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  transition:transform .45s cubic-bezier(.2,.8,.3,1)}
-.mfb-ct{font-size:15px;font-weight:700;letter-spacing:-.02em;margin:0;line-height:1.2}
-.mfb-cd{font-size:13.5px;color:${C.muted};line-height:1.5;margin:0}
-.mfb-hint{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:${C.faint};margin-top:auto;padding-top:4px}
-.mfb-hint i{width:5px;height:5px;border-radius:99px;background:currentColor;opacity:.6;transition:transform .35s cubic-bezier(.2,.8,.3,1),opacity .35s}
-.mfb-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;
-  text-transform:uppercase;letter-spacing:.14em;color:#B5AEA3;padding-top:18px}
-.mfb-foot a{color:inherit;text-decoration:none;text-transform:none;letter-spacing:0;font-size:12px}
-@media (max-width:760px){
-  .mfb-cards{grid-template-columns:1fr}
+  padding:20px 24px;max-width:420px;animation:mfb-pop .5s cubic-bezier(.2,.7,.3,1) both}
+.mfb-foot{display:flex;align-items:center;justify-content:center;gap:10px;font-size:12px;
+  color:#B5AEA3;padding-top:18px}
+.mfb-foot a{color:inherit;text-decoration:none}
+@media (max-width:560px){
   .mfb-form{flex-direction:column}
   .mfb-input{width:100%;min-width:0}
   .mfb-btn{width:100%}
-  .mfb-root{padding-bottom:28px}
-  .mfb-hero{gap:12px;padding-top:12px}
+  .mfb-hero{padding:18px 0 28px}
+  .mfb-head{flex-direction:column;gap:8px}
 }
 @media (prefers-reduced-motion:reduce){
   .mfb-rise,.mfb-done{animation:none!important;opacity:1!important;transform:none!important}
-  .mfb-card{opacity:1!important;transform:none!important;transition:none}
-  .mfb-card::after{display:none}
   .mfb-badge i{animation:none}
 }
 `;
@@ -110,33 +89,8 @@ function Rise({ delay, children, style }: { delay: number; children: React.React
   );
 }
 
-function useReveal() {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const root = ref.current;
-    if (!root) return;
-    const cards = Array.from(root.querySelectorAll<HTMLElement>(".mfb-card"));
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          const el = entry.target as HTMLElement;
-          el.style.transitionDelay = `${cards.indexOf(el) * 0.11}s`;
-          el.classList.add("in");
-          io.unobserve(el);
-        });
-      },
-      { threshold: 0.2, rootMargin: "0px 0px -8% 0px" },
-    );
-    cards.forEach((c) => io.observe(c));
-    return () => io.disconnect();
-  }, []);
-  return ref;
-}
-
 function BetaPage() {
   const mascot = useRef<MascotHandle>(null);
-  const cardsRef = useReveal();
   const [email, setEmail] = useState("");
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -209,7 +163,7 @@ function BetaPage() {
             </span>
             <span className="mfb-badge">
               <i />
-              Private Beta · Limitierte Plätze
+              Private Beta
             </span>
           </header>
         </Rise>
@@ -224,21 +178,21 @@ function BetaPage() {
               paper={C.canvas}
               notif={C.indigo}
               cycle={["idle", "orbit", "idle", "wink", "comet", "idle", "thinking", "swirl"]}
-              style={{ width: "clamp(180px,25vw,268px)", height: "clamp(180px,25vw,268px)" }}
+              style={{ width: "clamp(160px,22vw,220px)", height: "clamp(160px,22vw,220px)" }}
             />
           </Rise>
 
           <Rise delay={0.18}>
             <h1 className="mfb-h1">
-              Sicher dir deinen Beta-Zugang.
+              Gründer, Experten, Kapital.
               <br />
-              <span style={{ color: C.ember }}>Nur 500 Plätze.</span>
+              <span style={{ color: C.ember }}>An einem Ort.</span>
             </h1>
           </Rise>
 
           <Rise delay={0.28} style={{ display: "flex", justifyContent: "center" }}>
             <p className="mfb-lead">
-              matchfoundr verbindet Gründer, Experten und Kapital. Trag deine Mail ein und sei von Anfang an dabei.
+              Sichere dir einen der ersten 500 Plätze in der Beta. Wir melden uns, sobald dein Zugang bereit ist.
             </p>
           </Rise>
 
@@ -249,8 +203,7 @@ function BetaPage() {
                   Du bist auf der Liste.
                 </p>
                 <p style={{ margin: "6px 0 0", fontSize: 13.5, color: C.muted, lineHeight: 1.55 }}>
-                  Wir melden uns, sobald dein Zugang bereit ist. Bis dahin sortiert der Co-Pilot passende Gründer für
-                  dich vor.
+                  Wir melden uns bei dir, sobald die Beta für dich startet.
                 </p>
               </div>
             </Rise>
@@ -280,7 +233,7 @@ function BetaPage() {
               </Rise>
               <Rise delay={0.48}>
                 <p className="mfb-fine">
-                  <strong style={{ color: C.muted }}>Kein Spam.</strong> Eine Mail, wenn dein Zugang bereit ist.
+                  <strong style={{ color: C.muted }}>Kein Spam.</strong> Nur eine Mail, wenn es losgeht.
                 </p>
               </Rise>
             </>
@@ -288,60 +241,7 @@ function BetaPage() {
         </section>
 
         <Rise delay={0.58}>
-          <div className="mfb-cards" ref={cardsRef}>
-            <article className="mfb-card">
-              <div className="mfb-tile" style={{ background: "#FCE6DA" }}>
-                <Mascot
-                  cycle={["idle", "wink", "swirl"]}
-                  ink={C.ember}
-                  paper="#FCE6DA"
-                  style={{ width: "100%", height: "100%" }}
-                />
-              </div>
-              <h2 className="mfb-ct">Co-Founder-Matching</h2>
-              <p className="mfb-cd">Finde den richtigen Co-Founder nach Rolle, Stack und Tempo — nicht nach Zufall.</p>
-              <span className="mfb-hint">
-                <i style={{ background: C.ember }} />92 % Match-Genauigkeit in Vorabtests
-              </span>
-            </article>
-
-            <article className="mfb-card">
-              <div className="mfb-tile" style={{ background: "#EEF1FB" }}>
-                <Mascot
-                  cycle={["thinking", "idle"]}
-                  ink={C.indigo}
-                  paper="#EEF1FB"
-                  style={{ width: "100%", height: "100%" }}
-                />
-              </div>
-              <h2 className="mfb-ct">Dein Co-Pilot</h2>
-              <p className="mfb-cd">Stellt die richtigen Fragen, sortiert vor und entwirft die erste Nachricht für dich.</p>
-              <span className="mfb-hint">
-                <i style={{ background: C.indigo }} />Schreibt mit, nicht nur für dich
-              </span>
-            </article>
-
-            <article className="mfb-card">
-              <div className="mfb-tile" style={{ background: "#DBF1E1" }}>
-                <Mascot
-                  cycle={["comet", "idle"]}
-                  ink="#13957A"
-                  paper="#DBF1E1"
-                  style={{ width: "100%", height: "100%" }}
-                />
-              </div>
-              <h2 className="mfb-ct">Service-Welten</h2>
-              <p className="mfb-cd">Von Recht bis Funding: geprüfte Partner, direkt aus dem Profil beauftragt.</p>
-              <span className="mfb-hint">
-                <i style={{ background: "#13957A" }} />8 Welten, ein Checkout
-              </span>
-            </article>
-          </div>
-        </Rise>
-
-        <Rise delay={0.78}>
           <footer className="mfb-foot">
-            <span>matchfoundr</span>
             <a href="mailto:hallo@matchfoundr.de">Fragen? hallo@matchfoundr.de</a>
           </footer>
         </Rise>
