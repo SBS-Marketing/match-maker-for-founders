@@ -70,9 +70,12 @@ const CSS = `
 .mfb-fine{font-size:12.5px;color:${C.faint};margin:0}
 .mfb-done{background:#fff;border-radius:16px;box-shadow:0 12px 34px rgba(23,21,15,.07);border:1px solid ${C.line};
   padding:20px 24px;max-width:420px;animation:mfb-pop .5s cubic-bezier(.2,.7,.3,1) both}
-.mfb-foot{display:flex;align-items:center;justify-content:center;gap:10px;font-size:12px;
-  color:#B5AEA3;padding-top:18px}
-.mfb-foot a{color:inherit;text-decoration:none}
+.mfb-foot{display:flex;flex-direction:column;align-items:center;gap:14px;font-size:12px;
+  color:#B5AEA3;padding:28px 0 10px}
+.mfb-foot a{color:inherit;text-decoration:none;transition:color .15s}
+.mfb-foot a:hover{color:${C.ink}}
+.mfb-foot__links{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center}
+.mfb-foot__links span{width:3px;height:3px;border-radius:99px;background:${C.line.replace(".055",".18")}}
 @media (max-width:560px){
   .mfb-form{flex-direction:column}
   .mfb-input{width:100%;min-width:0}
@@ -257,7 +260,15 @@ function BetaPage() {
 
         <Rise delay={0.68}>
           <footer className="mfb-foot">
-            <a href="mailto:hallo@matchfoundr.de">Fragen? hallo@matchfoundr.de</a>
+            <div className="mfb-foot__links">
+              <a href="/impressum">Impressum</a>
+              <span />
+              <a href="/datenschutz">Datenschutz</a>
+              <span />
+              <a href="/agb">AGB</a>
+            </div>
+            <a href="mailto:hallo@matchfoundr.de">hallo@matchfoundr.de</a>
+            <span>© {new Date().getFullYear()} matchfoundr</span>
           </footer>
         </Rise>
       </div>
