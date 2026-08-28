@@ -158,7 +158,7 @@ const CSS = `
 .mfp-input:focus{border-color:${C.ember};box-shadow:0 0 0 3px rgba(226,81,28,.16);background:#fff}
 .mfp-fine{font-size:12.5px;color:${C.faint};margin:0;line-height:1.55}
 .mfp-done{text-align:center;animation:mfp-pop .5s cubic-bezier(.2,.7,.3,1) both}
-.mfp-foot{display:flex;flex-direction:column;align-items:center;gap:14px;font-size:12px;color:#B5AEA3;padding:28px 0 10px}
+.mfp-foot{display:flex;flex-direction:column;align-items:center;gap:14px;font-size:12px;color:${C.muted};padding:28px 0 10px;border-top:1px solid ${C.line};margin-top:auto;width:100%}
 .mfp-foot a{color:inherit;text-decoration:none;transition:color .15s}
 .mfp-foot a:hover{color:${C.ink}}
 .mfp-foot__links{display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center}
