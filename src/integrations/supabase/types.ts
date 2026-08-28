@@ -1438,6 +1438,36 @@ export type Database = {
         }
         Relationships: []
       }
+      potential_analyses: {
+        Row: {
+          answers: Json
+          created_at: string
+          email: string
+          id: string
+          name: string | null
+          report: Json | null
+          status: string
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string
+          email: string
+          id?: string
+          name?: string | null
+          report?: Json | null
+          status?: string
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string | null
+          report?: Json | null
+          status?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           commitment: Database["public"]["Enums"]["founder_commitment"] | null
@@ -1728,6 +1758,10 @@ export type Database = {
       }
       join_waitlist: {
         Args: { p_email: string; p_metadata?: Json; p_name?: string }
+        Returns: string
+      }
+      submit_potential_analysis: {
+        Args: { p_answers?: Json; p_email: string; p_name?: string }
         Returns: string
       }
     }
