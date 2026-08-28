@@ -246,11 +246,11 @@ function BetaPage() {
                   </button>
                 </form>
               </Rise>
-              <Rise delay={0.58}>
-                <p className="mfb-fine">
-                  <strong style={{ color: C.muted }}>Kein Spam.</strong> Nur eine Mail, wenn es losgeht.
-                </p>
-              </Rise>
+          <Rise delay={0.58}>
+            <p className="mfb-fine">
+              <strong style={{ color: C.muted }}>Kein Spam.</strong> Wir melden uns, sobald dein Beta-Platz bereit ist.
+            </p>
+          </Rise>
             </>
           )}
         </section>
