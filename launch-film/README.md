@@ -10,7 +10,7 @@ See `BEATMAP.md` for the beat-by-beat plan.
 | `fonts/` | Geist, Geist Mono and Instrument Serif (local, so renders need no network). |
 | `audio/` | `events.json` (sound cue times read from the film), stems and the mastered `film-audio.wav`. |
 | `tools/` | Render, sound and QA scripts (below). |
-| `stills/` | Style frames. |
+| `stills/` | Frames rendered from the film (ask, think, drop, chat, outro lines, end card). |
 | `matchfoundr-copilot-launch.mp4` | The rendered film. |
 
 ## Reproduce

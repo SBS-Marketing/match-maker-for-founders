@@ -47,4 +47,4 @@ intro is sent, and two paths converge into the matchfoundr mark.
 | 30.5 | 14.08 | 845 | *Dein* above and **Co-Pilot** (Instrument Serif) below rise from mask lines. | | |
 | 32 | 14.77 | 886 | End | | |
 
-Longest hold under 1 s. Zoom sequence: in → out (brief) → pan → in → pan → in; no move reverses.
+Stills of key beats are in `stills/`. Longest hold under 1 s. Zoom sequence: in → out (brief) → pan → in → pan → in; no move reverses.

@@ -654,7 +654,7 @@ function seek(t) {
   // pills, click, spinner, sent
   const pillPop = spring(t - T_PILLS, 2.3, 0.55), morePop = spring(t - (T_PILLS + 0.07), 2.3, 0.55);
   const clickPress = press(t - (T_CLICK - 0.04), 0.06);
-  const doneK = spring(t - T_DONE, 2.0, 0.7);
+  const doneK = spring(t - (T_DONE - 0.12), 2.8, 0.8);   // pill widens just ahead of its new label
   const yw = lerp(yesW, sentW, doneK);
   const yes = els.yes;
   show(yes, t >= T_PILLS);
@@ -669,7 +669,7 @@ function seek(t) {
   // labels
   $('yeslabel').style.transform = `translateY(${fall(t, T_CLICK, 0.14).toFixed(2)}%)`;
   const sp = $('spinner');
-  const spinK = spring(t - (T_CLICK + 0.06), 2.6, 0.6) * (1 - E.inCubic(seg(t, T_DONE - 0.12, T_DONE)));
+  const spinK = spring(t - (T_CLICK + 0.06), 2.6, 0.6) * (1 - E.inCubic(seg(t, T_DONE - 0.08, T_DONE + 0.02)));
   show(sp, spinK > 0.001);
   tf(sp, `rotate(${((t - T_CLICK) * 560).toFixed(1)}deg) scale(${spinK.toFixed(4)})`);
   // sent label: rises, then grows to headline size with the page, then slides away
@@ -682,7 +682,7 @@ function seek(t) {
   sl.style.left = px(lerp(20, pw / 2 - lw / 2, pageU));
   const sm = $('sentmask');
   sm.style.top = px(ph / 2 - lh / 2); sm.style.height = px(lh);
-  tf(sl, `translateY(${(t < T_LABEL_OUT ? rise(t, T_DONE + 0.02, 2.6) : fall(t, T_LABEL_OUT, 0.3)).toFixed(2)}%)`);
+  tf(sl, `translateY(${(t < T_LABEL_OUT ? rise(t, T_DONE - 0.08, 3.4) : fall(t, T_LABEL_OUT, 0.3)).toFixed(2)}%)`);
   $('yesmask').style.top = px(ph / 2 - 21); $('yesmask').style.height = '42px';
   // "Erst mehr zeigen" pops, then makes room for the sent label
   const more = $('more');
@@ -691,9 +691,9 @@ function seek(t) {
 
   // cursor glides in, clicks, leaves
   const cur = els.cursor;
-  show(cur, t >= T_CUR0 && t < B(21.6));
+  show(cur, t >= T_CUR0 && t < B(20.9));
   const cm = E.inOutCubic(seg(t, T_CUR0, T_CLICK - 0.06));
-  const cOut = E.inCubic(seg(t, B(20.8), B(21.6)));
+  const cOut = E.inCubic(seg(t, B(19.95), B(20.9)));
   const tx = yesWorld.l + yesW - 26, ty = yesWorld.t + 26;
   tf(cur, `translate(${px(lerp(tx + 150, tx, cm) + 260 * cOut)},${px(lerp(ty + 210, ty, cm) + 160 * cOut)}) scale(${(1 - 0.16 * clickPress).toFixed(4)})`);
 
