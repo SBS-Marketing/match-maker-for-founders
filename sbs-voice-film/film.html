@@ -116,8 +116,10 @@ const HANG = LINES[6].e + 0.10;
 const T_SMS = HANG + 0.25;                                     // the island confirms the SMS after the hang-up
 const T_O = ceilB(LINES[6].e + 1.75);                          // outro: the panel floods the frame (bar 13)
 const T_MERGE = T_O + 0.70, T_BLACK = T_O + 0.90;
-const T_LOGO = T_O + 6 * BEAT;
-const V0 = T_LOGO - VO.words[7].s;                             // outro VO: 'besetzt.' lands on the logo hit
+// the logo lands on the spoken last word; at least 4 beats after the flood, and late enough that the claim
+// starts after the success circle is born (T_O + .9)
+const T_LOGO = T_O + BEAT * Math.max(4, Math.ceil((0.9 + VO.words[VO.words.length - 1].s) / BEAT - 1e-6));
+const V0 = T_LOGO - VO.words[VO.words.length - 1].s;          // outro VO: its last word lands on the logo hit
 const DUR = T_LOGO + 3 * BEAT;                                 // the finished end card reads for about a second
 const FLY = 0.48;                                              // chip flight time (P + .12 → P + .60)
 const landAt = (P) => P + 0.12 + FLY;

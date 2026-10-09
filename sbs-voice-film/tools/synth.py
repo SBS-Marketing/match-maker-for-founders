@@ -190,6 +190,8 @@ def music(ev, voice_env):
     nb = t0 + bar * np.ceil((t_out - t0) / bar + 1e-6)         # next bar after the flood
     if nb + 2 * beat < t_logo - 1e-3:
         evs += [(nb, 'Amaj7'), (nb + 2 * beat, 'Bsus4')]        # under the claim, resolving on the logo
+    elif nb + beat < t_logo - 1e-3:
+        evs += [(nb, 'Amaj7')]
     evs.append((t_logo, None))
     for (ts, ch), (te, _) in zip(evs[:-1], evs[1:]):
         bass, tones = V[ch]
