@@ -1,6 +1,6 @@
 # SBS Voice-Agent film
 
-A 35-second German product film for the SBS Voice-Agent: 1920×1080, 60 fps, 100 BPM.
+A 36.6-second German product film for the SBS Voice-Agent: 1920×1080, 60 fps, 100 BPM.
 
 The look comes from the unreleased SBS website. The voices are OpenAI TTS (`gpt-4o-mini-tts`); `audio/voice/SPRECHERTEXTE.md` lists the lines and settings. See `BEATMAP.md` for the beat-by-beat plan.
 
@@ -26,7 +26,7 @@ python tools/synth.py audio/events.json audio/voice/clean audio
 (cd audio && ../tools/master.sh mix.wav film-audio.wav)        # -14 LUFS, -1 dBTP
 node ../launch-film/tools/render.mjs $(pwd) /tmp/sbs 3 8 0.5   # 3 workers, 8 subframes, 180° shutter
 ../launch-film/tools/assemble.sh /tmp/sbs/chunks.txt audio/film-audio.wav sbs-voice-agent.mp4
-node tools/stills.mjs $(pwd) /tmp/stills 3.6 11.5 27.6 35.3    # frames at given seconds
+node tools/stills.mjs $(pwd) /tmp/stills 3.6 11.5 27.6 36.5    # frames at given seconds
 ```
 
 The Python scripts need numpy and scipy. `voice.py` also needs ffmpeg with rubberband.

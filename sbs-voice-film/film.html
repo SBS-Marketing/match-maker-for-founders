@@ -99,7 +99,7 @@ const VO = VOICE.lines[7];
 const wE = (li, k) => LINES[li].words[k].te;
 
 // ── Anchors (every event below is an expression of the voice timing) ───────
-const T_BANNER = 0.15, RINGS = [BEAT, 2 * BEAT], T_TAKEOVER = 3 * BEAT;
+const T_BANNER = 0.15, RINGS = [BEAT, 2 * BEAT], T_TAKEOVER = 2.5 * BEAT;   // after ring 2's buzz, so 'KI-Agent nimmt an' reads
 const T_LAND = T_ACCEPT + 0.44;                                // accept button lands as the orb
 const P1 = Q(wE(1, 9) + 0.10), T_PANEL = P1 + 0.60, C1 = P1 + 1.20;  // 'Sicherung raus'
 const P2 = Q(wE(2, 2) + 0.45);                                 // 'dringend' → Priorität hoch
@@ -108,17 +108,17 @@ const T_BREMEN = Math.max(P4 + 0.70, wE(3, 5) + 0.02);
 const C2 = ceilB(wE(3, 5) + 0.45);
 const T_NAME = wE(4, 2) + 0.09;                                // 'Frau Krüger.' → header shows her name
 const P5 = Q(wE(4, 6) + 0.10);                                 // 'Morgen um 8 Uhr'
-const J = Q(wE(5, 0) + 0.05), C3 = J + 0.45;                   // the caller's 'Ja' closes the booking
+const J = Q(wE(5, 0) - 0.10), C3 = Q(wE(5, 0) + 0.05) + 0.45;   // the caller's 'Ja' closes the booking
 const P6 = Q(wE(6, 1) + 0.05);                                 // 'gebucht!' → Termin gebucht pill
 const P7 = Q(wE(6, 3) + 0.05);                                 // 'Bestätigung' → SMS row
 const C4 = Q(wE(6, 7) + 0.05);
 const HANG = LINES[6].e + 0.10;
 const T_SMS = HANG + 0.25;                                     // the island confirms the SMS after the hang-up
-const T_O = ceilB(LINES[6].e + 1.15);                          // outro: the panel floods the frame
+const T_O = ceilB(LINES[6].e + 1.75);                          // outro: the panel floods the frame (bar 13)
 const T_MERGE = T_O + 0.70, T_BLACK = T_O + 0.90;
 const T_LOGO = T_O + 6 * BEAT;
 const V0 = T_LOGO - VO.words[7].s;                             // outro VO: 'besetzt.' lands on the logo hit
-const DUR = T_LOGO + 2 * BEAT;
+const DUR = T_LOGO + 3 * BEAT;                                 // the finished end card reads for about a second
 const FLY = 0.48;                                              // chip flight time (P + .12 → P + .60)
 const landAt = (P) => P + 0.12 + FLY;
 
@@ -260,13 +260,21 @@ function build() {
   });
   // scroll once per line, just before it starts, so its whole final bubble fits
   const viewH = TR.bot - TR.top;
-  SCROLL = LAYOUT.map((L, li) => ({ t: LINES[li].s - 0.2, y: Math.max(0, L.top + L.fullH - viewH + 12) }));
+  SCROLL = LAYOUT.map((L, li) => {
+    const need = Math.max(0, L.top + L.fullH - viewH + 12);
+    const gapTop = LAYOUT.map((g) => g.top).find((v) => v >= need);
+    return { t: LINES[li].s - 0.2, y: need === 0 ? 0 : Math.min(L.top, (gapTop ?? need) - 6) };
+  });
   // highlighted words (the markers stay for the rest of the film)
   [[1, [8, 9]], [2, [2]], [3, [0, 1, 2, 3, 5]], [4, [3, 4, 5, 6]], [5, [0]], [6, [0, 1, 3, 7]]].forEach(([li, ks]) =>
     ks.forEach((k) => {
-      const w = LAYOUT[li].words[k], nx = LAYOUT[li].words[k + 1];
+      const ws = LAYOUT[li].words, w = ws[k], nx = ws[k + 1];
+      const prevM = ks.includes(k - 1) && ws[k - 1].row === w.row, nextM = ks.includes(k + 1) && nx.row === w.row;
       w.marked = true;
-      w.mkW = w.wd + 8 + (ks.includes(k + 1) && nx.row === w.row ? space - 8 + 4 : 0);
+      w.mkL = TR.padX + w.x - (prevM ? 0 : 3);
+      w.mkW = (nextM ? nx.x - w.x : w.wd + 3) + (prevM ? 0 : 3);
+      w.mk.style.left = px(w.mkL);
+      w.mk.style.borderRadius = `${prevM ? 0 : 6}px ${nextM ? 0 : 6}px ${nextM ? 0 : 6}px ${prevM ? 0 : 6}px`;
     }));
 
   // ── island / banner ──
@@ -282,6 +290,7 @@ function build() {
   h(`<div class="btn" id="smsOk" style="left:14px;top:14px;width:48px;height:48px;background:var(--em)">${CHECK(26, '#fff', 3.2)}</div>`, isl);
   h(`<div class="mask" style="left:76px;top:13px;width:300px;height:28px"><span class="in" id="smsT1" style="font-family:var(--sora);font-weight:600;font-size:20px;letter-spacing:-.02em;line-height:28px;color:#fff">SMS gesendet</span></div>`, isl);
   h(`<div class="mask" style="left:76px;top:41px;width:300px;height:22px"><span class="in" id="smsT2" style="font-weight:600;font-size:14px;line-height:22px;color:var(--mint)">Termin morgen 08:00 · an Sabine Krüger</span></div>`, isl);
+  els.smsRing = h(`<div class="ring"></div>`, C);
 
   // ── accept button → agent orb (world layer) ──
   const acc = h(`<div class="btn" id="accept" style="overflow:visible"></div>`, W2);
@@ -290,11 +299,10 @@ function build() {
   h(`<div class="a" style="left:0;top:0;width:100%;height:100%;border-radius:50%;overflow:hidden"><div class="a" id="helmL" style="left:50%;top:50%;transform-origin:0 0">${HELMET(100, '#fff')}</div></div>`, acc);
   h(`<div class="a" id="helmD" style="left:50%;top:50%;transform-origin:0 0;filter:drop-shadow(0 16px 21px rgba(11,18,32,.25))">${HELMET(100, '#0b1220')}</div>`, acc);
   els.accRings = [0, 1, 2].map(() => h(`<div class="ring"></div>`, W2));
-  els.smsRing = h(`<div class="ring"></div>`, W2);
 
   // ── navy panel "IM HINTERGRUND ERLEDIGT" ──
   h(`<div class="a" id="panel"></div>`, W2);
-  const P = h(`<div class="a" id="pInner" style="left:0;top:0"></div>`, W2);       // panel contents (world coords)
+  const P = h(`<div class="a" id="pInner" style="left:0;top:0"></div>`, W2);       // panel contents (world coords), clipped to the live panel
   h(`<div class="mask lbl" style="left:${PANEL.x + 36}px;top:${PANEL.y + 30}px;width:420px;height:22px;font-size:16px;color:var(--mint)"><span class="in" id="pHead" style="line-height:22px">Im Hintergrund erledigt</span></div>`, P);
   h(`<div class="mask lbl" style="left:${PANEL.x + PANEL.w - 236}px;top:${PANEL.y + 30}px;width:200px;height:22px;font-size:16px;color:var(--muted);text-align:right"><span class="in" id="pCount" style="line-height:22px">0 / 4</span></div>`, P);
   const rowSegs = [
@@ -404,9 +412,9 @@ function build() {
     [P1 + 1.5, 1.06, 60, 6, 'inOutCubic'],               // reveal pan with the first chip
     [C2, 1.08, 100, 8, 'inOutSine'],                     // priority + customer: slow push
     [LINES[5].s, 1.09, 140, 9, 'inOutSine'],             // appointment: slow push
-    [T_O, 1.12, 190, 10, 'inOutSine'],                   // yes + booked: slow push
+    [T_O, 1.1, 190, 12, 'inOutSine'],                    // yes + booked + SMS: slow push
     [T_LOGO, 1.45, 324, 40, 'inOutCubic'],               // push into the flood
-    [DUR, 1.52, 330, 43, 'inOutSine'],                   // end push
+    [DUR, 1.55, 333, 45, 'inOutSine'],                   // end push, through the last frame
   ];
 }
 
@@ -467,7 +475,7 @@ function phoneScreen(t) {
   ty($('bTitle'), t < T_TAKEOVER ? rise(t, 0.42) : fall(t, T_TAKEOVER, 0.22));
   ty($('bTitle2'), t < T_ACCEPT ? rise(t, T_TAKEOVER + 0.14) : fall(t, T_ACCEPT + 0.01, 0.14));
   const dec = $('decline'); show(dec, inBanner);
-  setBox(dec, w - 106 - BTN / 2, 48 - BTN / 2, BTN, BTN);
+  setBox(dec, (t < T_ACCEPT ? w : BAN.w) - 106 - BTN / 2, 48 - BTN / 2, BTN, BTN);
   tf(dec, `scale(${(spring(t - 0.44, 2.6, 0.55) * (1 - gone)).toFixed(4)})`);
 
   // live island content
@@ -495,12 +503,13 @@ function phoneScreen(t) {
 
   // header row (the website's voice-agent card header)
   const hdr = T_ACCEPT + 0.15;
-  popScale($('cBadge'), t, hdr, 2.4, 0.62);
-  ty($('cAgent'), rise(t, hdr + 0.04));
+  const clr = T_SMS - 0.05;
+  tf($('cBadge'), `scale(${(spring(t - hdr, 2.4, 0.62) * (1 - spring(t - clr, 3, 1))).toFixed(4)})`);
+  ty($('cAgent'), t < clr ? rise(t, hdr + 0.04) : fall(t, clr, 0.2));
   ty($('cCaller'), t < T_NAME ? rise(t, hdr + 0.08) : fall(t, T_NAME, 0.22));
-  ty($('cCaller2'), t < T_NAME + 0.12 ? 115 : rise(t, T_NAME + 0.12));
+  ty($('cCaller2'), t < T_NAME + 0.12 ? 115 : t < clr + 0.04 ? rise(t, T_NAME + 0.12) : fall(t, clr + 0.04, 0.2));
   ty($('cLive'), t < HANG ? rise(t, hdr + 0.1) : fall(t, HANG, 0.22));
-  ty($('cEnded'), t < HANG + 0.14 ? 115 : rise(t, HANG + 0.14));
+  ty($('cEnded'), 115);                                        // the status line says it; the island covers this row
   tf($('liveDot'), `scale(${(0.775 + 0.225 * Math.cos((2 * Math.PI * t) / (2 * BEAT))).toFixed(3)})`);
 
   // status line: the website's strings, swapped through the mask at each turn
@@ -509,10 +518,10 @@ function phoneScreen(t) {
   for (let i = 1; i < LINES.length; i++) if (LINES[i].ki !== LINES[i - 1].ki) swaps.push({ t: LINES[i].s - 0.1, s: LINES[i].ki ? ST.ki : ST.an });
   swaps.push({ t: HANG, s: ST.end });
   let si = 0;
-  while (si < swaps.length - 1 && t >= swaps[si + 1].t - 0.18) si++;
+  while (si < swaps.length - 1 && t >= swaps[si + 1].t) si++;
   const st = $('status'), nx = swaps[si + 1];
-  if (nx && t >= nx.t - 0.18) { st.textContent = swaps[si].s; ty(st, fall(t, nx.t - 0.18, 0.18)); }
-  else { st.textContent = swaps[si].s; ty(st, rise(t, swaps[si].t)); }
+  st.textContent = swaps[si].s;
+  ty(st, nx && t >= nx.t - 0.18 ? fall(t, nx.t - 0.18, 0.18) : rise(t, swaps[si].t));
   st.style.color = t >= HANG ? 'var(--em2)' : 'var(--ink)';
 
   ty($('trLabel'), rise(t, T_ACCEPT + 0.4));
@@ -565,10 +574,10 @@ function trGeo(t) {
     const l = LINES[li];
     let bw = L.sizes[0].w, bh = L.sizes[0].h;
     for (let k = 1; k < L.sizes.length; k++) {
-      bw += (L.sizes[k].w - L.sizes[k - 1].w) * spring(t - l.words[k].t, 2.2, 0.9);
-      bh += (L.sizes[k].h - L.sizes[k - 1].h) * spring(t - l.words[k].t, 2.2, 0.9);
+      bw += (L.sizes[k].w - L.sizes[k - 1].w) * spring(t - (l.words[k].t - 0.10), 2.2, 0.9);
+      bh += (L.sizes[k].h - L.sizes[k - 1].h) * spring(t - (l.words[k].t - 0.10), 2.2, 0.9);
     }
-    return { bw, bh, y: L.top - scroll, left: L.ki ? 20 : SW - 20 - bw, on: t >= l.s - 0.14 };
+    return { bw, bh, y: L.top - scroll, left: L.ki ? 20 : SW - 20 - bw, on: t >= l.s - 0.06 };
   });
 }
 // World box of words k0..k1 of line li (same bubble row), at time t.
@@ -588,11 +597,11 @@ function transcript(t) {
     // pop from the tail corner (spring, no opacity)
     const pop = spring(t - (l.s - 0.06), 2, 0.75);
     L.bub.style.transformOrigin = L.ki ? '0 0' : '100% 0';
-    tf(L.bub, `translateY(${(10 * (1 - pop)).toFixed(2)}px) scale(${lerp(0.6, 1, pop).toFixed(4)})`);
+    tf(L.bub, `translateY(${(10 * (1 - pop)).toFixed(2)}px) scale(${pop.toFixed(4)})`);
     L.words.forEach((w, k) => {
       riseTilt(w.el, t, l.words[k].t - 0.03, 2.6);
       if (w.marked) {
-        const t0 = l.words[k].t + 0.08;
+        const t0 = l.words[k].t + 0.18;
         show(w.mk, t >= t0);
         w.mk.style.width = px(w.mkW);
         tf(w.mk, `scaleX(${E.outCubic(seg(t, t0, t0 + 0.18)).toFixed(4)})`);
@@ -642,10 +651,11 @@ function acceptOrb(t, buzz) {
   tf(hd, helmT(hs, 0));
   hd.style.clipPath = `circle(${(75 * flood).toFixed(3)}% at 50% 50%)`;
   // the SMS confirmation in the island sends one ring out of its check
-  const sr = els.smsRing, sdt = t - (T_SMS + 0.12), son = sdt >= 0 && sdt < 0.7;
+  const sr = els.smsRing, sdt = t - (T_SMS + 0.25), son = sdt >= 0 && sdt < 0.6;
   show(sr, son);
   if (son) {
-    const u = E.outCubic(sdt / 0.7), rr = 24 + 60 * u, c = [PX + SW / 2 - SMS.w / 2 + 38, PY + ISL_TOP + 38];
+    const wI = lerp(LIVE.w, SMS.w, spring(t - T_SMS, 1.9, 0.75));
+    const u = E.outCubic(sdt / 0.6), rr = 24 + 34 * u, c = [SW / 2 - wI / 2 + 38, ISL_TOP + 38];   // screen-local, clipped by the screen
     setBox(sr, c[0] - rr, c[1] - rr, rr * 2, rr * 2);
     sr.style.borderWidth = px(2.5 * (1 - u));
     sr.style.borderColor = 'rgba(16,185,129,.55)';
@@ -674,25 +684,31 @@ function chipState(t, P, src, dst, sizeTo = 1) {
 function chipTf(C, st, extra = '') {
   tf(C.el, `translate(${st.x.toFixed(2)}px,${st.y.toFixed(2)}px) rotate(${st.lean.toFixed(3)}deg) scale(${st.s.toFixed(4)})${extra}`);
 }
-// A chip that lands as text: the pill contracts into it and its ink wipes to the panel colour.
+// A chip that lands as text: one front sweeps left → right. Behind it the new ink sits on the panel,
+// ahead of it the old ink still sits on the pill, which retracts with the front (no squash, no strike-through).
+function landSweep(C, t, L, padX) {
+  const F = lerp(-padX, C.w + 4 + padX, E.inOutCubic(seg(t, L, L + 0.18)));
+  const Fc = clamp(F, 0, C.w + 4);
+  C.bg.style.clipPath = `inset(0 0 0 ${(F + padX).toFixed(2)}px round 999px)`;
+  show(C.bg, F < C.w + 4 + padX - 0.5);
+  C.tA.style.clipPath = `inset(0 0 0 ${Fc.toFixed(2)}px)`;
+  C.tB.style.clipPath = `inset(0 ${(C.w + 4 - Fc).toFixed(2)}px 0 0)`;
+}
 function textChip(C, t, P, src, dst, sizeTo = 1, outT = Infinity) {
   show(C.el, t >= P);
   if (t < P) return;
   const st = chipState(t, P, src, dst, sizeTo);
-  const L = landAt(P), con = E.outCubic(seg(t, L, L + 0.15));
   chipTf(C, st);
-  const padX = 12 * st.peel * (1 - con), padY = 4 * st.peel * (1 - con);
+  const padX = 12 * st.peel, padY = 4 * st.peel;
   setBox(C.bg, -padX, -padY, C.w + 2 * padX, 34 + 2 * padY);
-  tf(C.bg, `scaleY(${(1 - con).toFixed(4)})`);
-  show(C.bg, con < 1);
-  C.tB.style.clipPath = `inset(0 ${(100 - 100 * E.inOutCubic(seg(t, L, L + 0.15))).toFixed(2)}% 0 0)`;
+  landSweep(C, t, landAt(P), padX);
   const out = t >= outT ? fall(t, outT, 0.24) : 0;
   C.wA.forEach((w) => ty(w, out)); C.wB.forEach((w) => ty(w, out));
 }
 function panel(t, geo) {
   const pnl = $('panel');
   show(pnl, t >= T_PANEL); show($('pInner'), t >= P1);
-  const OUT = (k) => T_O + 0.03 * k;                        // per-row fall-out time at the flood
+  const OUT = (k) => T_O + 0.28 + 0.05 * k;                 // each row's text falls as its check leaves for the merge
 
   // c1 'Sicherung raus' → row 1; the panel grows out of its landed rect
   const r1 = ROWS[0], c1 = CHIPS.c1;
@@ -703,30 +719,37 @@ function panel(t, geo) {
     const g = spring(t - T_PANEL, 1.05, 0.92), fl = spring(t - T_O, 0.95, 1);
     const from = { x: dst1.x - 12, y: dst1.y - 4, w: c1.w + 24, h: 42 };
     const to = { x: lerp(PANEL.x, -1000, fl), y: lerp(PANEL.y, -800, fl), w: lerp(PANEL.w, 2600, fl), h: lerp(PANEL.h, 1600, fl) };
-    setBox(pnl, lerp(from.x, to.x, g), lerp(from.y, to.y, g), lerp(from.w, to.w, g), lerp(from.h, to.h, g));
+    const bx = lerp(from.x, to.x, g), by = lerp(from.y, to.y, g), bw = lerp(from.w, to.w, g), bh = lerp(from.h, to.h, g);
+    setBox(pnl, bx, by, bw, bh);
     pnl.style.borderRadius = px(lerp(21, 30, g));
+    // the contents are revealed by the growing panel, never drawn on the canvas outside it
+    $('pInner').style.clipPath = `polygon(${bx}px ${by}px,${bx + bw}px ${by}px,${bx + bw}px ${by + bh}px,${bx}px ${by + bh}px)`;
   }
   const keep = (t0, k) => (t < OUT(k) ? rise(t, t0) : fall(t, OUT(k), 0.24));
   show(r1.segs[1].box, false);                                // the landed chip IS the word 'Sicherung'
   ty(r1.segs[0].el, keep(T_PANEL + 0.2, 0));
   ty(r1.segs[2].el, keep(T_PANEL + 0.22, 0));
-  ty($('pHead'), keep(T_PANEL + 0.2, 0));
-  const cnt = $('pCount'), done = [C1, C2, C3, C4].filter((c) => t >= c).length;
-  cnt.textContent = `${done} / 4`;
-  ty(cnt, t >= OUT(0) ? fall(t, OUT(0), 0.24) : rise(t, done ? [C1, C2, C3, C4][done - 1] : T_PANEL + 0.24, 3));
+  ty($('pHead'), t < T_O ? rise(t, T_PANEL + 0.3) : fall(t, T_O, 0.24));
+  // counter rolls: the old number falls on each check, the new one rises
+  const CK = [C1, C2, C3, C4], cnt = $('pCount'), k = CK.filter((c) => t >= c + 0.16).length, nxC = CK[k];
+  cnt.textContent = `${k} / 4`;
+  ty(cnt, t >= T_O ? fall(t, T_O, 0.24) : nxC !== undefined && t >= nxC ? fall(t, nxC, 0.16) : rise(t, k ? CK[k - 1] + 0.16 : T_PANEL + 0.34, 3));
 
   // slots: empty → pending (rotating arc) → check
-  const pendT = [T_PANEL + 0.2, landAt(P3) + 0.1, landAt(P5) + 0.2, landAt(P7) + 0.15];
+  const pendT = [T_PANEL + 0.3, landAt(P3) + 0.1, landAt(P5) + 0.2, landAt(P7) + 0.15];
   const okT = [C1, C2, C3, C4];
   const placeOut = [0, landAt(P3) - 0.04, landAt(P5) - 0.15, landAt(P7) - 0.15];
   ROWS.forEach((R, i) => {
-    const appear = T_PANEL + 0.2 + 0.05 * i;
+    const appear = T_PANEL + 0.3 + 0.05 * i;
     show(R.slot, t >= appear && t < T_O + 0.3 + 0.05 * i);
     popScale(R.slot, t, appear, 2.4, 0.7);
-    const pending = t >= pendT[i] && t < okT[i] + 0.15;
-    show(R.empty, t < pendT[i]);
+    // empty ring shrinks away as the pending ring springs in; pending ring and arc collapse under the check
+    const sp = spring(t - pendT[i], 2.6, 0.6) * (1 - spring(t - okT[i], 2.6, 1));
+    const pending = t >= pendT[i] && t < okT[i] + 0.4;
+    show(R.empty, i > 0 && t < pendT[i] + 0.25);
+    tf(R.empty, `scale(${(1 - spring(t - pendT[i], 2.6, 1)).toFixed(4)})`);
     show(R.pend, pending); show(R.arc, pending);
-    if (pending) { popScale(R.pend, t, pendT[i], 2.6, 0.6); tf(R.arc, `rotate(${((t - pendT[i]) * 300).toFixed(1)}deg)`); }
+    if (pending) { tf(R.pend, `scale(${sp.toFixed(4)})`); tf(R.arc, `rotate(${((t - pendT[i]) * 300).toFixed(1)}deg) scale(${sp.toFixed(4)})`); }
     show(R.ok, t >= okT[i]);
     const wave = press(t - (HANG + 0.1 + 0.06 * i), 0.07) * 0.18 + (i === 0 ? press(t - (landAt(P2) + 0.02), 0.07) * 0.15 : 0);
     if (i === 2) {
@@ -734,7 +757,7 @@ function panel(t, geo) {
       R.ok.style.clipPath = `circle(${(55 * E.outCubic(seg(t, C3, C3 + 0.15))).toFixed(2)}% at 50% 50%)`;
       tf(R.ok, `scale(${(1 + wave).toFixed(4)})`);
     } else tf(R.ok, `scale(${(spring(t - okT[i], 2.4, 0.55) + wave).toFixed(4)})`);
-    if (R.place) ty(R.place, t < placeOut[i] ? rise(t, appear + 0.02) : fall(t, placeOut[i], 0.2));
+    if (R.place) ty(R.place, t < placeOut[i] ? rise(t, appear + 0.04) : fall(t, placeOut[i], 0.2));
   });
 
   // c2 'dringend' → peach 'Priorität hoch' tag after row 1's title
@@ -770,9 +793,10 @@ function panel(t, geo) {
     const st = chipState(t, P5, wordsWorld(4, 3, 6, geo), { x: r3.segs[1].x, y: ROW_TOP[2] });
     const con = E.outCubic(seg(t, l5, l5 + 0.15));
     chipTf(c5, st);
-    const padX = 12 * st.peel * (1 - con), padY = 4 * st.peel * (1 - con);
+    const padX = 12 * st.peel, padY = 4 * st.peel;
     setBox(c5.bg, -padX, -padY, c5.w + 2 * padX, 34 + 2 * padY);
-    tf(c5.bg, `scaleY(${(1 - con).toFixed(4)})`);
+    c5.bg.style.clipPath = `inset(0 0 0 ${(100 * con).toFixed(2)}% round 999px)`;   // retracts to its right end while the words fall
+    show(c5.bg, con < 0.999);
     show(c5.tB, false);
     ty(c5.wA[0], fall(t, l5, 0.2));
   }
@@ -788,9 +812,10 @@ function panel(t, geo) {
   if (t >= J) {
     const src = wordsWorld(5, 0, 0, geo);
     const a = [src.x + src.w / 2, src.y + 17 - 10 * spring(t - J, 3, 0.8)], b = [SLOT_X, ROW_TOP[2] + 17];
-    const p = quad(a, [(a[0] + b[0]) / 2, Math.min(a[1], b[1]) - 160], b, E.inOutCubic(seg(t, J + 0.07, C3)));
+    const u = E.inOutCubic(seg(t, J + 0.07, C3));
+    const p = quad(a, [(a[0] + b[0]) / 2, Math.min(a[1], b[1]) - 60], b, u);
     setBox(ja, p[0] - 15, p[1] - 15, 30, 30);
-    tf(ja, `scale(${(spring(t - J, 2.6, 0.6) * (1 - E.inCubic(seg(t, C3 - 0.02, C3 + 0.08)))).toFixed(4)})`);
+    tf(ja, `scale(${(spring(t - J, 2.6, 0.6) * (1 + 0.4 * Math.sin(Math.PI * u)) * (1 - E.inCubic(seg(t, C3 - 0.02, C3 + 0.08)))).toFixed(4)})`);
   }
 
   // c6 'gebucht!' → white 'Termin gebucht' pill straddling the panel's right edge beside row 3
@@ -799,7 +824,7 @@ function panel(t, geo) {
   if (t >= P6) {
     const L = landAt(P6), g = spring(t - L, 2.2, 0.75);
     const okW = 25, gap = 10, inner = okW + gap + CHIPS.pillTextW, pillW = inner + 40, pillH = 50;
-    const st = chipState(t, P6, wordsWorld(6, 1, 1, geo), { x: PANEL.x + PANEL.w - c6.w / 2, y: ROW_TOP[2] + 26 - 17 });
+    const st = chipState(t, P6, wordsWorld(6, 1, 1, geo), { x: PANEL.x + PANEL.w - c6.w / 2, y: ROW_TOP[2] });
     chipTf(c6, st, t >= OUT(2) ? ` scale(${(1 - spring(t - OUT(2), 3, 1)).toFixed(4)})` : '');
     const padX = lerp(12 * st.peel, (pillW - c6.w) / 2, g), padY = lerp(4 * st.peel, (pillH - 34) / 2, g);
     setBox(c6.bg, -padX, -padY, c6.w + 2 * padX, 34 + 2 * padY);
@@ -833,7 +858,7 @@ function outro(t) {
     if (t < t0) return;
     const u = E.inOutCubic(seg(t, t0, t0 + 0.4));
     setBox(el, lerp(SLOT_X, M.x, u) - 15, lerp(ROW_TOP[k] + 17, M.y, u) - 15, 30, 30);
-    tf(el, `scale(${(1 - E.inCubic(seg(t, t0 + 0.38, t0 + 0.48))).toFixed(4)})`);
+    tf(el, `scale(${((1 + 0.45 * Math.sin(Math.PI * u)) * (1 - E.inCubic(seg(t, t0 + 0.38, t0 + 0.48)))).toFixed(4)})`);
   });
   const succ = $('succ');
   show(succ, t >= T_MERGE - 0.05 && t < T_LOGO + 0.26);
@@ -842,7 +867,7 @@ function outro(t) {
     const vt = t - V0, br = vt > 0 && vt < VO.dur ? 1 + 0.04 * envOf(VO, vt) : 1;
     const r = lerp(15, 48, g) * br * (1 - E.inCubic(seg(t, T_LOGO, T_LOGO + 0.25)));
     setBox(succ, M.x - r, M.y - r, 2 * r, 2 * r);
-    ty($('succChk'), t < T_LOGO ? 0 : fall(t, T_LOGO, 0.15));
+    ty($('succChk'), fall(t, T_LOGO - 0.14, 0.14));
   }
   els.succRings.forEach((el, k) => {
     const dt = t - (T_MERGE + 0.2 + 1.2 * k), ok = dt >= 0 && dt < 1.2;
@@ -863,29 +888,28 @@ function outro(t) {
   // claim words rise on their spoken onsets
   CLAIM.forEach((c) => { show(c.box, t >= T_O); if (t >= T_O) riseTilt(c.el, t, c.t, 2.2); });
   const ul = $('uline');
-  show(ul, t >= T_LOGO + 0.3);
-  tf(ul, `scaleX(${E.draw(seg(t, T_LOGO + 0.3, T_LOGO + 1.0)).toFixed(4)})`);
+  show(ul, t >= T_LOGO + 0.2);
+  tf(ul, `scaleX(${E.draw(seg(t, T_LOGO + 0.2, T_LOGO + 0.8)).toFixed(4)})`);
   // logo: the helmet grows at M out of the shrinking circle and slides left; the wordmark comes out from behind it
   const hw = 447 * LOGO_K, hh = 456 * LOGO_K;
   const lh = $('logoHelm'), clip = $('wmClip');
   show(lh, t >= T_LOGO); show(clip, t >= T_LOGO + 0.2);
   if (t >= T_LOGO) {
-    const g = lerp(0.4, 1, spring(t - T_LOGO, 1.8, 0.8));
+    const g = spring(t - T_LOGO, 1.8, 0.8);
     const lockL = M.x - ((1739 - 31) * LOGO_K) / 2;
     const cx = lerp(M.x, lockL + hw / 2, E.inOutCubic(seg(t, T_LOGO + 0.12, T_LOGO + 0.6)));
     const top = M.y - hh / 2;                                 // helmet bbox top (logo y 28)
     tf(lh, `translate(${(cx - (hw * g) / 2).toFixed(2)}px,${(M.y - (hh * g) / 2).toFixed(2)}px) scale(${g.toFixed(4)})`);
-    const wmL = lockL + (609 - 31) * LOGO_K, wmW = 1131 * LOGO_K;
+    const wmL = cx - hw / 2 + (609 - 31) * LOGO_K, wmW = 1131 * LOGO_K;
     const clipL = Math.max(cx + (hw * g) / 2 + 6, wmL - 2);
     const rev = E.outCubic(seg(t, T_LOGO + 0.2, T_LOGO + 0.72));
-    const slide = (1 - rev) * (wmW * 0.6);
-    setBox(clip, clipL, top + (70 - 28) * LOGO_K - 2, Math.max(0, wmL + wmW + 2 - clipL), 411 * LOGO_K + 4);
+    setBox(clip, clipL, top + (70 - 28) * LOGO_K - 2, Math.max(0, lerp(clipL, wmL + wmW + 2, rev) - clipL), 411 * LOGO_K + 4);
     const wm = $('wm');
-    wm.style.left = px(wmL - slide - clipL); wm.style.top = px(2);
+    wm.style.left = px(wmL - clipL); wm.style.top = px(2);
   }
-  tf($('subRule'), `scaleX(${E.outCubic(seg(t, T_LOGO + 0.55, T_LOGO + 0.8)).toFixed(4)})`);
-  show($('subRule'), t >= T_LOGO + 0.55);
-  ty($('sub'), rise(t, T_LOGO + 0.6));
+  tf($('subRule'), `scaleX(${E.outCubic(seg(t, T_LOGO + 0.4, T_LOGO + 0.65)).toFixed(4)})`);
+  show($('subRule'), t >= T_LOGO + 0.4);
+  ty($('sub'), rise(t, T_LOGO + 0.45));
 }
 
 // ── Init ────────────────────────────────────────────────────────────────────
@@ -922,7 +946,7 @@ function sfxList() {
   add('thump', T_MERGE + 0.05, null, 0.45);
   add('dark', T_BLACK + 0.45);
   add('logo', T_LOGO);
-  add('tick', T_LOGO + 0.6, [2600, 0], 0.45);
+  add('tick', T_LOGO + 0.45, [2600, 0], 0.45);
   return L;
 }
 window.EVENTS = { beat: BEAT, dur: DUR, accept: T_ACCEPT, logo: T_LOGO, outro: T_O, hang: HANG, outroVO: V0, chord9: 21.6,

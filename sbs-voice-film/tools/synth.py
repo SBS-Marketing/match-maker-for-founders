@@ -167,7 +167,7 @@ V = {  # (bass midi, pad voicing)
 PLAN = {
     1: [(0, 'Eadd9')], 2: [(0, 'Eadd9')], 3: [(0, 'C#m7')], 4: [(0, 'C#m7')], 5: [(0, 'Amaj7')], 6: [(0, 'Amaj7')],
     7: [(0, 'Bsus4')], 8: [(0, 'Bsus4'), (2, 'B')], 9: [(0, 'C#m7')], 10: [(0, 'Amaj7')], 11: [(0, 'E')],
-    12: [(0, 'E'), (3, 'Bsus4')], 13: [(0, 'Amaj7'), (2, 'Bsus4')],   # bar 12 beat 4 = the flood
+    12: [(0, 'E')], 13: [(0, 'Amaj7'), (2, 'Bsus4')], 14: [(0, 'B')],   # bar 13 downbeat = the flood; E add9 on the logo
 }
 
 

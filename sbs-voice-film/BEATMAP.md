@@ -1,6 +1,6 @@
 # SBS Voice-Agent — beat map
 
-**Format:** 35.4 s, 1920×1080, 60 fps, one continuous take, German. 100 BPM, 1 beat = 0.6 s.
+**Format:** 36.6 s, 1920×1080, 60 fps, one continuous take, German. 100 BPM, 1 beat = 0.6 s.
 
 **Timing:** Every time below is derived from the measured voice lines in `timing.js`; the film re-times itself if the audio changes. The music's bar 1 starts at the pickup (2.40 s).
 
@@ -42,7 +42,7 @@ Taken from the SBS website:
 | L5 | KI-Agent | Danke, Frau Krüger. Morgen um 8 Uhr ist ein Techniker frei. Passt das? | 17.65–23.12 |
 | L6 | Anruferin | Ja, das passt perfekt! | 23.44–25.35 |
 | L7 | KI-Agent | Ist gebucht! Die Bestätigung kommt gleich per SMS. | 25.60–29.35 |
-| VO | KI-Agent | Ihr Telefon ist ab heute nie mehr besetzt. | 31.32–34.82 |
+| VO | KI-Agent | Ihr Telefon ist ab heute nie mehr besetzt. | 31.92–35.42 |
 
 ## Beats
 
@@ -52,7 +52,7 @@ Taken from the SBS website:
   - Lock screen at 07:52.
   - The island springs into the call banner: „Notdienst-Leitung · Eingehender Anruf“ with decline and accept buttons.
   - On beats 1 and 2 the phone buzzes and rings leave the accept button.
-  - At 1.80 the title rolls to „KI-Agent nimmt an …“ and the SBS helmet rises into the accept button.
+  - At 1.50 the title rolls to „KI-Agent nimmt an …“ and the SBS helmet rises into the accept button.
 - **Camera:** Tight on the island (2.4×), slow pan down.
 - **Sound:**
   - Island bloop.
@@ -106,14 +106,14 @@ Taken from the SBS website:
 - **Camera:** Slow push.
 - **Sound:** Bar 9 thins to pad and sub, for suspense under „Passt das?“.
 
-### 23.44–30.60 · Zusage und Bestätigung
+### 23.44–31.20 · Zusage und Bestätigung
 
 - **Picture:**
-  - A check lifts off the caller's „Ja,“ and floods row 3 (24.30): „… eingetragen“.
+  - A check lifts off the caller's „Ja,“ (23.70), grows on its way and floods row 3 (24.30): „… eingetragen“.
   - „gebucht!“ becomes the website's „Termin gebucht“ pill (27.30).
   - „Bestätigung“ becomes row 4: „SMS-Bestätigung versendet · Techniker informiert“ (29.40).
   - The call ends: „Gespräch beendet · alles erledigt“, „Beendet“.
-  - The island opens to „✓ SMS gesendet · Termin morgen 08:00 · an Sabine Krüger“ (29.70).
+  - The call header clears, and the island opens to „✓ SMS gesendet · Termin morgen 08:00 · an Sabine Krüger“ (29.70).
 - **Camera:** Slow push.
 - **Sound:**
   - Booking chime.
@@ -121,22 +121,22 @@ Taken from the SBS website:
   - Hang-up blip.
   - The ring motif returns as the SMS sound.
 
-### 30.60–34.20 · Alles erledigt, then the claim
+### 31.20–34.80 · Alles erledigt, then the claim
 
 - **Picture:**
-  - The navy card floods the frame; its rows fall out through their mask lines.
-  - The four checks merge into the website's success circle (31.30).
-  - Black floods out of it (31.50).
+  - On the bar-13 downbeat the navy card floods the frame.
+  - Each row's text falls out through its mask as its check leaves; the four checks merge into the website's success circle (31.90).
+  - Black floods out of it (32.10).
   - The claim rises word by word with the voice-over.
 - **Camera:** Push into the flood, 1.12× to 1.45×.
 - **Sound:** Flood swell, merge, dark whoosh, voice-over.
 
-### 34.20–35.40 · SBS
+### 34.80–36.60 · SBS
 
 - **Picture:**
-  - On the spoken „besetzt.“ the circle shrinks behind the SBS helmet. The helmet slides left and the wordmark slides out from behind it.
+  - On the spoken „besetzt.“ the empty circle shrinks behind the growing SBS helmet. The helmet slides left and the wordmark wipes on from its edge, S-B-S.
   - „besetzt.“ gets its emerald underline.
-  - The line „— Der Voice-Agent von SBS“ rises.
+  - The line „— Der Voice-Agent von SBS“ rises. The finished end card reads for about a second while the camera keeps pushing.
 - **Camera:** End push.
 - **Sound:** Logo hit with the E add9 chord.
 
