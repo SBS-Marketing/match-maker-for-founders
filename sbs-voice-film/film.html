@@ -413,6 +413,8 @@ function build() {
   h(`<div class="a" id="subRule" style="left:${subX}px;top:${subY + 11}px;height:2px;width:34px;background:var(--mint);transform-origin:0 50%"></div>`, W2);
   h(`<div class="mask lbl" style="left:${subX + 48}px;top:${subY}px;width:${SUB_W + 6}px;height:24px;font-size:17px;letter-spacing:.14em;color:var(--mint)"><span class="in" id="sub" style="line-height:24px">Der Voice-Agent von SBS</span></div>`, W2);
 
+  // end card centre (lockup top to sub-line bottom); never above the previous key, so y keeps moving one way
+  const endCy = Math.max(15, (M.y - (456 * LOGO_K) / 2 + (subY + 24)) / 2);
   // camera: [time, zoom, x, y, ease into this key]
   CAM_KEYS = [
     [0, 2.4, -340, -350, 'linear'],
@@ -423,8 +425,8 @@ function build() {
     [C2, 1.08, 100, 8, 'inOutSine'],                     // priority + customer: slow push
     [LINES[5].s, 1.09, 140, 9, 'inOutSine'],             // appointment: slow push
     [T_O, 1.1, 190, 12, 'inOutSine'],                    // yes + booked + SMS: slow push
-    [T_LOGO, 1.45, 324, 40, 'inOutCubic'],               // push into the flood
-    [DUR, 1.55, 333, 45, 'inOutSine'],                   // end push, through the last frame
+    [T_LOGO, 1.45, 324, endCy - 3, 'inOutCubic'],        // push into the flood
+    [DUR, 1.55, 333, endCy + 2, 'inOutSine'],            // end push, through the last frame
   ];
 }
 

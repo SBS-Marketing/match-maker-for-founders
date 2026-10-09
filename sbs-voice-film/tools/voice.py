@@ -30,12 +30,13 @@ LINES = [
     ('05_ki', 'ki', 'Danke, Frau Krüger. Morgen um 8 Uhr ist ein Techniker frei. Passt das?', 'Danke, Frau Krüger. Morgen um acht Uhr ist ein Techniker frei. Passt das?'),
     ('06_anruferin', 'anruferin', 'Ja, das passt perfekt!', None),
     ('07_ki', 'ki', 'Ist gebucht! Die Bestätigung kommt gleich per SMS.', 'Ist gebucht! Die Bestätigung kommt gleich per Es Em Es.'),
-    ('08_outro', 'ki', 'Ihr Telefon ist ab heute nie mehr besetzt.', None),
+    ('08_outro', 'ki', 'Software, die mitdenkt.', None),
 ]
 SR = 48000
 HOP = 0.005
 MAX_PAUSE = 0.36
 PHRASE_GAP = 0.11
+PHRASE_GAP_LINE = {'08_outro': 0.08}   # the short claim has a brief stop before its last word
 EDGE_PAD = 0.02
 
 
@@ -108,8 +109,8 @@ def stretch(x, sr, tempo):
     return y.astype(np.float64) / 32768
 
 
-def phrases(x, sr):
-    """Voiced phrases [(t0, t1, voiced_seconds)] split at pauses >= PHRASE_GAP."""
+def phrases(x, sr, gap=PHRASE_GAP):
+    """Voiced phrases [(t0, t1, voiced_seconds)] split at pauses >= gap."""
     m = voiced_mask(x, sr)
     rs = runs(m)
     out, cur = [], None
@@ -120,7 +121,7 @@ def phrases(x, sr):
                 cur = [t0, t1, t1 - t0]
             else:
                 cur[1], cur[2] = t1, cur[2] + (t1 - t0)
-        elif cur is not None and (t1 - t0) >= PHRASE_GAP:
+        elif cur is not None and (t1 - t0) >= gap:
             out.append(tuple(cur))
             cur = None
     if cur is not None:
@@ -159,8 +160,8 @@ def assign(words, spoken, ph):
     return groups[::-1], wts
 
 
-def word_times(words, spoken, x, sr):
-    ph, m = phrases(x, sr)
+def word_times(words, spoken, x, sr, gap=PHRASE_GAP):
+    ph, m = phrases(x, sr, gap)
     groups, wts = assign(words, spoken, ph)
     out = []
     for (i, j), (t0, t1, vd) in zip(groups, ph):
@@ -204,7 +205,7 @@ def main():
         spoken = (spoken_text or text).split()
         if len(spoken) != len(words):
             spoken = words
-        wt, ph = word_times(words, spoken, x, SR)
+        wt, ph = word_times(words, spoken, x, SR, PHRASE_GAP_LINE.get(name, PHRASE_GAP))
         wavfile.write(odir / f'{name}.wav', SR, (np.clip(x, -1, 1) * 32767).astype(np.int16))
         meta.append({'id': name, 'who': who, 'text': text, 'dur': round(len(x) / SR, 3), 'raw': round(raw, 3), 'phrases': ph, 'words': wt})
         print(f'{name:14s} raw {raw:5.2f}s  -> {len(x) / SR:5.2f}s  phrases {ph}')
