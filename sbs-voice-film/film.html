@@ -942,21 +942,21 @@ function sfxList() {
   add('pickup', T_ACCEPT);
   add('whoosh', T_ACCEPT + 0.22, [0.4, 500, 2200, 0.4, -0.2]);
   add('thump', T_LAND);
-  // a soft tick as each new bubble opens (the pickup covers the first), alternating E6 / A6
-  LINES.slice(1).forEach((l, i) => add('tick', l.s - 0.06, [i % 2 ? 1760 : 1319, l.ki ? -0.3 : 0.3]));
+  // a soft tick as each new bubble opens (the pickup covers the first, the booking shimmer the one after 'perfekt!'),
+  // alternating E6 / A6
+  const T_SHIMMER = inPause(C3 + 0.04);                        // the booking sparkle waits for the end of 'perfekt!'
+  LINES.slice(1).forEach((l, i) => Math.abs(l.s - 0.06 - T_SHIMMER) > 0.3 && add('tick', l.s - 0.06, [i % 2 ? 1760 : 1319, l.ki ? -0.3 : 0.3]));
   add('panel', T_PANEL);
   add('check', C1, [0]);
-  add('tock', landAt(P2), [64]);
-  add('check', C2, [1]);
-  add('check', C3, [2], 0.63);                                 // under 'das passt': quiet
-  add('shimmer', inPause(C3 + 0.04));                          // the booking sparkle waits for the end of 'perfekt!'
+  add('check', C2, [1]);                                       // the tag landing and the 'Ja' check (C3) stay silent:
+  add('shimmer', T_SHIMMER);                                   // under 'Name' and 'passt' nothing would be heard
   add('pop', landAt(P6));
   add('hangup', HANG);                                         // also stands for the last check (C4)
   [0, 1, 2, 3].forEach((k) => add('mar', T_SMS + 0.1 + 0.06 * k, [[76, 80, 83, 88][k]]));
   add('bloop', T_SMS + 0.02, null, 0.8);
   add('flood', T_O + 0.3);
   [0, 1, 2, 3].forEach((k) => add('mar', T_O + 0.7 + 0.05 * k, [[88, 92, 95, 100][k]], 0.8));
-  add('thump', T_MERGE + 0.05);
+  add('thump', T_MERGE);                                       // with the run's first note
   add('dark', T_BLACK + 0.45);
   add('logo', T_LOGO);
   return L;

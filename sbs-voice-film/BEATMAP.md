@@ -99,7 +99,7 @@ Taken from the SBS website:
   - „Sabine Krüger“ and „Hafenstraße 12“ fly into the CRM row: „Kundin im CRM angelegt“.
   - Check 2 at 18.85, in the pause after „Frau Krüger.“.
 - **Camera:** Slow push.
-- **Sound:** A quiet wood tock as the tag lands, the check ding in the pause.
+- **Sound:** The check ding in the pause. The tag landing stays silent: under „Name“ nothing would be heard.
 
 ### 18.85–22.56 · Terminvorschlag
 
@@ -119,9 +119,9 @@ Taken from the SBS website:
   - The call header clears, and the island opens to „✓ SMS gesendet · Termin morgen 08:00 · an Sabine Krüger“ (28.47).
 - **Camera:** Slow push.
 - **Sound:**
-  - A quiet check under „das passt“; the booking shimmer waits for the pause after „perfekt!“.
+  - The „Ja“ check stays silent under „das passt“; the booking shimmer waits for the pause after „perfekt!“.
   - Pill pop, kept low under „Bestätigung“.
-  - Hang-up blip, which also stands for the last check.
+  - Hang-up blip, starting 0.1 s after „SMS.“; it also stands for the last check.
   - The ring motif returns as the SMS sound.
   - Once the call is over, the music comes up for the bridge.
 
@@ -143,14 +143,14 @@ Taken from the SBS website:
   - The line „— Der Voice-Agent von SBS“ rises. The finished end card reads for about a second while the camera keeps pushing.
 - **Camera:** End push.
 - **Sound:**
-  - Logo hit with the E add9 chord. The hit is low only, and 300–4000 Hz in music and effects is turned down 8 dB under the word, so „mitdenkt.“ stays clear.
+  - Logo hit with the E add9 chord. The hit is low only and sits under the word, and 300–4000 Hz in music and effects is turned down 8 dB under it, so „mitdenkt.“ stays clear.
   - The marimba ring motif answers right after the word, and the chord rings out with the picture.
 
 ## Sound mix
 
-- **Voices:** ElevenLabs lines resampled with a steep anti-image filter. Each line gets a rumble cut and a de-esser (plus a light presence lift for the agent), a gentle compressor and a look-ahead limiter (peaks at most 11 dB over the voiced level), and is matched to the same loudness. The claim sits 0.5 LU higher. Dry, no room.
-- **Music:** The sub sits an octave under the chord root (55–82 Hz), below the voices. The pad is one slowly drifting sine per note, with no detuned stack, so it doesn't beat. The reverb dies faster in the highs, and the whole bed, reverb included, ducks 12 dB under speech.
-- **Effects:** Each cue is set by loudness against the voices: about −8 LU in a pause, −14 LU or lower under a word, −3 to −6 LU with no speech around. The bus dips another 6 dB under words. Nothing in the speech band sits on a key word, and every clip starts and ends with a short fade.
+- **Voices:** ElevenLabs lines resampled with a steep anti-image filter. Each line gets a rumble cut, a light presence lift (agent only; the caller is very sibilant), a compressor, a de-esser keyed to the line's vowel level (it tames the caller's s without a lisp), and a look-ahead limiter (peaks at most 11 dB over the voiced level). Every line is matched to the same loudness. The claim sits 0.5 LU higher, and its last word, which the TTS speaks softer, is brought up about 5 dB. Dry, no room.
+- **Music:** The sub sits an octave under the chord root (55–82 Hz), below the voices. The pad is one slowly drifting sine per note, with no detuned stack, so it doesn't beat. The reverb dies faster in the highs. Pads and sub, reverb included, duck 12 dB under speech; before the claim the duck starts earlier and moves slower. The drums play at the ducked level throughout, so no kick jumps out after the call.
+- **Effects:** Each cue is set by loudness against the voices: about −8 LU in a pause, −14 LU or lower under a word, −3 to −6 LU with no speech around. The bus dips another 6 dB under words (the low-only logo hit is set at its under-the-word level instead). Nothing in the speech band sits on a key word, cues with several notes start on the picture event, and every clip starts and ends with a short fade. The bells are struck bars with a short mallet strike.
 - **Master:** −14 LUFS integrated, −1 dBTP. A 4× oversampled limiter feeds a linear loudnorm; `master.sh` stops if loudnorm falls back to dynamic mode.
 
 ## Rules check

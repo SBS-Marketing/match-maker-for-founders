@@ -1,11 +1,13 @@
 """Soundtrack, sound effects and voice mix for the SBS Voice-Agent film.
 
 Music and effects are synthesized here (no samples). The two voices are the ElevenLabs lines prepared by voice.py.
-- Voices: rumble cut and a light presence lift for the agent; the caller gets a de-esser instead of the lift. Each line
-  goes through a gentle compressor and a look-ahead peak limiter and is matched to the same loudness. Dry, no room.
+- Voices: rumble cut, and a light presence lift for the agent only (the caller is very sibilant). Each line goes through
+  a compressor, a de-esser keyed to its vowels and a look-ahead peak limiter, and is matched to the same loudness. The
+  claim's last word, which the TTS drops, comes up a little. Dry, no room.
 - Music: 100 BPM, E major, bar grid anchored on the pickup (T_ACCEPT). Calm bed: a slowly drifting pad, a real sub
-  below the voices, rim and shaker later on, the ringtone motif on marimba after the claim. Ducked 12 dB under all
-  speech (reverb included), with the gaps between lines bridged so the bed doesn't breathe.
+  below the voices, rim and shaker later on, the ringtone motif on marimba after the claim. Pads and sub duck 12 dB
+  under all speech (reverb included), with the gaps between lines bridged so the bed doesn't breathe; the drums stay at
+  that ducked level throughout.
 - SFX: ringtone, pickup chime, orb whoosh, bubble ticks, card and check sounds, booking shimmer, hang-up, SMS run, page
   flood, logo hit. Each cue is set by loudness (its loudest 100 ms, K-weighted) relative to the voices, waits for a
   speech pause where the film allows it, and the whole bus dips 6 dB under words.
@@ -202,9 +204,19 @@ def reverb(st):
     return np.stack([signal.fftconvolve(st[:, c], IR[:, c])[: len(st)] for c in range(2)], axis=1)
 
 
-def bell(freq, m, decay, parts=((1, 1), (2.01, 0.45), (3.02, 0.22), (4.17, 0.12))):
+def bell(freq, m, decay):
+    """Struck bar: free-bar partials (1, 2.756, 5.404) plus a soft octave, each a pair 1.5 cents apart (a slow shimmer
+    instead of a static sine), the upper ones dying faster, and a 3 ms mallet strike on the attack."""
     t = np.arange(m) / SR
-    return sum(a * np.sin(2 * np.pi * freq * r * t) * np.exp(-t / (decay / r ** 0.6)) for r, a in parts) * np.clip(t / 0.002, 0, 1)
+    y = np.zeros(m)
+    for r, a, k in ((1.0, 1.0, 1.0), (2.0, 0.15, 0.6), (2.756, 0.28, 0.4), (5.404, 0.08, 0.2)):
+        f = freq * r
+        if f > 15000:
+            continue
+        d = f * 2 ** (1.5 / 1200) - f
+        y += a * 0.5 * (np.sin(2 * np.pi * f * t) + np.sin(2 * np.pi * (f + d) * t + 1.1)) * np.exp(-t / (decay * k))
+    strike = bp(noise(m), 2500, 9000) * np.exp(-t / 0.003) * 0.25
+    return (y + strike) * np.clip(t / 0.0008, 0, 1)
 
 
 def bell_len(decay, extra=0.0):
@@ -270,8 +282,8 @@ def music(ev, gate):
 
     pads = np.zeros((n, 2))
     sub = np.zeros(n)
-    keys = np.zeros((n, 2))
-    drums = np.zeros((n, 2))
+    keys = np.zeros((n, 2))                                     # only after the claim: not ducked
+    drums = np.zeros((n, 2))                                    # the groove keeps one level: the ducked one
     send = np.zeros((n, 2))
 
     # chord events (a repeated chord is held, not re-attacked) with their end times
@@ -319,7 +331,7 @@ def music(ev, gate):
     for b in range(1, 13):
         if b == 9:
             continue                                            # bar 9 thins to pad and sub
-        add(drums, to_stereo(K * (0.6 if b == 1 else 1.0)), at(b))   # the pickup downbeat stays under the chime
+        add(drums, to_stereo(K), at(b))
         if b >= 4 and at(b, 2) < t_out - 1e-3:
             r = rim()
             add(drums, pan(r, -0.1), at(b, 2))
@@ -339,13 +351,13 @@ def music(ev, gate):
     for j, note in enumerate(RING):
         add(keys, pan(taper(marimba(midi_hz(note), int(1.6 * SR), 0.3)) * 0.08, -0.4 + j * 0.27), t_ring + j * 0.075)
     tt = np.arange(m) / SR
-    add(sub, taper(np.sin(2 * np.pi * midi_hz(40) * tt) * np.exp(-tt / 0.6) * 0.26), t_logo)
+    add(sub, taper(np.sin(2 * np.pi * midi_hz(40) * tt) * np.exp(-tt / 0.6) * 0.10), t_logo)   # under the claim's last word
 
-    # duck everything (reverb return too) 12 dB under speech
+    # duck pads and sub (reverb return too) 12 dB under speech. The drums always play at the ducked level, so a kick
+    # outside speech (pickup, after the call) is no louder than the rest
     duck = 1 - 0.749 * gate
-    bed = pads + keys
-    wet = reverb(hp(bed * 0.5, 250) + send) * duck[:, None]
-    out = (drums + bed) * duck[:, None] + to_stereo(sub * duck) + wet * 0.32
+    wet = reverb(hp(pads * 0.5, 250) + send) * duck[:, None] + reverb(hp(keys * 0.5, 250))
+    out = drums * 0.251 + pads * duck[:, None] + keys + to_stereo(sub * duck) + wet * 0.32
     out[: int(t0 * SR)] = 0                                     # bar 0 is the ringtone only
     k = int(1.2 * SR)
     out[-k:] *= (0.5 + 0.5 * np.cos(np.linspace(0, np.pi, k)))[:, None]   # the logo chord fades with the picture
@@ -361,7 +373,7 @@ def sfx_ring():
         add(out, pan(marimba(midi_hz(note), int(1.1 * SR), 0.22) * (0.9 if i < 3 else 1.0), -0.15 + 0.1 * i), i * 0.075)
     t = np.arange(int(0.3 * SR)) / SR
     buzz = (np.sin(2 * np.pi * 150 * t) + 0.3 * np.sin(2 * np.pi * 300 * t)) * (0.5 + 0.5 * np.sin(2 * np.pi * 30 * t)) * (1 - t / 0.3) ** 2
-    add(out, to_stereo(lp(buzz, 400) * 0.1), 0)
+    add(out, to_stereo(lp(buzz, 400) * 0.1), 3 * 0.075)       # with the last note, on the beat (the phone shakes)
     return out
 
 
@@ -504,9 +516,10 @@ LIB = {
     'whoosh': (sfx_whoosh, -9), 'thump': (sfx_thump, -9), 'tick': (sfx_tick, -20), 'panel': (sfx_panel, -10),
     'check': (sfx_check, -8), 'tock': (sfx_tock, -14), 'shimmer': (sfx_shimmer, -10), 'pop': (sfx_pop, -14),
     'hangup': (sfx_hangup, -6), 'mar': (sfx_mar, -9), 'flood': (sfx_flood, -4), 'dark': (sfx_dark, -10),
-    'logo': (sfx_logo, -4),
+    'logo': (sfx_logo, -10),
 }
-ON_START = {'shimmer'}   # cues that hit with their first note (the rest line up their loudest moment with the event)
+ON_START = {'shimmer', 'pickup', 'hangup'}   # cues that hit with their first note (the rest line up their loudest moment)
+UNGATED = {'logo'}       # low only, set at its under-the-word level: no gate, so its tail decays without a swell
 
 
 def peak_time(clip):
@@ -541,11 +554,12 @@ def word_gate(vo, n):
 
 def sfx(ev, total, vref, gate):
     n = int(round(total * SR))
-    buf = np.zeros((n, 2))
+    buf, free = np.zeros((n, 2)), np.zeros((n, 2))
     for e in ev['sfx']:
         fn, rel = LIB[e['k']]
-        place(buf, fn(*e.get('a', [])), e['t'], vref + rel + 20 * np.log10(e.get('g', 1.0)), e['k'] in ON_START)
-    buf *= 10 ** (-6 * gate / 20)[:, None]                      # 6 dB down under words
+        place(free if e['k'] in UNGATED else buf, fn(*e.get('a', [])), e['t'], vref + rel + 20 * np.log10(e.get('g', 1.0)),
+              e['k'] in ON_START)
+    buf = buf * 10 ** (-6 * gate / 20)[:, None] + free          # 6 dB down under words
     return buf + reverb(buf) * 0.14
 
 
@@ -580,12 +594,30 @@ def voiced_rms_db(y):
     return 10 * np.log10(np.mean(y[e > e.max() - 30] ** 2))
 
 
-def deess(y, thr=-6.0, ratio=4.0):
-    """Split-band de-esser: 5–11 kHz comes down where it rises above the 300–3000 Hz voice band minus 6 dB."""
+def deess(y, thr=-3.0, ratio=3.0, max_gr=12.0):
+    """Split-band de-esser: 5–11 kHz comes down (3:1, at most 12 dB) where it rises above the line's typical vowel
+    level in 300–3000 Hz minus 3 dB. Keyed to the line's vowels, not the momentary band, so an s keeps its edge."""
     band = bp0(y, 5000, 11000)
-    ms = lambda v, s: np.convolve(v ** 2, np.ones(int(s * SR)) / int(s * SR), mode='same')
-    over = np.maximum(0, 10 * np.log10(ms(band, 0.005) + 1e-12) - 10 * np.log10(ms(bp0(y, 300, 3000), 0.03) + 1e-12) - thr)
-    return y - band * follow(1 - 10 ** (-over * (1 - 1 / ratio) / 20), 0.002, 0.04)
+    f20 = lambda v: 10 * np.log10(np.convolve(v ** 2, np.ones(960) / 960, mode='same') + 1e-12)
+    lo, hi, e = f20(bp0(y, 300, 3000)), f20(band), f20(y)
+    ref = np.median(lo[(e > e.max() - 30) & (lo > hi)])
+    lvl = 10 * np.log10(np.convolve(band ** 2, np.ones(240) / 240, mode='same') + 1e-12)
+    gr = np.clip((lvl - ref - thr) * (1 - 1 / ratio), 0, max_gr)
+    return y - band * follow(1 - 10 ** (-gr / 20), 0.002, 0.04)
+
+
+def lift_last_word(y, s, below=1.0, most=6.0):
+    """TTS tends to drop the last word of a claim. Bring its voiced level up to `below` dB under the rest of the line
+    (at most +6 dB), with a 30 ms ramp just before it starts."""
+    k = max(0, int((s - 0.03) * SR))
+    w = int(0.02 * SR)
+    p = np.convolve(kweight(y) ** 2, np.ones(w) / w, mode='same')
+    on = 10 * np.log10(p + 1e-20) > 10 * np.log10(p.max()) - 25        # voiced: pauses don't count
+    pw = lambda a, b: 10 * np.log10(np.mean(p[a:b][on[a:b]]) + 1e-20)
+    up = float(np.clip(pw(0, k) - pw(k, len(y)) - below, 0, most))
+    r = min(int(0.03 * SR), len(y) - k)
+    ramp = np.concatenate([np.zeros(k), 0.5 - 0.5 * np.cos(np.linspace(0, np.pi, r)), np.ones(len(y) - k - r)])
+    return y * 10 ** (up * ramp / 20)
 
 
 def compress(y, thr_db, ratio=3.0, knee=6.0, att=0.005, rel=0.08):
@@ -610,12 +642,15 @@ def voices(ev, vdir, total):
     items = [(l['id'], l['s']) for l in ev['lines']]
     if ev.get('outroVO') is not None:
         items.append(('08_outro', ev['outroVO']))
+    words = {l['id']: l['words'] for l in json.load(open(f'{vdir}/voice.json'))['lines']}
     for vid, t in items:
         x = load(f'{vdir}/{vid}.wav')
         caller = vid.endswith('_anruferin')
-        y = deess(voice_eq(x, 0.0 if caller else 1.5))          # the caller's voice is very sibilant: no lift for her
+        y = voice_eq(x, 0.0 if caller else 1.5)                 # the caller's voice is very sibilant: no lift for her
         y = y * 10 ** ((-20 - voiced_rms_db(y)) / 20)
-        y = compress(y, -24.0)                                  # about 4 dB on the vowels
+        y = deess(compress(y, -24.0))                           # after the compressor, which brings the s's up
+        if vid == '08_outro':
+            y = lift_last_word(y, words[vid][-1]['s'])
         y = limit(y, 10 ** ((voiced_rms_db(y) + 11) / 20))      # peaks at most 11 dB over the voiced level
         st = pan(y, 0 if vid == '08_outro' else (0.06 if caller else -0.06))
         st *= 10 ** ((VO_LUFS + (0.5 if vid == '08_outro' else 0) - loudness(st)) / 20)
@@ -641,7 +676,11 @@ if __name__ == '__main__':
     n = int(round(total * SR))
     vo, spans = voices(ev, vdir, total)
     vref = loudness(vo)                                         # every cue is set against the voices' loudness
-    mus = music(ev, speech_gate(spans, n)) * 0.8
+    # the claim comes after a music-only bridge: its duck starts earlier and moves slower, so it reads as a fade
+    gate = speech_gate(spans, n)
+    if ev.get('outroVO') is not None:
+        gate = np.maximum(speech_gate(spans[:-1], n), speech_gate(spans[-1:], n, pre=0.45, att=0.18))
+    mus = music(ev, gate) * 0.8
     fx = sfx(ev, total, vref, word_gate(vo, n))
     if ev.get('claimEnd'):
         mus, fx = (carve(x, ev['logo'] - 0.05, ev['claimEnd'] + 0.05) for x in (mus, fx))
