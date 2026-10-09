@@ -97,15 +97,19 @@ const LINES = (() => {
 })();
 const VO = VOICE.lines[7];
 const wE = (li, k) => LINES[li].words[k].te;
+// a moment free of speech: t itself when no word runs within [t − .02, t + .12], else just after the word in the way.
+// Checks and their sounds wait for these pauses, so no ding sits on top of a word.
+const WORDS = LINES.flatMap((l) => l.words);
+const inPause = (t) => { const w = WORDS.find((v) => v.te > t - 0.02 && v.t < t + 0.12); return w ? inPause(w.te + 0.03) : t; };
 
 // ── Anchors (every event below is an expression of the voice timing) ───────
 const T_BANNER = 0.15, RINGS = [BEAT, 2 * BEAT], T_TAKEOVER = 2.5 * BEAT;   // after ring 2's buzz, so 'KI-Agent nimmt an' reads
 const T_LAND = T_ACCEPT + 0.44;                                // accept button lands as the orb
-const P1 = Q(wE(1, 9) + 0.10), T_PANEL = P1 + 0.60, C1 = P1 + 1.20;  // 'Sicherung raus'
+const P1 = Q(wE(1, 9) + 0.10), T_PANEL = P1 + 0.60, C1 = inPause(P1 + 1.20);  // 'Sicherung raus'
 const P2 = Q(wE(2, 2) + 0.45);                                 // 'dringend' → Priorität hoch
 const P3 = Q(wE(3, 1) + 0.05), P4 = Q(wE(3, 3) + 0.05);        // 'Sabine Krüger', 'Hafenstraße 12'
 const T_BREMEN = Math.max(P4 + 0.70, wE(3, 5) + 0.02);
-const C2 = ceilB(wE(3, 5) + 0.45);
+const C2 = inPause(ceilB(wE(3, 5) + 0.45));
 const T_NAME = wE(4, 2) + 0.09;                                // 'Frau Krüger.' → header shows her name
 const P5 = Q(wE(4, 6) + 0.10);                                 // 'Morgen um 8 Uhr'
 const J = Q(wE(5, 0) - 0.10), C3 = Q(wE(5, 0) + 0.05) + 0.45;   // the caller's 'Ja' closes the booking
@@ -114,7 +118,7 @@ const P7 = Q(wE(6, 3) + 0.05);                                 // 'Bestätigung'
 const C4 = Q(wE(6, 7) + 0.05);
 const HANG = LINES[6].e + 0.10;
 const T_SMS = HANG + 0.25;                                     // the island confirms the SMS after the hang-up
-const T_O = ceilB(LINES[6].e + 1.75);                          // outro: the panel floods the frame (bar 13)
+const T_O = ceilB(LINES[6].e + 1.75);                          // outro: the panel floods the frame, on a beat
 const T_MERGE = T_O + 0.70, T_BLACK = T_O + 0.90;
 // the logo lands on the spoken last word; at least 4 beats after the flood, and late enough that the claim
 // starts after the success circle is born (T_O + .9)
@@ -929,39 +933,36 @@ window.DUR = DUR; window.FPS = FPS; window.BEAT = BEAT;
 window.seek = seek;
 // Sound cues (seconds) for tools/synth.py: {k: effect, t: time, a: args, g: gain}.
 function sfxList() {
+  // levels live in tools/synth.py (loudness relative to the voices); g is an extra gain on top
   const L = [];
   const add = (k, t, a, g) => L.push({ k, t, ...(a ? { a } : {}), ...(g ? { g } : {}) });
   add('bloop', T_BANNER + 0.06);
   RINGS.forEach((r) => add('ring', r));
   add('glass', T_TAKEOVER);
   add('pickup', T_ACCEPT);
-  add('whoosh', T_ACCEPT + 0.22, [0.4, 500, 2200, 0.4, -0.2], 0.8);
-  add('thump', T_LAND, null, 0.55);
-  add('zip', T_ACCEPT + 0.42);
-  LINES.forEach((l) => add('tick', l.s - 0.06, [2000, l.ki ? -0.3 : 0.3], 0.5));
-  [P1, P2, P3, P4, P5, P6, P7].forEach((p) => add('whoosh', p + 0.12 + FLY * 0.55, [0.5, 450, 2600, -0.5, 0.5], 0.7));
+  add('whoosh', T_ACCEPT + 0.22, [0.4, 500, 2200, 0.4, -0.2]);
+  add('thump', T_LAND);
+  // a soft tick as each new bubble opens (the pickup covers the first), alternating E6 / A6
+  LINES.slice(1).forEach((l, i) => add('tick', l.s - 0.06, [i % 2 ? 1760 : 1319, l.ki ? -0.3 : 0.3]));
   add('panel', T_PANEL);
   add('check', C1, [0]);
   add('tock', landAt(P2), [64]);
-  [P3, P4, P5, P7].forEach((p) => add('tick', landAt(p), [1700, 0.4], 0.55));
   add('check', C2, [1]);
-  add('tick', T_NAME + 0.12, [2600, -0.3], 0.45);
-  add('pip', J);
-  add('check', C3, [2]); add('shimmer', C3 + 0.04);
+  add('check', C3, [2], 0.63);                                 // under 'das passt': quiet
+  add('shimmer', inPause(C3 + 0.04));                          // the booking sparkle waits for the end of 'perfekt!'
   add('pop', landAt(P6));
-  add('check', C4, [3]);
-  add('hangup', HANG);
+  add('hangup', HANG);                                         // also stands for the last check (C4)
   [0, 1, 2, 3].forEach((k) => add('mar', T_SMS + 0.1 + 0.06 * k, [[76, 80, 83, 88][k]]));
   add('bloop', T_SMS + 0.02, null, 0.8);
   add('flood', T_O + 0.3);
-  [0, 1, 2, 3].forEach((k) => add('mar', T_O + 0.7 + 0.05 * k, [[88, 92, 95, 100][k]], 0.65));
-  add('thump', T_MERGE + 0.05, null, 0.45);
+  [0, 1, 2, 3].forEach((k) => add('mar', T_O + 0.7 + 0.05 * k, [[88, 92, 95, 100][k]], 0.8));
+  add('thump', T_MERGE + 0.05);
   add('dark', T_BLACK + 0.45);
   add('logo', T_LOGO);
-  add('tick', T_LOGO + 0.45, [2600, 0], 0.45);
   return L;
 }
-window.EVENTS = { beat: BEAT, dur: DUR, accept: T_ACCEPT, logo: T_LOGO, outro: T_O, hang: HANG, outroVO: V0, chord9: 21.6,
+window.EVENTS = { beat: BEAT, dur: DUR, accept: T_ACCEPT, logo: T_LOGO, outro: T_O, hang: HANG, outroVO: V0,
+  claimEnd: V0 + VO.words[VO.words.length - 1].e,
   lines: LINES.map((l) => ({ id: l.id, s: l.s, e: l.e })), sfx: sfxList() };
 Promise.all(['500 24px Manrope', '600 18px Manrope', '700 16px Manrope', '600 60px Sora', '500 60px Sora', 'italic 500 60px Sora', '600 104px Sora'].map((f) => document.fonts.load(f, 'ÄäÖöÜüß09'))).then(() => document.fonts.ready).then(() => {
   build();

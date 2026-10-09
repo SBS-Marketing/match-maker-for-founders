@@ -42,6 +42,6 @@ Wichtig ist nur, dass sich die beiden Stimmen deutlich unterscheiden.
 | `05_ki.wav` | KI-Agent | Danke, Frau Krüger. Morgen um 8 Uhr ist ein Techniker frei. Passt das? | lösungsorientiert |
 | `06_anruferin.wav` | Anruferin | Ja, das passt perfekt! | erleichtert |
 | `07_ki.wav` | KI-Agent | Ist gebucht! Die Bestätigung kommt gleich per SMS. | herzlich, abschließend |
-| `08_outro.wav` *(optional)* | KI-Agent | Ihr Telefon ist ab heute nie mehr besetzt. | ruhig, mit einem Lächeln, wie ein Claim |
+| `08_outro.wav` *(optional)* | KI-Agent | Software, die mitdenkt. | ruhig, mit einem Lächeln, wie ein Claim |
 
 **Wenn eine Zahl falsch gesprochen wird:** „12“ als „zwölf“ und „8 Uhr“ als „acht Uhr“ ausschreiben. Im Transkript bleiben die Ziffern stehen.

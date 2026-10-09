@@ -1,6 +1,6 @@
 # SBS Voice-Agent film
 
-A 35.4-second German product film for the SBS Voice-Agent: 1920×1080, 60 fps, 100 BPM.
+A 34.2-second German product film for the SBS Voice-Agent: 1920×1080, 60 fps, 100 BPM.
 
 The look comes from the unreleased SBS website. The voices are ElevenLabs (`eleven_v4`): „Chris“ for the KI-Agent and „Kerstin“ for the Anruferin. `audio/voice/generation.json` records the generation, and `audio/voice/SPRECHERTEXTE.md` lists the lines. See `BEATMAP.md` for the beat-by-beat plan.
 
@@ -11,7 +11,7 @@ The look comes from the unreleased SBS website. The voices are ElevenLabs (`elev
 | `assets/` | The SBS logo PNGs and `sbs-logo-paths.js`, the helmet and wordmark traced to SVG paths in the logo's 1760×520 space. |
 | `fonts/` | Sora and Manrope, local so renders need no network. |
 | `audio/voice/` | The TTS lines as delivered (`01_ki.wav` … `08_outro.wav`). `clean/voice.json` holds the processed timing. |
-| `audio/` | `events.json` (the film's sound cues) and the mastered `film-audio.wav`. |
+| `audio/` | `events.json` (the film's sound cues) and the mastered `film-audio.wav`. `synth.py` also writes the `music`, `sfx`, `voice` and `mix` stems here (not committed). |
 | `tools/` | Voice prep, timing, sound, mastering and stills scripts. Rendering reuses `../launch-film/tools`. |
 | `sbs-voice-agent.mp4` | The rendered film. |
 
@@ -19,14 +19,14 @@ The look comes from the unreleased SBS website. The voices are ElevenLabs (`elev
 
 ```bash
 cd sbs-voice-film
-python tools/voice.py audio/voice audio/voice/clean 1.0        # trim, cap pauses at 0.36 s, original tempo, word onsets
+python tools/voice.py audio/voice audio/voice/clean 1.0        # resample, trim, cap pauses at 0.36 s, word onsets
 python tools/timing.py audio/voice/clean timing.js             # word onsets + loudness envelopes for the film
 node ../launch-film/tools/events.mjs $(pwd) audio/events.json  # sound cues from the film
 python tools/synth.py audio/events.json audio/voice/clean audio
-(cd audio && ../tools/master.sh mix.wav film-audio.wav)        # -14 LUFS, -1 dBTP
+(cd audio && ../tools/master.sh mix.wav film-audio.wav)        # -14 LUFS, -1 dBTP, linear
 node ../launch-film/tools/render.mjs $(pwd) /tmp/sbs 3 8 0.5   # 3 workers, 8 subframes, 180° shutter
 ../launch-film/tools/assemble.sh /tmp/sbs/chunks.txt audio/film-audio.wav sbs-voice-agent.mp4
-node tools/stills.mjs $(pwd) /tmp/stills 3.6 11.5 27.6 36.5    # frames at given seconds
+node tools/stills.mjs $(pwd) /tmp/stills 3.6 11.5 27.6 33.6    # frames at given seconds
 ```
 
 The Python scripts need numpy and scipy. A tempo other than 1.0 in `voice.py` needs ffmpeg with rubberband.
@@ -35,6 +35,9 @@ The Python scripts need numpy and scipy. A tempo other than 1.0 in `voice.py` ne
 
 Drop new files into `audio/voice/` with the same names, then rerun the steps above. The film re-times itself to the new durations:
 - the transcript, chips, checks and camera keys
-- the outro, which still lands on the spoken „besetzt.“
+- the outro, which still lands on the claim's last spoken word (now „mitdenkt.“)
+- the sound cues, which wait for speech pauses where they can
 
-All music and sound effects are synthesized in `tools/synth.py` (no samples), so they are free to use. The ringtone is a custom marimba motif, not a system tone. The phone is generic: no logos, its own status glyphs, and no on-screen phone number.
+The end-card claim is the text of `08_outro` in `tools/voice.py`; change it there when the outro file changes.
+
+All music and sound effects are synthesized in `tools/synth.py` (no samples), so they are free to use. `BEATMAP.md` describes the mix: voice chain, ducking and cue levels. The ringtone is a custom marimba motif, not a system tone. The phone is generic: no logos, its own status glyphs, and no on-screen phone number.

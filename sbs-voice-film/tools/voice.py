@@ -3,7 +3,8 @@
 python voice.py <voice dir> <out dir> [tempo=1.0]
 
 For each line in LINES:
-  1. trim leading/trailing silence, shorten inner pauses to at most MAX_PAUSE,
+  1. resample to 48 kHz with a steep anti-image filter, trim leading/trailing silence (with short fades),
+     shorten inner pauses to at most MAX_PAUSE,
   2. optionally time-stretch (rubberband, pitch kept) by `tempo`,
   3. estimate word onsets: the line is split into phrases at pauses >= PHRASE_GAP, words are assigned to
      phrases by a small DP (syllable weight vs. phrase length, preferring punctuation at phrase ends),
@@ -12,6 +13,7 @@ Writes <out>/NN.wav (48 kHz mono) and <out>/voice.json; the film reads the timin
 """
 import json
 import warnings
+from math import gcd
 import re
 import subprocess
 import sys
@@ -20,7 +22,7 @@ from pathlib import Path
 
 import numpy as np
 from scipy.io import wavfile
-from scipy.signal import butter, sosfiltfilt, resample_poly
+from scipy.signal import firwin, resample_poly
 
 LINES = [
     ('01_ki', 'ki', 'Elektro Wagner, guten Tag! Wie kann ich Ihnen helfen?', None),
@@ -38,6 +40,14 @@ MAX_PAUSE = 0.36
 PHRASE_GAP = 0.11
 PHRASE_GAP_LINE = {'08_outro': 0.08}   # the short claim has a brief stop before its last word
 EDGE_PAD = 0.02
+
+
+def resample(x, sr0):
+    """Polyphase resampling with a steep Kaiser filter: the default one lets the 24 kHz sibilants mirror into 12-16 kHz."""
+    g = gcd(SR, sr0)
+    up, down = SR // g, sr0 // g
+    h = firwin(160 * max(up, down) + 1, 0.479 * min(sr0, SR), window=('kaiser', 12.0), fs=sr0 * up)
+    return resample_poly(x, up, down, window=h)
 
 
 def syllables(word):
@@ -197,7 +207,7 @@ def main():
         x = x.astype(np.float64) / 32768
         if x.ndim > 1:
             x = x.mean(axis=1)
-        x = resample_poly(x, SR, sr0) if sr0 != SR else x
+        x = resample(x, sr0) if sr0 != SR else x
         raw = len(x) / SR
         x = splice(*trim(x), SR, int(SR * 0.008))
         x = stretch(x, SR, tempo if name != '08_outro' else min(tempo, 1.04))
@@ -218,7 +228,10 @@ def trim(x):
     on = np.flatnonzero(m)
     a = max(0, int((on[0] * HOP - EDGE_PAD) * SR))
     b = min(len(x), int(((on[-1] + 1) * HOP + EDGE_PAD) * SR))
-    y = x[a:b]
+    y = x[a:b].copy()
+    fi, fo = int(0.003 * SR), int(0.015 * SR)                  # raised-cosine edges: no step at the cut
+    y[:fi] *= 0.5 - 0.5 * np.cos(np.linspace(0, np.pi, fi))
+    y[-fo:] *= 0.5 + 0.5 * np.cos(np.linspace(0, np.pi, fo))
     return y, voiced_mask(y, SR)
 
 
