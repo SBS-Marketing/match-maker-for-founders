@@ -262,7 +262,7 @@ def speech_gate(spans, n, pre=0.15, post=0.05, bridge=0.6, att=0.06, rel=0.5):
 
 def music(ev, gate):
     total, beat = ev['dur'], ev['beat']
-    n = int(total * SR)
+    n = int(round(total * SR))
     t0, t_logo, t_out = ev['accept'], ev['logo'], ev['outro']
     t_ring = ev.get('claimEnd', t_logo + 0.45) + 0.05             # the marimba motif answers the claim's last word
     bar = 4 * beat
@@ -540,7 +540,7 @@ def word_gate(vo, n):
 
 
 def sfx(ev, total, vref, gate):
-    n = int(total * SR)
+    n = int(round(total * SR))
     buf = np.zeros((n, 2))
     for e in ev['sfx']:
         fn, rel = LIB[e['k']]
@@ -604,7 +604,7 @@ def limit(y, ceil, look=0.002, rel=0.05):
 
 
 def voices(ev, vdir, total):
-    n = int(total * SR)
+    n = int(round(total * SR))
     out = np.zeros((n, 2))
     spans = []
     items = [(l['id'], l['s']) for l in ev['lines']]
@@ -638,7 +638,7 @@ if __name__ == '__main__':
     ev = json.load(open(sys.argv[1]))
     vdir, out = sys.argv[2], sys.argv[3]
     total = ev['dur']
-    n = int(total * SR)
+    n = int(round(total * SR))
     vo, spans = voices(ev, vdir, total)
     vref = loudness(vo)                                         # every cue is set against the voices' loudness
     mus = music(ev, speech_gate(spans, n)) * 0.8
