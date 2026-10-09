@@ -158,122 +158,116 @@ def marimba(freq, m=None, decay=0.32):
 
 
 # ── music ────────────────────────────────────────────────────────────────────
-E3, E4 = 52, 64
-CHORDS = [  # (bass midi, chord tones) per bar, E major: I – vi7 – IVmaj7 – V6sus
-    (40, [56, 59, 63, 66]),   # E: G#3 B3 D#4 F#4 (Emaj9-ish)
-    (37, [56, 59, 61, 64]),   # C#m7
-    (45, [57, 61, 64, 68]),   # Amaj7
-    (47, [54, 59, 61, 66]),   # B6sus
-]
-RING = [76, 80, 83, 88]       # E5 G#5 B5 E6 — the ringtone motif, also the arp hook
+RING = [76, 80, 83, 88]       # E5 G#5 B5 E6 — the ringtone motif (also the check run and converge ticks)
+V = {  # (bass midi, pad voicing)
+    'Eadd9': (40, [56, 59, 64, 66]), 'C#m7': (37, [56, 59, 61, 64]), 'Amaj7': (33, [57, 61, 64, 68]),
+    'Bsus4': (35, [54, 59, 64, 66]), 'B': (35, [54, 59, 63, 66]), 'E': (40, [56, 59, 64, 68]),
+}
+# bar (1-based, bar 1 = the pickup) → [(beat offset, chord)], E major, 100 BPM
+PLAN = {
+    1: [(0, 'Eadd9')], 2: [(0, 'Eadd9')], 3: [(0, 'C#m7')], 4: [(0, 'C#m7')], 5: [(0, 'Amaj7')], 6: [(0, 'Amaj7')],
+    7: [(0, 'Bsus4')], 8: [(0, 'Bsus4'), (2, 'B')], 9: [(0, 'C#m7')], 10: [(0, 'Amaj7')], 11: [(0, 'E')],
+    12: [(0, 'E'), (3, 'Bsus4')], 13: [(0, 'Amaj7'), (2, 'Bsus4')],   # bar 12 beat 4 = the flood
+}
 
 
 def music(ev, voice_env):
     total, beat = ev['dur'], ev['beat']
     n = int(total * SR)
-    t0 = ev['accept']                       # bar 1, beat 1
-    t_end_chord = ev['logo']
+    t0, t_logo, t_out = ev['accept'], ev['logo'], ev['outro']
     bar = 4 * beat
-    nbar = int(np.ceil((t_end_chord - t0) / bar))
+    at = lambda b, k=0: t0 + (b - 1) * bar + k * beat          # bar b, beat offset k
 
     pads = np.zeros((n, 2))
     sub = np.zeros(n)
-    arp = np.zeros((n, 2))
+    keys = np.zeros((n, 2))
     drums = np.zeros((n, 2))
     send = np.zeros((n, 2))
 
-    def at(b):
-        return t0 + b * beat
-
-    # bars of the bed (stop at the logo hit, which carries the final chord)
-    for k in range(nbar):
-        bs = at(4 * k)
-        if bs >= t_end_chord - 0.05:
-            break
-        be = min(at(4 * k + 4), t_end_chord)
-        bass, tones = CHORDS[k % 4]
-        dur = be - bs
-        m = int((dur + 1.2) * SR)
+    # chord events with their end times
+    evs = []
+    for b in sorted(PLAN):
+        for k, ch in PLAN[b]:
+            evs.append((at(b, k), ch))
+    evs.append((t_logo, None))
+    for (ts, ch), (te, _) in zip(evs[:-1], evs[1:]):
+        bass, tones = V[ch]
+        dur = te - ts
+        thin = abs(ts - at(9)) < 1e-6
+        m = int((dur + 1.4) * SR)
         for j, note in enumerate(tones):
             v = sum(saw(midi_hz(note) * 2 ** (c / 1200), m, rng.random()) for c in (-7, 0, 6)) / 3
-            v = lp(v, 1300 + 500 * min(k / 6, 1)) * env_adsr(m, 0.35, 0.6, 0.85, 0.9, dur)
-            add(pads, pan(v * 0.07, (j - 1.5) * 0.4), bs)
+            v = lp(v, 2500 if not thin else 1600) * env_adsr(m, 0.4, 0.8, 0.8, 1.0, dur)
+            add(pads, pan(v * 0.06, (j - 1.5) * 0.4), ts)
         m2 = int((dur + 0.4) * SR)
         tt = np.arange(m2) / SR
-        sv = np.sin(2 * np.pi * midi_hz(bass) * tt) * env_adsr(m2, 0.02, 0.5, 0.7, 0.25, dur - 0.05)
-        add(sub, sv * 0.22, bs)
-        # marimba arp: 8ths, ringtone-shaped contour over the chord
-        for s in range(8):
-            ts = bs + s * beat / 2
-            if ts >= be - 1e-3:
-                break
-            pool = sorted(tones + [x + 12 for x in tones])
-            idx = [0, 2, 4, 6, 5, 3, 4, 2][s]
-            note = pool[min(idx, len(pool) - 1)] + 12
-            g = 0.085 if s % 2 == 0 else 0.06
-            add(arp, pan(marimba(midi_hz(note), int(0.7 * SR), 0.25) * g, 0.5 * np.sin(s * 1.3 + k)), ts)
+        sv = np.sin(2 * np.pi * midi_hz(bass + 12) * tt) * env_adsr(m2, 0.02, 0.6, 0.75, 0.25, dur - 0.05)
+        add(sub, sv * 0.2, ts)
 
-    # drums: soft kick on 1 and 3 from bar 1; brushed hats from bar 3; rim on 2 and 4 from bar 7
     def kick():
         m = int(0.45 * SR)
         t = np.arange(m) / SR
         f = 48 + 90 * np.exp(-t / 0.03)
-        return np.tanh(1.2 * np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / 0.16)) * 0.42
-
-    def hat(decay=0.05):
-        m = int(0.25 * SR)
-        t = np.arange(m) / SR
-        return bp(noise(m), 6000, 14000) * np.exp(-t / decay) * 0.22
+        return np.tanh(1.2 * np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / 0.16)) * 0.4
 
     def rim():
         m = int(0.12 * SR)
         t = np.arange(m) / SR
-        return (bp(noise(m), 1500, 4000) * np.exp(-t / 0.012) + np.sin(2 * np.pi * 820 * t) * np.exp(-t / 0.02) * 0.4) * 0.22
+        return (bp(noise(m), 1500, 4000) * np.exp(-t / 0.012) + np.sin(2 * np.pi * 820 * t) * np.exp(-t / 0.02) * 0.4) * 0.2
+
+    def shaker():
+        m = int(0.12 * SR)
+        t = np.arange(m) / SR
+        return bp(noise(m), 5000, 12000) * np.sin(np.pi * np.clip(t / 0.07, 0, 1)) ** 2 * 0.12
 
     K = kick()
     kicks = []
-    nbeats = int((t_end_chord - t0) / beat)
-    for b in range(nbeats):
-        tb = at(b)
-        if tb >= t_end_chord - 0.05:
-            break
-        if b % 2 == 0:
-            add(drums, to_stereo(K), tb)
-            kicks.append(tb)
-        if b >= 8:
-            add(drums, pan(hat(0.035) * 0.6, 0.3), tb + beat / 2)
-        if b >= 24 and b % 4 in (1, 3):
+    for b in range(1, 13):
+        if b == 9:
+            continue                                            # bar 9 thins to pad and sub
+        add(drums, to_stereo(K), at(b))
+        kicks.append(at(b))
+        if b >= 4 and at(b, 2) < t_out - 1e-3:
             r = rim()
-            add(drums, pan(r, -0.1), tb)
-            add(send, pan(r * 0.5, 0), tb)
+            add(drums, pan(r, -0.1), at(b, 2))
+            add(send, pan(r * 0.5, 0), at(b, 2))
+        if b >= 10:
+            for k in range(8):
+                ts = at(b, k / 2)
+                if ts < t_out - 1e-3:
+                    add(drums, pan(shaker() * (0.8 if k % 2 else 1.0), 0.35), ts)
 
-    # final chord on the logo hit (Eadd9 spread), long tail
-    m = int((total - t_end_chord + 0.2) * SR)
+    # final chord on the logo (E add9 spread), marimba ring motif, sub
+    m = int((total - t_logo + 0.3) * SR)
     for j, note in enumerate([40, 52, 59, 64, 66, 68, 71]):
         v = sum(saw(midi_hz(note) * 2 ** (c / 1200), m, rng.random()) for c in (-6, 0, 7)) / 3
-        v = lp(v, 2200) * env_adsr(m, 0.01, 1.2, 0.55, 0.6, m / SR - 0.4)
-        add(pads, pan(v * 0.08, (j - 3) * 0.25), t_end_chord)
-    for j, note in enumerate([76, 80, 83, 88]):
-        add(arp, pan(marimba(midi_hz(note), int(1.6 * SR), 0.6) * 0.09, -0.4 + j * 0.27), t_end_chord + j * 0.075)
+        v = lp(v, 2400) * env_adsr(m, 0.012, 1.2, 0.6, 0.6, m / SR - 0.4)
+        add(pads, pan(v * 0.065, (j - 3) * 0.25), t_logo)
+    for j, note in enumerate(RING):
+        add(keys, pan(marimba(midi_hz(note), int(1.6 * SR), 0.6) * 0.08, -0.4 + j * 0.27), t_logo + j * 0.075)
     tt = np.arange(m) / SR
-    add(sub, np.sin(2 * np.pi * midi_hz(28) * tt) * np.exp(-tt / 1.4) * 0.3, t_end_chord)
+    add(sub, np.sin(2 * np.pi * midi_hz(40) * tt) * np.exp(-tt / 1.4) * 0.26, t_logo)
 
-    # duck the bed under speech (voice envelope), plus a light kick pump
-    duck = 1 - 0.55 * voice_env
+    # duck the bed under speech (−8 dB), plus a light kick pump
+    duck = 1 - 0.6 * voice_env
     for tk in kicks:
         i = int(tk * SR)
         mm = min(int(0.35 * SR), n - i)
-        if mm <= 0:
-            continue
-        tt = np.arange(mm) / SR
-        duck[i:i + mm] *= 1 - 0.25 * np.exp(-tt / 0.1) * np.clip(tt / 0.004, 0, 1)
+        if mm > 0:
+            tt = np.arange(mm) / SR
+            duck[i:i + mm] *= 1 - 0.2 * np.exp(-tt / 0.1) * np.clip(tt / 0.004, 0, 1)
 
-    bed = pads + arp
+    bed = pads + keys
     wet = reverb(bed * 0.5 + send)
-    out = drums * duck[:, None] + to_stereo(sub * duck) + bed * duck[:, None] + wet * 0.3
-    # nothing before the pickup except the final reverb tail
+    out = drums * duck[:, None] + to_stereo(sub * duck) + bed * duck[:, None] + wet * 0.32
+    # carve 1–4 kHz by −4 dB for 0.6 s at the logo hit, so the spoken 'besetzt.' stays clear
+    w = np.zeros(n)
+    i0 = int((t_logo - 0.05) * SR)
+    w[i0:i0 + int(0.6 * SR)] = 1
+    w = np.convolve(w, np.ones(int(0.05 * SR)) / int(0.05 * SR), mode='same')
+    out -= bp(out, 1000, 4000) * (1 - 10 ** (-4 / 20)) * w[:, None]
     gate = np.ones(n)
-    gate[: int(t0 * SR)] = 0
+    gate[: int(t0 * SR)] = 0                                    # bar 0 is the ringtone only
     return out * gate[:, None]
 
 
@@ -386,7 +380,58 @@ def sfx_sparkle():
     return out
 
 
+def sfx_bloop():
+    m = int(0.16 * SR)
+    t = np.arange(m) / SR
+    f = 520 * (780 / 520) ** np.clip(t / 0.12, 0, 1)
+    v = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.sin(np.pi * np.clip(t / 0.14, 0, 1)) ** 1.5
+    return pan(v, 0)
+
+
+def sfx_glass():
+    m = int(0.8 * SR)
+    a = bell(midi_hz(83), m, 0.3)
+    b = np.zeros(m)
+    off = int(0.07 * SR)
+    b[off:] = bell(midi_hz(88), m - off, 0.4)
+    return pan(a * 0.4 + b * 0.45, 0.1)
+
+
+def sfx_panel():
+    m = int(0.7 * SR)
+    t = np.arange(m) / SR
+    thump = np.sin(2 * np.pi * np.cumsum(60 + 50 * np.exp(-t / 0.04)) / SR) * np.exp(-t / 0.14)
+    sw = sweep(noise(m), 'bp', 500, 3000, q=1.3) * np.sin(np.pi * np.clip(t / 0.35, 0, 1)) ** 2 * 0.35
+    return pan(thump * 0.8, 0.2) + pan(sw, np.linspace(0.0, 0.5, m))
+
+
+def sfx_pip():
+    m = int(0.25 * SR)
+    return pan(marimba(midi_hz(88), m, 0.06), -0.2)
+
+
+def sfx_pop():
+    m = int(0.35 * SR)
+    t = np.arange(m) / SR
+    f = 380 + 600 * (1 - np.exp(-t / 0.03))
+    v = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / 0.06) * np.clip(t / 0.003, 0, 1)
+    return pan(v + bell(midi_hz(95), m, 0.15) * 0.25, 0.5)
+
+
+def sfx_mar(note=76):
+    return pan(marimba(midi_hz(note), int(0.7 * SR), 0.22), 0.3 * np.sin(note))
+
+
+def sfx_dark():
+    m = int(1.0 * SR)
+    t = np.arange(m) / SR
+    shape = np.sin(np.pi * np.clip(t / 0.9, 0, 1)) ** 2
+    return pan(sweep(noise(m), 'bp', 700, 160, q=1.0) * shape + np.sin(2 * np.pi * 48 * t) * shape * 0.4, 0)
+
+
 LIB = {
+    'bloop': (sfx_bloop, 0.16), 'glass': (sfx_glass, 0.22), 'panel': (sfx_panel, 0.4), 'pip': (sfx_pip, 0.2),
+    'pop': (sfx_pop, 0.3), 'mar': (sfx_mar, 0.18), 'dark': (sfx_dark, 0.3),
     'ring': (sfx_ring, 0.5), 'pickup': (sfx_pickup, 0.5), 'whoosh': (sfx_whoosh, 0.3), 'thump': (sfx_thump, 0.4),
     'tick': (sfx_tick, 0.16), 'zip': (sfx_zip, 0.16), 'tock': (sfx_tock, 0.32), 'check': (sfx_check, 0.3),
     'shimmer': (sfx_shimmer, 0.36), 'hangup': (sfx_hangup, 0.34), 'flood': (sfx_flood, 0.42), 'logo': (sfx_logo, 0.72),
@@ -472,8 +517,9 @@ if __name__ == '__main__':
     tail = int(0.15 * SR)
     for x in (mus, fx, vo):
         x[-tail:] *= np.linspace(1, 0, tail)[:, None]
-    mix = mus * 0.9 + fx + vo
+    mus, fx = mus * 0.8, fx * 0.5                                # voices on top: bed and effects well below speech
+    mix = mus + fx + vo
     peak = max(np.abs(mix).max(), 1e-9)
-    for name, x in (('music', mus * 0.9), ('sfx', fx), ('voice', vo), ('mix', mix)):
+    for name, x in (('music', mus), ('sfx', fx), ('voice', vo), ('mix', mix)):
         write(f'{out}/{name}.wav', x / peak * 0.6)
     print('peak', round(float(peak), 3), 'seconds', round(total, 3))
