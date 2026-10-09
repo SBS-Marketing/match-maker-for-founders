@@ -1,0 +1,68 @@
+{
+  "model": "eleven_v4",
+  "created_at": "2026-10-09T09:26:25.548Z",
+  "samples": [
+    {
+      "file": "01_ki.wav",
+      "voice": "Chris - Supportive and Cool",
+      "voice_id": "uUnmYv9aJqaqzs1wcFRH",
+      "text": "Elektro Wagner, guten Tag! Wie kann ich Ihnen helfen?",
+      "duration_s": 3.04
+    },
+    {
+      "file": "02_anruferin.wav",
+      "voice": "Kerstin. Your Voice!",
+      "voice_id": "Y5JXXvUD3rmjDInkLVA2",
+      "text": "Hallo! Bei uns im Büro fliegt ständig die Sicherung raus.",
+      "duration_s": 4.08
+    },
+    {
+      "file": "03_ki.wav",
+      "voice": "Chris - Supportive and Cool",
+      "voice_id": "uUnmYv9aJqaqzs1wcFRH",
+      "text": "Das klingt dringend. Wie ist Ihr Name und Ihre Adresse?",
+      "spoken_text": "Das klingt dringend. Wie ist Ihr Name und Ihre Adresse?",
+      "duration_s": 3.6
+    },
+    {
+      "file": "04_anruferin.wav",
+      "voice": "Kerstin. Your Voice!",
+      "voice_id": "Y5JXXvUD3rmjDInkLVA2",
+      "text": "Sabine Krüger, Hafenstraße 12 in Bremen.",
+      "spoken_text": "Sabine Krüger, Hafenstraße zwölf in Bremen.",
+      "duration_s": 4.08
+    },
+    {
+      "file": "05_ki.wav",
+      "voice": "Chris - Supportive and Cool",
+      "voice_id": "uUnmYv9aJqaqzs1wcFRH",
+      "text": "Danke, Frau Krüger. Morgen um 8 Uhr ist ein Techniker frei. Passt das?",
+      "spoken_text": "Danke, Frau Krüger. Morgen um acht Uhr ist ein Techniker frei. Passt das?",
+      "duration_s": 4.48
+    },
+    {
+      "file": "06_anruferin.wav",
+      "voice": "Kerstin. Your Voice!",
+      "voice_id": "Y5JXXvUD3rmjDInkLVA2",
+      "text": "Ja, das passt perfekt!",
+      "spoken_text": "Ja, das passt perfekt!",
+      "duration_s": 2.16
+    },
+    {
+      "file": "07_ki.wav",
+      "voice": "Chris - Supportive and Cool",
+      "voice_id": "uUnmYv9aJqaqzs1wcFRH",
+      "text": "Ist gebucht! Die Bestätigung kommt gleich per SMS.",
+      "spoken_text": "Ist gebucht! Die Bestätigung kommt gleich per SMS.",
+      "duration_s": 3.36
+    },
+    {
+      "file": "08_outro.wav",
+      "voice": "Chris - Supportive and Cool",
+      "voice_id": "uUnmYv9aJqaqzs1wcFRH",
+      "text": "Ihr Telefon ist ab heute nie mehr besetzt.",
+      "spoken_text": "Ihr Telefon ist ab heute nie mehr besetzt.",
+      "duration_s": 2.64
+    }
+  ]
+}

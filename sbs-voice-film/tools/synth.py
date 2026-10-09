@@ -167,7 +167,7 @@ V = {  # (bass midi, pad voicing)
 PLAN = {
     1: [(0, 'Eadd9')], 2: [(0, 'Eadd9')], 3: [(0, 'C#m7')], 4: [(0, 'C#m7')], 5: [(0, 'Amaj7')], 6: [(0, 'Amaj7')],
     7: [(0, 'Bsus4')], 8: [(0, 'Bsus4'), (2, 'B')], 9: [(0, 'C#m7')], 10: [(0, 'Amaj7')], 11: [(0, 'E')],
-    12: [(0, 'E')], 13: [(0, 'Amaj7'), (2, 'Bsus4')], 14: [(0, 'B')],   # bar 13 downbeat = the flood; E add9 on the logo
+    12: [(0, 'E')],                       # from the flood on, the chords follow ev['outro'] / ev['logo'] (see music())
 }
 
 
@@ -185,10 +185,11 @@ def music(ev, voice_env):
     send = np.zeros((n, 2))
 
     # chord events with their end times
-    evs = []
-    for b in sorted(PLAN):
-        for k, ch in PLAN[b]:
-            evs.append((at(b, k), ch))
+    evs = [(at(b, k), ch) for b in sorted(PLAN) for k, ch in PLAN[b] if at(b, k) < t_out - 1e-3]
+    evs.append((t_out, 'Bsus4'))                                # the flood opens on a sus chord
+    nb = t0 + bar * np.ceil((t_out - t0) / bar + 1e-6)         # next bar after the flood
+    if nb + 2 * beat < t_logo - 1e-3:
+        evs += [(nb, 'Amaj7'), (nb + 2 * beat, 'Bsus4')]        # under the claim, resolving on the logo
     evs.append((t_logo, None))
     for (ts, ch), (te, _) in zip(evs[:-1], evs[1:]):
         bass, tones = V[ch]
@@ -196,8 +197,11 @@ def music(ev, voice_env):
         thin = abs(ts - at(9)) < 1e-6
         m = int((dur + 1.4) * SR)
         for j, note in enumerate(tones):
-            v = sum(saw(midi_hz(note) * 2 ** (c / 1200), m, rng.random()) for c in (-7, 0, 6)) / 3
-            v = lp(v, 2500 if not thin else 1600) * env_adsr(m, 0.4, 0.8, 0.8, 1.0, dur)
+            f0 = midi_hz(note)
+            tt = np.arange(m) / SR
+            body = sum(np.sin(2 * np.pi * f0 * 2 ** (c / 1200) * tt + rng.random() * 6.28) for c in (-5, 0, 5)) / 3
+            air = sum(saw(f0 * 2 ** (c / 1200), m, rng.random()) for c in (-7, 7)) / 2
+            v = (body * 0.8 + lp(air, 1400 if not thin else 1000, order=4) * 0.35) * env_adsr(m, 0.5, 0.8, 0.8, 1.0, dur)
             add(pads, pan(v * 0.06, (j - 1.5) * 0.4), ts)
         m2 = int((dur + 0.4) * SR)
         tt = np.arange(m2) / SR
@@ -240,8 +244,11 @@ def music(ev, voice_env):
     # final chord on the logo (E add9 spread), marimba ring motif, sub
     m = int((total - t_logo + 0.3) * SR)
     for j, note in enumerate([40, 52, 59, 64, 66, 68, 71]):
-        v = sum(saw(midi_hz(note) * 2 ** (c / 1200), m, rng.random()) for c in (-6, 0, 7)) / 3
-        v = lp(v, 2400) * env_adsr(m, 0.012, 1.2, 0.6, 0.6, m / SR - 0.4)
+        f0 = midi_hz(note)
+        tt = np.arange(m) / SR
+        body = sum(np.sin(2 * np.pi * f0 * 2 ** (c / 1200) * tt + rng.random() * 6.28) for c in (-5, 0, 5)) / 3
+        air = sum(saw(f0 * 2 ** (c / 1200), m, rng.random()) for c in (-7, 7)) / 2
+        v = (body * 0.8 + lp(air, 1800, order=4) * 0.35) * env_adsr(m, 0.012, 1.2, 0.6, 0.6, m / SR - 0.4)
         add(pads, pan(v * 0.065, (j - 3) * 0.25), t_logo)
     for j, note in enumerate(RING):
         add(keys, pan(marimba(midi_hz(note), int(1.6 * SR), 0.6) * 0.08, -0.4 + j * 0.27), t_logo + j * 0.075)
@@ -279,8 +286,8 @@ def sfx_ring():
     for i, note in enumerate(RING):
         add(out, pan(marimba(midi_hz(note), int(0.8 * SR), 0.22) * (0.9 if i < 3 else 1.0), -0.15 + 0.1 * i), i * 0.075)
     t = np.arange(int(0.3 * SR)) / SR
-    buzz = np.sign(np.sin(2 * np.pi * 150 * t)) * (0.5 + 0.5 * np.sin(2 * np.pi * 30 * t)) * (1 - t / 0.3)
-    add(out, to_stereo(lp(buzz, 600) * 0.12), 0)
+    buzz = (np.sin(2 * np.pi * 150 * t) + 0.3 * np.sin(2 * np.pi * 300 * t)) * (0.5 + 0.5 * np.sin(2 * np.pi * 30 * t)) * (1 - t / 0.3) ** 2
+    add(out, to_stereo(lp(buzz, 400) * 0.1), 0)
     return out
 
 
@@ -457,16 +464,21 @@ def load(path):
     return x
 
 
-def phone_eq(x):
-    y = bp(x, 280, 3800, order=2)
-    y = peaking(y, 1700, 3.0, 0.9)
-    return np.tanh(y * 1.6) / 1.4
+def voice_eq(x, presence=1.5):
+    """Clean speech EQ: rumble cut, a touch of presence, nothing that colours the voice."""
+    y = hp(x, 80)
+    y = peaking(y, 250, -1.5, 0.9)          # a little less boom
+    return peaking(y, 3500, presence, 0.8)
 
 
-def agent_eq(x):
-    y = hp(x, 90)
-    y = peaking(y, 3200, 2.0, 0.8)
-    return y
+def compress(x, thr_db=-24.0, ratio=3.0, win=0.010, smooth=0.025):
+    """Feed-forward RMS compressor (vectorised): 10 ms RMS detector, smoothed gain, no make-up."""
+    w = max(1, int(win * SR))
+    lvl = 10 * np.log10(np.convolve(x ** 2, np.ones(w) / w, mode='same') + 1e-12)
+    gr = np.minimum(0.0, (thr_db - lvl) * (1 - 1 / ratio))
+    a = np.exp(-1 / (smooth * SR))
+    gr = signal.lfilter([1 - a], [1, -a], gr)
+    return x * 10 ** (gr / 20)
 
 
 def voices(ev, vdir, total):
@@ -476,14 +488,16 @@ def voices(ev, vdir, total):
     for l in ev['lines']:
         x = load(f"{vdir}/{l['id']}.wav")
         ki = l['id'].endswith('_ki')
-        y = agent_eq(x) if ki else phone_eq(x)
-        y = y / np.sqrt(np.mean(y ** 2) + 1e-12) * 0.11          # equal loudness per line
+        y = voice_eq(x, 1.5 if ki else 1.0)
+        y = y / np.sqrt(np.mean(y ** 2) + 1e-12) * 0.1          # equal loudness per line
+        y = compress(y, 20 * np.log10(0.1) - 2, 3.0)            # tame peaks ~2 dB above the line's RMS
         add(out, pan(y, -0.06 if ki else 0.06), l['s'])
         add(env, np.ones(len(y)), l['s'])
     if ev.get('outroVO') is not None:
         x = load(f"{vdir}/08_outro.wav")
-        y = agent_eq(x)
+        y = voice_eq(x, 1.5)
         y = y / np.sqrt(np.mean(y ** 2) + 1e-12) * 0.105
+        y = compress(y, 20 * np.log10(0.105) - 2, 3.0)
         add(out, pan(y, 0), ev['outroVO'])
         add(env, np.ones(len(y)) * 0.8, ev['outroVO'])
     # smooth the speech gate for the music duck (80 ms attack, 300 ms release)
@@ -494,7 +508,7 @@ def voices(ev, vdir, total):
         v = env[i]
         s = (a if v > s else r) ** 48 * s + (1 - (a if v > s else r) ** 48) * v
         sm[i:i + 48] = s
-    return out + reverb(out) * 0.05, np.clip(sm, 0, 1)
+    return out, np.clip(sm, 0, 1)                             # dry voices: no added room
 
 
 def write(path, x):

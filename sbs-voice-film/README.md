@@ -1,8 +1,8 @@
 # SBS Voice-Agent film
 
-A 36.6-second German product film for the SBS Voice-Agent: 1920×1080, 60 fps, 100 BPM.
+A 35.4-second German product film for the SBS Voice-Agent: 1920×1080, 60 fps, 100 BPM.
 
-The look comes from the unreleased SBS website. The voices are OpenAI TTS (`gpt-4o-mini-tts`); `audio/voice/SPRECHERTEXTE.md` lists the lines and settings. See `BEATMAP.md` for the beat-by-beat plan.
+The look comes from the unreleased SBS website. The voices are ElevenLabs (`eleven_v4`): „Chris“ for the KI-Agent and „Kerstin“ for the Anruferin. `audio/voice/generation.json` records the generation, and `audio/voice/SPRECHERTEXTE.md` lists the lines. See `BEATMAP.md` for the beat-by-beat plan.
 
 | Path | What |
 |---|---|
@@ -19,7 +19,7 @@ The look comes from the unreleased SBS website. The voices are OpenAI TTS (`gpt-
 
 ```bash
 cd sbs-voice-film
-python tools/voice.py audio/voice audio/voice/clean 1.1        # trim, cap pauses at 0.26 s, ×1.1 tempo (rubberband), word onsets
+python tools/voice.py audio/voice audio/voice/clean 1.0        # trim, cap pauses at 0.36 s, original tempo, word onsets
 python tools/timing.py audio/voice/clean timing.js             # word onsets + loudness envelopes for the film
 node ../launch-film/tools/events.mjs $(pwd) audio/events.json  # sound cues from the film
 python tools/synth.py audio/events.json audio/voice/clean audio
@@ -29,7 +29,7 @@ node ../launch-film/tools/render.mjs $(pwd) /tmp/sbs 3 8 0.5   # 3 workers, 8 su
 node tools/stills.mjs $(pwd) /tmp/stills 3.6 11.5 27.6 36.5    # frames at given seconds
 ```
 
-The Python scripts need numpy and scipy. `voice.py` also needs ffmpeg with rubberband.
+The Python scripts need numpy and scipy. A tempo other than 1.0 in `voice.py` needs ffmpeg with rubberband.
 
 ## Swapping in new voice files
 

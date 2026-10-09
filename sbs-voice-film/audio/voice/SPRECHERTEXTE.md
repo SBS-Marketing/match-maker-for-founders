@@ -1,5 +1,7 @@
 # Sprechertexte für den SBS-Voice-Agent-Film
 
+> Im Film verwendet: die ElevenLabs-Aufnahmen (`eleven_v4`, Stimmen „Chris“ und „Kerstin“, siehe `generation.json`). Die Hinweise unten beschreiben die ursprüngliche OpenAI-Variante.
+
 Eine Datei pro Zeile, Dateiname wie unten, Ablage in diesem Ordner (`sbs-voice-film/audio/voice/`).
 Der Film richtet sein Timing nach der echten Länge jeder Datei.
 
