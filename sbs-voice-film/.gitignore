@@ -6,3 +6,4 @@ audio/voice.wav
 audio/mix.wav
 # scratch probes written by review agents
 tools/_*.mjs
+__pycache__/
