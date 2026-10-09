@@ -138,7 +138,7 @@ const M = { x: 330, y: -72 };                                  // outro merge po
 const LOGO_K = 76 / 456;                                       // logo scale (1760×520 space → 76 tall helmet)
 
 // ── Filled at init ──────────────────────────────────────────────────────────
-let CAM_KEYS = [], LAYOUT = [], SCROLL = [], ROWS = [], CHIPS = {}, CLAIM = [], SUB_W = 0;
+let CAM_KEYS = [], LAYOUT = [], SCROLL = [], ROWS = [], CHIPS = {}, CLAIM = [], CLAIM_LINES = 2, SUB_W = 0;
 const els = {};
 
 // ── Math ────────────────────────────────────────────────────────────────────
@@ -377,29 +377,37 @@ function build() {
   h(`<div class="a" id="black" style="border-radius:50%;background:#050505;overflow:hidden"><div class="a glow" id="blackGlow" style="background:radial-gradient(circle,rgba(16,185,129,.22) 0%,rgba(16,185,129,.07) 40%,rgba(16,185,129,0) 65%)"></div></div>`, W2);
   els.succRings = [0, 1].map(() => h(`<div class="ring"></div>`, W2));
   h(`<div class="a" id="succ" style="border-radius:50%;background:var(--em);overflow:hidden"><div id="succChk" style="position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center">${CHECK(40, '#fff', 2.6)}</div></div>`, W2);
-  // claim lines, word by word (Sora 600, 60 units; 'besetzt.' italic 500 mint)
+  // claim, word by word, taken from the outro voice line (Sora 600, 60 units). The last word is the
+  // website-style emphasis (italic 500, mint) with an underline. One line if it fits, else two balanced lines.
   const F_CL = 'font-family:Sora;font-weight:600;font-size:60px;letter-spacing:-.045em';
   const F_CLI = 'font-family:Sora;font-weight:500;font-style:italic;font-size:60px;letter-spacing:-.04em';
   const cs = domWidth(' ', F_CL);
-  let wi = 0;
+  const cw = VO.text.split(' ');
+  const wW = cw.map((w, k) => domWidth(w, k === cw.length - 1 ? F_CLI : F_CL));
+  const lineW = (a, b) => wW.slice(a, b).reduce((s, v) => s + v, 0) + cs * (b - a - 1);
+  let brk = cw.length;
+  if (lineW(0, cw.length) > 700) {
+    let best = Infinity;
+    for (let k = 1; k < cw.length; k++) { const m = Math.max(lineW(0, k), lineW(k, cw.length)); if (m < best) { best = m; brk = k; } }
+  }
+  CLAIM_LINES = brk < cw.length ? 2 : 1;
   CLAIM = [];
-  [['Ihr', 'Telefon', 'ist', 'ab', 'heute'], ['nie', 'mehr', 'besetzt.']].forEach((ws, r) => {
-    const widths = ws.map((w) => domWidth(w, w === 'besetzt.' ? F_CLI : F_CL));
-    let x = M.x - (widths.reduce((a, b) => a + b, 0) + cs * (ws.length - 1)) / 2;
-    ws.forEach((w, k) => {
-      const it = w === 'besetzt.';
-      const box = h(`<div class="cwd" style="left:${(x - 6).toFixed(2)}px;top:${-12 + r * 66}px"><span class="claim" style="${it ? 'font-style:italic;font-weight:500;letter-spacing:-.04em;color:var(--mint)' : ''}">${w}</span></div>`, W2);
-      CLAIM.push({ el: box.firstChild, box, x, w: widths[k], t: V0 + VO.words[wi].s - 0.03 });
-      x += widths[k] + cs; wi++;
-    });
+  [[0, brk], [brk, cw.length]].filter(([a, b]) => b > a).forEach(([a, b], r) => {
+    let x = M.x - lineW(a, b) / 2;
+    for (let k = a; k < b; k++) {
+      const it = k === cw.length - 1;
+      const box = h(`<div class="cwd" style="left:${(x - 6).toFixed(2)}px;top:${-12 + r * 66}px"><span class="claim" style="${it ? 'font-style:italic;font-weight:500;letter-spacing:-.04em;color:var(--mint)' : ''}">${cw[k]}</span></div>`, W2);
+      CLAIM.push({ el: box.firstChild, box, x, w: wW[k], r, t: V0 + VO.words[k].s - 0.03 });
+      x += wW[k] + cs;
+    }
   });
   const lw = CLAIM[CLAIM.length - 1];
-  h(`<div class="a" id="uline" style="left:${(lw.x + 4).toFixed(2)}px;top:${-12 + 66 + 64}px;width:${(lw.w - 14).toFixed(2)}px;height:4px;border-radius:2px;background:var(--em);transform-origin:0 50%"></div>`, W2);
+  h(`<div class="a" id="uline" style="left:${(lw.x + 4).toFixed(2)}px;top:${-12 + 66 * lw.r + 64}px;width:${(lw.w - 14).toFixed(2)}px;height:4px;border-radius:2px;background:var(--em);transform-origin:0 50%"></div>`, W2);
   // final lockup: helmet + wordmark, traced from the SBS logo (same 1760×520 space)
   h(`<div class="a" id="logoHelm" style="left:0;top:0;transform-origin:0 0">${HELMET(447 * LOGO_K, '#fff')}</div>`, W2);
   h(`<div class="a" id="wmClip" style="overflow:hidden"><svg id="wm" class="a" width="${(1131 * LOGO_K).toFixed(2)}" height="${(411 * LOGO_K).toFixed(2)}" viewBox="609 70 1131 411" style="top:0"><path d="${window.SBS_WORDMARK_D}" fill="#fff" fill-rule="evenodd"/></svg></div>`, W2);
   SUB_W = domWidth('DER VOICE-AGENT VON SBS', 'font-family:Manrope;font-weight:700;font-size:17px;letter-spacing:.14em');
-  const subY = -12 + 2 * 66 + 44, subX = M.x - (34 + 14 + SUB_W) / 2;
+  const subY = -12 + CLAIM_LINES * 66 + 44, subX = M.x - (34 + 14 + SUB_W) / 2;
   h(`<div class="a" id="subRule" style="left:${subX}px;top:${subY + 11}px;height:2px;width:34px;background:var(--mint);transform-origin:0 50%"></div>`, W2);
   h(`<div class="mask lbl" style="left:${subX + 48}px;top:${subY}px;width:${SUB_W + 6}px;height:24px;font-size:17px;letter-spacing:.14em;color:var(--mint)"><span class="in" id="sub" style="line-height:24px">Der Voice-Agent von SBS</span></div>`, W2);
 
