@@ -1,0 +1,9 @@
+{
+  "name": "launch-film-tools",
+  "private": true,
+  "type": "module",
+  "description": "Render tooling for the Co-Pilot launch film (frames via Playwright, blended with ffmpeg).",
+  "dependencies": {
+    "playwright-core": "1.56.1"
+  }
+}

@@ -1,0 +1,978 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>SBS Voice-Agent</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+:root{
+  --canvas:#f6f8fc; --ink:#0b1220; --slate:#5b6475; --muted:#8a93a3; --ondark:#b8c0cf; --line3:#3d4657;
+  --em:#10b981; --em2:#059669; --em3:#047857; --mint:#6ee7b7; --mint2:#e6fbf3; --ok:#22c55e;
+  --peach:#fdd9bf; --peachink:#1c140d; --black:#050505; --red:#dc2626;
+  --sora:"Sora",system-ui,sans-serif; --man:"Manrope",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:var(--canvas);font-family:var(--man);color:var(--ink);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+#cam{position:absolute;left:0;top:0;width:0;height:0;transform-origin:0 0}
+.a{position:absolute}
+.mask{position:absolute;overflow:hidden}
+.mask>.in{display:block;white-space:pre}
+.hide{display:none!important}
+.lbl{font-family:var(--man);font-weight:700;text-transform:uppercase;letter-spacing:.12em}
+
+#grid{background-image:linear-gradient(rgba(15,23,42,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(15,23,42,.05) 1px,transparent 1px);background-size:56px 56px;background-position:-1px -1px;-webkit-mask-image:radial-gradient(ellipse 1300px 760px at 50% 50%,#000 30%,transparent 75%);mask-image:radial-gradient(ellipse 1300px 760px at 50% 50%,#000 30%,transparent 75%)}
+.glow{border-radius:50%;background:radial-gradient(circle,rgba(16,185,129,.15) 0%,rgba(16,185,129,.05) 40%,rgba(16,185,129,0) 65%)}
+#bezel{background:var(--ink);box-shadow:0 50px 100px -40px rgba(15,23,42,.4)}
+.key{background:#3d4657;border-radius:2px}
+#screen{overflow:hidden;background:radial-gradient(120% 60% at 50% 0%,#e6fbf3 0%,#ffffff 60%)}
+#content{position:absolute;left:0;top:0;width:440px;height:920px}
+#isl{background:var(--ink);overflow:hidden}
+.btn{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.ring{position:absolute;border-radius:50%;border-style:solid;border-color:rgba(16,185,129,.35)}
+.bar{position:absolute;width:7px;border-radius:3.5px}
+.grp{position:absolute;left:0;top:0;width:440px}
+.bub{position:absolute;overflow:hidden;font-family:var(--man);font-weight:500;font-size:24px}
+.bub.ki{background:var(--em);color:#fff;border-radius:6px 25px 25px 25px}
+.bub.an{background:#fff;color:var(--ink);border-radius:25px 6px 25px 25px;box-shadow:0 0 0 1px rgba(15,23,42,.08) inset}
+.wd{position:absolute;overflow:hidden;height:34px;padding:0 2px}
+.wd>span{display:block;line-height:34px;white-space:pre;transform-origin:0 100%}
+.mk{position:absolute;border-radius:6px;transform-origin:0 50%}
+#world2{z-index:6}
+#panel{background:var(--ink)}
+.row{font-family:var(--man);font-weight:500;font-size:24px;color:var(--mint2);white-space:pre}
+.seg{position:absolute;overflow:hidden;height:36px}
+.seg>span{display:block;line-height:36px;white-space:pre}
+.dseg{position:absolute;overflow:hidden;height:28px}
+.dseg>span{display:block;line-height:28px;white-space:pre;font-size:19px;font-weight:500;color:var(--ondark)}
+.slot{position:absolute;width:30px;height:30px;border-radius:50%}
+.chip{position:absolute;left:0;top:0;transform-origin:0 0}
+.chip .cbg{position:absolute;border-radius:999px;transform-origin:50% 50%}
+.chip .ctx{position:absolute;left:0;top:0;white-space:pre;font-family:var(--man);font-weight:500;font-size:24px;line-height:34px}
+.cw{position:absolute;top:0;overflow:hidden;height:34px}
+.cw>span{display:block;white-space:pre;line-height:34px}
+.claim{font-family:var(--sora);font-weight:600;font-size:60px;letter-spacing:-.045em;color:#fff;white-space:pre}
+.cwd{position:absolute;overflow:hidden;height:76px;padding:0 6px}
+.cwd>span{display:block;line-height:76px;transform-origin:0 100%}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="cam">
+    <div id="grid" class="a"></div>
+    <div id="glowA" class="a glow"></div>
+    <div id="glowB" class="a glow"></div>
+    <div id="phone" class="a">
+      <div id="bezel" class="a"></div>
+      <div id="screen" class="a"><div id="content"></div></div>
+    </div>
+    <div id="world2" class="a"></div>
+  </div>
+</div>
+<script src="timing.js"></script>
+<script src="assets/sbs-logo-paths.js"></script>
+<script>
+'use strict';
+// ════════════════════════════════════════════════════════════════════════════
+// SBS Voice-Agent film. seek(t) derives every style from t alone: no CSS
+// transitions, timers or state carried between frames. All times hang off the
+// measured voice lines in timing.js (built by tools/voice.py + tools/timing.py).
+// ════════════════════════════════════════════════════════════════════════════
+const FPS = 60, BPM = 100, BEAT = 60 / BPM;
+const Q = (t) => 0.15 * Math.ceil(t / 0.15 - 1e-6);          // next quarter beat
+const ceilB = (t) => BEAT * Math.ceil(t / BEAT - 1e-6);       // next whole beat
+
+// ── Voice lines → absolute times ────────────────────────────────────────────
+const T_ACCEPT = 4 * BEAT, L1_START = T_ACCEPT + 0.45;
+const GAPS = [0, 0.25, 0.25, 0.25, 0.25, 0.32, 0.25];          // silence before each dialogue line
+const LINES = (() => {
+  const out = [];
+  let t = L1_START;
+  VOICE.lines.slice(0, 7).forEach((l, i) => {
+    t += GAPS[i];
+    out.push({ ...l, s: t, e: t + l.dur, ki: l.who === 'ki', words: l.words.map((w) => ({ ...w, t: t + w.s, te: t + w.e })) });
+    t += l.dur;
+  });
+  return out;
+})();
+const VO = VOICE.lines[7];
+const wE = (li, k) => LINES[li].words[k].te;
+// a moment free of speech: t itself when no word runs within [t − .02, t + .12], else just after the word in the way.
+// Checks and their sounds wait for these pauses, so no ding sits on top of a word.
+const WORDS = LINES.flatMap((l) => l.words);
+const inPause = (t) => { const w = WORDS.find((v) => v.te > t - 0.02 && v.t < t + 0.12); return w ? inPause(w.te + 0.03) : t; };
+
+// ── Anchors (every event below is an expression of the voice timing) ───────
+const T_BANNER = 0.15, RINGS = [BEAT, 2 * BEAT], T_TAKEOVER = 2.5 * BEAT;   // after ring 2's buzz, so 'KI-Agent nimmt an' reads
+const T_LAND = T_ACCEPT + 0.44;                                // accept button lands as the orb
+const P1 = Q(wE(1, 9) + 0.10), T_PANEL = P1 + 0.60, C1 = inPause(P1 + 1.20);  // 'Sicherung raus'
+const P2 = Q(wE(2, 2) + 0.45);                                 // 'dringend' → Priorität hoch
+const P3 = Q(wE(3, 1) + 0.05), P4 = Q(wE(3, 3) + 0.05);        // 'Sabine Krüger', 'Hafenstraße 12'
+const T_BREMEN = Math.max(P4 + 0.70, wE(3, 5) + 0.02);
+const C2 = inPause(ceilB(wE(3, 5) + 0.45));
+const T_NAME = wE(4, 2) + 0.09;                                // 'Frau Krüger.' → header shows her name
+const P5 = Q(wE(4, 6) + 0.10);                                 // 'Morgen um 8 Uhr'
+const J = Q(wE(5, 0) - 0.10), C3 = Q(wE(5, 0) + 0.05) + 0.45;   // the caller's 'Ja' closes the booking
+const P6 = Q(wE(6, 1) + 0.05);                                 // 'gebucht!' → Termin gebucht pill
+const P7 = Q(wE(6, 3) + 0.05);                                 // 'Bestätigung' → SMS row
+const C4 = Q(wE(6, 7) + 0.05);
+const HANG = LINES[6].e + 0.10;
+const T_SMS = HANG + 0.25;                                     // the island confirms the SMS after the hang-up
+const T_O = ceilB(LINES[6].e + 1.75);                          // outro: the panel floods the frame, on a beat
+const T_MERGE = T_O + 0.70, T_BLACK = T_O + 0.90;
+// the logo lands on the spoken last word; at least 4 beats after the flood, and late enough that the claim
+// starts after the success circle is born (T_O + .9)
+const T_LOGO = T_O + BEAT * Math.max(4, Math.ceil((0.9 + VO.words[VO.words.length - 1].s) / BEAT - 1e-6));
+const V0 = T_LOGO - VO.words[VO.words.length - 1].s;          // outro VO: its last word lands on the logo hit
+const DUR = T_LOGO + 3 * BEAT;                                 // the finished end card reads for about a second
+const FLY = 0.48;                                              // chip flight time (P + .12 → P + .60)
+const landAt = (P) => P + 0.12 + FLY;
+
+// ── Geometry (world). Screen-local (sx, sy) → world (sx − 560, sy − 460). ──
+const SW = 440, SH = 920, SR = 54, BZ = 12;
+const PX = -560, PY = -460;
+const ISL0 = { w: 126, h: 36, r: 18 }, BAN = { w: 412, h: 96, r: 32 }, LIVE = { w: 196, h: 36, r: 18 }, SMS = { w: 392, h: 76, r: 38 }, ISL_TOP = 12;
+const BTN = 48;
+const ORB = { x: 220, y: 186, d: 128 };
+const BARS = { n: 32, w: 7, gap: 4, y: 296, h: 60 };
+const TR = { top: 410, bot: 904, start: 8, padX: 22, padY: 16, lh: 34, gap: 16, label: 24 };
+const BREAKS = [[4], [5, 8], [3, 7], [2], [3, 9], [], [2, 5]];    // word index that starts each new bubble line
+const PANEL = { x: -30, y: -245, w: 720, h: 490 };
+const ROW_TOP = [100, 196, 292, 388].map((y) => PANEL.y + y);    // world y of each row
+const ROW_X = 52, SLOT_X = 21, DET_DY = 40;
+const M = { x: 330, y: -72 };                                  // outro merge point
+const LOGO_K = 76 / 456;                                       // logo scale (1760×520 space → 76 tall helmet)
+
+// ── Filled at init ──────────────────────────────────────────────────────────
+let CAM_KEYS = [], LAYOUT = [], SCROLL = [], ROWS = [], CHIPS = {}, CLAIM = [], CLAIM_LINES = 2, SUB_W = 0;
+const els = {};
+
+// ── Math ────────────────────────────────────────────────────────────────────
+const clamp = (v, lo = 0, hi = 1) => (v < lo ? lo : v > hi ? hi : v);
+const lerp = (a, b, t) => a + (b - a) * t;
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const loglerp = (a, b, t) => Math.exp(lerp(Math.log(a), Math.log(b), t));
+const E = {
+  inOutCubic: (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2),
+  outCubic: (u) => 1 - Math.pow(1 - u, 3),
+  inCubic: (u) => u * u * u,
+  inOutSine: (u) => -(Math.cos(Math.PI * u) - 1) / 2,
+  draw: (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 2.2) / 2),   // ≈ cubic-bezier(.6,0,.2,1)
+  linear: (u) => u,
+};
+function spring(t, f = 1.8, z = 0.7) {
+  if (t <= 0) return 0;
+  const w = 2 * Math.PI * f;
+  if (z >= 1) return 1 - Math.exp(-w * t) * (1 + w * t);
+  const wd = w * Math.sqrt(1 - z * z);
+  return 1 - Math.exp(-z * w * t) * (Math.cos(wd * t) + ((z * w) / wd) * Math.sin(wd * t));
+}
+const press = (t, tau) => (t <= 0 ? 0 : (t / tau) * Math.exp(1 - t / tau));
+const rise = (t, t0, f = 2.4) => (1 - spring(t - t0, f, 1)) * 115;      // % translateY, from mask line
+const fall = (t, t0, d = 0.26) => -115 * E.inCubic(seg(t, t0, t0 + d)); // % translateY, out through mask
+const px = (v) => v.toFixed(2) + 'px';
+const quad = (a, c, b, u) => [(1 - u) * (1 - u) * a[0] + 2 * (1 - u) * u * c[0] + u * u * b[0], (1 - u) * (1 - u) * a[1] + 2 * (1 - u) * u * c[1] + u * u * b[1]];
+
+// ── DOM helpers ─────────────────────────────────────────────────────────────
+const $ = (id) => document.getElementById(id);
+function h(html, parent) { const t = document.createElement('template'); t.innerHTML = html.trim(); const n = t.content.firstChild; parent.appendChild(n); return n; }
+function domWidth(str, css) { const s = document.createElement('span'); s.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;left:0;top:0;' + css; s.textContent = str; $('stage').appendChild(s); const w = s.getBoundingClientRect().width; s.remove(); return w; }
+function setBox(el, l, t, w, hh) { el.style.left = px(l); el.style.top = px(t); el.style.width = px(w); el.style.height = px(hh); }
+const tf = (el, v) => { el.style.transform = v; };
+const show = (el, on) => { el.classList.toggle('hide', !on); };
+const ty = (el, pct) => tf(el, `translateY(${pct.toFixed(2)}%)`);
+// rise + the website's 2° tilt as the word comes up
+const riseTilt = (el, t, t0, f = 2.4) => { const r = rise(t, t0, f); tf(el, `translateY(${r.toFixed(2)}%) rotate(${((2 * r) / 115).toFixed(3)}deg)`); };
+const popScale = (el, t, t0, f = 2.4, z = 0.6) => tf(el, `scale(${spring(t - t0, f, z).toFixed(4)})`);
+
+const F_BUB = 'font-family:Manrope;font-weight:500;font-size:24px';
+const F_DET = 'font-family:Manrope;font-weight:500;font-size:19px';
+const HELMET = (w, fill) => `<svg width="${w.toFixed(2)}" height="${((w * 456) / 447).toFixed(2)}" viewBox="31 28 447 456" style="display:block"><path d="${window.SBS_HELMET_D}" fill="${fill}" fill-rule="evenodd"/></svg>`;
+const HANDSET = (s, rot = 0) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="#fff" style="display:block;transform:rotate(${rot}deg)"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>`;
+const PERSON = (s, c) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${c}" style="display:block"><circle cx="12" cy="8.2" r="4.2"/><path d="M3.8 21c.6-4.4 4-7.2 8.2-7.2s7.6 2.8 8.2 7.2z"/></svg>`;
+const CHECK = (s, c, w = 3) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M6 12.5l4 4 8-9"/></svg>`;
+
+// ════════════════════════════════════════════════════════════════════════════
+// Build
+// ════════════════════════════════════════════════════════════════════════════
+function build() {
+  const C = $('content'), W2 = $('world2');
+  ['grid', 'glowA', 'glowB', 'phone', 'bezel', 'screen', 'content', 'world2'].forEach((k) => (els[k] = $(k)));
+  setBox(els.grid, 60 - 1300, -760, 2600, 1520);
+  setBox(els.glowA, -340 - 365, -140 - 365, 730, 730);
+  setBox(els.glowB, 330 - 450, -450, 900, 900);
+
+  // ── phone body ──
+  setBox(els.bezel, PX - BZ, PY - BZ, SW + 2 * BZ, SH + 2 * BZ);
+  els.bezel.style.borderRadius = px(SR + BZ);
+  setBox(els.screen, PX, PY, SW, SH);
+  els.screen.style.borderRadius = px(SR);
+  [[-16, 160, 50], [-16, 230, 60], [SW + 12, 210, 100]].forEach(([x, y, hh]) => h(`<div class="a key" style="left:${PX + x}px;top:${PY + y}px;width:4px;height:${hh}px"></div>`, els.phone));
+
+  // ── status bar + lock screen ──
+  h(`<div class="a" style="left:34px;top:18px;font-weight:700;font-size:16px;line-height:20px">07:52</div>`, C);
+  h(`<svg class="a" style="left:${SW - 84}px;top:21px" width="60" height="13" viewBox="0 0 66 13">
+      <g fill="#0b1220"><rect x="0" y="8.5" width="3" height="4" rx="1"/><rect x="4.6" y="6" width="3" height="6.5" rx="1"/><rect x="9.2" y="3.5" width="3" height="9" rx="1"/><rect x="13.8" y="1" width="3" height="11.5" rx="1"/></g>
+      <path d="M24 5a8 8 0 0 1 11 0M26.2 7.7a4.8 4.8 0 0 1 6.6 0" stroke="#0b1220" stroke-width="1.7" fill="none" stroke-linecap="round"/><circle cx="29.5" cy="10.6" r="1.5" fill="#0b1220"/>
+      <rect x="41" y="1" width="21.5" height="11" rx="3.2" stroke="#0b1220" stroke-opacity=".38" fill="none"/><rect x="43" y="3" width="15" height="7" rx="1.6" fill="#0b1220"/><rect x="63.6" y="4.4" width="1.8" height="4.2" rx=".9" fill="#0b1220" fill-opacity=".38"/></svg>`, C);
+  h(`<div class="a" id="lock" style="left:0;top:0;width:${SW}px">
+      <div class="mask" style="left:0;top:112px;width:${SW}px;height:26px;text-align:center"><span class="in" id="lockDate" style="font-weight:600;font-size:18px;line-height:26px;color:var(--slate)">Mittwoch, 14. Oktober</span></div>
+      <div class="mask" style="left:0;top:136px;width:${SW}px;height:124px;text-align:center"><span class="in" id="lockClock" style="font-family:var(--sora);font-weight:600;font-size:104px;line-height:124px;letter-spacing:-.055em">07:52</span></div></div>`, C);
+  h(`<div class="a" style="left:${SW / 2 - 70}px;top:${SH - 14}px;width:140px;height:5px;border-radius:3px;background:var(--ink)"></div>`, C);
+
+  // ── call screen ──
+  h(`<div class="a" id="cBadge" style="left:24px;top:64px;width:36px;height:36px;border-radius:11px;background:var(--ink);display:flex;align-items:center;justify-content:center;transform-origin:50% 50%">${HELMET(22, '#fff')}</div>`, C);
+  h(`<div class="mask lbl" style="left:72px;top:63px;width:220px;height:18px;font-size:13px;color:var(--slate)"><span class="in" id="cAgent" style="line-height:18px">SBS Voice-Agent</span></div>`, C);
+  h(`<div class="mask" style="left:72px;top:81px;width:260px;height:26px"><span class="in" id="cCaller" style="font-family:var(--sora);font-weight:600;font-size:18px;letter-spacing:-.02em;line-height:26px">Unbekannte Nummer</span></div>`, C);
+  h(`<div class="mask" style="left:72px;top:81px;width:260px;height:26px"><span class="in" id="cCaller2" style="font-family:var(--sora);font-weight:600;font-size:18px;letter-spacing:-.02em;line-height:26px">Sabine Krüger</span></div>`, C);
+  h(`<div class="mask lbl" style="left:${SW - 174}px;top:63px;width:150px;height:18px;font-size:13px;letter-spacing:.08em;color:var(--em2);text-align:right"><span class="in" id="cLive" style="line-height:18px"><i id="liveDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--em);margin-right:7px;vertical-align:1px"></i>Live</span></div>`, C);
+  h(`<div class="mask lbl" style="left:${SW - 174}px;top:63px;width:150px;height:18px;font-size:13px;letter-spacing:.08em;color:var(--slate);text-align:right"><span class="in" id="cEnded" style="line-height:18px"><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--slate);margin-right:7px;vertical-align:1px"></i>Beendet</span></div>`, C);
+  els.pulses = [0, 1].map(() => h(`<div class="ring"></div>`, C));
+  els.bars = Array.from({ length: BARS.n }, () => h(`<div class="bar"></div>`, C));
+  h(`<div class="mask" style="left:0;top:327px;width:${SW}px;height:26px;text-align:center"><span class="in" id="status" style="font-family:var(--sora);font-weight:600;font-size:17px;line-height:26px">Agent spricht …</span></div>`, C);
+  h(`<div class="mask lbl" style="left:24px;top:372px;width:220px;height:18px;font-size:12px;color:var(--slate)"><span class="in" id="trLabel" style="line-height:18px">Live-Transkript</span></div>`, C);
+  h(`<div class="a" id="trRule" style="left:24px;top:396px;width:${SW - 48}px;height:1px;background:rgba(15,23,42,.08);transform-origin:50% 50%"></div>`, C);
+  const view = h(`<div class="a" id="trView" style="left:0;top:${TR.top}px;width:${SW}px;height:${TR.bot - TR.top}px;overflow:hidden"></div>`, C);
+
+  // transcript groups: label + bubble with per-word masks and markers
+  const space = domWidth(' ', F_BUB);
+  let gy = TR.start;
+  LAYOUT = LINES.map((l, li) => {
+    const ws = l.text.split(' ').map((w) => ({ w, wd: domWidth(w, F_BUB) }));
+    let x = 0, row = 0;
+    ws.forEach((o, k) => {
+      if (BREAKS[li].includes(k)) { x = 0; row++; }
+      if (x > 0) x += space;
+      o.x = x; o.row = row; x += o.wd;
+    });
+    const rowsN = row + 1;
+    const sizes = ws.map((_, k) => {
+      let wmax = 0;
+      for (let j = 0; j <= k; j++) wmax = Math.max(wmax, ws[j].x + ws[j].wd);
+      return { w: Math.ceil(wmax) + TR.padX * 2 + 2, h: (ws[k].row + 1) * TR.lh + TR.padY * 2 };
+    });
+    const fullH = TR.label + rowsN * TR.lh + TR.padY * 2;
+    const g = h(`<div class="grp"></div>`, view);
+    const lab = h(`<div class="mask lbl" style="${l.ki ? 'left:22px' : `left:${SW - 242}px;text-align:right`};top:0;width:220px;height:18px;font-size:14px;color:${l.ki ? 'var(--em2)' : 'var(--slate)'}"><span class="in" style="line-height:18px">${l.ki ? 'KI-Agent' : 'Anruferin'}</span></div>`, g);
+    const bub = h(`<div class="bub ${l.ki ? 'ki' : 'an'}" style="top:${TR.label}px"></div>`, g);
+    const words = ws.map((o) => {
+      const mk = h(`<div class="mk hide" style="left:${TR.padX + o.x - 4}px;top:${TR.padY + o.row * TR.lh + 2}px;height:${TR.lh - 4}px;${l.ki ? 'background:var(--em3)' : 'background:var(--mint2);box-shadow:inset 0 -1.7px 0 var(--em)'}"></div>`, bub);
+      const m = h(`<div class="wd" style="left:${TR.padX + o.x - 2}px;top:${TR.padY + o.row * TR.lh}px"><span>${o.w}</span></div>`, bub);
+      return { ...o, el: m.firstChild, mk };
+    });
+    const top = gy;
+    gy += fullH + TR.gap;
+    return { g, lab: lab.firstChild, bub, words, sizes, ki: l.ki, top, fullH, rowsN };
+  });
+  // scroll once per line, just before it starts, so its whole final bubble fits
+  const viewH = TR.bot - TR.top;
+  SCROLL = LAYOUT.map((L, li) => {
+    const need = Math.max(0, L.top + L.fullH - viewH + 12);
+    const gapTop = LAYOUT.map((g) => g.top).find((v) => v >= need);
+    return { t: LINES[li].s - 0.2, y: need === 0 ? 0 : Math.min(L.top, (gapTop ?? need) - 6) };
+  });
+  // highlighted words (the markers stay for the rest of the film)
+  [[1, [8, 9]], [2, [2]], [3, [0, 1, 2, 3, 5]], [4, [3, 4, 5, 6]], [5, [0]], [6, [0, 1, 3, 7]]].forEach(([li, ks]) =>
+    ks.forEach((k) => {
+      const ws = LAYOUT[li].words, w = ws[k], nx = ws[k + 1];
+      const prevM = ks.includes(k - 1) && ws[k - 1].row === w.row, nextM = ks.includes(k + 1) && nx.row === w.row;
+      w.marked = true;
+      w.mkL = TR.padX + w.x - (prevM ? 0 : 3);
+      w.mkW = (nextM ? nx.x - w.x : w.wd + 3) + (prevM ? 0 : 3);
+      w.mk.style.left = px(w.mkL);
+      w.mk.style.borderRadius = `${prevM ? 0 : 6}px ${nextM ? 0 : 6}px ${nextM ? 0 : 6}px ${prevM ? 0 : 6}px`;
+    }));
+
+  // ── island / banner ──
+  const isl = h(`<div class="a" id="isl"></div>`, C);
+  h(`<div class="btn" id="avatar" style="left:16px;top:22px;width:52px;height:52px;background:#3d4657">${PERSON(26, '#b8c0cf')}</div>`, isl);
+  h(`<div class="mask lbl" style="left:82px;top:24px;width:200px;height:18px;font-size:12px;color:var(--mint)"><span class="in" id="bEyebrow" style="line-height:18px">Notdienst-Leitung</span></div>`, isl);
+  h(`<div class="mask" style="left:82px;top:44px;width:200px;height:28px"><span class="in" id="bTitle" style="font-family:var(--sora);font-weight:600;font-size:18px;letter-spacing:-.02em;line-height:28px;color:#fff">Eingehender Anruf</span></div>`, isl);
+  h(`<div class="mask" style="left:82px;top:44px;width:200px;height:28px"><span class="in" id="bTitle2" style="font-family:var(--sora);font-weight:600;font-size:18px;letter-spacing:-.02em;line-height:28px;color:#fff">KI-Agent nimmt an …</span></div>`, isl);
+  h(`<div class="btn" id="decline" style="width:${BTN}px;height:${BTN}px;background:var(--red)">${HANDSET(22, 135)}</div>`, isl);
+  h(`<div class="a" id="liveBars" style="left:18px;top:10px;width:20px;height:16px"></div>`, isl);
+  els.mini = [0, 1, 2].map((i) => h(`<div class="a" style="left:${i * 7}px;top:0;width:3px;height:16px;border-radius:2px;background:var(--em);transform-origin:50% 50%"></div>`, $('liveBars')));
+  h(`<div class="mask" style="right:18px;top:0;width:60px;height:36px;text-align:right"><span class="in" id="liveTime" style="line-height:36px;font-weight:700;font-size:14px;color:var(--mint)">0:00</span></div>`, isl);
+  h(`<div class="btn" id="smsOk" style="left:14px;top:14px;width:48px;height:48px;background:var(--em)">${CHECK(26, '#fff', 3.2)}</div>`, isl);
+  h(`<div class="mask" style="left:76px;top:13px;width:300px;height:28px"><span class="in" id="smsT1" style="font-family:var(--sora);font-weight:600;font-size:20px;letter-spacing:-.02em;line-height:28px;color:#fff">SMS gesendet</span></div>`, isl);
+  h(`<div class="mask" style="left:76px;top:41px;width:300px;height:22px"><span class="in" id="smsT2" style="font-weight:600;font-size:14px;line-height:22px;color:var(--mint)">Termin morgen 08:00 · an Sabine Krüger</span></div>`, isl);
+  els.smsRing = h(`<div class="ring"></div>`, C);
+
+  // ── accept button → agent orb (world layer) ──
+  const acc = h(`<div class="btn" id="accept" style="overflow:visible"></div>`, W2);
+  h(`<div class="a" id="accDisc" style="left:0;top:0;width:100%;height:100%;border-radius:50%;background:var(--em);box-shadow:0 14px 34px -12px rgba(16,185,129,.7)"></div>`, acc);
+  h(`<div class="a" style="left:0;top:0;width:100%;height:100%;border-radius:50%;overflow:hidden"><div id="accHand" style="position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center">${HANDSET(23)}</div></div>`, acc);
+  h(`<div class="a" style="left:0;top:0;width:100%;height:100%;border-radius:50%;overflow:hidden"><div class="a" id="helmL" style="left:50%;top:50%;transform-origin:0 0">${HELMET(100, '#fff')}</div></div>`, acc);
+  h(`<div class="a" id="helmD" style="left:50%;top:50%;transform-origin:0 0;filter:drop-shadow(0 16px 21px rgba(11,18,32,.25))">${HELMET(100, '#0b1220')}</div>`, acc);
+  els.accRings = [0, 1, 2].map(() => h(`<div class="ring"></div>`, W2));
+
+  // ── navy panel "IM HINTERGRUND ERLEDIGT" ──
+  h(`<div class="a" id="panel"></div>`, W2);
+  const P = h(`<div class="a" id="pInner" style="left:0;top:0"></div>`, W2);       // panel contents (world coords), clipped to the live panel
+  h(`<div class="mask lbl" style="left:${PANEL.x + 36}px;top:${PANEL.y + 30}px;width:420px;height:22px;font-size:16px;color:var(--mint)"><span class="in" id="pHead" style="line-height:22px">Im Hintergrund erledigt</span></div>`, P);
+  h(`<div class="mask lbl" style="left:${PANEL.x + PANEL.w - 236}px;top:${PANEL.y + 30}px;width:200px;height:22px;font-size:16px;color:var(--muted);text-align:right"><span class="in" id="pCount" style="line-height:22px">0 / 4</span></div>`, P);
+  const rowSegs = [
+    ['Anliegen erkannt: ', 'Sicherung', ' löst aus'],
+    ['Kundin im CRM angelegt'],
+    ['Termin ', 'morgen 08:00', ' im Kalender', ' eingetragen'],
+    ['SMS-', 'Bestätigung', ' versendet', ' · Techniker informiert'],
+  ];
+  ROWS = rowSegs.map((segs, i) => {
+    let x = ROW_X;
+    const out = segs.map((s) => {
+      const el = h(`<div class="seg" style="left:${x - 2}px;top:${ROW_TOP[i] - 1}px;padding:0 2px"><span class="row">${s}</span></div>`, P);
+      const o = { s, x, w: domWidth(s, F_BUB), el: el.firstChild, box: el };
+      x += o.w;
+      return o;
+    });
+    const slot = h(`<div class="slot" style="left:${SLOT_X - 15}px;top:${ROW_TOP[i] + 17 - 15}px"></div>`, P);
+    const empty = h(`<div class="a" style="left:0;top:0;width:30px;height:30px;border-radius:50%;border:2px solid var(--line3)"></div>`, slot);
+    const pend = h(`<div class="a" style="left:0;top:0;width:30px;height:30px;border-radius:50%;border:2px solid var(--em);box-shadow:0 0 0 6px rgba(16,185,129,.12)"></div>`, slot);
+    const arc = h(`<svg class="a" width="30" height="30" viewBox="0 0 30 30" style="left:0;top:0;overflow:visible"><path d="M15 1a14 14 0 0 1 14 14" fill="none" stroke="#6ee7b7" stroke-width="3" stroke-linecap="round"/></svg>`, slot);
+    const ok = h(`<div class="a" style="left:0;top:0;width:30px;height:30px;border-radius:50%;background:var(--ok);display:flex;align-items:center;justify-content:center">${CHECK(19, '#050505', 3.2)}</div>`, slot);
+    const ph = ['', 'Kundendaten …', 'Termin …', 'Bestätigung …'][i];
+    const place = ph ? h(`<div class="seg" style="left:${ROW_X - 2}px;top:${ROW_TOP[i] - 1}px;padding:0 2px"><span class="row" style="color:var(--muted)">${ph}</span></div>`, P).firstChild : null;
+    return { segs: out, slot, empty, pend, arc, ok, place, end: x };
+  });
+  // row 2 detail: name · address
+  let dx = ROW_X;
+  ROWS[1].det = ['Sabine Krüger', ' · ', 'Hafenstraße 12', ', Bremen'].map((s) => {
+    const el = h(`<div class="dseg" style="left:${dx - 2}px;top:${ROW_TOP[1] + DET_DY}px;padding:0 2px"><span>${s}</span></div>`, P);
+    const o = { s, x: dx, w: domWidth(s, F_DET), el: el.firstChild, box: el };
+    dx += o.w;
+    return o;
+  });
+  ROWS[2].det = [h(`<div class="dseg" style="left:${ROW_X - 2}px;top:${ROW_TOP[2] + DET_DY}px;padding:0 2px"><span style="color:var(--muted)">wartet auf Zusage …</span></div>`, P).firstChild];
+  ROWS[0].tag = { x: ROWS[0].end + 18, y: ROW_TOP[0] + 1, w: Math.ceil(domWidth('Priorität hoch', 'font-family:Manrope;font-weight:700;font-size:16px')) + 28, h: 32 };
+
+  // ── chips: copies of spoken words that fly into the panel ──
+  const chip = (id, text, ki, endColor) => {
+    const el = h(`<div class="chip" id="${id}"><div class="cbg" style="background:${ki ? 'var(--em3)' : '#fff'};box-shadow:${ki ? '0 14px 28px -14px rgba(4,120,87,.7)' : '0 14px 28px -14px rgba(11,18,32,.45),inset 0 0 0 1px rgba(15,23,42,.08)'}"></div><div class="ctx"></div><div class="ctx" style="clip-path:inset(0 100% 0 0)"></div></div>`, W2);
+    const wA = [], wB = [];
+    let x = 0;
+    text.split('|').forEach((p) => {
+      const w = domWidth(p, F_BUB);
+      wA.push(h(`<div class="cw" style="left:${x}px;width:${w + 2}px"><span style="color:${ki ? '#fff' : 'var(--ink)'}">${p}</span></div>`, el.children[1]).firstChild);
+      wB.push(h(`<div class="cw" style="left:${x}px;width:${w + 2}px"><span style="color:${endColor}">${p}</span></div>`, el.children[2]).firstChild);
+      x += w;
+    });
+    [el.children[1], el.children[2]].forEach((c) => { c.style.width = px(x + 4); c.style.height = '34px'; });   // clip-path needs a real box
+    return { el, bg: el.children[0], tA: el.children[1], tB: el.children[2], wA, wB, w: x };
+  };
+  CHIPS = {
+    c1: chip('c1', 'Sicherung| raus', false, 'var(--mint2)'),
+    c2: chip('c2', 'dringend', true, '#fff'),
+    c3: chip('c3', 'Sabine Krüger', false, 'var(--ondark)'),
+    c4: chip('c4', 'Hafenstraße 12', false, 'var(--ondark)'),
+    c5: chip('c5', 'Morgen um 8 Uhr', true, '#fff'),
+    c6: chip('c6', 'gebucht!', true, '#fff'),
+    c7: chip('c7', 'Bestätigung', true, 'var(--mint2)'),
+  };
+  // tag (Priorität hoch) and pill (Termin gebucht) are what chips c2 / c6 turn into
+  h(`<div class="a" id="tagFlood" style="left:0;top:0;width:100%;height:100%;border-radius:999px;background:var(--peach)"></div>`, CHIPS.c2.bg);
+  h(`<div class="mask" id="tagTextM" style="height:32px"><span class="in" id="tagText" style="line-height:32px;font-weight:700;font-size:16px;color:var(--peachink)">Priorität hoch</span></div>`, CHIPS.c2.el);
+  h(`<div class="a" id="pillFlood" style="left:0;top:0;width:100%;height:100%;border-radius:999px;background:#fff"></div>`, CHIPS.c6.bg);
+  h(`<div class="a" id="pillOk" style="width:25px;height:25px;border-radius:50%;background:var(--em);display:flex;align-items:center;justify-content:center">${CHECK(16, '#fff', 3.4)}</div>`, CHIPS.c6.el);
+  h(`<div class="mask" id="pillTextM" style="height:30px"><span class="in" id="pillText" style="line-height:30px;font-weight:600;font-size:18px;color:var(--ink)">Termin gebucht</span></div>`, CHIPS.c6.el);
+  CHIPS.pillTextW = domWidth('Termin gebucht', 'font-family:Manrope;font-weight:600;font-size:18px');
+  // the caller's 'Ja' as a check that flies into row 3
+  h(`<div class="a" id="jaChk" style="width:30px;height:30px;border-radius:50%;background:var(--em);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 20px -10px rgba(5,150,105,.8)">${CHECK(19, '#fff', 3.2)}</div>`, W2);
+
+  // ── outro (world) ──
+  els.mergeChk = [0, 1, 2, 3].map(() => h(`<div class="a" style="width:30px;height:30px;border-radius:50%;background:var(--ok);display:flex;align-items:center;justify-content:center">${CHECK(19, '#050505', 3.2)}</div>`, W2));
+  h(`<div class="a" id="black" style="border-radius:50%;background:#050505;overflow:hidden"><div class="a glow" id="blackGlow" style="background:radial-gradient(circle,rgba(16,185,129,.22) 0%,rgba(16,185,129,.07) 40%,rgba(16,185,129,0) 65%)"></div></div>`, W2);
+  els.succRings = [0, 1].map(() => h(`<div class="ring"></div>`, W2));
+  h(`<div class="a" id="succ" style="border-radius:50%;background:var(--em);overflow:hidden"><div id="succChk" style="position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center">${CHECK(40, '#fff', 2.6)}</div></div>`, W2);
+  // claim, word by word, taken from the outro voice line (Sora 600, 60 units). The last word is the
+  // website-style emphasis (italic 500, mint) with an underline. One line if it fits, else two balanced lines.
+  const F_CL = 'font-family:Sora;font-weight:600;font-size:60px;letter-spacing:-.045em';
+  const F_CLI = 'font-family:Sora;font-weight:500;font-style:italic;font-size:60px;letter-spacing:-.04em';
+  const cs = domWidth(' ', F_CL);
+  const cw = VO.text.split(' ');
+  const wW = cw.map((w, k) => domWidth(w, k === cw.length - 1 ? F_CLI : F_CL));
+  const lineW = (a, b) => wW.slice(a, b).reduce((s, v) => s + v, 0) + cs * (b - a - 1);
+  let brk = cw.length;
+  if (lineW(0, cw.length) > 700) {
+    let best = Infinity;
+    for (let k = 1; k < cw.length; k++) { const m = Math.max(lineW(0, k), lineW(k, cw.length)); if (m < best) { best = m; brk = k; } }
+  }
+  CLAIM_LINES = brk < cw.length ? 2 : 1;
+  CLAIM = [];
+  [[0, brk], [brk, cw.length]].filter(([a, b]) => b > a).forEach(([a, b], r) => {
+    let x = M.x - lineW(a, b) / 2;
+    for (let k = a; k < b; k++) {
+      const it = k === cw.length - 1;
+      const box = h(`<div class="cwd" style="left:${(x - 6).toFixed(2)}px;top:${-12 + r * 66}px"><span class="claim" style="${it ? 'font-style:italic;font-weight:500;letter-spacing:-.04em;color:var(--mint)' : ''}">${cw[k]}</span></div>`, W2);
+      CLAIM.push({ el: box.firstChild, box, x, w: wW[k], r, t: V0 + VO.words[k].s - 0.03 });
+      x += wW[k] + cs;
+    }
+  });
+  const lw = CLAIM[CLAIM.length - 1];
+  h(`<div class="a" id="uline" style="left:${(lw.x + 4).toFixed(2)}px;top:${-12 + 66 * lw.r + 64}px;width:${(lw.w - 14).toFixed(2)}px;height:4px;border-radius:2px;background:var(--em);transform-origin:0 50%"></div>`, W2);
+  // final lockup: helmet + wordmark, traced from the SBS logo (same 1760×520 space)
+  h(`<div class="a" id="logoHelm" style="left:0;top:0;transform-origin:0 0">${HELMET(447 * LOGO_K, '#fff')}</div>`, W2);
+  h(`<div class="a" id="wmClip" style="overflow:hidden"><svg id="wm" class="a" width="${(1131 * LOGO_K).toFixed(2)}" height="${(411 * LOGO_K).toFixed(2)}" viewBox="609 70 1131 411" style="top:0"><path d="${window.SBS_WORDMARK_D}" fill="#fff" fill-rule="evenodd"/></svg></div>`, W2);
+  SUB_W = domWidth('DER VOICE-AGENT VON SBS', 'font-family:Manrope;font-weight:700;font-size:17px;letter-spacing:.14em');
+  const subY = -12 + CLAIM_LINES * 66 + 44, subX = M.x - (34 + 14 + SUB_W) / 2;
+  h(`<div class="a" id="subRule" style="left:${subX}px;top:${subY + 11}px;height:2px;width:34px;background:var(--mint);transform-origin:0 50%"></div>`, W2);
+  h(`<div class="mask lbl" style="left:${subX + 48}px;top:${subY}px;width:${SUB_W + 6}px;height:24px;font-size:17px;letter-spacing:.14em;color:var(--mint)"><span class="in" id="sub" style="line-height:24px">Der Voice-Agent von SBS</span></div>`, W2);
+
+  // end card centre (lockup top to sub-line bottom); never above the previous key, so y keeps moving one way
+  const endCy = Math.max(15, (M.y - (456 * LOGO_K) / 2 + (subY + 24)) / 2);
+  // camera: [time, zoom, x, y, ease into this key]
+  CAM_KEYS = [
+    [0, 2.4, -340, -350, 'linear'],
+    [T_ACCEPT, 2.4, -340, -322, 'inOutSine'],            // ring: slow pan down
+    [T_ACCEPT + 2 * BEAT, 1.12, -340, 0, 'inOutSine'],   // pickup: pull back to the whole phone
+    [P1, 1.12, -290, 4, 'inOutSine'],                    // the problem: slow drift right
+    [P1 + 1.5, 1.06, 60, 6, 'inOutCubic'],               // reveal pan with the first chip
+    [C2, 1.08, 100, 8, 'inOutSine'],                     // priority + customer: slow push
+    [LINES[5].s, 1.09, 140, 9, 'inOutSine'],             // appointment: slow push
+    [T_O, 1.1, 190, 12, 'inOutSine'],                    // yes + booked + SMS: slow push
+    [T_LOGO, 1.45, 324, endCy - 3, 'inOutCubic'],        // push into the flood
+    [DUR, 1.55, 333, endCy + 2, 'inOutSine'],            // end push, through the last frame
+  ];
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// seek(t)
+// ════════════════════════════════════════════════════════════════════════════
+function camAt(t) {
+  let i = 1;
+  while (i < CAM_KEYS.length - 1 && t > CAM_KEYS[i][0]) i++;
+  const a = CAM_KEYS[i - 1], b = CAM_KEYS[i], e = E[b[4]](seg(t, a[0], b[0]));
+  return { z: loglerp(a[1], b[1], e), x: lerp(a[2], b[2], e), y: lerp(a[3], b[3], e) };
+}
+const lineAt = (t) => LINES.findIndex((l) => t >= l.s && t < l.e);
+function envOf(l, tt) {
+  const f = tt * 100, k = Math.floor(f), env = l.env, n = env.length - 1;
+  if (k < 0 || k > n) return 0;
+  const at = (j) => env[clamp(j, 0, n)];
+  return lerp((at(k - 1) + at(k) + at(k + 1)) / 3, (at(k) + at(k + 1) + at(k + 2)) / 3, f - k);
+}
+function envAt(t) {
+  const i = lineAt(t);
+  if (i < 0) return { v: 0, ki: true, i };
+  return { v: envOf(LINES[i], t - LINES[i].s), ki: LINES[i].ki, i };
+}
+const lastSpeaker = (t) => { let k = 0; for (let i = 0; i < LINES.length; i++) if (t >= LINES[i].s - 0.06) k = i; return k; };
+
+function seek(t) {
+  const cam = camAt(t);
+  tf($('cam'), `translate(960px,540px) scale(${cam.z.toFixed(5)}) translate(${(-cam.x).toFixed(3)}px,${(-cam.y).toFixed(3)}px)`);
+  let buzz = 0;
+  RINGS.forEach((r) => { const d = t - r; if (d > 0 && d < 0.3) buzz += 2 * Math.sin(2 * Math.PI * 28 * d) * (1 - d / 0.3); });
+  tf(els.phone, `translate(${buzz.toFixed(2)}px,0)`);
+  phoneScreen(t);
+  const geo = transcript(t);
+  acceptOrb(t, buzz);
+  panel(t, geo);
+  outro(t);
+}
+
+// ── Island → banner → live island; lock screen; call header, status ──
+function phoneScreen(t) {
+  const open = spring(t - T_BANNER, 1.9, 0.72), openH = spring(t - T_BANNER - 0.03, 1.9, 0.8);
+  const shut = spring(t - (T_ACCEPT + 0.02), 2, 0.85);
+  const sms = spring(t - T_SMS, 1.9, 0.75), smsH = spring(t - T_SMS - 0.03, 1.9, 0.8);
+  const w = lerp(lerp(lerp(ISL0.w, BAN.w, open), LIVE.w, shut), SMS.w, sms);
+  const hh = lerp(lerp(lerp(ISL0.h, BAN.h, openH), LIVE.h, shut), SMS.h, smsH);
+  const r = lerp(lerp(lerp(ISL0.r, BAN.r, open), LIVE.r, shut), SMS.r, sms);
+  const isl = $('isl');
+  setBox(isl, SW / 2 - w / 2, ISL_TOP, w, hh);
+  isl.style.borderRadius = px(Math.min(r, hh / 2));
+
+  // banner content
+  const inBanner = t < T_ACCEPT + 0.4;
+  const gone = spring(t - T_ACCEPT, 4, 1);
+  const av = $('avatar'); show(av, inBanner);
+  tf(av, `scale(${(spring(t - 0.36, 2.6, 0.55) * (1 - gone)).toFixed(4)})`);
+  ty($('bEyebrow'), t < T_ACCEPT ? rise(t, 0.38) : fall(t, T_ACCEPT + 0.01, 0.14));
+  ty($('bTitle'), t < T_TAKEOVER ? rise(t, 0.42) : fall(t, T_TAKEOVER, 0.22));
+  ty($('bTitle2'), t < T_ACCEPT ? rise(t, T_TAKEOVER + 0.14) : fall(t, T_ACCEPT + 0.01, 0.14));
+  const dec = $('decline'); show(dec, inBanner);
+  setBox(dec, (t < T_ACCEPT ? w : BAN.w) - 106 - BTN / 2, 48 - BTN / 2, BTN, BTN);
+  tf(dec, `scale(${(spring(t - 0.44, 2.6, 0.55) * (1 - gone)).toFixed(4)})`);
+
+  // live island content
+  const live = t >= T_ACCEPT + 0.2 && t < T_SMS + 0.2;
+  show($('liveBars'), live);
+  ty($('liveTime'), !live ? 115 : t < T_SMS ? rise(t, T_ACCEPT + 0.22) : fall(t, T_SMS - 0.04, 0.16));
+  show($('smsOk'), t >= T_SMS);
+  popScale($('smsOk'), t, T_SMS + 0.1, 2.6, 0.6);
+  ty($('smsT1'), rise(t, T_SMS + 0.14));
+  ty($('smsT2'), rise(t, T_SMS + 0.2));
+  if (live) {
+    tf($('liveBars'), `scale(${(spring(t - (T_ACCEPT + 0.22), 2.4, 0.7) * (1 - spring(t - (T_SMS - 0.04), 4, 1))).toFixed(4)})`);
+    const secs = Math.floor(Math.max(0, Math.min(t, HANG) - T_ACCEPT));
+    $('liveTime').textContent = `0:${String(secs).padStart(2, '0')}`;
+    els.mini.forEach((m, i) => {
+      const k = t < HANG ? 0.25 + 0.75 * (0.5 - 0.5 * Math.cos(2 * Math.PI * (t - i * 0.2))) : 0.25;
+      tf(m, `scaleY(${k.toFixed(3)})`);
+    });
+  }
+
+  // lock screen: springs down under the banner, falls out at the pickup
+  tf($('lock'), `translateY(${(40 * spring(t - T_BANNER, 1.6, 0.8)).toFixed(2)}px)`);
+  ty($('lockDate'), fall(t, T_ACCEPT + 0.04, 0.24));
+  ty($('lockClock'), fall(t, T_ACCEPT + 0.08, 0.28));
+
+  // header row (the website's voice-agent card header)
+  const hdr = T_ACCEPT + 0.15;
+  const clr = T_SMS - 0.05;
+  tf($('cBadge'), `scale(${(spring(t - hdr, 2.4, 0.62) * (1 - spring(t - clr, 3, 1))).toFixed(4)})`);
+  ty($('cAgent'), t < clr ? rise(t, hdr + 0.04) : fall(t, clr, 0.2));
+  ty($('cCaller'), t < T_NAME ? rise(t, hdr + 0.08) : fall(t, T_NAME, 0.22));
+  ty($('cCaller2'), t < T_NAME + 0.12 ? 115 : t < clr + 0.04 ? rise(t, T_NAME + 0.12) : fall(t, clr + 0.04, 0.2));
+  ty($('cLive'), t < HANG ? rise(t, hdr + 0.1) : fall(t, HANG, 0.22));
+  ty($('cEnded'), 115);                                        // the status line says it; the island covers this row
+  tf($('liveDot'), `scale(${(0.775 + 0.225 * Math.cos((2 * Math.PI * t) / (2 * BEAT))).toFixed(3)})`);
+
+  // status line: the website's strings, swapped through the mask at each turn
+  const ST = { ki: 'Agent spricht …', an: 'Anruferin spricht …', end: 'Gespräch beendet · alles erledigt' };
+  const swaps = [{ t: T_ACCEPT + 0.35, s: ST.ki }];
+  for (let i = 1; i < LINES.length; i++) if (LINES[i].ki !== LINES[i - 1].ki) swaps.push({ t: LINES[i].s - 0.1, s: LINES[i].ki ? ST.ki : ST.an });
+  swaps.push({ t: HANG, s: ST.end });
+  let si = 0;
+  while (si < swaps.length - 1 && t >= swaps[si + 1].t) si++;
+  const st = $('status'), nx = swaps[si + 1];
+  st.textContent = swaps[si].s;
+  ty(st, nx && t >= nx.t - 0.18 ? fall(t, nx.t - 0.18, 0.18) : rise(t, swaps[si].t));
+  st.style.color = t >= HANG ? 'var(--em2)' : 'var(--ink)';
+
+  ty($('trLabel'), rise(t, T_ACCEPT + 0.4));
+  tf($('trRule'), `scaleX(${E.outCubic(seg(t, T_ACCEPT + 0.4, T_ACCEPT + 0.6)).toFixed(4)})`);
+
+  voiceBars(t);
+  orbPulses(t);
+}
+
+function voiceBars(t) {
+  const n = BARS.n, x0 = (SW - (n * BARS.w + (n - 1) * BARS.gap)) / 2;
+  const sp = lastSpeaker(t), ended = t >= HANG, li = lineAt(t);
+  els.bars.forEach((b, i) => {
+    const out = spring(t - (T_ACCEPT + 0.3) - 0.01 * Math.abs(i - 15.5), 2.2, 0.9);   // bars spring out of the orb centre
+    const x = lerp(ORB.x - BARS.w / 2, x0 + i * (BARS.w + BARS.gap), out);
+    const idle = 0.08 + 0.04 * Math.sin(t / 0.4 + i / 3);
+    let act = 0;
+    if (!ended && li >= 0) {
+      const l = LINES[li];
+      act = envOf(l, t - l.s - 0.012 * Math.abs(i - 15.5)) * (0.55 + 0.45 * Math.sin(((i + 0.5) * Math.PI) / n)) * (0.8 + 0.2 * Math.sin(2 * Math.PI * (3.1 * t + 0.37 * i)));
+    }
+    const hv = BARS.h * Math.max(idle, act);
+    setBox(b, x, BARS.y - hv / 2, BARS.w, hv);
+    const cur = LINES[sp], flip = t - (cur.s - 0.06) - 0.008 * Math.abs(i - 15.5);
+    const ki = flip >= 0 ? cur.ki : sp > 0 ? LINES[sp - 1].ki : true;
+    b.style.background = ended || ki ? 'var(--em)' : 'var(--ink)';
+    tf(b, `scaleY(${out.toFixed(4)})`);
+    show(b, t >= T_ACCEPT + 0.3);
+  });
+}
+
+function orbPulses(t) {
+  const per = 4 * BEAT;
+  els.pulses.forEach((p, k) => {
+    const d = t - T_LAND - (k * per) / 2;
+    const on = d >= 0 && t - (d % per) < HANG;      // rings started before the hang-up finish their cycle
+    show(p, on);
+    if (!on) return;
+    const ph = (d % per) / per, u = E.outCubic(ph);
+    const r = (ORB.d / 2) * lerp(1, 1.9, u);
+    setBox(p, ORB.x - r, ORB.y - r, r * 2, r * 2);
+    p.style.borderWidth = px(2 * (1 - ph));
+  });
+}
+
+// ── Transcript ──
+function trGeo(t) {
+  const scroll = SCROLL.reduce((v, s, i) => v + (s.y - (i ? SCROLL[i - 1].y : 0)) * spring(t - s.t, 1.3, 1), 0);
+  return LAYOUT.map((L, li) => {
+    const l = LINES[li];
+    let bw = L.sizes[0].w, bh = L.sizes[0].h;
+    for (let k = 1; k < L.sizes.length; k++) {
+      bw += (L.sizes[k].w - L.sizes[k - 1].w) * spring(t - (l.words[k].t - 0.10), 2.2, 0.9);
+      bh += (L.sizes[k].h - L.sizes[k - 1].h) * spring(t - (l.words[k].t - 0.10), 2.2, 0.9);
+    }
+    return { bw, bh, y: L.top - scroll, left: L.ki ? 20 : SW - 20 - bw, on: t >= l.s - 0.06 };
+  });
+}
+// World box of words k0..k1 of line li (same bubble row), at time t.
+function wordsWorld(li, k0, k1, geo) {
+  const L = LAYOUT[li], g = geo[li], a = L.words[k0], b = L.words[k1];
+  return { x: PX + g.left + TR.padX + a.x, y: PY + TR.top + g.y + TR.label + TR.padY + a.row * TR.lh, w: b.x + b.wd - a.x };
+}
+function transcript(t) {
+  const geo = trGeo(t);
+  LAYOUT.forEach((L, li) => {
+    const g = geo[li], l = LINES[li];
+    show(L.g, g.on);
+    if (!g.on) return;
+    tf(L.g, `translateY(${g.y.toFixed(2)}px)`);
+    ty(L.lab, rise(t, l.s - 0.1));
+    setBox(L.bub, g.left, TR.label, g.bw, g.bh);
+    // pop from the tail corner (spring, no opacity)
+    const pop = spring(t - (l.s - 0.06), 2, 0.75);
+    L.bub.style.transformOrigin = L.ki ? '0 0' : '100% 0';
+    tf(L.bub, `translateY(${(10 * (1 - pop)).toFixed(2)}px) scale(${pop.toFixed(4)})`);
+    L.words.forEach((w, k) => {
+      riseTilt(w.el, t, l.words[k].t - 0.03, 2.6);
+      if (w.marked) {
+        const t0 = l.words[k].t + 0.18;
+        show(w.mk, t >= t0);
+        w.mk.style.width = px(w.mkW);
+        tf(w.mk, `scaleX(${E.outCubic(seg(t, t0, t0 + 0.18)).toFixed(4)})`);
+      }
+    });
+  });
+  return geo;
+}
+
+// ── Accept button: rings, takeover, press, flight into the orb ──
+function acceptOrb(t, buzz) {
+  const acc = $('accept');
+  const bw = lerp(ISL0.w, BAN.w, spring(t - T_BANNER, 1.9, 0.72));
+  const home = [PX + SW / 2 - bw / 2 + bw - 46, PY + ISL_TOP + 48];
+  const orbW = [PX + ORB.x, PY + ORB.y];
+  const fly = E.inOutCubic(seg(t, T_ACCEPT + 0.04, T_LAND));
+  const p = quad(home, [-190, -290], orbW, fly);
+  const d = lerp(BTN, ORB.d, spring(t - (T_ACCEPT + 0.06), 1.6, 0.75));
+  let s = spring(t - 0.5, 2.6, 0.55);
+  RINGS.forEach((r) => (s += 0.12 * press(t - r, 0.09)));
+  s -= 0.14 * press(t - T_ACCEPT, 0.08);
+  // landing squash, then breathe with the voice (website: 1 + .12·level for the agent, .04 for the caller)
+  let sx = s, sy = s;
+  if (t > T_LAND) {
+    const ev = envAt(t), br = 1 + (ev.i >= 0 ? (ev.ki ? 0.12 : 0.04) * ev.v : 0);
+    const sq = (1 - spring(t - T_LAND, 2, 0.6)) * 0.06;
+    sx = br * (1 + sq); sy = br * (1 - sq);
+  }
+  const wig = fly < 0.01 ? RINGS.reduce((v, r) => v + (t > r ? 12 * Math.sin(2 * Math.PI * 6.7 * (t - r)) * Math.exp(-6.5 * (t - r)) : 0), 0) : 0;
+  setBox(acc, p[0] - d / 2 + (fly < 1 ? buzz : 0), p[1] - d / 2, d, d);
+  tf(acc, `scale(${sx.toFixed(4)},${sy.toFixed(4)})`);
+  tf($('accHand'), `translateY(${(t < T_TAKEOVER ? 0 : 115 * E.inCubic(seg(t, T_TAKEOVER, T_TAKEOVER + 0.24))).toFixed(2)}%) rotate(${wig.toFixed(2)}deg)`);
+  // the emerald disc's radius springs to 0 behind the helmet
+  const dr = 1 - E.inOutCubic(seg(t, T_ACCEPT + 0.24, T_LAND));
+  const disc = $('accDisc');
+  disc.style.clipPath = `circle(${(50 * dr).toFixed(3)}% at 50% 50%)`;
+  show(disc, dr > 0);
+  // light helmet rises into the button at the takeover; the dark one floods over it from the centre
+  const hs = t < T_ACCEPT ? 26 : lerp(26, 108 * (447 / 456), spring(t - (T_ACCEPT + 0.24), 1.6, 0.75));
+  const helmT = (sz, dy) => `translate(${(-sz / 2).toFixed(2)}px,${(-sz * 0.51 + dy).toFixed(2)}px) scale(${(sz / 100).toFixed(4)})`;
+  const up = t < T_TAKEOVER + 0.14 ? 1 : 1 - spring(t - (T_TAKEOVER + 0.14), 2.2, 0.85);
+  const hl = $('helmL'), hd = $('helmD');
+  show(hl, t >= T_TAKEOVER + 0.14);
+  tf(hl, helmT(hs, up * BTN * 0.8));
+  const flood = E.inOutCubic(seg(t, T_ACCEPT + 0.16, T_ACCEPT + 0.32));
+  show(hd, flood > 0);
+  tf(hd, helmT(hs, 0));
+  hd.style.clipPath = `circle(${(75 * flood).toFixed(3)}% at 50% 50%)`;
+  // the SMS confirmation in the island sends one ring out of its check
+  const sr = els.smsRing, sdt = t - (T_SMS + 0.25), son = sdt >= 0 && sdt < 0.6;
+  show(sr, son);
+  if (son) {
+    const wI = lerp(LIVE.w, SMS.w, spring(t - T_SMS, 1.9, 0.75));
+    const u = E.outCubic(sdt / 0.6), rr = 24 + 34 * u, c = [SW / 2 - wI / 2 + 38, ISL_TOP + 38];   // screen-local, clipped by the screen
+    setBox(sr, c[0] - rr, c[1] - rr, rr * 2, rr * 2);
+    sr.style.borderWidth = px(2.5 * (1 - u));
+    sr.style.borderColor = 'rgba(16,185,129,.55)';
+  }
+  // rings leave the button on each ring and on the pickup
+  [...RINGS, T_ACCEPT].forEach((r, k) => {
+    const el = els.accRings[k], dt = t - r, on = dt >= 0 && dt < 0.6;
+    show(el, on);
+    if (!on) return;
+    const u = E.outCubic(dt / 0.6), rr = 24 + 46 * u;
+    setBox(el, home[0] - rr + buzz, home[1] - rr, rr * 2, rr * 2);
+    el.style.borderWidth = px(2 * (1 - u));
+  });
+}
+
+// ── Chips ──
+// Peel at P (padding grows, lifts 8, scales 1.05), fly P+.12 → P+.60 on a high arc, land on the target.
+function chipState(t, P, src, dst, sizeTo = 1) {
+  const peel = spring(t - P, 3, 0.8);
+  const u = E.inOutCubic(seg(t, P + 0.12, landAt(P)));
+  const a = [src.x, src.y - 8 * peel], b = [dst.x, dst.y];
+  const p = quad(a, [(a[0] + b[0]) / 2, Math.min(a[1], b[1]) - 180], b, u);
+  const s = lerp(1, sizeTo, u) * (1 + 0.05 * peel * (1 - u) + 0.05 * Math.sin(Math.PI * u));
+  return { x: p[0], y: p[1], s, lean: 5 * Math.sin(Math.PI * u) * Math.sign(b[0] - a[0]), peel, u };
+}
+function chipTf(C, st, extra = '') {
+  tf(C.el, `translate(${st.x.toFixed(2)}px,${st.y.toFixed(2)}px) rotate(${st.lean.toFixed(3)}deg) scale(${st.s.toFixed(4)})${extra}`);
+}
+// A chip that lands as text: one front sweeps left → right. Behind it the new ink sits on the panel,
+// ahead of it the old ink still sits on the pill, which retracts with the front (no squash, no strike-through).
+function landSweep(C, t, L, padX) {
+  const F = lerp(-padX, C.w + 4 + padX, E.inOutCubic(seg(t, L, L + 0.18)));
+  const Fc = clamp(F, 0, C.w + 4);
+  C.bg.style.clipPath = `inset(0 0 0 ${(F + padX).toFixed(2)}px round 999px)`;
+  show(C.bg, F < C.w + 4 + padX - 0.5);
+  C.tA.style.clipPath = `inset(0 0 0 ${Fc.toFixed(2)}px)`;
+  C.tB.style.clipPath = `inset(0 ${(C.w + 4 - Fc).toFixed(2)}px 0 0)`;
+}
+function textChip(C, t, P, src, dst, sizeTo = 1, outT = Infinity) {
+  show(C.el, t >= P);
+  if (t < P) return;
+  const st = chipState(t, P, src, dst, sizeTo);
+  chipTf(C, st);
+  const padX = 12 * st.peel, padY = 4 * st.peel;
+  setBox(C.bg, -padX, -padY, C.w + 2 * padX, 34 + 2 * padY);
+  landSweep(C, t, landAt(P), padX);
+  const out = t >= outT ? fall(t, outT, 0.24) : 0;
+  C.wA.forEach((w) => ty(w, out)); C.wB.forEach((w) => ty(w, out));
+}
+function panel(t, geo) {
+  const pnl = $('panel');
+  show(pnl, t >= T_PANEL); show($('pInner'), t >= P1);
+  const OUT = (k) => T_O + 0.28 + 0.05 * k;                 // each row's text falls as its check leaves for the merge
+
+  // c1 'Sicherung raus' → row 1; the panel grows out of its landed rect
+  const r1 = ROWS[0], c1 = CHIPS.c1;
+  const dst1 = { x: r1.segs[1].x, y: ROW_TOP[0] };
+  textChip(c1, t, P1, wordsWorld(1, 8, 9, geo), dst1, 1, OUT(0));
+  if (t >= P1) { const o = fall(t, T_PANEL + 0.15, 0.22); ty(c1.wA[1], o); ty(c1.wB[1], o); }
+  if (t >= T_PANEL) {
+    const g = spring(t - T_PANEL, 1.05, 0.92), fl = spring(t - T_O, 0.95, 1);
+    const from = { x: dst1.x - 12, y: dst1.y - 4, w: c1.w + 24, h: 42 };
+    const to = { x: lerp(PANEL.x, -1000, fl), y: lerp(PANEL.y, -800, fl), w: lerp(PANEL.w, 2600, fl), h: lerp(PANEL.h, 1600, fl) };
+    const bx = lerp(from.x, to.x, g), by = lerp(from.y, to.y, g), bw = lerp(from.w, to.w, g), bh = lerp(from.h, to.h, g);
+    setBox(pnl, bx, by, bw, bh);
+    pnl.style.borderRadius = px(lerp(21, 30, g));
+    // the contents are revealed by the growing panel, never drawn on the canvas outside it
+    $('pInner').style.clipPath = `polygon(${bx}px ${by}px,${bx + bw}px ${by}px,${bx + bw}px ${by + bh}px,${bx}px ${by + bh}px)`;
+  }
+  const keep = (t0, k) => (t < OUT(k) ? rise(t, t0) : fall(t, OUT(k), 0.24));
+  show(r1.segs[1].box, false);                                // the landed chip IS the word 'Sicherung'
+  ty(r1.segs[0].el, keep(T_PANEL + 0.2, 0));
+  ty(r1.segs[2].el, keep(T_PANEL + 0.22, 0));
+  ty($('pHead'), t < T_O ? rise(t, T_PANEL + 0.3) : fall(t, T_O, 0.24));
+  // counter rolls: the old number falls on each check, the new one rises
+  const CK = [C1, C2, C3, C4], cnt = $('pCount'), k = CK.filter((c) => t >= c + 0.16).length, nxC = CK[k];
+  cnt.textContent = `${k} / 4`;
+  ty(cnt, t >= T_O ? fall(t, T_O, 0.24) : nxC !== undefined && t >= nxC ? fall(t, nxC, 0.16) : rise(t, k ? CK[k - 1] + 0.16 : T_PANEL + 0.34, 3));
+
+  // slots: empty → pending (rotating arc) → check
+  const pendT = [T_PANEL + 0.3, landAt(P3) + 0.1, landAt(P5) + 0.2, landAt(P7) + 0.15];
+  const okT = [C1, C2, C3, C4];
+  const placeOut = [0, landAt(P3) - 0.04, landAt(P5) - 0.15, landAt(P7) - 0.15];
+  ROWS.forEach((R, i) => {
+    const appear = T_PANEL + 0.3 + 0.05 * i;
+    show(R.slot, t >= appear && t < T_O + 0.3 + 0.05 * i);
+    popScale(R.slot, t, appear, 2.4, 0.7);
+    // empty ring shrinks away as the pending ring springs in; pending ring and arc collapse under the check
+    const sp = spring(t - pendT[i], 2.6, 0.6) * (1 - spring(t - okT[i], 2.6, 1));
+    const pending = t >= pendT[i] && t < okT[i] + 0.4;
+    show(R.empty, i > 0 && t < pendT[i] + 0.25);
+    tf(R.empty, `scale(${(1 - spring(t - pendT[i], 2.6, 1)).toFixed(4)})`);
+    show(R.pend, pending); show(R.arc, pending);
+    if (pending) { tf(R.pend, `scale(${sp.toFixed(4)})`); tf(R.arc, `rotate(${((t - pendT[i]) * 300).toFixed(1)}deg) scale(${sp.toFixed(4)})`); }
+    show(R.ok, t >= okT[i]);
+    const wave = press(t - (HANG + 0.1 + 0.06 * i), 0.07) * 0.18 + (i === 0 ? press(t - (landAt(P2) + 0.02), 0.07) * 0.15 : 0);
+    if (i === 2) {
+      // the 'Ja' check floods row 3 from the centre
+      R.ok.style.clipPath = `circle(${(55 * E.outCubic(seg(t, C3, C3 + 0.15))).toFixed(2)}% at 50% 50%)`;
+      tf(R.ok, `scale(${(1 + wave).toFixed(4)})`);
+    } else tf(R.ok, `scale(${(spring(t - okT[i], 2.4, 0.55) + wave).toFixed(4)})`);
+    if (R.place) ty(R.place, t < placeOut[i] ? rise(t, appear + 0.04) : fall(t, placeOut[i], 0.2));
+  });
+
+  // c2 'dringend' → peach 'Priorität hoch' tag after row 1's title
+  const c2 = CHIPS.c2, tag = r1.tag;
+  show(c2.el, t >= P2 && t < T_O + 0.4);
+  if (t >= P2) {
+    const L = landAt(P2), g = spring(t - L, 2.4, 0.8);
+    const st = chipState(t, P2, wordsWorld(2, 2, 2, geo), { x: tag.x + (tag.w - c2.w) / 2, y: tag.y - 1 });
+    chipTf(c2, st, t >= OUT(0) ? ` scale(${(1 - spring(t - OUT(0), 3, 1)).toFixed(4)})` : '');
+    const padX = lerp(12 * st.peel, (tag.w - c2.w) / 2, g), padY = lerp(4 * st.peel, -1, g);
+    setBox(c2.bg, -padX, -padY, c2.w + 2 * padX, 34 + 2 * padY);
+    $('tagFlood').style.clipPath = `circle(${(75 * E.outCubic(seg(t, L, L + 0.22))).toFixed(2)}% at 50% 50%)`;
+    ty(c2.wA[0], fall(t, L + 0.02, 0.18));
+    show(c2.tB, false);
+    const tw = domWidthTag();
+    setBox($('tagTextM'), (c2.w - tw) / 2, 1, tw + 2, 32);
+    ty($('tagText'), rise(t, L + 0.12));
+  }
+
+  // row 2: 'Sabine Krüger' + 'Hafenstraße 12' fly into the detail line
+  const r2 = ROWS[1];
+  ty(r2.segs[0].el, keep(landAt(P3) + 0.05, 1));
+  show(r2.det[0].box, false); show(r2.det[2].box, false);
+  textChip(CHIPS.c3, t, P3, wordsWorld(3, 0, 1, geo), { x: r2.det[0].x, y: ROW_TOP[1] + DET_DY + 14 - 17 * 19 / 24 }, 19 / 24, OUT(1));
+  textChip(CHIPS.c4, t, P4, wordsWorld(3, 2, 3, geo), { x: r2.det[2].x, y: ROW_TOP[1] + DET_DY + 14 - 17 * 19 / 24 }, 19 / 24, OUT(1));
+  ty(r2.det[1].el, keep(landAt(P4), 1));
+  ty(r2.det[3].el, keep(T_BREMEN, 1));
+
+  // row 3: 'Morgen um 8 Uhr' → 'Termin morgen 08:00 im Kalender', then ' eingetragen' after the 'Ja'
+  const r3 = ROWS[2], c5 = CHIPS.c5, l5 = landAt(P5);
+  show(c5.el, t >= P5 && t < l5 + 0.4);
+  if (t >= P5) {
+    const st = chipState(t, P5, wordsWorld(4, 3, 6, geo), { x: r3.segs[1].x, y: ROW_TOP[2] });
+    const con = E.outCubic(seg(t, l5, l5 + 0.15));
+    chipTf(c5, st);
+    const padX = 12 * st.peel, padY = 4 * st.peel;
+    setBox(c5.bg, -padX, -padY, c5.w + 2 * padX, 34 + 2 * padY);
+    c5.bg.style.clipPath = `inset(0 0 0 ${(100 * con).toFixed(2)}% round 999px)`;   // retracts to its right end while the words fall
+    show(c5.bg, con < 0.999);
+    show(c5.tB, false);
+    ty(c5.wA[0], fall(t, l5, 0.2));
+  }
+  ty(r3.segs[1].el, keep(l5 + 0.06, 2));
+  ty(r3.segs[0].el, keep(l5 + 0.10, 2));
+  ty(r3.segs[2].el, keep(l5 + 0.16, 2));
+  ty(r3.segs[3].el, keep(C3 + 0.10, 2));
+  ty(r3.det[0], t < C3 + 0.02 ? rise(t, l5 + 0.25) : fall(t, C3 + 0.02, 0.2));
+
+  // the caller's 'Ja' → a check that flies into row 3's ring
+  const ja = $('jaChk');
+  show(ja, t >= J && t < C3 + 0.1);
+  if (t >= J) {
+    const src = wordsWorld(5, 0, 0, geo);
+    const a = [src.x + src.w / 2, src.y + 17 - 10 * spring(t - J, 3, 0.8)], b = [SLOT_X, ROW_TOP[2] + 17];
+    const u = E.inOutCubic(seg(t, J + 0.07, C3));
+    const p = quad(a, [(a[0] + b[0]) / 2, Math.min(a[1], b[1]) - 60], b, u);
+    setBox(ja, p[0] - 15, p[1] - 15, 30, 30);
+    tf(ja, `scale(${(spring(t - J, 2.6, 0.6) * (1 + 0.4 * Math.sin(Math.PI * u)) * (1 - E.inCubic(seg(t, C3 - 0.02, C3 + 0.08)))).toFixed(4)})`);
+  }
+
+  // c6 'gebucht!' → white 'Termin gebucht' pill straddling the panel's right edge beside row 3
+  const c6 = CHIPS.c6;
+  show(c6.el, t >= P6 && t < T_O + 0.4);
+  if (t >= P6) {
+    const L = landAt(P6), g = spring(t - L, 2.2, 0.75);
+    const okW = 25, gap = 10, inner = okW + gap + CHIPS.pillTextW, pillW = inner + 40, pillH = 50;
+    const st = chipState(t, P6, wordsWorld(6, 1, 1, geo), { x: PANEL.x + PANEL.w - c6.w / 2, y: ROW_TOP[2] });
+    chipTf(c6, st, t >= OUT(2) ? ` scale(${(1 - spring(t - OUT(2), 3, 1)).toFixed(4)})` : '');
+    const padX = lerp(12 * st.peel, (pillW - c6.w) / 2, g), padY = lerp(4 * st.peel, (pillH - 34) / 2, g);
+    setBox(c6.bg, -padX, -padY, c6.w + 2 * padX, 34 + 2 * padY);
+    c6.bg.style.boxShadow = g > 0.02 ? '0 30px 70px -30px rgba(15,23,42,.35),inset 0 1px 0 #fff' : '0 14px 28px -14px rgba(4,120,87,.7)';
+    $('pillFlood').style.clipPath = `circle(${(75 * E.outCubic(seg(t, L, L + 0.2))).toFixed(2)}% at 50% 50%)`;
+    ty(c6.wA[0], fall(t, L + 0.02, 0.16));
+    show(c6.tB, false);
+    const x0 = c6.w / 2 - inner / 2;
+    setBox($('pillOk'), x0, 17 - okW / 2, okW, okW);
+    popScale($('pillOk'), t, L + 0.12, 2.6, 0.55);
+    setBox($('pillTextM'), x0 + okW + gap, 2, CHIPS.pillTextW + 4, 30);
+    ty($('pillText'), rise(t, L + 0.16));
+  }
+
+  // c7 'Bestätigung' → row 4 'SMS-Bestätigung versendet · Techniker informiert'
+  const r4 = ROWS[3], l7 = landAt(P7);
+  textChip(CHIPS.c7, t, P7, wordsWorld(6, 3, 3, geo), { x: r4.segs[1].x, y: ROW_TOP[3] }, 1, OUT(3));
+  show(r4.segs[1].box, false);
+  ty(r4.segs[0].el, keep(l7 + 0.06, 3));
+  ty(r4.segs[2].el, keep(l7 + 0.12, 3));
+  ty(r4.segs[3].el, keep(C4 + 0.04, 3));
+}
+const domWidthTag = () => domWidthTag.v || (domWidthTag.v = domWidth('Priorität hoch', 'font-family:Manrope;font-weight:700;font-size:16px'));
+
+// ── Outro: flood, checks merge, black, claim, logo ──
+function outro(t) {
+  // the four checks converge on M and are absorbed by the success circle
+  els.mergeChk.forEach((el, k) => {
+    const t0 = T_O + 0.3 + 0.05 * k;
+    show(el, t >= t0 && t < t0 + 0.5);
+    if (t < t0) return;
+    const u = E.inOutCubic(seg(t, t0, t0 + 0.4));
+    setBox(el, lerp(SLOT_X, M.x, u) - 15, lerp(ROW_TOP[k] + 17, M.y, u) - 15, 30, 30);
+    tf(el, `scale(${((1 + 0.45 * Math.sin(Math.PI * u)) * (1 - E.inCubic(seg(t, t0 + 0.38, t0 + 0.48)))).toFixed(4)})`);
+  });
+  const succ = $('succ');
+  show(succ, t >= T_MERGE - 0.05 && t < T_LOGO + 0.26);
+  if (t >= T_MERGE - 0.05) {
+    const g = spring(t - (T_MERGE - 0.05), 1.6, 0.7);
+    const vt = t - V0, br = vt > 0 && vt < VO.dur ? 1 + 0.04 * envOf(VO, vt) : 1;
+    const r = lerp(15, 48, g) * br * (1 - E.inCubic(seg(t, T_LOGO, T_LOGO + 0.25)));
+    setBox(succ, M.x - r, M.y - r, 2 * r, 2 * r);
+    ty($('succChk'), fall(t, T_LOGO - 0.14, 0.14));
+  }
+  els.succRings.forEach((el, k) => {
+    const dt = t - (T_MERGE + 0.2 + 1.2 * k), ok = dt >= 0 && dt < 1.2;
+    show(el, ok);
+    if (!ok) return;
+    const u = E.outCubic(dt / 1.2), r = lerp(48, 91, u);
+    setBox(el, M.x - r, M.y - r, 2 * r, 2 * r);
+    el.style.borderWidth = px(2 * (1 - u));
+  });
+  // black flood from the merge point (the website's dark sections), carrying a static glow
+  const bl = $('black');
+  show(bl, t >= T_BLACK);
+  if (t >= T_BLACK) {
+    const r = 1700 * E.inOutCubic(seg(t, T_BLACK, T_BLACK + 0.9));
+    setBox(bl, M.x - r, M.y - r, 2 * r, 2 * r);
+    setBox($('blackGlow'), r - 450 + (330 - M.x), r - 450 + (40 - M.y), 900, 900);
+  }
+  // claim words rise on their spoken onsets
+  CLAIM.forEach((c) => { show(c.box, t >= T_O); if (t >= T_O) riseTilt(c.el, t, c.t, 2.2); });
+  const ul = $('uline');
+  show(ul, t >= T_LOGO + 0.2);
+  tf(ul, `scaleX(${E.draw(seg(t, T_LOGO + 0.2, T_LOGO + 0.8)).toFixed(4)})`);
+  // logo: the helmet grows at M out of the shrinking circle and slides left; the wordmark comes out from behind it
+  const hw = 447 * LOGO_K, hh = 456 * LOGO_K;
+  const lh = $('logoHelm'), clip = $('wmClip');
+  show(lh, t >= T_LOGO); show(clip, t >= T_LOGO + 0.2);
+  if (t >= T_LOGO) {
+    const g = spring(t - T_LOGO, 1.8, 0.8);
+    const lockL = M.x - ((1739 - 31) * LOGO_K) / 2;
+    const cx = lerp(M.x, lockL + hw / 2, E.inOutCubic(seg(t, T_LOGO + 0.12, T_LOGO + 0.6)));
+    const top = M.y - hh / 2;                                 // helmet bbox top (logo y 28)
+    tf(lh, `translate(${(cx - (hw * g) / 2).toFixed(2)}px,${(M.y - (hh * g) / 2).toFixed(2)}px) scale(${g.toFixed(4)})`);
+    const wmL = cx - hw / 2 + (609 - 31) * LOGO_K, wmW = 1131 * LOGO_K;
+    const clipL = Math.max(cx + (hw * g) / 2 + 6, wmL - 2);
+    const rev = E.outCubic(seg(t, T_LOGO + 0.2, T_LOGO + 0.72));
+    setBox(clip, clipL, top + (70 - 28) * LOGO_K - 2, Math.max(0, lerp(clipL, wmL + wmW + 2, rev) - clipL), 411 * LOGO_K + 4);
+    const wm = $('wm');
+    wm.style.left = px(wmL - clipL); wm.style.top = px(2);
+  }
+  tf($('subRule'), `scaleX(${E.outCubic(seg(t, T_LOGO + 0.4, T_LOGO + 0.65)).toFixed(4)})`);
+  show($('subRule'), t >= T_LOGO + 0.4);
+  ty($('sub'), rise(t, T_LOGO + 0.45));
+}
+
+// ── Init ────────────────────────────────────────────────────────────────────
+window.DUR = DUR; window.FPS = FPS; window.BEAT = BEAT;
+window.seek = seek;
+// Sound cues (seconds) for tools/synth.py: {k: effect, t: time, a: args, g: gain}.
+function sfxList() {
+  // levels live in tools/synth.py (loudness relative to the voices); g is an extra gain on top
+  const L = [];
+  const add = (k, t, a, g) => L.push({ k, t, ...(a ? { a } : {}), ...(g ? { g } : {}) });
+  add('bloop', T_BANNER + 0.06);
+  RINGS.forEach((r) => add('ring', r));
+  add('glass', T_TAKEOVER);
+  add('pickup', T_ACCEPT);
+  add('whoosh', T_ACCEPT + 0.22, [0.4, 500, 2200, 0.4, -0.2]);
+  add('thump', T_LAND);
+  // a soft tick as each new bubble opens (the pickup covers the first, the booking shimmer the one after 'perfekt!'),
+  // alternating E6 / A6
+  const T_SHIMMER = inPause(C3 + 0.04);                        // the booking sparkle waits for the end of 'perfekt!'
+  LINES.slice(1).forEach((l, i) => Math.abs(l.s - 0.06 - T_SHIMMER) > 0.3 && add('tick', l.s - 0.06, [i % 2 ? 1760 : 1319, l.ki ? -0.3 : 0.3]));
+  add('panel', T_PANEL);
+  add('check', C1, [0]);
+  add('check', C2, [1]);                                       // the tag landing and the 'Ja' check (C3) stay silent:
+  add('shimmer', T_SHIMMER);                                   // under 'Name' and 'passt' nothing would be heard
+  add('pop', landAt(P6));
+  add('hangup', HANG);                                         // also stands for the last check (C4)
+  [0, 1, 2, 3].forEach((k) => add('mar', T_SMS + 0.1 + 0.06 * k, [[76, 80, 83, 88][k]]));
+  add('bloop', T_SMS + 0.02, null, 0.8);
+  add('flood', T_O + 0.3);
+  [0, 1, 2, 3].forEach((k) => add('mar', T_O + 0.7 + 0.05 * k, [[88, 92, 95, 100][k]], 0.8));
+  add('thump', T_MERGE);                                       // with the run's first note
+  add('dark', T_BLACK + 0.45);
+  add('logo', T_LOGO);
+  return L;
+}
+window.EVENTS = { beat: BEAT, dur: DUR, accept: T_ACCEPT, logo: T_LOGO, outro: T_O, hang: HANG, outroVO: V0,
+  claimEnd: V0 + VO.words[VO.words.length - 1].e,
+  lines: LINES.map((l) => ({ id: l.id, s: l.s, e: l.e })), sfx: sfxList() };
+Promise.all(['500 24px Manrope', '600 18px Manrope', '700 16px Manrope', '600 60px Sora', '500 60px Sora', 'italic 500 60px Sora', '600 104px Sora'].map((f) => document.fonts.load(f, 'ÄäÖöÜüß09'))).then(() => document.fonts.ready).then(() => {
+  build();
+  seek(0);
+  document.body.dataset.ready = '1';
+  const q = new URLSearchParams(location.search);
+  if (q.has('t')) seek(parseFloat(q.get('t')));
+  if (q.has('b')) seek(parseFloat(q.get('b')) * BEAT);
+  if (q.has('play')) { const t0 = performance.now(); const loop = () => { seek(((performance.now() - t0) / 1000) % DUR); requestAnimationFrame(loop); }; loop(); }
+});
+</script>
+</body>
+</html>
