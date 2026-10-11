@@ -6,7 +6,7 @@
   'use strict';
   const W = 393, H = 852;                                     // screen in points (iPhone-class)
   const C = {
-    ink: '#0b1220', body: '#3d4657', slate: '#5b6475', muted: '#8a93a3', line: '#e6eaf2', canvas: '#f6f8fc',
+    ink: '#0b1220', body: '#3d4657', slate: '#5b6475', muted: '#667085', line: '#e6eaf2', canvas: '#f6f8fc',
     em: '#10b981', em6: '#059669', em7: '#047857', mint: '#6ee7b7', mint50: '#e6fbf3', check: '#22c55e',
     navy: '#0b1220', peach: '#fdd9bf', peachInk: '#7c3a12', blue: '#e3e9f5', blueInk: '#1e3a8a', red: '#dc2626',
     black: '#050505', bar: '#dfe6f0',
@@ -201,12 +201,14 @@ ${screen}
       const last = lines.flatMap((l) => l.words).length - 1;
       lines.forEach((l, li) => {
         const base = top + PT + li * LH + 15;
-        for (const w of l.words) {
-          if (!marks.includes(w.i)) continue;
-          const nx = l.words.find((v) => v.i === w.i + 1);
-          const x1 = nx && marks.includes(nx.i) ? nx.x0 : w.x1;      // a marked run is one box
-          o.push(rect(bx + PX + w.x0 - 3, base - 14.5, x1 - w.x0 + 6, 19.5, 5, ki ? `fill="${C.em7}" fill-opacity=".55"` : `fill="${C.mint50}"`));
-          if (!ki) o.push(rect(bx + PX + w.x0 - 3, base + 3.6, x1 - w.x0 + 6, 1.6, 0.8, `fill="${C.em}"`));
+        // marked words: one box per run of consecutive marked words on this line
+        for (let k = 0; k < l.words.length; k++) {
+          if (!marks.includes(l.words[k].i) || (k && marks.includes(l.words[k - 1].i))) continue;
+          let e = k;
+          while (e + 1 < l.words.length && marks.includes(l.words[e + 1].i)) e++;
+          const x0 = l.words[k].x0, x1 = l.words[e].x1;
+          o.push(rect(bx + PX + x0 - 3, base - 14.5, x1 - x0 + 6, 19.5, 5, ki ? `fill="${C.em7}" fill-opacity=".55"` : `fill="${C.mint50}"`));
+          if (!ki) o.push(rect(bx + PX + x0 - 3, base + 3.6, x1 - x0 + 6, 1.6, 0.8, `fill="${C.em}"`));
         }
         if (live && l.words.some((w) => w.i === last)) {
           // the word being heard right now is still settling in
@@ -242,7 +244,7 @@ ${screen}
     const x1 = W / 2 - 6 - bw2, x2 = W / 2 + 6;
     o.push(rect(x1, by2, bw2, bh2, 14, `fill="${C.red}"`));
     const t1 = measure('Auflegen', bfont), g1 = x1 + (bw2 - (20 + 9 + t1)) / 2;
-    o.push(icon('phoneDown', g1, by2 + 14, 20, '#fff', 2), text(g1 + 29, by2 + 29.5, 'Auflegen', bfont, { fill: '#fff' }));
+    o.push(`<g transform="rotate(135 ${n(g1 + 10)} ${n(by2 + 24)})">${icon('phone', g1, by2 + 14, 20, '#fff', 2)}</g>`, text(g1 + 29, by2 + 29.5, 'Auflegen', bfont, { fill: '#fff' }));
     o.push(rect(x2, by2, bw2, bh2, 14, `fill="#fff" stroke="${C.line}"`));
     const t2 = measure('Übernehmen', bfont), g2 = x2 + (bw2 - (19 + 9 + t2)) / 2;
     o.push(icon('headset', g2, by2 + 14.5, 19, C.ink, 2), text(g2 + 28, by2 + 29.5, 'Übernehmen', bfont, { fill: C.ink }));
@@ -260,12 +262,18 @@ ${screen}
       `<radialGradient id="${id}-veil" cx="${W / 2}" cy="${0.46 * H}" r="${0.48 * W}" gradientUnits="userSpaceOnUse" gradientTransform="translate(${W / 2} ${0.46 * H}) scale(1 ${n(vr)}) translate(${-W / 2} ${-0.46 * H})"><stop offset=".3" stop-color="#fff" stop-opacity=".96"/><stop offset=".65" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>`,
       `<radialGradient id="${id}-glow" cx="${W / 2}" cy="${H / 2}" r="600" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${C.em}" stop-opacity=".12"/><stop offset=".6" stop-color="${C.em}" stop-opacity="0"/></radialGradient>`,
       `<linearGradient id="${id}-ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f172a" stop-opacity=".15"/><stop offset=".55" stop-color="#0f172a" stop-opacity=".15"/><stop offset=".8" stop-color="${C.mint}" stop-opacity=".95"/><stop offset=".9" stop-color="#fff"/><stop offset="1" stop-color="#0f172a" stop-opacity=".15"/></linearGradient>`,
-      `<filter id="${id}-blur" x="-50%" y="-80%" width="200%" height="260%"><feGaussianBlur stdDeviation="13"/></filter>`,
-      `<filter id="${id}-emglow" x="-30%" y="-60%" width="160%" height="220%"><feDropShadow dx="0" dy="0" stdDeviation="9" flood-color="${C.em}" flood-opacity=".45"/></filter>`,
     ];
     const o = [];
-    // the site's soft "0 30px 70px -30px" shadow: a blurred, inset slab under the element
-    const under = (x, y, w, h, a = 0.2) => rect(x + w * 0.14, y + h * 0.5, w * 0.72, h * 0.7, h * 0.35, `fill="#0f172a" fill-opacity="${a}" filter="url(#${id}-blur)"`);
+    // CSS box-shadow (offset-y, blur, spread) as a blurred, offset rect: blur radius b ≈ Gaussian σ = b / 2.
+    // Like CSS, it is only painted outside the element (masked), so it never shows through the translucent glass.
+    let nMask = 0;
+    const boxShadow = (x, y, w, h, r, dy, blur, spread, col, a) => {
+      const sw = Math.max(w + 2 * spread, 2), sh = Math.max(h + 2 * spread, 2), mid = `${id}-out${nMask++}`, fid = `${id}-blur${blur / 2}`;
+      if (!defs.some((d) => d.includes(`id="${fid}"`))) defs.push(`<filter id="${fid}" x="-100%" y="-300%" width="300%" height="700%"><feGaussianBlur stdDeviation="${blur / 2}"/></filter>`);
+      defs.push(`<mask id="${mid}" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}">${rect(0, 0, W, H, 0, 'fill="#fff"')}${rect(x, y, w, h, r, 'fill="#000"')}</mask>`);
+      return `<g mask="url(#${mid})">${rect(x + (w - sw) / 2, y + dy + (h - sh) / 2, sw, sh, Math.min(r, sh / 2), `fill="${col}" fill-opacity="${a}" filter="url(#${fid})"`)}</g>`;
+    };
+    const under = (x, y, w, h, r) => boxShadow(x, y, w, h, r, 30, 70, -30, '#0f172a', 0.35);   // 0 30px 70px -30px
     o.push(rect(0, 0, W, H, 0, 'fill="#fff"'));
     // warp star field, light variant, at rest: short streaks from the centre (same rules as the site's canvas)
     const R = rng(20251009), stars = [];
@@ -283,7 +291,7 @@ ${screen}
     o.push(island());
     // header: glass pill with logo and the two-bar menu button
     const ny = 56;
-    o.push(under(16, ny, W - 32, 56, 0.08), rect(16, ny, W - 32, 56, 28, `fill="#fff" fill-opacity=".72" stroke="#fff" stroke-opacity=".9"`));
+    o.push(boxShadow(16, ny, W - 32, 56, 28, 12, 40, -18, '#0f172a', 0.3), rect(16, ny, W - 32, 56, 28, `fill="#fff" fill-opacity=".72" stroke="#fff" stroke-opacity=".9"`));
     o.push(logo(36, ny + 16, 24, C.ink).svg);
     o.push(`<circle cx="${W - 16 - 6 - 22}" cy="${ny + 28}" r="22" fill="${C.black}"/>`);
     o.push(rect(W - 44 - 9, ny + 28 - 4.5, 18, 2, 1, 'fill="#fff"'), rect(W - 44 - 9, ny + 28 + 2.5, 18, 2, 1, 'fill="#fff"'));
@@ -299,7 +307,7 @@ ${screen}
     let y = (H - blockH) / 2;
     // tag pill with the pulsing dot
     const tx = (W - tagW) / 2;
-    o.push(under(tx, y, tagW, tagH), rect(tx, y, tagW, tagH, tagH / 2, `fill="#fff" fill-opacity=".9" stroke="#fff" stroke-opacity=".9"`));
+    o.push(under(tx, y, tagW, tagH, tagH / 2), rect(tx, y, tagW, tagH, tagH / 2, `fill="#fff" fill-opacity=".9" stroke="#fff" stroke-opacity=".9"`));
     o.push(`<circle cx="${n(tx + 16)}" cy="${n(y + 17)}" r="8" fill="${C.em}" fill-opacity=".18"/><circle cx="${n(tx + 16)}" cy="${n(y + 17)}" r="4" fill="${C.em}"/>`);
     o.push(text(tx + 30, y + 21.6, tagS, tagF));
     y += tagH + gap;
@@ -313,11 +321,11 @@ ${screen}
     defs.push(shine(`${id}-shine1`, l3x + furW + sp, l3x + l3));
     o.push(text(l3x, base(2), 'für', hF));
     o.push(text(l3x + furW + sp, base(2), 'messbares', hF, { fill: `url(#${id}-shine1)` }));
-    o.push(rect(l3x + furW + sp, base(2) + 7, mW + hF.ls, 0.07 * hs, 1.3, `fill="${C.em}"`));
+    o.push(rect(l3x + furW + sp, base(2) + 3.5, mW + hF.ls, 0.07 * hs, 1.3, `fill="${C.em}"`));
     const wW = measure('Wachstum', hF), aW = 0.62 * hs, l4 = wW + 0.12 * hs + aW, l4x = (W - l4) / 2;
     defs.push(shine(`${id}-shine2`, l4x, l4x + wW));
     o.push(text(l4x, base(3), 'Wachstum', hF, { fill: `url(#${id}-shine2)` }));
-    o.push(rect(l4x, base(3) + 7, wW + hF.ls, 0.07 * hs, 1.3, `fill="${C.em}"`));
+    o.push(rect(l4x, base(3) + 3.5, wW + hF.ls, 0.07 * hs, 1.3, `fill="${C.em}"`));
     const ax = l4x + wW + 0.12 * hs, ay = base(3) - 0.12 * hs - aW;
     o.push(rect(ax, ay, aW, aW, 0.18 * hs, `fill="${C.em}"`), icon('arrow', ax + aW * 0.15, ay + aW * 0.15, aW * 0.7, '#04140d', 3));
     y += 4 * hlh + gap;
@@ -326,12 +334,12 @@ ${screen}
     y += pLines.length * plh + gap;
     // buttons (they wrap onto two rows at phone width, as on the site)
     const b1x = (W - b1W) / 2;
-    o.push(rect(b1x, y, b1W, 56, 14, `fill="url(#${id}-ring)" filter="url(#${id}-emglow)"`));
+    o.push(boxShadow(b1x, y, b1W, 56, 14, 0, 30, -8, C.em, 0.75), rect(b1x, y, b1W, 56, 14, `fill="url(#${id}-ring)"`));
     o.push(rect(b1x + 1, y + 1, b1W - 2, 54, 13, `fill="${C.black}"`));
     o.push(icon('bolt', b1x + 29, y + 20, 16, '#E5E5E5', 2), text(b1x + 29 + 16 + 10, y + 33.5, 'Projekt starten', b1F));
     y += 56 + 12;
     const b2x = (W - b2W) / 2;
-    o.push(under(b2x, y, b2W, 56), rect(b2x, y, b2W, 56, 14, `fill="#fff" fill-opacity=".9" stroke="#fff" stroke-opacity=".9"`));
+    o.push(under(b2x, y, b2W, 56, 14), rect(b2x, y, b2W, 56, 14, `fill="#fff" fill-opacity=".9" stroke="#fff" stroke-opacity=".9"`));
     [12, 16, 9].forEach((h, i) => o.push(rect(b2x + 26 + i * 5, y + 28 - h / 2, 3, h, 1.5, `fill="${C.em}"`)));
     o.push(text(b2x + 26 + 13 + 10, y + 33.5, 'Voice-Agent live testen', b2F));
     // scroll cue
@@ -382,7 +390,7 @@ ${screen}
       o.push(card(x, y, kw, kh, 18));
       o.push(text(x + 16, y + 23, lab, F('Manrope', 600, 12, C.slate)));
       o.push(text(x + 16, y + 54, val, F('Sora', 600, 26, C.ink, -0.9)));
-      const sf = F('Manrope', 600, 11, kind ? C.em7 : C.muted);
+      const sf = F('Manrope', 600, 11, kind ? C.em7 : C.slate);
       if (kind === 'up') o.push(`<path d="M${x + 16} ${y + 70.5}l4-5 4 5z" fill="${C.em}"/>`);
       if (kind === 'ok') o.push(`<circle cx="${x + 20}" cy="${y + 67.5}" r="5" fill="${C.check}"/>`, icon('check', x + 16.6, y + 64.1, 6.8, '#fff', 1.6));
       o.push(text(x + 16 + (kind ? 13 : 0), y + 71.5, sub, sf));
@@ -393,7 +401,7 @@ ${screen}
     o.push(text(40, cyy + 28, 'Anrufe pro Tag', F('Manrope', 700, 14, C.ink)), text(W - 40, cyy + 28, '290 gesamt', F('Manrope', 600, 12, C.muted), { anchor: 'end' }));
     const days = [['Fr', 52], ['Sa', 21], ['So', 11], ['Mo', 63], ['Di', 71], ['Mi', 58], ['Heute', 14]];
     const px0 = 66, px1 = W - 40, base = cyy + chH - 32, top = cyy + 48, vmax = 80;
-    [0, 40, 80].forEach((v) => {
+    [0, 30, 60].forEach((v) => {
       const gy = base - (base - top) * v / vmax;
       o.push(`<path d="M${px0} ${n(gy)}H${px1}" stroke="${v ? C.line : '#d5dbe6'}" stroke-width="1"/>`, text(px0 - 10, gy + 4, String(v), F('Manrope', 600, 10.5, C.muted), { anchor: 'end' }));
     });
