@@ -15,32 +15,32 @@ body{margin:0;background:#fff;color:#0b1220;font-family:Manrope,system-ui,sans-s
      Klassen, keine globalen Variablen). Ohne JavaScript zeigt die Sektion den fertigen Endzustand.
      Design-Tokens: Emerald #10b981, Text #0b1220, Hintergrund #f6f8fc. Schriften: Sora (Headlines), Manrope (Text). -->
 <style>
-.sbsa{--ink:#0b1220;--mute:#5b6475;--body:#3d4657;--em:#10b981;--em6:#059669;--em7:#047857;--mint:#6ee7b7;--mint50:#e6fbf3;--navy:#0b1220;--line:rgba(15,23,42,.08);--bg2:#f6f8fc;
+.sbsa{font-size:16px;line-height:1.5;letter-spacing:normal;text-transform:none;text-align:left;--ink:#0b1220;--mute:#5b6475;--body:#3d4657;--em:#10b981;--em6:#059669;--em7:#047857;--mint:#6ee7b7;--mint50:#e6fbf3;--navy:#0b1220;--line:rgba(15,23,42,.08);--bg2:#f6f8fc;
   position:relative;padding:clamp(90px,12vw,150px) clamp(16px,5vw,24px);background:var(--bg2);overflow:hidden;color:var(--ink);font-family:Manrope,system-ui,sans-serif}
 .sbsa *{box-sizing:border-box}
 .sbsa-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(15,23,42,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(15,23,42,.05) 1px,transparent 1px);background-size:56px 56px;-webkit-mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%);mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%);pointer-events:none}
 .sbsa-glow{position:absolute;left:40%;top:30%;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(16,185,129,.25),transparent 65%);filter:blur(50px);pointer-events:none}
 .sbsa-wrap{position:relative;max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:48px}
 .sbsa-head{display:flex;flex-direction:column;gap:18px;max-width:760px}
-.sbsa-eyebrow{display:flex;align-items:center;gap:10px;font:700 12px Manrope,sans-serif;letter-spacing:.14em;color:var(--em6)}
+.sbsa-eyebrow{display:flex;align-items:center;gap:10px;font:700 12px Manrope,sans-serif;letter-spacing:.14em;color:var(--em7)}
 .sbsa-eyebrow::before{content:"";width:24px;height:1px;background:var(--em)}
 .sbsa-head h2{margin:0;font:600 clamp(36px,5vw,64px)/1.05 Sora,sans-serif;letter-spacing:-.04em}
 .sbsa-head p{margin:0;font:500 17px/1.6 Manrope,sans-serif;color:var(--mute);text-wrap:pretty}
-.sbsa-glass{border-radius:clamp(22px,5vw,30px);padding:clamp(14px,4vw,28px);background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);border:1px solid rgba(255,255,255,.9);box-shadow:0 40px 90px -40px rgba(15,23,42,.35),inset 0 1px 0 #fff;display:flex;flex-direction:column;gap:20px}
+.sbsa-glass{border-radius:clamp(22px,5vw,30px);padding:clamp(14px,4vw,28px);background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.9);box-shadow:0 40px 90px -40px rgba(15,23,42,.35),inset 0 1px 0 #fff;display:flex;flex-direction:column;gap:20px}
 
 /* stepper + pause */
 .sbsa-bar{display:flex;align-items:center;gap:12px}
 .sbsa-steps{flex:1;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:0;padding:0;list-style:none}
 .sbsa-steps li{display:flex;min-width:0}
 .sbsa-step{all:unset;cursor:pointer;flex:1;display:flex;flex-direction:column;gap:8px;min-width:0;border-radius:10px;padding:2px 0}
-.sbsa-step:focus-visible{outline:2px solid var(--em);outline-offset:4px}
+.sbsa-step:focus-visible{outline:2px solid var(--em7);outline-offset:4px}
 .sbsa-track{display:block;position:relative;height:4px;border-radius:2px;background:rgba(15,23,42,.08);overflow:hidden}
 .sbsa-track i{position:absolute;inset:0;border-radius:2px;background:var(--em);transform-origin:0 50%;transform:scaleX(1)}
 .sbsa-step span{display:flex;gap:6px;align-items:baseline;font:700 12px Manrope,sans-serif;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sbsa-step b{font:800 11px Manrope,sans-serif;color:var(--em7)}
 .sbsa-step[aria-current="step"] span{color:var(--ink)}
 .sbsa-play{all:unset;cursor:pointer;flex:none;width:38px;height:38px;border-radius:50%;background:#fff;border:1px solid var(--line);box-shadow:0 8px 20px -12px rgba(15,23,42,.35);display:grid;place-items:center}
-.sbsa-play:focus-visible{outline:2px solid var(--em);outline-offset:3px}
+.sbsa-play:focus-visible{outline:2px solid var(--em7);outline-offset:3px}
 .sbsa-play svg{width:14px;height:14px}
 
 /* stage: the canvas keeps one design size and is scaled to fit */
@@ -56,7 +56,7 @@ body{margin:0;background:#fff;color:#0b1220;font-family:Manrope,system-ui,sans-s
 .sbsa-roll{position:relative;display:block;overflow:hidden;height:1.3em}
 .sbsa-roll>span{position:absolute;left:0;top:0;white-space:nowrap}
 .sbsa-badge{margin-left:auto;display:inline-flex;align-items:center;gap:5px;padding:3px 8px 3px 6px;border-radius:999px;background:var(--mint50);color:var(--em7);font:800 10px Manrope,sans-serif;letter-spacing:.04em;text-transform:none;transform-origin:100% 50%}
-.sbsa-badge svg{width:11px;height:11px}
+.sbsa-badge svg{width:11px;height:11px;flex:none}
 .sbsa-ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--bg2);color:var(--ink);flex:none}
 .sbsa-ic svg{width:15px;height:15px}
 
@@ -65,7 +65,7 @@ body{margin:0;background:#fff;color:#0b1220;font-family:Manrope,system-ui,sans-s
 .sbsa-mail .sbsa-from small{font:500 11.5px Manrope,sans-serif;color:var(--mute)}
 .sbsa-mail .sbsa-subject{font:600 15px/1.3 Sora,sans-serif;letter-spacing:-.01em}
 .sbsa-mail .sbsa-snip{margin:0;font:500 13px/1.55 Manrope,sans-serif;color:var(--body)}
-.sbsa-mark{background-image:linear-gradient(var(--mint50),var(--mint50)),linear-gradient(var(--em),var(--em));background-repeat:no-repeat;background-position:0 0,0 100%;background-size:100% 100%,100% 2px;border-radius:3px;padding:0 1px;color:var(--ink)}
+.sbsa-mark{white-space:nowrap;background-image:linear-gradient(var(--mint50),var(--mint50)),linear-gradient(var(--em),var(--em));background-repeat:no-repeat;background-position:0 0,0 100%;background-size:100% 100%,100% 2px;border-radius:3px;padding:0 1px;color:var(--ink)}
 .sbsa-dot{width:8px;height:8px;border-radius:50%;background:var(--em);flex:none}
 
 /* agent */
@@ -94,7 +94,7 @@ body{margin:0;background:#fff;color:#0b1220;font-family:Manrope,system-ui,sans-s
 
 /* result */
 .sbsa-result{background:var(--em);border-color:transparent;color:#04140d;box-shadow:0 18px 36px -14px rgba(16,185,129,.6)}
-.sbsa-result .sbsa-lab{color:#064e3b}
+.sbsa-result .sbsa-lab{color:#022c22}
 .sbsa-panel{position:relative;margin-top:4px;border-radius:14px;background:#fff;padding:12px;display:flex;flex-direction:column;gap:8px;overflow:hidden}
 .sbsa-panel strong{font:600 14px/1.25 Sora,sans-serif;color:var(--ink)}
 .sbsa-panel small{font:600 11.5px Manrope,sans-serif;color:var(--mute)}
@@ -115,10 +115,12 @@ body{margin:0;background:#fff;color:#0b1220;font-family:Manrope,system-ui,sans-s
 
 /* narrow layout: compact task tiles */
 .sbsa-canvas[data-layout="narrow"] .sbsa-detail{display:none}
+.sbsa-canvas[data-layout="narrow"] .sbsa-lab,.sbsa-canvas[data-layout="narrow"] .sbsa-badge,.sbsa-canvas[data-layout="narrow"] .sbsa-state{font-size:12px}
+.sbsa-canvas[data-layout="narrow"] .sbsa-from small,.sbsa-canvas[data-layout="narrow"] .sbsa-panel small{font-size:13px}
 .sbsa-canvas[data-layout="narrow"] .sbsa-task{padding:12px}
 .sbsa-canvas[data-layout="narrow"] .sbsa-task .sbsa-title{font-size:12px;overflow-wrap:anywhere}
 .sbsa-canvas[data-layout="narrow"] .sbsa-task .sbsa-lab{font-size:0;gap:0}
-.sbsa-canvas[data-layout="narrow"] .sbsa-task .sbsa-badge{margin-left:0}
+.sbsa-canvas[data-layout="narrow"] .sbsa-task .sbsa-badge{margin-left:0;font-size:11px;padding:3px 7px 3px 5px}
 .sbsa-compact{display:none}
 .sbsa-canvas[data-layout="narrow"] .sbsa-compact{display:flex}
 
@@ -127,8 +129,8 @@ body{margin:0;background:#fff;color:#0b1220;font-family:Manrope,system-ui,sans-s
 .sbsa-stat{border-radius:16px;background:#fff;border:1px solid var(--line);padding:14px 16px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .sbsa-stat strong{font:600 clamp(20px,3vw,28px)/1.1 Sora,sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
 .sbsa-stat span{font:600 12.5px Manrope,sans-serif;color:var(--mute)}
-.sbsa-log{display:flex;gap:14px;align-items:flex-start;padding:14px 18px;border-radius:16px;background:var(--navy);color:#e6fbf3}
-.sbsa-log-lab{display:flex;align-items:center;gap:8px;color:var(--mint);font:700 11px Manrope,sans-serif;letter-spacing:.12em;white-space:nowrap;padding-top:4px}
+.sbsa-log{display:flex;gap:14px;align-items:flex-end;padding:14px 18px;border-radius:16px;background:var(--navy);color:#e6fbf3}
+.sbsa-log-lab{display:flex;align-items:center;gap:8px;height:22px;color:var(--mint);font:700 11px Manrope,sans-serif;letter-spacing:.12em;white-space:nowrap}
 .sbsa-log-lab i{width:7px;height:7px;border-radius:50%;background:#22c55e}
 .sbsa-lines{position:relative;flex:1;min-width:0;height:66px;overflow:hidden;font:500 13.5px/22px ui-monospace,SFMono-Regular,Menlo,monospace}
 .sbsa-line{position:absolute;left:0;right:0;bottom:0;height:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -144,7 +146,8 @@ body{margin:0;background:#fff;color:#0b1220;font-family:Manrope,system-ui,sans-s
   .sbsa-step span{font-size:0;gap:0}
   .sbsa-step span b{font-size:11px;color:var(--mute)}
   .sbsa-step[aria-current="step"] span b{color:var(--ink)}
-  .sbsa-log{flex-direction:column;gap:8px}
+  .sbsa-glass{padding:10px}
+  .sbsa-log{flex-direction:column;align-items:stretch;gap:8px}
   .sbsa-lines{flex:none;width:100%;font-size:12px}
   .sbsa-stat{padding:12px}
   .sbsa-stat span{font-size:11px}
@@ -164,13 +167,13 @@ body{margin:0;background:#fff;color:#0b1220;font-family:Manrope,system-ui,sans-s
     <div class="sbsa-glass">
       <div class="sbsa-bar">
         <ol class="sbsa-steps">
-          <li><button class="sbsa-step" data-step="0" aria-label="Schritt 1: Eingang"><span class="sbsa-track"><i></i></span><span><b>1</b>Eingang</span></button></li>
-          <li><button class="sbsa-step" data-step="1" aria-label="Schritt 2: Verstehen"><span class="sbsa-track"><i></i></span><span><b>2</b>Verstehen</span></button></li>
-          <li><button class="sbsa-step" data-step="2" aria-label="Schritt 3: Ausführen"><span class="sbsa-track"><i></i></span><span><b>3</b>Ausführen</span></button></li>
-          <li><button class="sbsa-step" data-step="3" aria-label="Schritt 4: Freigabe"><span class="sbsa-track"><i></i></span><span><b>4</b>Freigabe</span></button></li>
-          <li><button class="sbsa-step" data-step="4" aria-label="Schritt 5: Erledigt" aria-current="step"><span class="sbsa-track"><i></i></span><span><b>5</b>Erledigt</span></button></li>
+          <li><button type="button" class="sbsa-step" data-step="0" aria-label="Schritt 1: Eingang"><span class="sbsa-track"><i></i></span><span><b>1</b>Eingang</span></button></li>
+          <li><button type="button" class="sbsa-step" data-step="1" aria-label="Schritt 2: Verstehen"><span class="sbsa-track"><i></i></span><span><b>2</b>Verstehen</span></button></li>
+          <li><button type="button" class="sbsa-step" data-step="2" aria-label="Schritt 3: Ausführen"><span class="sbsa-track"><i></i></span><span><b>3</b>Ausführen</span></button></li>
+          <li><button type="button" class="sbsa-step" data-step="3" aria-label="Schritt 4: Freigabe"><span class="sbsa-track"><i></i></span><span><b>4</b>Freigabe</span></button></li>
+          <li><button type="button" class="sbsa-step" data-step="4" aria-label="Schritt 5: Erledigt" aria-current="step"><span class="sbsa-track"><i></i></span><span><b>5</b>Erledigt</span></button></li>
         </ol>
-        <button class="sbsa-play" type="button" aria-label="Animation abspielen" aria-pressed="false">
+        <button class="sbsa-play" type="button" aria-label="Animation abspielen">
           <svg class="sbsa-i-play" viewBox="0 0 14 14"><path d="M3.5 2.2v9.6L11.6 7z" fill="#0b1220"/></svg>
           <svg class="sbsa-i-pause" viewBox="0 0 14 14" style="display:none"><path d="M3.5 2.5h2.4v9H3.5zM8.1 2.5h2.4v9H8.1z" fill="#0b1220"/></svg>
         </button>
@@ -184,13 +187,13 @@ body{margin:0;background:#fff;color:#0b1220;font-family:Manrope,system-ui,sans-s
             <div class="sbsa-ring"></div>
             <div class="sbsa-lab"><span class="sbsa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg></span>Auslöser · E-Mail<span class="sbsa-badge" data-new><span class="sbsa-dot"></span>Neu · 09:41</span></div>
             <div class="sbsa-mask"><span class="sbsa-from">Müller Haustechnik GmbH<small>info@mueller-haustechnik.de</small></span></div>
-            <div class="sbsa-mask"><span class="sbsa-subject">Wartungsvertrag für 3 Standorte</span></div>
+            <div class="sbsa-mask"><span class="sbsa-subject">Wartungsvertrag für 3&nbsp;Standorte</span></div>
             <div class="sbsa-mask"><p class="sbsa-snip">Guten Tag, wir suchen einen <span class="sbsa-mark" data-mark="0">Wartungsvertrag</span> für unsere <span class="sbsa-mark" data-mark="1">drei Standorte</span> in Bremen. Bitte senden Sie uns ein <span class="sbsa-mark" data-mark="2">Angebot</span>.</p></div>
           </article>
 
           <article class="sbsa-node sbsa-agent" data-node="agent">
             <div class="sbsa-ring"></div>
-            <div class="sbsa-lab"><span class="sbsa-ava"><svg viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="none" stroke="rgba(110,231,183,.22)" stroke-width="2"/><path data-spin d="M17 2a15 15 0 0 1 15 15" fill="none" stroke="#6ee7b7" stroke-width="2" stroke-linecap="round" style="opacity:0"/><g data-helmet transform="translate(9.4 9.2) scale(.0345)"></g></svg></span>KI-Agent<span class="sbsa-state" data-state style="color:#6ee7b7">fertig</span></div>
+            <div class="sbsa-lab"><span class="sbsa-ava"><svg viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="none" stroke="rgba(110,231,183,.22)" stroke-width="2"/><path data-spin d="M17 2a15 15 0 0 1 15 15" fill="none" stroke="#6ee7b7" stroke-width="2" stroke-linecap="round" style="opacity:0"/><g transform="translate(9.4 9.2) scale(.0345)"><path d="M220.5 483.3C210.2 482.8 195.1 481.0 180.0 478.4C105.1 465.6 53.8 429.7 37.6 378.9C31.8 360.4 31.8 360.0 31.3 299.5C31.0 262.1 31.2 239.3 32.0 231.0C38.9 154.6 84.5 87.1 152.5 52.3C176.6 40.0 200.1 32.7 226.0 29.5C242.3 27.4 276.0 27.9 290.6 30.4C328.0 36.8 363.9 52.8 393.0 75.9C401.8 82.9 417.8 98.7 426.1 108.6C446.4 132.6 462.5 164.3 470.5 195.9C477.0 221.7 478.3 242.9 477.7 313.0C477.3 362.4 477.1 367.2 475.2 375.7C469.8 400.1 456.4 420.2 434.5 436.8C416.0 450.7 389.4 462.6 359.6 470.1C318.4 480.5 265.1 485.6 220.5 483.3ZM295.0 435.5C358.0 430.8 399.6 416.9 424.5 392.5C434.1 383.0 439.9 374.6 444.0 364.0C449.4 349.9 450.0 343.1 450.0 297.6C450.0 261.5 449.7 255.4 448.1 247.5C444.5 230.0 436.2 215.1 423.6 203.3C411.6 192.2 397.5 185.1 378.5 180.7C369.8 178.7 366.5 178.6 264.5 178.2C193.4 178.0 156.1 178.2 148.9 179.0C133.5 180.5 123.0 183.4 110.1 189.7C99.9 194.6 97.7 196.1 89.5 204.3C79.0 214.8 73.1 224.0 68.9 236.3C64.3 250.3 63.8 256.6 64.2 304.0L64.6 347.5L67.3 356.3C72.1 371.9 79.4 383.6 90.9 394.3C105.9 408.1 130.1 420.1 157.0 427.0C172.0 430.8 199.7 434.9 220.0 436.3C233.2 437.2 278.9 436.8 295.0 435.5ZM217.0 392.0C161.2 387.4 123.7 374.6 103.9 353.3C97.2 346.0 92.5 337.4 90.0 327.4C88.2 320.5 88.0 316.3 88.0 288.5C88.0 260.7 88.2 256.5 90.0 249.6C94.0 234.0 103.5 220.8 116.4 213.1C124.0 208.5 136.8 204.3 147.0 203.0C152.9 202.2 188.3 202.0 262.0 202.2C359.0 202.6 369.1 202.7 375.0 204.3C402.0 211.5 417.2 225.1 423.7 248.1C425.3 253.7 425.5 258.6 425.5 289.0C425.5 322.9 425.5 323.6 423.1 330.9C414.8 356.1 390.8 373.0 348.5 383.4C323.9 389.4 297.8 392.0 259.0 392.5C241.7 392.7 222.8 392.5 217.0 392.0ZM137.0 310.7C146.8 305.6 147.7 294.0 139.0 286.6C136.5 284.5 134.8 284.0 130.5 284.0C126.2 284.0 124.5 284.5 122.0 286.6C110.9 296.0 116.1 312.1 130.6 312.9C131.7 312.9 134.6 312.0 137.0 310.7ZM192.3 284.1C207.9 276.5 215.1 257.2 207.8 241.8C200.6 226.4 183.2 219.2 167.5 225.1C144.3 233.8 139.8 265.5 159.6 280.7C168.3 287.3 182.6 288.8 192.3 284.1Z" transform="translate(-31 -28)" fill="#fff" fill-rule="evenodd"/></g></svg></span>KI-Agent<span class="sbsa-state" data-state style="color:#6ee7b7">fertig</span></div>
             <span class="sbsa-title"><span class="sbsa-roll"><span data-roll="0">Anliegen verstehen</span><span data-roll="1">Anliegen erkannt</span></span></span>
             <div class="sbsa-tags"><span class="sbsa-tag" data-slot="0">Wartungsvertrag</span><span class="sbsa-tag" data-slot="1">3 Standorte</span><span class="sbsa-tag" data-slot="2">Angebot</span></div>
           </article>
@@ -219,10 +222,10 @@ body{margin:0;background:#fff;color:#0b1220;font-family:Manrope,system-ui,sans-s
 
           <article class="sbsa-node sbsa-task" data-node="cal">
             <div class="sbsa-ring"></div>
-            <div class="sbsa-lab"><span class="sbsa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M9 3.5V7M15 3.5V7"/></svg></span>Kalender<span class="sbsa-badge sbsa-detail" data-done><svg viewBox="0 0 12 12"><path d="m2.5 6.3 2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Geplant</span></div>
+            <div class="sbsa-lab"><span class="sbsa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M9 3.5V7M15 3.5V7"/></svg></span>Kalender<span class="sbsa-badge sbsa-detail" data-done><svg viewBox="0 0 12 12"><path d="m2.5 6.3 2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Reserviert</span></div>
             <span class="sbsa-title">Besichtigung planen</span>
-            <div class="sbsa-detail"><span class="sbsa-mask"><span class="sbsa-slot" data-slotpill><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Di · 10:00 Uhr vor Ort</span></span></div>
-            <span class="sbsa-badge sbsa-compact" data-done-c><svg viewBox="0 0 12 12"><path d="m2.5 6.3 2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Geplant</span>
+            <div class="sbsa-detail"><span class="sbsa-mask"><span class="sbsa-slot" data-slotpill><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Di., 10:00 Uhr · vor Ort</span></span></div>
+            <span class="sbsa-badge sbsa-compact" data-done-c><svg viewBox="0 0 12 12"><path d="m2.5 6.3 2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Reserviert</span>
           </article>
 
           <article class="sbsa-node sbsa-result" data-node="result">
@@ -231,7 +234,7 @@ body{margin:0;background:#fff;color:#0b1220;font-family:Manrope,system-ui,sans-s
             <span class="sbsa-title"><span class="sbsa-roll"><span data-rroll="0">Freigabe &amp; Versand</span><span data-rroll="1">Angebot versendet</span></span></span>
             <div class="sbsa-panel" data-panel>
               <strong>Angebot A-1042</strong>
-              <small>Müller Haustechnik · 3 Standorte</small>
+              <small>Müller Haustechnik · 3&nbsp;Standorte</small>
               <span class="sbsa-btn" data-btn><span class="sbsa-ripple" data-ripple></span><svg viewBox="0 0 24 24" fill="none" stroke="#e5e5e5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Freigeben</span>
               <div class="sbsa-sent" data-sent style="clip-path:circle(150% at 50% 80%)"><strong><span class="sbsa-ok"><svg viewBox="0 0 12 12"><path d="m2.5 6.3 2.3 2.3 4.7-5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Versendet</strong><small>an Müller Haustechnik</small></div>
             </div>
@@ -244,10 +247,10 @@ body{margin:0;background:#fff;color:#0b1220;font-family:Manrope,system-ui,sans-s
         </div>
       </div>
 
-      <div class="sbsa-stats">
-        <div class="sbsa-stat"><strong data-stat="time">6,4&nbsp;s</strong><span>Durchlaufzeit</span></div>
+      <div class="sbsa-stats" aria-hidden="true">
+        <div class="sbsa-stat"><strong data-stat="time">4,9&nbsp;s</strong><span>bis zur Freigabe</span></div>
         <div class="sbsa-stat"><strong>0</strong><span>manuelle Eingaben</span></div>
-        <div class="sbsa-stat"><strong data-stat="sys">4</strong><span>Systeme verbunden</span></div>
+        <div class="sbsa-stat"><strong>4</strong><span>Systeme verbunden</span></div>
       </div>
 
       <div class="sbsa-log" aria-hidden="true">
@@ -258,9 +261,9 @@ body{margin:0;background:#fff;color:#0b1220;font-family:Manrope,system-ui,sans-s
       <ol class="sbsa-sr">
         <li>Eine E-Mail von Müller Haustechnik geht ein: Wartungsvertrag für drei Standorte, Bitte um ein Angebot.</li>
         <li>Der KI-Agent erkennt das Anliegen: Wartungsvertrag, 3 Standorte, Angebot.</li>
-        <li>Parallel legt er den Kontakt im CRM an, erstellt das Angebot A-1042 als PDF und schlägt eine Besichtigung am Dienstag um 10 Uhr vor.</li>
-        <li>Der Vertrieb gibt das Angebot mit einem Klick frei.</li>
-        <li>Das Angebot wird versendet – nach 6,4 Sekunden, ohne manuelle Eingabe.</li>
+        <li>Parallel legt er den Kontakt im CRM an, erstellt das Angebot A-1042 als PDF und reserviert einen Besichtigungstermin am Dienstag um 10 Uhr.</li>
+        <li>Nach 4,9 Sekunden liegt das fertige Angebot ohne manuelle Eingabe zur Freigabe bereit.</li>
+        <li>Der Vertrieb gibt das Angebot mit einem Klick frei, dann wird es versendet. Beteiligt sind vier Systeme: E-Mail, CRM, Dokumente und Kalender.</li>
       </ol>
     </div>
   </div>
@@ -269,26 +272,14 @@ body{margin:0;background:#fff;color:#0b1220;font-family:Manrope,system-ui,sans-s
 <script>
 (() => {
   'use strict';
-  const root = document.getElementById('automatisierung');
-  if (!root) return;
-  root.classList.add('is-js');
-  const $ = (s) => root.querySelector(s), $$ = (s) => [...root.querySelectorAll(s)];
-  const stage = $('.sbsa-stage'), canvas = $('.sbsa-canvas'), wires = $('.sbsa-wires'), lines = $('[data-lines]');
-  const NS = 'http://www.w3.org/2000/svg';
-
-  // SBS helmet (traced logo, 1760×520 space; helmet bbox 31..478 × 28..484)
-  const HELMET = 'M220.5 483.3C210.2 482.8 195.1 481.0 180.0 478.4C105.1 465.6 53.8 429.7 37.6 378.9C31.8 360.4 31.8 360.0 31.3 299.5C31.0 262.1 31.2 239.3 32.0 231.0C38.9 154.6 84.5 87.1 152.5 52.3C176.6 40.0 200.1 32.7 226.0 29.5C242.3 27.4 276.0 27.9 290.6 30.4C328.0 36.8 363.9 52.8 393.0 75.9C401.8 82.9 417.8 98.7 426.1 108.6C446.4 132.6 462.5 164.3 470.5 195.9C477.0 221.7 478.3 242.9 477.7 313.0C477.3 362.4 477.1 367.2 475.2 375.7C469.8 400.1 456.4 420.2 434.5 436.8C416.0 450.7 389.4 462.6 359.6 470.1C318.4 480.5 265.1 485.6 220.5 483.3ZM295.0 435.5C358.0 430.8 399.6 416.9 424.5 392.5C434.1 383.0 439.9 374.6 444.0 364.0C449.4 349.9 450.0 343.1 450.0 297.6C450.0 261.5 449.7 255.4 448.1 247.5C444.5 230.0 436.2 215.1 423.6 203.3C411.6 192.2 397.5 185.1 378.5 180.7C369.8 178.7 366.5 178.6 264.5 178.2C193.4 178.0 156.1 178.2 148.9 179.0C133.5 180.5 123.0 183.4 110.1 189.7C99.9 194.6 97.7 196.1 89.5 204.3C79.0 214.8 73.1 224.0 68.9 236.3C64.3 250.3 63.8 256.6 64.2 304.0L64.6 347.5L67.3 356.3C72.1 371.9 79.4 383.6 90.9 394.3C105.9 408.1 130.1 420.1 157.0 427.0C172.0 430.8 199.7 434.9 220.0 436.3C233.2 437.2 278.9 436.8 295.0 435.5ZM217.0 392.0C161.2 387.4 123.7 374.6 103.9 353.3C97.2 346.0 92.5 337.4 90.0 327.4C88.2 320.5 88.0 316.3 88.0 288.5C88.0 260.7 88.2 256.5 90.0 249.6C94.0 234.0 103.5 220.8 116.4 213.1C124.0 208.5 136.8 204.3 147.0 203.0C152.9 202.2 188.3 202.0 262.0 202.2C359.0 202.6 369.1 202.7 375.0 204.3C402.0 211.5 417.2 225.1 423.7 248.1C425.3 253.7 425.5 258.6 425.5 289.0C425.5 322.9 425.5 323.6 423.1 330.9C414.8 356.1 390.8 373.0 348.5 383.4C323.9 389.4 297.8 392.0 259.0 392.5C241.7 392.7 222.8 392.5 217.0 392.0ZM137.0 310.7C146.8 305.6 147.7 294.0 139.0 286.6C136.5 284.5 134.8 284.0 130.5 284.0C126.2 284.0 124.5 284.5 122.0 286.6C110.9 296.0 116.1 312.1 130.6 312.9C131.7 312.9 134.6 312.0 137.0 310.7ZM192.3 284.1C207.9 276.5 215.1 257.2 207.8 241.8C200.6 226.4 183.2 219.2 167.5 225.1C144.3 233.8 139.8 265.5 159.6 280.7C168.3 287.3 182.6 288.8 192.3 284.1Z';
-  $('[data-helmet]').innerHTML = `<path d="${HELMET}" transform="translate(-31 -28)" fill="#fff" fill-rule="evenodd"/>`;
-
   // ── layouts (design units). wide: left → right, narrow: top → bottom ──────
   const LAYOUT = {
     wide: { w: 1120, h: 440, nodes: {
-      mail: [0, 100, 262, 240], agent: [330, 135, 222, 170], crm: [620, 0, 250, 124], doc: [620, 158, 250, 124], cal: [620, 316, 250, 124], result: [924, 115, 196, 210] } },
-    narrow: { w: 360, h: 824, nodes: {
-      mail: [0, 0, 360, 214], agent: [36, 262, 288, 150], crm: [0, 460, 116, 112], doc: [122, 460, 116, 112], cal: [244, 460, 116, 112], result: [30, 624, 300, 200] } },
+      mail: [0, 100, 262, 240], agent: [330, 135, 222, 170], crm: [620, 0, 250, 140], doc: [620, 150, 250, 140], cal: [620, 300, 250, 140], result: [924, 115, 196, 210] } },
+    narrow: { w: 360, h: 834, nodes: {
+      mail: [0, 0, 360, 214], agent: [36, 262, 288, 160], crm: [0, 470, 116, 112], doc: [122, 470, 116, 112], cal: [244, 470, 116, 112], result: [30, 634, 300, 200] } },
   };
   const NODES = ['mail', 'agent', 'crm', 'doc', 'cal', 'result'];
-  const el = {}; NODES.forEach((k) => (el[k] = $(`[data-node="${k}"]`)));
 
   // ── timeline (seconds). One loop tells the whole request ──────────────────
   const T = {
@@ -300,18 +291,20 @@ body{margin:0;background:#fff;color:#0b1220;font-family:Manrope,system-ui,sans-s
     doc: { on: 3.75, lines: [3.9, 5.3], pdf: 5.35, done: 5.65 },
     cd: [[5.8, 6.35], [5.85, 6.4], [5.9, 6.45]],
     result: 6.45, cursor: [6.9, 7.55], press: 7.62, flood: [7.75, 8.3], sent: 8.3,
-    reset: 12.6, LOOP: 13.6,
+    reset: 11.4, LOOP: 12.4,                                  // fade out the end state, fade in the start state
   };
-  const STEPS = [0, 1.25, 3.1, 6.45, 8.3, T.LOOP];          // Eingang · Verstehen · Ausführen · Freigabe · Erledigt
+  const STEPS = [0, 1.25, 3.1, 6.45, 8.3, T.reset];          // Eingang · Verstehen · Ausführen · Freigabe · Erledigt
   const FINAL = 9.4;                                          // the settled end state (no-JS look, reduced motion)
+  const SETTLED = [1.2, 3.05, 6.4, 7.7, FINAL];              // a calm frame per step, for reduced motion
+  const RUN = 4.9;                                            // seconds from the mail to the offer waiting for approval
   const LOG = [                                               // [time, stamp, message, short message for narrow logs]
     [0.35, '09:41:02', 'Neue E-Mail von info@mueller-haustechnik.de', 'Neue E-Mail eingegangen'],
-    [3.0, '09:41:03', 'Anliegen erkannt: Wartungsvertrag für 3 Standorte', 'Anliegen erkannt: Wartung'],
-    [4.65, '09:41:04', 'Kontakt im CRM angelegt · Müller Haustechnik GmbH', 'Kontakt im CRM angelegt'],
-    [5.15, '09:41:05', 'Besichtigung vorgeschlagen · Di, 10:00 Uhr', 'Besichtigung: Di, 10 Uhr'],
-    [5.65, '09:41:05', 'Angebot A-1042 erstellt · PDF', 'Angebot A-1042 erstellt'],
+    [3.0, '09:41:04', 'Anliegen erkannt: Wartungsvertrag für 3 Standorte', 'Anliegen erkannt: Wartung'],
+    [4.65, '09:41:05', 'Kontakt im CRM angelegt · Müller Haustechnik GmbH', 'Kontakt im CRM angelegt'],
+    [5.15, '09:41:05', 'Besichtigung reserviert · Di., 10:00 Uhr', 'Termin: Di., 10 Uhr'],
+    [5.65, '09:41:06', 'Angebot A-1042 erstellt · PDF', 'Angebot A-1042 erstellt'],
     [6.45, '09:41:06', 'Angebot zur Freigabe an den Vertrieb gesendet', 'Zur Freigabe gesendet'],
-    [8.3, '09:41:08', 'Freigegeben · Angebot an Müller Haustechnik versendet ✓', 'Freigegeben · versendet ✓'],
+    [8.3, '09:47:15', 'Vom Vertrieb freigegeben · Angebot versendet ✓', 'Freigegeben · versendet ✓'],
   ];
 
   // ── math ──────────────────────────────────────────────────────────────────
@@ -324,224 +317,262 @@ body{margin:0;background:#fff;color:#0b1220;font-family:Manrope,system-ui,sans-s
     return 1 - Math.exp(-z * w * dt) * (Math.cos(wd * dt) + (z * w / wd) * Math.sin(wd * dt));
   }
   const rise = (t, t0, d = 0.5) => (1 - outC(seg(t, t0, t0 + d))) * 105;   // % below the mask line
-  const R = (t) => outC(seg(t, T.reset, T.reset + 0.55));                   // 0 → 1 while the loop resets
   const fmt = (v) => v.toFixed(1).replace('.', ',');
+  const put = (node, key, v) => { if (node['__' + key] !== v) { node['__' + key] = v; node[key] = v; } };   // write only on change
 
-  // ── layout: positions, wires, chip anchors ───────────────────────────────
-  let mode = 'wide', L = LAYOUT.wide, k = 1, shortLog = false;
-  const anchor = {}, wire = [];
-  function offset(node) {                                     // position inside the canvas in design units
-    let x = 0, y = 0, n = node;
-    while (n && n !== canvas) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
-    return { x, y, w: node.offsetWidth, h: node.offsetHeight };
-  }
-  function makeWire(d, a, b) {
-    const base = document.createElementNS(NS, 'path'), live = document.createElementNS(NS, 'path'), dot = document.createElementNS(NS, 'circle');
-    base.setAttribute('class', 'sbsa-wire-base'); live.setAttribute('class', 'sbsa-wire-live'); dot.setAttribute('class', 'sbsa-packet'); dot.setAttribute('r', '4.5');
-    [base, live].forEach((p) => p.setAttribute('d', d));
-    wires.append(base, live, dot);
-    const len = live.getTotalLength();
-    live.style.strokeDasharray = `${len} ${len}`;
-    return { base, live, dot, len, a, b };
-  }
-  function layout() {
-    const sw = stage.clientWidth;
-    shortLog = lines.clientWidth < 440;
-    mode = sw >= 900 ? 'wide' : 'narrow';
-    L = LAYOUT[mode];
-    k = mode === 'wide' ? Math.min(1, sw / L.w) : Math.min(1.25, sw / L.w);
-    canvas.dataset.layout = mode;
-    canvas.style.width = L.w + 'px'; canvas.style.height = L.h + 'px';
-    canvas.style.transform = `translateX(${Math.max(0, (sw - L.w * k) / 2)}px) scale(${k})`;
-    stage.style.height = L.h * k + 'px';
-    for (const n of NODES) { const [x, y, w, h] = L.nodes[n]; Object.assign(el[n].style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' }); }
-    wires.setAttribute('width', L.w); wires.setAttribute('height', L.h);
-    wires.innerHTML = ''; wire.length = 0;
-    const N = L.nodes, mid = (n) => [N[n][0] + N[n][2] / 2, N[n][1] + N[n][3] / 2];
-    const tasks = ['crm', 'doc', 'cal'];
-    if (mode === 'wide') {
-      const r = (n) => [N[n][0] + N[n][2], mid(n)[1]], l = (n) => [N[n][0], mid(n)[1]];
-      const c = (p, q) => { const mx = (p[0] + q[0]) / 2; return `M${p[0]} ${p[1]}C${mx} ${p[1]} ${mx} ${q[1]} ${q[0]} ${q[1]}`; };
-      wire.push(makeWire(c(r('mail'), l('agent')), ...T.ab));
-      tasks.forEach((n, i) => wire.push(makeWire(c(r('agent'), l(n)), ...T.bc[i])));
-      tasks.forEach((n, i) => wire.push(makeWire(c(r(n), l('result')), ...T.cd[i])));
-    } else {
-      const b = (n) => [mid(n)[0], N[n][1] + N[n][3]], tp = (n) => [mid(n)[0], N[n][1]];
-      const c = (p, q) => { const my = (p[1] + q[1]) / 2; return `M${p[0]} ${p[1]}C${p[0]} ${my} ${q[0]} ${my} ${q[0]} ${q[1]}`; };
-      wire.push(makeWire(c(b('mail'), tp('agent')), ...T.ab));
-      tasks.forEach((n, i) => wire.push(makeWire(c(b('agent'), tp(n)), ...T.bc[i])));
-      tasks.forEach((n, i) => wire.push(makeWire(c(b(n), tp('result')), ...T.cd[i])));
+  let seq = 0;
+  document.querySelectorAll('section.sbsa:not([data-sbsa])').forEach((root) => { root.dataset.sbsa = ''; init(root); });
+
+  function init(root) {
+    root.classList.add('is-js');
+    const h = root.querySelector('h2');                      // the section may be on a page twice: keep ids unique
+    if (h && h.id && document.querySelectorAll(`[id="${h.id}"]`).length > 1) { h.id += '-' + (++seq); root.setAttribute('aria-labelledby', h.id); }
+    const $ = (s) => root.querySelector(s), $$ = (s) => [...root.querySelectorAll(s)];
+    const stage = $('.sbsa-stage'), canvas = $('.sbsa-canvas'), wires = $('.sbsa-wires'), lines = $('[data-lines]');
+    const NS = 'http://www.w3.org/2000/svg';
+    const el = {}; NODES.forEach((k) => (el[k] = $(`[data-node="${k}"]`)));
+
+    // ── layout: positions, wires, chip anchors ─────────────────────────────
+    let mode = 'wide', L = LAYOUT.wide, shortLog = false;
+    const anchor = {}, wire = [];
+    function offset(node) {                                   // position inside the canvas in design units
+      let x = 0, y = 0, n = node;
+      while (n && n !== canvas) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
+      return { x, y, w: node.offsetWidth, h: node.offsetHeight };
     }
-    // chips start on the highlighted words in the mail and dock into the agent's tag slots
-    $$('[data-chip]').forEach((c, i) => {
-      const m = offset($(`[data-mark="${i}"]`)), s = offset($(`[data-slot="${i}"]`));
-      anchor[i] = { from: { x: m.x + m.w / 2 - c.offsetWidth / 2, y: m.y + m.h / 2 - c.offsetHeight / 2 }, to: { x: s.x, y: s.y } };
-    });
-    const btn = offset($('[data-btn]'));
-    anchor.btn = { x: btn.x + btn.w * 0.62, y: btn.y + btn.h * 0.45 };
-    anchor.cur0 = mode === 'wide' ? { x: anchor.btn.x + 120, y: anchor.btn.y + 90 } : { x: anchor.btn.x + 70, y: anchor.btn.y + 110 };
-  }
+    function makeWire(d, a, b) {
+      const base = document.createElementNS(NS, 'path'), live = document.createElementNS(NS, 'path'), dot = document.createElementNS(NS, 'circle');
+      base.setAttribute('class', 'sbsa-wire-base'); live.setAttribute('class', 'sbsa-wire-live'); dot.setAttribute('class', 'sbsa-packet'); dot.setAttribute('r', '4.5');
+      [base, live].forEach((p) => p.setAttribute('d', d));
+      wires.append(base, live, dot);
+      const len = live.getTotalLength(), pts = [];
+      for (let i = 0; i <= 64; i++) { const q = live.getPointAtLength(len * i / 64); pts.push(q.x, q.y); }   // sampled once: no layout per frame
+      live.style.strokeDasharray = `${len} ${len}`;
+      return { base, live, dot, len, pts, a, b };
+    }
+    function layout() {
+      const sw = stage.clientWidth;
+      if (!sw) return;
+      shortLog = lines.clientWidth < 440;
+      mode = sw >= 900 ? 'wide' : 'narrow';
+      L = LAYOUT[mode];
+      const k = mode === 'wide' ? Math.min(1, sw / L.w) : Math.min(1.25, sw / L.w);
+      canvas.dataset.layout = mode;
+      canvas.style.width = L.w + 'px'; canvas.style.height = L.h + 'px';
+      canvas.style.transform = `translateX(${Math.max(0, (sw - L.w * k) / 2)}px) scale(${k})`;
+      stage.style.height = L.h * k + 'px';
+      for (const n of NODES) { const [x, y, w, hh] = L.nodes[n]; Object.assign(el[n].style, { left: x + 'px', top: y + 'px', width: w + 'px', height: hh + 'px' }); }
+      wires.setAttribute('width', L.w); wires.setAttribute('height', L.h);
+      wires.innerHTML = ''; wire.length = 0;
+      const N = L.nodes, mid = (n) => [N[n][0] + N[n][2] / 2, N[n][1] + N[n][3] / 2];
+      const tasks = ['crm', 'doc', 'cal'];
+      if (mode === 'wide') {
+        const r = (n) => [N[n][0] + N[n][2], mid(n)[1]], l = (n) => [N[n][0], mid(n)[1]];
+        const c = (p, q) => { const mx = (p[0] + q[0]) / 2; return `M${p[0]} ${p[1]}C${mx} ${p[1]} ${mx} ${q[1]} ${q[0]} ${q[1]}`; };
+        wire.push(makeWire(c(r('mail'), l('agent')), ...T.ab));
+        tasks.forEach((n, i) => wire.push(makeWire(c(r('agent'), l(n)), ...T.bc[i])));
+        tasks.forEach((n, i) => wire.push(makeWire(c(r(n), l('result')), ...T.cd[i])));
+      } else {
+        const b = (n) => [mid(n)[0], N[n][1] + N[n][3]], tp = (n) => [mid(n)[0], N[n][1]];
+        const c = (p, q) => { const my = (p[1] + q[1]) / 2; return `M${p[0]} ${p[1]}C${p[0]} ${my} ${q[0]} ${my} ${q[0]} ${q[1]}`; };
+        wire.push(makeWire(c(b('mail'), tp('agent')), ...T.ab));
+        tasks.forEach((n, i) => wire.push(makeWire(c(b('agent'), tp(n)), ...T.bc[i])));
+        tasks.forEach((n, i) => wire.push(makeWire(c(b(n), tp('result')), ...T.cd[i])));
+      }
+      // chips start on the highlighted words in the mail and dock into the agent's tag slots
+      $$('[data-chip]').forEach((c, i) => {
+        const m = offset($(`[data-mark="${i}"]`)), s = offset($(`[data-slot="${i}"]`));
+        anchor[i] = { from: { x: m.x + m.w / 2 - c.offsetWidth / 2, y: m.y + m.h / 2 - c.offsetHeight / 2 }, to: { x: s.x, y: s.y } };
+      });
+      const bt = offset($('[data-btn]'));
+      anchor.btn = { x: bt.x + bt.w * 0.62, y: bt.y + bt.h * 0.45 };
+      anchor.cur0 = mode === 'wide'
+        ? { x: Math.min(anchor.btn.x + 120, L.w - 26), y: Math.min(anchor.btn.y + 90, L.h - 30) }
+        : { x: Math.min(anchor.btn.x + 90, L.w - 26), y: anchor.btn.y - 40 };
+    }
 
-  // ── seek(t): every style is a function of t ──────────────────────────────
-  const marks = $$('[data-mark]'), chips = $$('[data-chip]');
-  const logEls = LOG.map(([, ts, msg]) => { const d = document.createElement('div'); d.className = 'sbsa-line'; d.innerHTML = `<b>${ts}</b> · <span></span>`; lines.append(d); return d; });
-  const typed = $$('[data-type]'), docLines = $$('[data-line]');
-  const steps = $$('.sbsa-step');
-  function ring(node, t0, t1) {                               // emerald focus ring while a node works
-    const r = el[node].querySelector('.sbsa-ring'), on = outC(seg(t, t0, t0 + 0.25)) * (1 - outC(seg(t, t1, t1 + 0.4)));
-    r.style.opacity = on.toFixed(3);
-  }
-  let t = 0;
-  function seek(time) {
-    t = time;
-    const out = R(t);
-    // mail arrives
-    const mail = el.mail, mIn = spring(t - T.mail, 1.8, 0.62) * (1 - out);
-    mail.style.transform = `translateY(${((1 - mIn) * 18).toFixed(2)}px) scale(${(0.97 + 0.03 * mIn).toFixed(4)})`;
-    mail.style.opacity = cl(mIn * 1.6).toFixed(3);
-    mail.querySelectorAll('.sbsa-mask>*').forEach((s, i) => (s.style.transform = `translateY(${Math.max(rise(t, T.mail + 0.15 + i * 0.08), out * 105).toFixed(2)}%)`));
-    const nb = mail.querySelector('[data-new]'), nbS = spring(t - T.mail - 0.2, 2.6, 0.45) * (1 - outC(seg(t, T.read[0], T.read[0] + 0.3)));
-    nb.style.transform = `scale(${nbS.toFixed(4)})`;
-    ring('mail', T.mail, T.read[2] + 0.4);
-    // the agent reads: markers sweep over the key words, each word lifts off as a chip and docks in the agent
-    marks.forEach((m, i) => {
-      const p = outC(seg(t, T.read[i], T.read[i] + 0.3)) * (1 - out);
-      m.style.backgroundSize = `${(p * 100).toFixed(1)}% 100%, ${(p * 100).toFixed(1)}% 2px`;
-    });
-    chips.forEach((c, i) => {
-      const a = anchor[i]; if (!a) return;
-      const t0 = T.read[i] + T.lift, u = inOut(seg(t, t0, t0 + T.fly)), land = spring(t - t0 - T.fly, 2.6, 0.5);
-      const vis = t >= T.read[i] + 0.12 && out < 1;
-      c.style.visibility = vis ? 'visible' : 'hidden';
-      if (!vis) return;
-      const lift = outC(seg(t, T.read[i] + 0.12, t0));
-      const cx = (a.from.x + a.to.x) / 2 + (mode === 'wide' ? 0 : 70), cy = (a.from.y + a.to.y) / 2 - (mode === 'wide' ? 70 : 0);
-      const x = (1 - u) ** 2 * a.from.x + 2 * (1 - u) * u * cx + u * u * a.to.x, y = (1 - u) ** 2 * a.from.y + 2 * (1 - u) * u * cy + u * u * a.to.y;
-      const s = u < 1 ? 0.92 + 0.12 * lift : 0.94 + 0.06 * land;
-      const gone = 1 - outC(seg(t, T.reset + 0.1 * i, T.reset + 0.1 * i + 0.4));
-      c.style.transform = `translate(${x.toFixed(2)}px, ${(y - 8 * lift * (1 - u)).toFixed(2)}px) scale(${(s * gone).toFixed(4)})`;
-    });
-    // agent
-    const agent = el.agent, busy = t >= T.busy[0] && t < T.known;
-    agent.querySelector('[data-spin]').setAttribute('transform', `rotate(${busy ? ((t * 360) % 360).toFixed(1) : 0} 17 17)`);
-    agent.querySelector('[data-spin]').style.opacity = busy ? 1 : 0;
-    agent.querySelector('[data-state]').textContent = t < T.ab[0] || out > 0.5 ? 'wartet' : t < T.known ? 'liest …' : 'fertig';
-    agent.querySelector('[data-state]').style.color = t >= T.known && out < 0.5 ? '#6ee7b7' : '#94a3b8';
-    const roll = outC(seg(t, T.known, T.known + 0.35)) * (1 - out);
-    agent.querySelector('[data-roll="0"]').style.transform = `translateY(${(-roll * 110).toFixed(1)}%)`;
-    agent.querySelector('[data-roll="1"]').style.transform = `translateY(${((1 - roll) * 110).toFixed(1)}%)`;
-    ring('agent', T.ab[1], T.bc[2][1]);
-    // wires: drawn by a packet, then solid; at the reset they flow out at the far end
-    wire.forEach((w) => {
-      const p = inOut(seg(t, w.a, w.b)), q = outC(seg(t, T.reset, T.reset + 0.6));
-      w.live.style.strokeDashoffset = (w.len * (1 - p) - w.len * q).toFixed(2);
-      w.live.style.opacity = p > 0 && q < 1 ? 1 : 0;
-      const head = p > 0 && p < 1;
-      if (head) { const pt = w.live.getPointAtLength(w.len * p); w.dot.setAttribute('cx', pt.x.toFixed(2)); w.dot.setAttribute('cy', pt.y.toFixed(2)); }
-      w.dot.style.opacity = head ? 1 : 0;
-      w.base.style.strokeDashoffset = (-t * 14).toFixed(1);
-    });
-    // tasks
-    const task = (n, on, done) => {
-      const pop = spring(t - on, 2.2, 0.55) * (1 - out);
-      el[n].style.transform = `scale(${(0.985 + 0.015 * pop).toFixed(4)})`;
-      ring(n, on, done);
-      el[n].querySelectorAll('[data-done], [data-done-c]').forEach((b) => (b.style.transform = `scale(${(spring(t - done, 2.6, 0.45) * (1 - out)).toFixed(4)})`));
+    // ── render(t): every style is a function of t ──────────────────────────
+    const marks = $$('[data-mark]'), chips = $$('[data-chip]');
+    const logEls = LOG.map(([, ts]) => { const d = document.createElement('div'); d.className = 'sbsa-line'; d.innerHTML = `<b>${ts}</b> · <span></span>`; lines.append(d); return d; });
+    const typed = $$('[data-type]'), docLines = $$('[data-line]'), steps = $$('.sbsa-step');
+    const q = {
+      maskLines: [...el.mail.querySelectorAll('.sbsa-mask>*')], newBadge: $('[data-new]'), spin: $('[data-spin]'), state: $('[data-state]'),
+      roll0: $('[data-roll="0"]'), roll1: $('[data-roll="1"]'), rroll0: $('[data-rroll="0"]'), rroll1: $('[data-rroll="1"]'),
+      pdf: $('[data-pdf]'), slot: $('[data-slotpill]'), panel: $('[data-panel]'), cursor: $('[data-cursor]'), ripple: $('[data-ripple]'),
+      sent: $('[data-sent]'), time: $('[data-stat="time"]'), stats: $('.sbsa-stats'), logDot: $('.sbsa-log-lab i'),
     };
-    task('crm', T.crm.on, T.crm.done); task('doc', T.doc.on, T.doc.done); task('cal', T.cal.on, T.cal.done);
-    typed.forEach((s, i) => {
-      const full = s.dataset.type, a = T.crm.type[0] + i * 0.4, u = seg(t, a, a + 0.42);
-      const n = out > 0.3 ? 0 : Math.round(full.length * u);
-      s.innerHTML = full.slice(0, n) + (u > 0 && u < 1 ? '<i class="sbsa-caret"></i>' : '');
-    });
-    docLines.forEach((d, i) => { const u = outC(seg(t, T.doc.lines[0] + i * 0.3, T.doc.lines[0] + i * 0.3 + 0.35)) * (1 - out); d.style.transform = `scaleX(${u.toFixed(4)})`; d.style.background = u >= 1 ? '#94a3b8' : '#cfd8e3'; });
-    $('[data-pdf]').style.transform = `scale(${(spring(t - T.doc.pdf, 2.6, 0.45) * (1 - out)).toFixed(4)})`;
-    $('[data-slotpill]').style.transform = `translateY(${Math.max(rise(t, T.cal.slot, 0.45), out * 105).toFixed(1)}%)`;
-    // result: approval, a click, then the panel floods to "Versendet"
-    const res = el.result, rOn = spring(t - T.result, 2.0, 0.55) * (1 - out);
-    res.style.transform = `scale(${(0.97 + 0.03 * rOn).toFixed(4)})`;
-    res.style.filter = `saturate(${(0.35 + 0.65 * cl(rOn)).toFixed(3)})`;
-    ring('result', T.result, T.sent);
-    $('[data-panel]').style.transform = `translateY(${((1 - cl(rOn)) * 10).toFixed(2)}px)`;
-    $('[data-panel]').style.opacity = (0.35 + 0.65 * cl(rOn)).toFixed(3);
-    const cur = $('[data-cursor]'), cu = inOut(seg(t, T.cursor[0], T.cursor[1])), a0 = anchor.cur0, a1 = anchor.btn;
-    if (a0) {
-      const press = t >= T.press && t < T.press + 0.16 ? 0.86 : 1;
-      cur.style.transform = `translate(${(a0.x + (a1.x - a0.x) * cu).toFixed(2)}px, ${(a0.y + (a1.y - a0.y) * cu).toFixed(2)}px) scale(${press})`;
-      cur.style.opacity = (outC(seg(t, T.cursor[0], T.cursor[0] + 0.2)) * (1 - outC(seg(t, T.flood[1], T.flood[1] + 0.35)))).toFixed(3);
-    }
-    const rp = seg(t, T.press, T.press + 0.5);
-    $('[data-ripple]').style.transform = `scale(${(outC(rp) * 2.2).toFixed(3)})`;
-    $('[data-ripple]').style.opacity = rp > 0 && rp < 1 ? (1 - rp).toFixed(3) : 0;
-    const fl = inOut(seg(t, T.flood[0], T.flood[1]));        // floods out of the button; at the reset it wipes away downwards
-    $('[data-sent]').style.clipPath = out > 0 ? `inset(${(out * 100).toFixed(2)}% 0 0 0 round 14px)` : `circle(${(fl * 150).toFixed(2)}% at 62% 82%)`;
-    const rr = outC(seg(t, T.sent, T.sent + 0.35)) * (1 - out);
-    res.querySelector('[data-rroll="0"]').style.transform = `translateY(${(-rr * 110).toFixed(1)}%)`;
-    res.querySelector('[data-rroll="1"]').style.transform = `translateY(${((1 - rr) * 110).toFixed(1)}%)`;
-    // stats: the run time counts while the request is in flight
-    const run = cl(t - LOG[0][0], 0, LOG[LOG.length - 1][0] - LOG[0][0]);
-    $('[data-stat="time"]').textContent = `${fmt(t < LOG[0][0] || out > 0.5 ? 0 : run * (6.4 / (LOG[LOG.length - 1][0] - LOG[0][0])))}\u00a0s`;
-    const sys = [t >= T.mail, t >= T.crm.done, t >= T.cal.done, t >= T.doc.done].filter(Boolean).length;
-    $('[data-stat="sys"]').textContent = out > 0.5 ? 0 : sys;
-    // live log: the newest line types in at the bottom, older lines slide up and dim
-    let shown = LOG.map(([s]) => s <= t);
-    logEls.forEach((d, i) => {
-      if (!shown[i] || out >= 1) { d.style.display = 'none'; return; }
-      let r = 0;
-      for (let j = i + 1; j < LOG.length; j++) r += outC(seg(t, LOG[j][0], LOG[j][0] + 0.3));
-      d.style.display = r >= 3 ? 'none' : 'block';
-      d.style.transform = `translateY(${(-r * 22 + (1 - outC(seg(t, LOG[i][0], LOG[i][0] + 0.25))) * 22).toFixed(2)}px)`;
-      d.style.opacity = ((r < 1 ? 1 : r < 2 ? 0.55 : 0.3) * (1 - out)).toFixed(3);
-      const msg = LOG[i][shortLog ? 3 : 2], u = seg(t, LOG[i][0], LOG[i][0] + Math.min(0.6, msg.length * 0.012));
-      d.lastChild.textContent = msg.slice(0, Math.round(msg.length * u));
-    });
-    // stepper
-    const cur5 = STEPS.findIndex((s, i) => t >= s && t < STEPS[i + 1]);
-    steps.forEach((b, i) => {
-      const u = i < cur5 ? 1 : i > cur5 ? 0 : seg(t, STEPS[i], STEPS[i + 1]);
-      b.querySelector('i').style.transform = `scaleX(${u.toFixed(4)})`;
-      if (i === cur5) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
-    });
-  }
+    const rings = {}; NODES.forEach((n) => (rings[n] = el[n].querySelector('.sbsa-ring')));
+    const badges = {}; ['crm', 'doc', 'cal'].forEach((n) => (badges[n] = [...el[n].querySelectorAll('[data-done], [data-done-c]')]));
+    let t = 0, clock = 0, lastStep = -1;
+    const ring = (node, t0, t1) => (rings[node].style.opacity = (outC(seg(t, t0, t0 + 0.25)) * (1 - outC(seg(t, t1, t1 + 0.4)))).toFixed(3));
 
-  // ── playback: loops while visible, pauses off-screen, honours reduced motion, has a pause button ──
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const btn = $('.sbsa-play');
-  let playing = false, wantPlay = !reduce.matches, visible = false, last = 0, raf = 0, started = false;
-  function setBtn() {
-    btn.setAttribute('aria-pressed', String(playing));
-    btn.setAttribute('aria-label', playing ? 'Animation pausieren' : 'Animation abspielen');
-    btn.querySelector('.sbsa-i-play').style.display = playing ? 'none' : '';
-    btn.querySelector('.sbsa-i-pause').style.display = playing ? '' : 'none';
+    function render(time) {
+      t = time;
+      // mail arrives
+      const mIn = spring(t - T.mail, 1.8, 0.62);
+      el.mail.style.transform = `translateY(${((1 - mIn) * 18).toFixed(2)}px) scale(${(0.97 + 0.03 * mIn).toFixed(4)})`;
+      el.mail.style.opacity = cl(mIn * 1.6).toFixed(3);
+      q.maskLines.forEach((s, i) => (s.style.transform = `translateY(${rise(t, T.mail + 0.15 + i * 0.08).toFixed(2)}%)`));
+      const nbX = outC(seg(t, T.read[0], T.read[0] + 0.3));
+      q.newBadge.style.transform = `scale(${(spring(t - T.mail - 0.2, 2.6, 0.7) * (1 - nbX)).toFixed(4)})`;
+      q.newBadge.style.opacity = (1 - nbX).toFixed(3);
+      ring('mail', T.mail, T.read[2] + 0.4);
+      // the agent reads: markers sweep over the key words, each word lifts off as a chip and docks in the agent
+      marks.forEach((m, i) => {
+        const p = (outC(seg(t, T.read[i], T.read[i] + 0.3)) * 100).toFixed(1);
+        m.style.backgroundSize = `${p}% 100%, ${p}% 2px`;
+      });
+      chips.forEach((c, i) => {
+        const a = anchor[i]; if (!a) return;
+        const t0 = T.read[i] + T.lift, u = inOut(seg(t, t0, t0 + T.fly)), land = spring(t - t0 - T.fly, 2.6, 0.5);
+        const vis = t >= T.read[i] + 0.12;
+        c.style.visibility = vis ? 'visible' : 'hidden';
+        if (!vis) return;
+        const lift = outC(seg(t, T.read[i] + 0.12, t0));
+        // separate arcs: the first chip arcs over, the later ones swing in from below (or from the right on phones)
+        const cx = mode === 'narrow' ? L.w + 40 : i === 0 ? (a.from.x + a.to.x) / 2 : a.to.x + 24;
+        const cy = mode === 'narrow' ? a.to.y : i === 0 ? (a.from.y + a.to.y) / 2 - 70 : a.to.y + 60;
+        const x = (1 - u) ** 2 * a.from.x + 2 * (1 - u) * u * cx + u * u * a.to.x, y = (1 - u) ** 2 * a.from.y + 2 * (1 - u) * u * cy + u * u * a.to.y;
+        const s = u < 1 ? 0.92 + 0.12 * lift : 0.94 + 0.06 * land;
+        c.style.transform = `translate(${x.toFixed(2)}px, ${(y - 8 * lift * (1 - u)).toFixed(2)}px) scale(${s.toFixed(4)})`;
+      });
+      // agent
+      const busy = t >= T.busy[0] && t < T.known;
+      q.spin.setAttribute('transform', `rotate(${busy ? ((t * 360) % 360).toFixed(1) : 0} 17 17)`);
+      q.spin.style.opacity = busy ? 1 : 0;
+      put(q.state, 'textContent', t < T.ab[0] ? 'wartet' : t < T.known ? 'liest …' : 'fertig');
+      q.state.style.color = t >= T.known ? '#6ee7b7' : '#94a3b8';
+      const roll = outC(seg(t, T.known, T.known + 0.35));
+      q.roll0.style.transform = `translateY(${(-roll * 110).toFixed(1)}%)`;
+      q.roll1.style.transform = `translateY(${((1 - roll) * 110).toFixed(1)}%)`;
+      ring('agent', T.ab[1], T.bc[2][1]);
+      // wires: drawn by a packet, then solid
+      wire.forEach((w) => {
+        const p = inOut(seg(t, w.a, w.b));
+        w.live.style.strokeDashoffset = (w.len * (1 - p)).toFixed(2);
+        w.live.style.opacity = p > 0 ? 1 : 0;
+        const head = p > 0 && p < 1;
+        if (head) {
+          const f = p * 64, i = Math.min(63, f | 0), r = f - i, P = w.pts;
+          w.dot.setAttribute('cx', (P[2 * i] + (P[2 * i + 2] - P[2 * i]) * r).toFixed(2));
+          w.dot.setAttribute('cy', (P[2 * i + 1] + (P[2 * i + 3] - P[2 * i + 1]) * r).toFixed(2));
+        }
+        w.dot.style.opacity = head ? 1 : 0;
+        w.base.style.strokeDashoffset = (-(clock / T.LOOP) * 12 * Math.round(T.LOOP * 14 / 12)).toFixed(1);   // whole dash periods per loop
+      });
+      // tasks
+      const task = (n, on, done) => {
+        el[n].style.transform = `scale(${(0.985 + 0.015 * spring(t - on, 2.2, 0.55)).toFixed(4)})`;
+        ring(n, on, done);
+        badges[n].forEach((b) => (b.style.transform = `scale(${spring(t - done, 2.6, 0.45).toFixed(4)})`));
+      };
+      task('crm', T.crm.on, T.crm.done); task('doc', T.doc.on, T.doc.done); task('cal', T.cal.on, T.cal.done);
+      typed.forEach((s, i) => {
+        const full = s.dataset.type, a = T.crm.type[0] + i * 0.4, u = seg(t, a, a + 0.42);
+        put(s, 'innerHTML', full.slice(0, Math.round(full.length * u)) + (u > 0 && u < 1 ? '<i class="sbsa-caret"></i>' : ''));
+      });
+      docLines.forEach((d, i) => {
+        const u = outC(seg(t, T.doc.lines[0] + i * 0.3, T.doc.lines[0] + i * 0.3 + 0.35));
+        d.style.transform = `scaleX(${u.toFixed(4)})`; d.style.background = u >= 1 ? '#94a3b8' : '#cfd8e3';
+      });
+      q.pdf.style.transform = `scale(${spring(t - T.doc.pdf, 2.6, 0.45).toFixed(4)})`;
+      q.slot.style.transform = `translateY(${rise(t, T.cal.slot, 0.45).toFixed(1)}%)`;
+      // result: the offer arrives for approval, a click, then the panel floods to "Versendet"
+      const rOn = spring(t - T.result, 2.0, 0.55);
+      el.result.style.transform = `scale(${(0.97 + 0.03 * rOn).toFixed(4)})`;
+      el.result.style.filter = `saturate(${(0.35 + 0.65 * cl(rOn)).toFixed(3)})`;
+      ring('result', T.result, T.sent);
+      q.panel.style.transform = `translateY(${((1 - cl(rOn)) * 10).toFixed(2)}px)`;
+      q.panel.style.opacity = cl(rOn).toFixed(3);
+      const cu = inOut(seg(t, T.cursor[0], T.cursor[1])), a0 = anchor.cur0, a1 = anchor.btn;
+      if (a0) {
+        const press = t >= T.press && t < T.press + 0.16 ? 0.86 : 1;
+        q.cursor.style.transform = `translate(${(a0.x + (a1.x - a0.x) * cu).toFixed(2)}px, ${(a0.y + (a1.y - a0.y) * cu).toFixed(2)}px) scale(${press})`;
+        q.cursor.style.opacity = (outC(seg(t, T.cursor[0], T.cursor[0] + 0.2)) * (1 - outC(seg(t, T.flood[1], T.flood[1] + 0.35)))).toFixed(3);
+      }
+      const rp = seg(t, T.press, T.press + 0.5);
+      q.ripple.style.transform = `scale(${(outC(rp) * 2.2).toFixed(3)})`;
+      q.ripple.style.opacity = rp > 0 && rp < 1 ? (1 - rp).toFixed(3) : 0;
+      q.sent.style.clipPath = `circle(${(inOut(seg(t, T.flood[0], T.flood[1])) * 150).toFixed(2)}% at 62% 82%)`;
+      const rr = outC(seg(t, T.sent, T.sent + 0.35));
+      q.rroll0.style.transform = `translateY(${(-rr * 110).toFixed(1)}%)`;
+      q.rroll1.style.transform = `translateY(${((1 - rr) * 110).toFixed(1)}%)`;
+      // run time until the offer waits for approval (the human click is not part of it)
+      const run = cl(t - LOG[0][0], 0, T.result - LOG[0][0]) * RUN / (T.result - LOG[0][0]);
+      put(q.time, 'textContent', `${fmt(run)} s`);
+      // live log: the newest line types in at the bottom, older lines slide up and dim
+      logEls.forEach((d, i) => {
+        if (LOG[i][0] > t) { d.style.display = 'none'; return; }
+        let r = 0;
+        for (let j = i + 1; j < LOG.length; j++) r += outC(seg(t, LOG[j][0], LOG[j][0] + 0.3));
+        d.style.display = r >= 3 ? 'none' : 'block';
+        d.style.transform = `translateY(${(-r * 22 + (1 - outC(seg(t, LOG[i][0], LOG[i][0] + 0.25))) * 22).toFixed(2)}px)`;
+        d.style.opacity = r < 1 ? 1 : r < 2 ? 0.75 : 0.6;
+        const msg = LOG[i][shortLog ? 3 : 2], u = seg(t, LOG[i][0], LOG[i][0] + Math.min(0.6, msg.length * 0.012));
+        put(d.lastChild, 'textContent', msg.slice(0, Math.round(msg.length * u)));
+      });
+      // stepper (step 5 is complete once the end state has settled)
+      const cur = STEPS.findIndex((s, i) => t >= s && t < STEPS[i + 1]);
+      steps.forEach((b, i) => {
+        const end = i === 4 ? FINAL : STEPS[i + 1], u = i < cur ? 1 : i > cur ? 0 : seg(t, STEPS[i], end);
+        b.querySelector('i').style.transform = `scaleX(${u.toFixed(4)})`;
+      });
+      if (cur !== lastStep) { lastStep = cur; steps.forEach((b, i) => (i === cur ? b.setAttribute('aria-current', 'step') : b.removeAttribute('aria-current'))); }
+    }
+
+    // the loop: the end state fades out, the start state fades in, then the next request arrives
+    function seek(time) {
+      clock = time;
+      const fo = outC(seg(time, T.reset, T.reset + 0.45)), fi = outC(seg(time, T.reset + 0.5, T.LOOP));
+      const vis = time < T.reset ? 1 : time < T.reset + 0.5 ? 1 - fo : fi;
+      [canvas, q.stats, lines].forEach((e) => (e.style.opacity = vis.toFixed(3)));
+      render(time < T.reset ? time : time < T.reset + 0.5 ? T.reset - 0.001 : 0);
+      q.logDot.style.opacity = (0.65 + 0.35 * Math.cos(2 * Math.PI * time / (T.LOOP / 10))).toFixed(3);   // seamless across the loop
+    }
+
+    // ── playback: loops while on screen, pauses off-screen, honours reduced motion, has a pause button ──
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const btn = $('.sbsa-play');
+    let playing = false, wantPlay = !reduce.matches, visible = false, last = 0, raf = 0, started = false;
+    function setBtn() {
+      btn.setAttribute('aria-label', playing ? 'Animation pausieren' : 'Animation abspielen');
+      btn.querySelector('.sbsa-i-play').style.display = playing ? 'none' : '';
+      btn.querySelector('.sbsa-i-pause').style.display = playing ? '' : 'none';
+    }
+    function frame(now) {
+      if (!root.isConnected) { playing = false; return; }
+      const dt = Math.min(0.1, (now - last) / 1000); last = now;
+      seek((clock + dt) % T.LOOP);
+      raf = requestAnimationFrame(frame);
+    }
+    function update() {
+      const run = wantPlay && visible && !document.hidden;
+      if (run && !playing) { playing = true; last = performance.now(); raf = requestAnimationFrame(frame); }
+      if (!run && playing) { playing = false; cancelAnimationFrame(raf); }
+      setBtn();
+    }
+    btn.addEventListener('click', () => {
+      wantPlay = !wantPlay;
+      if (wantPlay && !started) seek(0);
+      started = true; update();
+    });
+    steps.forEach((b, i) => b.addEventListener('click', () => {
+      started = true;
+      if (reduce.matches) { wantPlay = false; seek(SETTLED[i]); update(); return; }
+      seek(STEPS[i] + 0.001); wantPlay = true; update();
+    }));
+    document.addEventListener('visibilitychange', update);
+    new IntersectionObserver((es) => {                          // a band in the middle of the viewport, so tall stages start too
+      visible = es[es.length - 1].isIntersecting;
+      if (visible && !started && wantPlay) { started = true; seek(0); }
+      update();
+    }, { rootMargin: '-30% 0px -30% 0px', threshold: 0 }).observe(stage);
+    reduce.addEventListener?.('change', () => { wantPlay = !reduce.matches; if (!wantPlay) seek(FINAL); update(); });
+    new ResizeObserver(() => { layout(); seek(clock); }).observe($('.sbsa-bar'));   // the bar's height never changes with the layout
+    (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => { layout(); seek(clock); });
+    layout(); seek(FINAL); setBtn();
+    root.__sbsa = { seek: (x) => { wantPlay = false; update(); seek(x); }, T };   // for tests and screenshots
   }
-  function frame(now) {
-    const dt = Math.min(0.1, (now - last) / 1000); last = now;
-    seek((t + dt) % T.LOOP);
-    raf = requestAnimationFrame(frame);
-  }
-  function update() {
-    const run = wantPlay && visible && !document.hidden;
-    if (run && !playing) { playing = true; last = performance.now(); raf = requestAnimationFrame(frame); }
-    if (!run && playing) { playing = false; cancelAnimationFrame(raf); }
-    setBtn();
-  }
-  btn.addEventListener('click', () => {
-    wantPlay = !wantPlay;
-    if (wantPlay && t >= FINAL - 0.01 && !started) seek(0);
-    started = true; update();
-  });
-  steps.forEach((b, i) => b.addEventListener('click', () => { seek(STEPS[i] + 0.001); wantPlay = true; started = true; update(); }));
-  document.addEventListener('visibilitychange', update);
-  new IntersectionObserver((es) => {
-    visible = es[0].isIntersecting;
-    if (visible && !started && wantPlay) { started = true; seek(0); }
-    update();
-  }, { threshold: 0.35 }).observe(stage);
-  reduce.addEventListener?.('change', () => { wantPlay = !reduce.matches; if (!wantPlay) seek(FINAL); update(); });
-  new ResizeObserver(() => { layout(); seek(t); }).observe(stage);
-  (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => { layout(); seek(wantPlay ? 0 : FINAL); });
-  layout(); seek(FINAL); setBtn();
-  root.__sbsa = { seek: (x) => { wantPlay = false; update(); seek(x); }, T };   // for tests and screenshots
 })();
 </script>
 </body>
