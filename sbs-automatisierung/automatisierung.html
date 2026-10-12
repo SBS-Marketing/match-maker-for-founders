@@ -245,7 +245,7 @@ body{margin:0;background:#fff;color:#0b1220;font-family:Manrope,system-ui,sans-s
       </div>
 
       <div class="sbsa-stats">
-        <div class="sbsa-stat"><strong data-stat="time">6,4 s</strong><span>Durchlaufzeit</span></div>
+        <div class="sbsa-stat"><strong data-stat="time">6,4&nbsp;s</strong><span>Durchlaufzeit</span></div>
         <div class="sbsa-stat"><strong>0</strong><span>manuelle Eingaben</span></div>
         <div class="sbsa-stat"><strong data-stat="sys">4</strong><span>Systeme verbunden</span></div>
       </div>
@@ -480,7 +480,7 @@ body{margin:0;background:#fff;color:#0b1220;font-family:Manrope,system-ui,sans-s
     res.querySelector('[data-rroll="1"]').style.transform = `translateY(${((1 - rr) * 110).toFixed(1)}%)`;
     // stats: the run time counts while the request is in flight
     const run = cl(t - LOG[0][0], 0, LOG[LOG.length - 1][0] - LOG[0][0]);
-    $('[data-stat="time"]').textContent = `${fmt(t < LOG[0][0] || out > 0.5 ? 0 : run * (6.4 / (LOG[LOG.length - 1][0] - LOG[0][0])))} s`;
+    $('[data-stat="time"]').textContent = `${fmt(t < LOG[0][0] || out > 0.5 ? 0 : run * (6.4 / (LOG[LOG.length - 1][0] - LOG[0][0])))}\u00a0s`;
     const sys = [t >= T.mail, t >= T.crm.done, t >= T.cal.done, t >= T.doc.done].filter(Boolean).length;
     $('[data-stat="sys"]').textContent = out > 0.5 ? 0 : sys;
     // live log: the newest line types in at the bottom, older lines slide up and dim
