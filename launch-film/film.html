@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Dein Co-Pilot · matchfoundr</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+:root{
+  --canvas:#FAF8F3; --surface:#FFFFFF; --cream:#FBFAF7;
+  --ink:#15140F; --ink-soft:#2A251F; --smoke:#6E665C; --faint:#9A9286;
+  --ember:#E2511C; --ember-light:#F2622A;
+  --indigo-grad:linear-gradient(155deg,#4B6FE2 0%,#3756C4 52%,#273F96 100%);
+  --ruled:rgba(21,20,15,0.09); --ruled-soft:rgba(21,20,15,0.055);
+  --iri:conic-gradient(from var(--a,0deg),#DB4B93,#E2511C,#D79014,#2E9E50,#13957A,#3A6FD6,#8A55D2,#DB4B93);
+  --sans:"Geist",system-ui,sans-serif; --mono:"Geist Mono",ui-monospace,monospace; --serif:"Instrument Serif",Georgia,serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000;overflow:hidden}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:var(--canvas);font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11"}
+#cam{position:absolute;left:0;top:0;width:0;height:0;transform-origin:0 0}
+.a{position:absolute}
+.mono{font-family:var(--mono);text-transform:uppercase}
+.mask{position:absolute;overflow:hidden}
+.mask>.in{display:block;white-space:pre}
+.hide{display:none!important}
+
+#glow{z-index:1;background:var(--iri)}
+#bezelIri{z-index:2;background:var(--iri)}
+#bezelInk{z-index:3;background:var(--ink)}
+#screen{z-index:4;overflow:hidden}
+#content{position:absolute;width:428px;height:900px}
+#chips{z-index:6}
+#dot{z-index:7}
+#ring{border-radius:50%;border-style:solid;border-color:var(--ember)}
+#shimmer{z-index:6}
+#flood{z-index:10;background:var(--ember);overflow:hidden}
+#cards{z-index:12}
+#chips,#cards,#cursor{left:0;top:0}
+#yes{z-index:20}
+#cursor{z-index:30}
+#hud{position:absolute;left:0;top:0;width:1920px;height:1080px;z-index:40;pointer-events:none}
+
+.bubble{position:absolute;overflow:hidden;border-radius:20px 20px 6px 20px;transform-origin:0 0}
+.btext{position:absolute;left:15px;top:12px;font-size:15px;line-height:21.5px;white-space:pre}
+.abubble{position:absolute;background:var(--surface);border:1px solid var(--ruled);border-radius:20px 20px 20px 6px;box-shadow:0 1px 2px rgba(21,20,15,.04),0 10px 26px -18px rgba(21,20,15,.18);overflow:hidden}
+.abubble .ln{position:absolute;left:15px;font-size:15px;line-height:21.5px;color:var(--ink-soft);white-space:pre}
+.chip{position:absolute;height:33px;padding:0 15px;border-radius:999px;color:#FBFAF7;font-size:14.5px;font-weight:620;display:flex;align-items:center;white-space:nowrap;transform-origin:50% 50%;box-shadow:0 10px 18px -12px rgba(21,20,15,.6)}
+
+.card{position:absolute;border-radius:28px;background:var(--ink);overflow:hidden;color:var(--cream);transform-origin:50% 50%}
+.card .ph{position:absolute;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.card .ph b{font-weight:700;letter-spacing:-.04em;color:rgba(251,250,247,.92)}
+.card .nm{position:absolute;font-weight:620;letter-spacing:-.015em;white-space:nowrap;transform-origin:0 0}
+.card .rl{position:absolute;font-family:var(--mono);letter-spacing:.13em;text-transform:uppercase;color:rgba(251,250,247,.52);white-space:nowrap;transform-origin:0 0}
+.card .ds{position:absolute;width:282px;font-size:15.5px;line-height:21px;color:rgba(251,250,247,.8)}
+.card .ft{position:absolute;display:flex;align-items:baseline;gap:7px;transform-origin:0 0}
+.card .ft b{font-size:30px;font-weight:720;color:var(--ember-light);letter-spacing:-.02em}
+.card .ft span{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:rgba(251,250,247,.5)}
+.card .ch{position:absolute;height:30px;padding:0 13px;border-radius:999px;border:1px solid rgba(251,250,247,.18);font-size:13px;font-weight:550;color:rgba(251,250,247,.82);display:flex;align-items:center}
+.card .best{position:absolute;height:34px;padding:0 14px 0 11px;border-radius:999px;background:var(--cream);color:var(--ink);font-size:14px;font-weight:650;display:flex;align-items:center;gap:8px;white-space:nowrap;transform-origin:0 50%;box-shadow:0 10px 24px -10px rgba(0,0,0,.5)}
+.card .best i{width:9px;height:9px;border-radius:50%;background:var(--ember);display:block}
+
+.pill{position:absolute;height:42px;border-radius:21px;font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden}
+.word{display:inline-block;overflow:hidden;vertical-align:top;padding:0 0 .16em;margin-bottom:-.16em}
+.word>span{display:inline-block}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="cam">
+    <div id="glow" class="a"></div>
+    <div id="bezelIri" class="a"></div>
+    <div id="bezelInk" class="a"></div>
+    <div id="screen" class="a"><div id="content"></div></div>
+    <div id="chips" class="a"></div>
+    <div id="shimmer" class="a"></div>
+    <div id="dot" class="a"></div>
+    <div id="flood" class="a"></div>
+    <div id="cards" class="a"></div>
+    <div id="yes" class="a pill"></div>
+    <svg id="cursor" class="a" width="22" height="30" viewBox="0 0 22 30" style="overflow:visible"><path d="M2 2 L2 24 L8 18.5 L12.5 28 L16 26.4 L11.6 17 L19.5 17 Z" fill="#15140F" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" style="filter:drop-shadow(0 3px 4px rgba(0,0,0,.28))"/></svg>
+  </div>
+  <div id="hud"></div>
+</div>
+<script src="vendor/mf-mascot-engine.js"></script>
+<script>
+'use strict';
+// ════════════════════════════════════════════════════════════════════════════
+// Every variable is declared up here, before the first seek(). seek(t) derives
+// every style from t alone: no CSS transitions, timers or state between frames.
+// ════════════════════════════════════════════════════════════════════════════
+const FPS = 60, BPM = 130, BEAT = 60 / BPM, BEATS = 32, DUR = BEATS * BEAT;
+const B = (b) => b * BEAT;
+
+// ── Copy (German) ───────────────────────────────────────────────────────────
+const REQUEST = ['Ich hab keine Lust mehr, alles', 'allein zu stemmen. Ich such einen', 'technischen Co-Founder'];
+const ANSWER1 = ['Gefunden: Anna Wojcik, Full-Stack', 'in Berlin, KI-Fokus – und ihr MVP', 'hat schon 50 Kunden.'];
+const ANSWER2 = ['Soll ich Freitag ein Kennenlernen', 'vorschlagen?'];
+const LINE1 = ['Du', 'hast', 'allein', 'gebaut.'];
+const LINE2 = ['Freitag', 'triffst', 'du', 'Anna.'];
+const CHIPS = [
+  ['Backend', '#3A6FD6'], ['B2B SaaS', '#13957A'], ['Berlin', '#D79014'],
+  ['Vollzeit', '#2E9E50'], ['Schon gegründet', '#8A55D2'], ['Design-Gespür', '#DB4B93'],
+];
+const PROFILES = [
+  { n: 'Lukas Thiel',  i: 'LT', r: 'DevOps · Leipzig',      d: 'Infra von null auf 40 Mio. Requests am Tag.', fit: 79, c: 'Teilzeit', hue: '#D79014' },
+  { n: 'Jonas Berger', i: 'JB', r: 'ML Engineer · München', d: 'Empfehlungssysteme für 30 Mio. Nutzer.',     fit: 82, c: 'Vollzeit', hue: '#3A6FD6' },
+  { n: 'Sofia Ruiz',   i: 'SR', r: 'Backend · Hamburg',     d: 'Rust und Postgres, vier Jahre Fintech.',     fit: 88, c: 'Vollzeit', hue: '#13957A' },
+  { n: 'Mehmet Kaya',  i: 'MK', r: 'Full-Stack · Köln',     d: 'Zwei Exits. Shippt jeden Freitag.',          fit: 86, c: 'Teilzeit', hue: '#8A55D2' },
+  { n: 'Lea Brandt',   i: 'LB', r: 'Frontend · Berlin',     d: 'Design-Systeme für drei Scale-ups.',         fit: 83, c: 'Vollzeit', hue: '#2E9E50' },
+  { n: 'Anna Wojcik',  i: 'AW', r: 'Full-Stack · Berlin',   d: 'KI-Fokus, 7 Jahre dabei. Ihr MVP hat 50 Kunden.', fit: 94, c: 'Vollzeit', hue: '#E2511C' },
+  { n: 'Priya Nair',   i: 'PN', r: 'Mobile · Berlin',       d: 'Drei Apps mit über einer Million Installs.', fit: 84, c: 'Vollzeit', hue: '#DB4B93' },
+  { n: 'Tim Hoffmann', i: 'TH', r: 'Backend · Stuttgart',   d: 'Payments-APIs für 2.000 Händler.',           fit: 80, c: 'Teilzeit', hue: '#E03A2E' },
+];
+const BEST = 5, STRIP_FROM = 2, STRIP_TO = 5, PITCH = 366, CH = 176;
+
+// ── Timeline (seconds) ──────────────────────────────────────────────────────
+const T_TYPE0 = B(0.3), T_TYPE1 = B(5.6), T_SEND = B(6);
+const T_SWAP = B(7.05);                 // send button becomes the Co-Pilot dot
+const TOSSES = [B(8), B(9), B(10), B(11)], AIR = 0.40;
+const T_DROP = B(12), FLOOD_IN = 0.35;
+const T_BURST = T_DROP + 0.27, T_SLIDE0 = B(13.1), T_SLIDE1 = B(14.75), T_LIFT = B(15);
+const T_EXIT = B(15.3), T_CONTRACT = B(16), CONTRACT = 0.46, T_FLY = B(16);
+const T_A1 = B(17), T_A2 = B(18), T_PILLS = B(18.5), T_CUR0 = B(18.7), T_CLICK = B(19.5), T_DONE = B(20.5);
+const T_PAGE = B(21), T_PAGE1 = B(22.6), T_LABEL_OUT = B(23);
+const T_L1 = B(23.3), T_L2 = B(25), T_LINES_OUT = B(27.5);
+const T_ROUTE0 = B(27.8), T_MEET = B(29.5), T_LOCK = B(30), T_END_TXT = B(30.5);
+
+// ── World geometry. Origin = phone-screen centre; screen is 428×900. ────────
+const SW = 428, SH = 900, BZ = 11, SX = -214, SY = -450;
+const BOX0 = { t: 112, b: 326, r: 26 }, BOX1 = { t: 0, b: 900, r: 51 };  // composer → screen (screen-local y)
+const ASK_SCALE = 1.3;
+const SEND_C = { x: SX + 386, y: SY + 286 };    // send button centre (world)
+const DOT_C = { x: 0, y: 60 }, DOT_R = 56;
+const FLOOD_R = 1200;
+
+// ── Measured at init (declared now, filled before the first seek) ─────────
+let bw = 0, bh = 0, bubbleL = 0, meta1T = 0, cardT = 0, a1T = 0, a1W = 0, a1H = 0, a2T = 0, a2W = 0, a2H = 0;
+let meta2T = 0, pillsT = 0, yesW = 0, sentW = 0, sentLW = 0, moreW = 0, yesWorld = null, wordmarkW = 0;
+let CAM_KEYS = [], KEYS = [];
+const els = {};
+let mascotUid = 0;
+
+// ── Math ────────────────────────────────────────────────────────────────────
+const clamp = (v, lo = 0, hi = 1) => (v < lo ? lo : v > hi ? hi : v);
+const lerp = (a, b, t) => a + (b - a) * t;
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const loglerp = (a, b, t) => Math.exp(lerp(Math.log(a), Math.log(b), t));
+const E = {
+  inOutCubic: (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2),
+  outCubic: (u) => 1 - Math.pow(1 - u, 3),
+  inCubic: (u) => u * u * u,
+  inOutSine: (u) => -(Math.cos(Math.PI * u) - 1) / 2,
+  outQuart: (u) => 1 - Math.pow(1 - u, 4),
+  linear: (u) => u,
+};
+const dInOutCubic = (u) => (u < 0.5 ? 12 * u * u : 3 * Math.pow(-2 * u + 2, 2));
+// Closed-form step response of a damped spring (0 → 1), t in seconds since start.
+function spring(t, f = 1.8, z = 0.7) {
+  if (t <= 0) return 0;
+  const w = 2 * Math.PI * f;
+  if (z >= 1) return 1 - Math.exp(-w * t) * (1 + w * t);
+  const wd = w * Math.sqrt(1 - z * z);
+  return 1 - Math.exp(-z * w * t) * (Math.cos(wd * t) + ((z * w) / wd) * Math.sin(wd * t));
+}
+// Normalised press curve: 0 → 1 at t = tau → 0.
+const press = (t, tau) => (t <= 0 ? 0 : (t / tau) * Math.exp(1 - t / tau));
+const rise = (t, t0, f = 2.4) => (1 - spring(t - t0, f, 1)) * 115;      // % translateY, from mask line
+const fall = (t, t0, d = 0.28) => -115 * E.inCubic(seg(t, t0, t0 + d)); // % translateY, out through mask
+const px = (v) => v.toFixed(2) + 'px';
+function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+// Typing rhythm: deterministic, slower around punctuation and word gaps.
+const TYPED = (() => {
+  const r = rng(0x7e57), chars = REQUEST.join(''), w = [];
+  for (let i = 0; i < chars.length; i++) {
+    const c = chars[i], prev = chars[i - 1] || '';
+    let k = 0.75 + r() * 0.7;
+    if (prev === ' ') k += 0.55 + r() * 0.5;
+    if (prev === ',' || prev === '.') k += 1.6;
+    if (r() < 0.12) k *= 0.45;   // quick pairs
+    w.push(k);
+  }
+  for (const n of [REQUEST[0].length, REQUEST[0].length + REQUEST[1].length]) w[n] += 0.9;  // eye moves to next line
+  const total = w.reduce((s, v) => s + v, 0), times = [];
+  let acc = 0;
+  for (let i = 0; i < w.length; i++) { acc += w[i]; times.push(T_TYPE0 + ((acc - w[0] * 0.5) / total) * (T_TYPE1 - T_TYPE0)); }
+  return times;
+})();
+const typedCount = (t) => { let n = 0; while (n < TYPED.length && TYPED[n] <= t) n++; return n; };
+
+// Chip toss parameters (fixed per toss so every frame agrees).
+const TOSS = TOSSES.map((t0, k) => {
+  const r = rng(0xc0ffee + k * 97);
+  return CHIPS.map((_, i) => ({
+    t0: t0 + i * 0.012, h: 120 + r() * 120, vx: (i - 2.5) * 42 + (r() - 0.5) * 30,
+    land: (r() - 0.5) * 30, rot0: (r() - 0.5) * 30, spin: (r() - 0.5) * 520, x0: (r() - 0.5) * 24,
+  }));
+});
+
+// Route geometry for the outro (screen space).
+const MEET = { x: 960, y: 480 }, MARK_K = 1.0;
+const ROUTE_L = [[-60, 820], [330, 820], [470, 300], [760, 300], [MEET.x, MEET.y]];
+const ROUTE_R = [[1980, 230], [1600, 230], [1440, 760], [1150, 760], [MEET.x, MEET.y]];
+const CHEV_L = [[8, 14], [62, 50], [8, 86]];
+const ROUTE_LD = roundedPoly(ROUTE_L, 60), ROUTE_RD = roundedPoly(ROUTE_R, 60);
+const CHEV_R = [[132, 14], [78, 50], [132, 86]];
+
+// ── Polyline helpers ────────────────────────────────────────────────────────
+function polyLen(p) { let s = 0; for (let i = 1; i < p.length; i++) s += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); return s; }
+function pointAt(p, d) {
+  for (let i = 1; i < p.length; i++) {
+    const l = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]);
+    if (d <= l || i === p.length - 1) { const u = l ? clamp(d / l) : 0; return [lerp(p[i - 1][0], p[i][0], u), lerp(p[i - 1][1], p[i][1], u)]; }
+    d -= l;
+  }
+  return p[p.length - 1];
+}
+function resample(p, n, upTo) {
+  const L = upTo === undefined ? polyLen(p) : upTo, out = [];
+  for (let i = 0; i < n; i++) out.push(pointAt(p, (L * i) / (n - 1)));
+  return out;
+}
+// Dense polyline with rounded (quadratic) corners, so drawing and morphing share one shape.
+function roundedPoly(pts, r) {
+  const out = [pts[0]];
+  for (let i = 1; i < pts.length - 1; i++) {
+    const [ax, ay] = pts[i - 1], [bx, by] = pts[i], [cx, cy] = pts[i + 1];
+    const l1 = Math.hypot(bx - ax, by - ay), l2 = Math.hypot(cx - bx, cy - by), rr = Math.min(r, l1 / 2, l2 / 2);
+    const p1 = [bx - ((bx - ax) / l1) * rr, by - ((by - ay) / l1) * rr], p2 = [bx + ((cx - bx) / l2) * rr, by + ((cy - by) / l2) * rr];
+    for (let k = 0; k <= 10; k++) { const u = k / 10; out.push([(1 - u) * (1 - u) * p1[0] + 2 * (1 - u) * u * bx + u * u * p2[0], (1 - u) * (1 - u) * p1[1] + 2 * (1 - u) * u * by + u * u * p2[1]]); }
+  }
+  out.push(pts[pts.length - 1]);
+  return out;
+}
+// Rounded polyline path (corner radius r) for the route.
+function roundedPath(pts, r) {
+  if (pts.length < 2) return '';
+  let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const [ax, ay] = pts[i - 1], [bx, by] = pts[i], [cx, cy] = pts[i + 1];
+    const l1 = Math.hypot(bx - ax, by - ay), l2 = Math.hypot(cx - bx, cy - by), rr = Math.min(r, l1 / 2, l2 / 2);
+    const p1 = [bx - ((bx - ax) / l1) * rr, by - ((by - ay) / l1) * rr], p2 = [bx + ((cx - bx) / l2) * rr, by + ((cy - by) / l2) * rr];
+    d += `L${p1[0].toFixed(1)} ${p1[1].toFixed(1)}Q${bx.toFixed(1)} ${by.toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+  }
+  const z = pts[pts.length - 1];
+  return d + `L${z[0].toFixed(1)} ${z[1].toFixed(1)}`;
+}
+// Part of a polyline between arc lengths s0 and s1.
+function subpath(p, s0, s1) {
+  const out = [pointAt(p, s0)];
+  let acc = 0;
+  for (let i = 1; i < p.length; i++) {
+    acc += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]);
+    if (acc > s0 && acc < s1) out.push(p[i]);
+  }
+  out.push(pointAt(p, s1));
+  return out;
+}
+const TAIL_END = 170;
+const tailLen = (u, d) => Math.min(d, lerp(900, TAIL_END, E.inOutSine(clamp((u - 0.45) / 0.55))));
+// Route travelled so far (arc length d), with the corner list truncated.
+function routeUpTo(p, d) {
+  const out = [p[0]];
+  for (let i = 1; i < p.length; i++) {
+    const l = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]);
+    if (d <= l) { const u = clamp(d / l); out.push([lerp(p[i - 1][0], p[i][0], u), lerp(p[i - 1][1], p[i][1], u)]); return out; }
+    out.push(p[i]); d -= l;
+  }
+  return out;
+}
+
+// ── DOM helpers ─────────────────────────────────────────────────────────────
+const $ = (id) => document.getElementById(id);
+function h(html, parent) { const t = document.createElement('template'); t.innerHTML = html.trim(); const n = t.content.firstChild; parent.appendChild(n); return n; }
+const ICON_SEND = (s) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>`;
+const COPILOT_MARK = (s, c, sp) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6l5 6-5 6"/><path d="M11 6l5 6-5 6"/><circle cx="20" cy="12" r="1.6" fill="${sp}" stroke="none"/></svg>`;
+function domWidth(str, css) { const s = document.createElement('span'); s.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;left:0;top:0;' + css; s.textContent = str; $('stage').appendChild(s); const w = s.getBoundingClientRect().width; s.remove(); return w; }
+function textWidth(str, font) { const c = textWidth.c || (textWidth.c = document.createElement('canvas').getContext('2d')); c.font = font; return c.measureText(str).width; }
+function setBox(el, l, t, w, hh) { el.style.left = px(l); el.style.top = px(t); el.style.width = px(w); el.style.height = px(hh); }
+
+// ════════════════════════════════════════════════════════════════════════════
+// Build
+// ════════════════════════════════════════════════════════════════════════════
+function build() {
+  const C = $('content');
+  ['glow', 'bezelIri', 'bezelInk', 'screen', 'chips', 'shimmer', 'dot', 'flood', 'cards', 'yes', 'cursor', 'hud'].forEach((k) => (els[k] = $(k)));
+
+  // measurements
+  const F15 = 'font-size:15px;font-weight:400';
+  bw = Math.ceil(Math.max(...REQUEST.map((l) => domWidth(l, F15)))) + 30;
+  bh = 3 * 21.5 + 24;
+  bubbleL = SW - 18 - bw;
+  meta1T = 150 + bh + 8;
+  cardT = meta1T + 26;
+  a1W = Math.ceil(Math.max(...ANSWER1.map((l) => domWidth(l, F15)))) + 32; a1H = ANSWER1.length * 21.5 + 24;
+  a2W = Math.ceil(Math.max(...ANSWER2.map((l) => domWidth(l, F15)))) + 32; a2H = ANSWER2.length * 21.5 + 24;
+  a1T = cardT + CH + 14; a2T = a1T + a1H + 10; meta2T = a2T + a2H + 8; pillsT = meta2T + 26;
+  const P = 'font-size:14.5px;font-weight:600';
+  yesW = Math.ceil(domWidth('Ja, Freitag', P)) + 40;
+  sentLW = domWidth('✓ Intro verschickt', P);
+  sentW = Math.ceil(sentLW) + 40;
+  moreW = Math.ceil(domWidth('Erst mehr zeigen', P)) + 40;
+  yesWorld = { l: SX + 18, t: SY + pillsT, cx: SX + 18 + sentW / 2, cy: SY + pillsT + 21 };
+  wordmarkW = domWidth('matchfoundr.', 'font-size:112px;font-weight:700;letter-spacing:-.035em');
+
+  // camera: [time, zoom, x, y, ease into this key]
+  CAM_KEYS = [
+    [0, 2.25, 0, -231, 'linear'],
+    [T_SEND, 3.0, 0, -231, 'inOutSine'],       // ask: one slow push
+    [B(8), 1.0, 0, 0, 'inOutCubic'],          // send: one pull back
+    [B(12), 1.0, 0, 30, 'inOutSine'],         // think: pan
+    [B(16), 1.08, 0, 20, 'inOutSine'],        // drop: push
+    [B(21), 1.08, 0, 110, 'inOutSine'],       // chat: pan
+    [B(23), 2.3, yesWorld.cx, yesWorld.cy, 'inOutCubic'],  // outro: push into the button
+    [DUR + 1, 2.3, yesWorld.cx, yesWorld.cy, 'linear'],
+  ];
+
+  // ── phone screen content (screen-local coords) ──
+  // status bar
+  h(`<div class="mask" style="left:36px;top:14px;height:24px;width:60px"><span class="in" id="s941" style="font-size:16px;font-weight:620;letter-spacing:-.01em;line-height:24px">9:41</span></div>`, C);
+  h(`<div class="a" id="island" style="top:11px;height:36px;border-radius:18px;background:var(--ink)"></div>`, C);
+  h(`<div class="mask" style="left:${SW - 108}px;top:17px;height:20px;width:80px"><span class="in" id="sicons"><svg width="76" height="14" viewBox="0 0 76 14" style="margin-top:3px">
+      <g fill="#15140F"><rect x="0" y="9" width="3.2" height="4.5" rx="1"/><rect x="5" y="6.5" width="3.2" height="7" rx="1"/><rect x="10" y="4" width="3.2" height="9.5" rx="1"/><rect x="15" y="1.5" width="3.2" height="12" rx="1"/></g>
+      <path d="M29 5.2a9 9 0 0 1 12 0M31.4 8a5.4 5.4 0 0 1 7.2 0" stroke="#15140F" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="35" cy="11.3" r="1.6" fill="#15140F"/>
+      <rect x="48.5" y="1.5" width="23" height="11" rx="3.4" stroke="#15140F" stroke-opacity=".4" fill="none"/><rect x="50.5" y="3.5" width="17" height="7" rx="1.8" fill="#15140F"/><rect x="73" y="5" width="1.8" height="4" rx=".9" fill="#15140F" fill-opacity=".4"/></svg></span></div>`, C);
+  // header
+  h(`<div class="a" id="hline" style="left:0;top:125px;width:${SW}px;height:1px;background:var(--ruled-soft);transform-origin:0 0"></div>`, C);
+  h(`<div class="a" id="havatar" style="left:20px;top:73px;width:40px;height:40px;border-radius:13px;background:var(--indigo-grad);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(39,63,150,.18),0 18px 30px -16px rgba(39,63,150,.55)">${COPILOT_MARK(19, '#fff', '#fff')}</div>`, C);
+  h(`<div class="mask" style="left:72px;top:72px;height:22px;width:200px"><span class="in" id="htitle" style="font-size:16px;font-weight:640;letter-spacing:-.01em;line-height:22px">Co-Pilot</span></div>`, C);
+  h(`<div class="mask mono" style="left:72px;top:96px;height:15px;width:240px;font-size:9.5px;letter-spacing:.14em;color:var(--faint)"><span class="in" id="hsub" style="line-height:15px;display:flex;align-items:center;gap:6px"><i style="width:6px;height:6px;border-radius:50%;background:#2E9E50;display:block"></i>Denkt mit · matchfoundr</span></div>`, C);
+  h(`<div class="a mono" id="htag" style="left:${SW - 66}px;top:82px;height:22px;padding:0 9px;border-radius:999px;background:var(--ink);color:var(--cream);font-size:9.5px;letter-spacing:.14em;display:flex;align-items:center;gap:6px;transform-origin:50% 50%"><i style="width:5px;height:5px;border-radius:50%;background:var(--ember);display:block"></i>KI</div>`, C);
+
+  // composer UI that only exists in the ask scene
+  h(`<div class="mask mono" style="left:24px;top:${BOX0.t + 20}px;height:18px;width:140px;font-size:10px;letter-spacing:.14em;color:var(--faint)"><span class="in" id="clabel" style="line-height:18px;display:flex;align-items:center;gap:7px">${COPILOT_MARK(14, '#3756C4', '#E2511C')}Co-Pilot</span></div>`, C);
+  h(`<div class="a" id="cplus" style="left:20px;top:${BOX0.b - 58}px;width:40px;height:40px;border-radius:13px;border:1px solid var(--ruled);display:flex;align-items:center;justify-content:center;color:var(--smoke);font-size:22px;font-weight:300;transform-origin:50% 50%">+</div>`, C);
+
+  h(`<div class="a" id="ring"></div>`, C);
+  // the user's message: typed in the composer, flooded into the bubble
+  const bub = h(`<div class="bubble" id="bubble" style="width:${bw}px;height:${bh}px"></div>`, C);
+  const lines = (id, color) => `<div class="btext" id="${id}" style="color:${color}">${REQUEST.map((_, i) => `<div style="height:21.5px"><span></span>${id === 'tink' ? '<i class="caret" style="display:inline-block;width:2px;height:17px;background:#3756C4;vertical-align:-3px;margin-left:1px"></i>' : ''}</div>`).join('')}</div>`;
+  h(lines('tink', 'var(--ink)'), bub);
+  const rip = h(`<div class="a" id="ripple" style="border-radius:50%;overflow:hidden;background:var(--ember)"></div>`, bub);
+  h(lines('tcream', 'var(--cream)'), rip);
+  h(`<div class="mask mono" style="right:20px;top:${meta1T}px;height:14px;width:140px;font-size:9.5px;letter-spacing:.1em;color:var(--faint);text-align:right"><span class="in" id="meta1" style="line-height:14px">Du · 09:41</span></div>`, C);
+
+  // answers
+  const ab = (id, top, w, hh, ls) => {
+    const m = h(`<div class="mask" style="left:18px;top:${top}px;width:${w + 4}px;height:${hh + 14}px"></div>`, C);
+    const b = h(`<div class="abubble" id="${id}" style="left:0;top:0;width:${w}px;height:${hh}px"></div>`, m);
+    ls.forEach((l, i) => h(`<div class="mask" style="left:15px;top:${12 + i * 21.5}px;height:21.5px;width:${w - 20}px"><span class="in ln" style="position:static;line-height:21.5px;color:var(--ink-soft);font-size:15px">${l}</span></div>`, b));
+    return b;
+  };
+  ab('a1', a1T, a1W, a1H, ANSWER1);
+  ab('a2', a2T, a2W, a2H, ANSWER2);
+  h(`<div class="mask mono" style="left:20px;top:${meta2T}px;height:14px;width:160px;font-size:9.5px;letter-spacing:.1em;color:var(--faint)"><span class="in" id="meta2" style="line-height:14px">Co-Pilot · 09:41</span></div>`, C);
+  h(`<div class="pill" id="more" style="top:${pillsT}px;width:${moreW}px;border:1.5px solid rgba(21,20,15,.18);color:var(--ink);background:var(--surface);display:flex;align-items:center;justify-content:center;transform-origin:0 50%">Erst mehr zeigen</div>`, C);
+
+  // bottom composer + home indicator
+  h(`<div class="a" id="bcomp" style="left:14px;top:${SH - 84}px;width:${SW - 28}px;height:50px;border-radius:18px;background:var(--surface);border:1px solid var(--ruled);display:flex;align-items:center;padding:0 6px 0 16px;font-size:14.5px;color:var(--faint)"><span style="flex:1">Frag deinen Co-Pilot…</span><span style="width:38px;height:38px;border-radius:13px;background:var(--indigo-grad);display:flex;align-items:center;justify-content:center">${ICON_SEND(17)}</span></div>`, C);
+  h(`<div class="a" id="homebar" style="top:${SH - 13}px;height:5px;border-radius:3px;background:var(--ink)"></div>`, C);
+
+  // ── send button → Co-Pilot dot (world) ──
+  h(`<div class="a" id="sendbg" style="left:0;top:0;width:100%;height:100%;background:var(--indigo-grad);box-shadow:0 2px 6px rgba(39,63,150,.18),0 18px 30px -16px rgba(39,63,150,.6)"></div>`, els.dot);
+  h(`<div class="a" id="sendarrow" style="left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px">${ICON_SEND(22)}</div>`, els.dot);
+  h(`<div class="a" id="sendfill" style="border-radius:50%;background:var(--ember)"></div>`, els.dot);
+  h(`<svg class="a" id="mascot" style="overflow:visible"></svg>`, els.dot);
+
+  // chips
+  CHIPS.forEach(([label, hue], i) => h(`<div class="chip" id="chip${i}" style="background:${hue}">${label}</div>`, els.chips));
+  // shimmer
+  h(`<div class="mask" style="left:-200px;top:0;width:400px;height:24px;text-align:center"><span class="in" id="shim" style="font-size:15px;font-weight:560;line-height:24px;letter-spacing:-.005em;background:linear-gradient(100deg,#9A9286 0%,#9A9286 38%,#15140F 50%,#9A9286 62%,#9A9286 100%);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent">Ich suche die passende Person…</span></div>`, els.shimmer);
+
+  // ── flood (carries a copy of the bubble's words) ──
+  h(`<div class="btext" id="fwords" style="color:var(--cream);transform-origin:0 0">${REQUEST.map((l) => `<div class="mask" style="position:relative;height:21.5px;width:${bw}px"><span class="in">${l}</span></div>`).join('')}</div>`, els.flood);
+
+  // ── cards ──
+  h(`<div class="mask mono" style="left:-220px;top:-268px;width:440px;height:22px;text-align:center;font-size:12.5px;letter-spacing:.16em;color:rgba(251,250,247,.86)"><span class="in" id="cardsHead" style="line-height:22px">8 Treffer für dich</span></div>`, els.cards);
+  PROFILES.forEach((p, i) => {
+    const c = h(`<div class="card" id="card${i}" style="width:330px;height:440px">
+      <div class="ph" style="background:radial-gradient(120% 90% at 25% 15%, ${p.hue} 0%, ${p.hue}cc 38%, #15140F 100%)"><b>${p.i}</b></div>
+      <div class="nm">${p.n}</div><div class="rl">${p.r}</div><div class="ds">${p.d}</div>
+      <div class="ft"><b>${p.fit}</b><span>FIT</span></div><div class="ch">${p.c}</div>
+      ${i === BEST ? '<div class="best"><i></i>Bester Treffer</div>' : ''}</div>`, els.cards);
+  });
+
+  // ── yes pill (world; becomes the outro page) ──
+  els.yes.innerHTML = `<div class="a" id="yesbg" style="left:0;top:0;width:100%;height:100%;background:var(--ink);border-radius:inherit"></div>
+    <div class="mask" id="yesmask" style="left:0;top:0;height:100%;width:100%"><span class="in" id="yeslabel" style="position:absolute;left:20px;top:0;line-height:42px;color:var(--cream)">Ja, Freitag</span></div>
+    <div class="mask" id="sentmask" style="left:0;top:0;height:100%;width:100%"><span class="in" id="sentlabel" style="position:absolute;top:0;line-height:42px;color:var(--cream);transform-origin:0 50%">✓ Intro verschickt</span></div>
+    <svg class="a" id="spinner" width="20" height="20" viewBox="0 0 20 20" style="left:50%;top:50%;margin:-10px 0 0 -10px"><circle cx="10" cy="10" r="7.5" fill="none" stroke="#FBFAF7" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="33 50"/></svg>`;
+
+  // ── HUD (screen space) ──
+  const hud = els.hud;
+  const line = (id, words, top) => {
+    const row = h(`<div class="a" id="${id}" style="left:0;top:${top}px;width:1920px;text-align:center;font-size:92px;font-weight:640;letter-spacing:-.035em;color:#FBFAF7;line-height:104px;white-space:nowrap"></div>`, hud);
+    words.forEach((w, i) => h(`<span class="word" style="margin:0 ${i < words.length - 1 ? '.24em' : '0'} 0 0"><span>${w === 'Anna.' ? '<em style="font-style:normal;color:#F2622A">Anna</em>.' : w}</span></span>`, row));
+  };
+  line('L1', LINE1, 428);
+  line('L2', LINE2, 536);
+  h(`<svg class="a" id="routes" width="1920" height="1080" viewBox="0 0 1920 1080" style="left:0;top:0;overflow:visible">
+      <path id="rl" fill="none" stroke="#FBFAF7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="rr" fill="none" stroke="#E2511C" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle id="dl" r="9" fill="#FBFAF7"/><circle id="dr" r="9" fill="#E2511C"/><circle id="dm" r="6" fill="#FBFAF7"/></svg>`, hud);
+  h(`<div class="mask" id="wmask" style="top:${MEET.y - 70}px;height:140px"><span class="in" id="wordmark" style="position:absolute;left:0;top:0;line-height:140px;font-weight:700;font-size:112px;letter-spacing:-.035em;color:#FBFAF7">matchfoundr<span style="color:#E2511C">.</span></span></div>`, hud);
+  h(`<div class="mask mono" style="left:560px;top:${MEET.y - 128}px;width:800px;height:26px;text-align:center;font-size:17px;letter-spacing:.34em;color:rgba(251,250,247,.5)"><span class="in" id="dein" style="line-height:26px">Dein</span></div>`, hud);
+  h(`<div class="mask" style="left:460px;top:${MEET.y + 84}px;width:1000px;height:150px;text-align:center"><span class="in" id="copilot" style="font-family:var(--serif);font-style:italic;font-size:132px;line-height:150px;color:#FBFAF7;letter-spacing:-.01em">Co-Pilot</span></div>`, hud);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// seek(t)
+// ════════════════════════════════════════════════════════════════════════════
+function camAt(t) {
+  let i = 1;
+  while (i < CAM_KEYS.length - 1 && t > CAM_KEYS[i][0]) i++;
+  const a = CAM_KEYS[i - 1], b = CAM_KEYS[i], e = E[b[4]](seg(t, a[0], b[0]));
+  return { z: loglerp(a[1], b[1], e), x: lerp(a[2], b[2], e), y: lerp(a[3], b[3], e) };
+}
+const tf = (el, v) => { el.style.transform = v; };
+const show = (el, on) => { el.classList.toggle('hide', !on); };
+
+function seek(t) {
+  // camera: one transform on one container
+  const cam = camAt(t);
+  tf($('cam'), `translate(960px,540px) scale(${cam.z.toFixed(5)}) translate(${(-cam.x).toFixed(3)}px,${(-cam.y).toFixed(3)}px)`);
+
+  // ── composer → phone ──
+  const grow = spring(t - (T_SEND + 0.05), 1.15, 1);
+  const top = lerp(BOX0.t, BOX1.t, grow), bot = lerp(BOX0.b, BOX1.b, grow), rad = lerp(BOX0.r, BOX1.r, grow);
+  const bx = { l: SX, t: SY + top, w: SW, h: bot - top };
+  const ink = 11 * grow, gl = lerp(14, 26, grow);
+  const ang = (t * 48) % 360;
+  setBox(els.glow, bx.l - gl, bx.t - gl, bx.w + gl * 2, bx.h + gl * 2);
+  els.glow.style.borderRadius = px(rad + gl);
+  els.glow.style.filter = `blur(${lerp(22, 34, grow).toFixed(2)}px)`;
+  els.glow.style.opacity = '0.78';
+  els.glow.style.setProperty('--a', ang.toFixed(2) + 'deg');
+  setBox(els.bezelIri, bx.l - 2, bx.t - 2, bx.w + 4, bx.h + 4);
+  els.bezelIri.style.borderRadius = px(rad + 2);
+  els.bezelIri.style.setProperty('--a', ang.toFixed(2) + 'deg');
+  setBox(els.bezelInk, bx.l - ink, bx.t - ink, bx.w + ink * 2, bx.h + ink * 2);
+  els.bezelInk.style.borderRadius = px(rad + ink);
+  els.bezelInk.style.boxShadow = `0 ${px(60 * grow)} ${px(120 * grow)} ${px(-50 * grow)} rgba(21,20,15,.55)`;
+  setBox(els.screen, bx.l, bx.t, bx.w, bx.h);
+  els.screen.style.borderRadius = px(rad);
+  const bg = Math.round(lerp(255, 250, grow)), bg2 = Math.round(lerp(255, 248, grow)), bg3 = Math.round(lerp(255, 243, grow));
+  els.screen.style.background = `rgb(${bg},${bg2},${bg3})`;
+  $('content').style.top = px(-top);
+
+  // status bar + header
+  const isl = spring(t - B(6.85), 2.0, 0.75);
+  const iw = 124 * isl;
+  $('island').style.left = px(SW / 2 - iw / 2); $('island').style.width = px(iw);
+  tf($('s941'), `translateY(${rise(t, B(7.0)).toFixed(2)}%)`);
+  tf($('sicons'), `translateY(${rise(t, B(7.05)).toFixed(2)}%)`);
+  tf($('hline'), `scaleX(${E.outCubic(seg(t, B(7.0), B(7.7))).toFixed(4)})`);
+  tf($('havatar'), `scale(${spring(t - B(7.05), 2.2, 0.55).toFixed(4)})`);
+  tf($('htitle'), `translateY(${rise(t, B(7.12)).toFixed(2)}%)`);
+  tf($('hsub'), `translateY(${rise(t, B(7.2)).toFixed(2)}%)`);
+  tf($('htag'), `scale(${spring(t - B(7.25), 2.2, 0.55).toFixed(4)})`);
+
+  // composer-only UI
+  tf($('clabel'), `translateY(${(t < T_SEND ? rise(t, -1) : fall(t, T_SEND, 0.22)).toFixed(2)}%)`);
+  tf($('cplus'), `scale(${(1 - E.inCubic(seg(t, T_SEND, T_SEND + 0.2))).toFixed(4)})`);
+
+  // typed text (fixed lines) + caret
+  const n = typedCount(t);
+  const caretOn = t < T_SEND;
+  for (const id of ['tink', 'tcream']) {
+    const rows = $(id).children;
+    let rem = n;
+    for (let i = 0; i < 3; i++) {
+      const take = Math.min(rem, REQUEST[i].length);
+      rows[i].firstChild.textContent = REQUEST[i].slice(0, take);
+      rem -= take;
+      if (id === 'tink') {
+        const lineIdx = n >= REQUEST[0].length + REQUEST[1].length ? 2 : n >= REQUEST[0].length ? 1 : 0;
+        const caret = rows[i].querySelector('.caret');
+        show(caret, caretOn && i === lineIdx);
+      }
+    }
+  }
+
+  // ripple floods the message into a bubble, which flies to its chat slot
+  const bub = $('bubble');
+  const move = spring(t - (T_SEND + 0.3), 1.35, 0.82);
+  const s = lerp(ASK_SCALE, 1, move);
+  const bl = lerp(24 - 15 * ASK_SCALE, bubbleL, move), btp = lerp(BOX0.t + 52 - 12 * ASK_SCALE, 150, move);
+  tf(bub, `translate(${px(bl)},${px(btp)}) scale(${s.toFixed(4)})`);
+  show(bub, t < T_CONTRACT || t >= T_CONTRACT + CONTRACT);   // the flood carries the only copy while it contracts
+  // ripple centre: the send button, in bubble-local units of the ask pose
+  const rcx = (386 - (24 - 15 * ASK_SCALE)) / ASK_SCALE, rcy = (286 - (BOX0.t + 52 - 12 * ASK_SCALE)) / ASK_SCALE;
+  const rr = 340 * E.outCubic(seg(t, T_SEND, T_SEND + 0.36));
+  const rip = $('ripple');
+  setBox(rip, rcx - rr, rcy - rr, rr * 2, rr * 2);
+  $('tcream').style.left = px(15 - (rcx - rr)); $('tcream').style.top = px(12 - (rcy - rr));
+  const shadowK = seg(t, T_SEND + 0.2, T_SEND + 0.6);
+  bub.style.boxShadow = `0 ${px(14 * shadowK)} ${px(28 * shadowK)} ${px(-18 * shadowK)} rgba(178,59,14,.7)`;
+  tf($('meta1'), `translateY(${rise(t, B(6.95)).toFixed(2)}%)`);
+
+  // ring ripple spreading from the send button (width shrinks to zero, no fade)
+  const ringU = seg(t, T_SEND, T_SEND + 0.42), ringR = 22 + 280 * E.outCubic(ringU), ringW = 12 * (1 - ringU);
+  show(els.ring, ringU > 0 && ringU < 1);
+  setBox(els.ring, 386 - ringR, 286 - ringR, ringR * 2, ringR * 2);
+  els.ring.style.borderWidth = px(ringW);
+
+  // bottom composer rises in from the screen edge
+  tf($('bcomp'), `translateY(${px(120 * (1 - spring(t - B(7.3), 1.9, 1)))})`);
+  const hb = 140 * E.outCubic(seg(t, B(7.4), B(7.9)));
+  $('homebar').style.left = px(SW / 2 - hb / 2); $('homebar').style.width = px(hb);
+
+  // ── send button → Co-Pilot dot ──
+  const dotEl = els.dot;
+  const dotVisible = t < T_DROP + 0.2;
+  show(dotEl, dotVisible);
+  if (dotVisible) {
+    const m = spring(t - B(6.25), 1.25, 0.86);
+    const my = spring(t - B(6.25), 1.25, 0.72);
+    const size = lerp(44, DOT_R * 2, m), radius = lerp(15, DOT_R, m);
+    const cx = lerp(SEND_C.x, DOT_C.x, m), cy = lerp(SEND_C.y, DOT_C.y, my);
+    // press on send, squash + hop on each toss
+    let sx = 1 - 0.12 * press(t - (T_SEND - 0.05), 0.05), sy = sx, hop = 0;
+    for (const t0 of [...TOSSES, T_DROP]) {
+      const pre = seg(t, t0 - 0.13, t0), post = t - t0;
+      if (pre > 0 && pre < 1) { const k = E.inCubic(pre); sx *= 1 + 0.12 * k; sy *= 1 - 0.18 * k; }
+      if (post >= 0 && post < 0.6) {
+        const k = Math.exp(-7 * post) * Math.cos(2 * Math.PI * 3.2 * post);
+        sx *= 1 + 0.12 * k - 0.0; sy *= 1 - 0.18 * k;
+        if (t0 !== T_DROP && post < 0.26) hop = -22 * 4 * (post / 0.26) * (1 - post / 0.26);
+      }
+    }
+    setBox(dotEl, cx - size / 2, cy - size / 2 + hop, size, size);
+    dotEl.style.transformOrigin = '50% 100%';
+    tf(dotEl, `scale(${sx.toFixed(4)},${sy.toFixed(4)})`);
+    const sb = $('sendbg'); sb.style.borderRadius = px(radius);
+    tf($('sendarrow'), `scale(${(1 - E.inCubic(seg(t, B(6.25), B(6.55)))).toFixed(4)})`);
+    const fr = (size / 2) * 1.5 * E.outCubic(seg(t, B(6.35), B(6.95)));
+    setBox($('sendfill'), size / 2 - fr, size / 2 - fr, fr * 2, fr * 2);
+    const swapped = t >= T_SWAP;
+    show(sb, !swapped); show($('sendfill'), !swapped);
+    const ms = $('mascot');
+    show(ms, swapped);
+    if (swapped) {
+      const M = window.MFMascot, eng = new M.BotEngine(M.RAYON, 'idle');
+      eng.reset('idle', 0);
+      eng.blinkAt = T_SWAP - 0.1;
+      if (t >= B(11.3)) eng.setState('wide', B(11.3));
+      const box = (size / 2) * (M.VB / M.RAYON) * 2;
+      ms.setAttribute('viewBox', `${-M.VB} ${-M.VB} ${M.VB * 2} ${M.VB * 2}`);
+      setBox(ms, size / 2 - box / 2, size / 2 - box / 2, box, box);
+      ms.innerHTML = M.svgMarkup(eng.sample(t), 'mfd', '#E2511C', '#FAF8F3', '#3756C4');
+    }
+  }
+
+  // chips tossed on beats 8, 9, 10, 11
+  for (let i = 0; i < CHIPS.length; i++) {
+    const c = $('chip' + i);
+    let on = false;
+    for (const toss of TOSS) {
+      const p = toss[i], u = (t - p.t0) / AIR;
+      if (u <= 0 || u >= 1) continue;
+      on = true;
+      const x = DOT_C.x + p.x0 + p.vx * AIR * u * (1 - u) * 1.8 + p.land * u;
+      const y = DOT_C.y - 20 - 4 * p.h * u * (1 - u);
+      const sc = Math.min(E.outCubic(clamp(u / 0.28)), 1 - E.inCubic(clamp((u - 0.62) / 0.38)) * 0.85);
+      c.style.left = px(x); c.style.top = px(y);
+      tf(c, `translate(-50%,-50%) rotate(${(p.rot0 + p.spin * u * AIR).toFixed(2)}deg) scale(${sc.toFixed(4)})`);
+    }
+    show(c, on);
+  }
+
+  // shimmering status under the dot
+  show(els.shimmer, t < T_DROP + 0.3);
+  els.shimmer.style.left = px(0); els.shimmer.style.top = px(DOT_C.y + 82);
+  tf($('shim'), `translateY(${rise(t, B(7.55)).toFixed(2)}%)`);
+  $('shim').style.backgroundPosition = `${(100 - ((t * 0.9) % 1.4) / 1.4 * 140).toFixed(2)}% 0`;
+
+  // ── drop: ember flood, then it contracts back into the bubble ──
+  const fl = els.flood;
+  const cU = seg(t, T_CONTRACT, T_CONTRACT + CONTRACT);
+  const floodOn = t >= T_DROP && cU < 1;
+  show(fl, floodOn);
+  if (floodOn) {
+    const inU = E.inOutSine(seg(t, T_DROP, T_DROP + FLOOD_IN));
+    const R = lerp(DOT_R, FLOOD_R, inU);
+    const e = E.inOutCubic(cU);
+    const bwW = bw, bhW = bh;
+    const bcx = SX + bubbleL + bw / 2, bcy = SY + 150 + bh / 2;
+    const w = loglerp(R * 2, bwW, e), hh = loglerp(R * 2, bhW, e);
+    const cx = lerp(DOT_C.x, bcx, E.inOutCubic(clamp(cU * 1.1))), cy = lerp(DOT_C.y, bcy, E.inOutCubic(cU));
+    setBox(fl, cx - w / 2, cy - hh / 2, w, hh);
+    const r1 = Math.min(loglerp(R, 20, e), w / 2, hh / 2), r2 = Math.min(loglerp(R, 6, e), w / 2, hh / 2);
+    fl.style.borderRadius = `${px(r1)} ${px(r1)} ${px(r2)} ${px(r1)}`;
+    const ws = loglerp(2.3, 1, e);
+    const fw = $('fwords');
+    fw.style.left = px(w / 2 - (bw / 2) * ws + 15 * ws); fw.style.top = px(hh / 2 - (bh / 2) * ws + 12 * ws);
+    fw.style.transformOrigin = '0 0';
+    tf(fw, `scale(${ws.toFixed(4)})`);
+    const rows = fw.children;
+    for (let i = 0; i < rows.length; i++) tf(rows[i].firstChild, `translateY(${rise(t, B(15.9) + i * 0.05, 2.6).toFixed(2)}%)`);
+  }
+
+  // cards: burst from the centre, slide three cards, lift the best match
+  const cardsOn = t >= T_BURST - 0.02;
+  show(els.cards, cardsOn);
+  if (cardsOn) {
+    tf($('cardsHead'), `translateY(${(t < T_EXIT ? rise(t, B(12.95)) : fall(t, T_EXIT, 0.25)).toFixed(2)}%)`);
+    const su = seg(t, T_SLIDE0, T_SLIDE1);
+    const S = lerp(STRIP_FROM, STRIP_TO, E.inOutCubic(su));
+    const vel = dInOutCubic(su) * (su > 0 && su < 1 ? 1 : 0);
+    for (let i = 0; i < PROFILES.length; i++) {
+      const c = $('card' + i);
+      const order = Math.abs(i - STRIP_FROM);
+      const bt = T_BURST + order * 0.03;
+      const k = spring(t - bt, 2.0, 0.62);
+      const kp = spring(t - bt, 2.0, 0.8);
+      let x = lerp(DOT_C.x, (i - S) * PITCH, kp), y = lerp(DOT_C.y, 20, kp);
+      let sc = lerp(0.18, 1, k), rot = lerp((i - STRIP_FROM) * 7, 0, kp) - vel * 1.2;
+      if (i === BEST) { const L = spring(t - T_LIFT, 2.1, 0.62); y -= 26 * L; sc *= 1 + 0.045 * L; }
+      else if (t >= T_EXIT) { x += Math.sign(i - BEST) * 1150 * E.inCubic(seg(t, T_EXIT, T_EXIT + 0.5)); }
+      show(c, t >= bt);
+      if (i !== BEST || t < T_FLY) {
+        setBox(c, x - 165, y - 220, 330, 440);
+        c.style.zIndex = '';
+        c.style.borderRadius = '28px';
+        tf(c, `rotate(${rot.toFixed(3)}deg) scale(${sc.toFixed(4)})`);
+        c.style.boxShadow = i === BEST ? `0 ${px(34 + 16 * spring(t - T_LIFT, 2.1, 0.62))} 90px -30px rgba(70,16,0,.62)` : '0 34px 60px -30px rgba(70,16,0,.5)';
+        layoutCard(c, 0, i === BEST ? spring(t - T_LIFT, 2.4, 0.55) : 0);
+      } else {
+        // the chosen card flies into its slot in the chat
+        const q = spring(t - T_FLY, 1.45, 0.86), qy = spring(t - T_FLY, 1.45, 0.95);
+        const W0 = 330 * 1.045, H0 = 440 * 1.045;
+        const tx = SX + 18, ty = SY + cardT;
+        const cx0 = 0, cy0 = 20 - 26, cx1 = tx + 150, cy1 = ty + CH / 2;
+        const w = loglerp(W0, 300, q), hh = loglerp(H0, CH, q);
+        const cx = lerp(cx0, cx1, q), cy = lerp(cy0, cy1, qy);
+        setBox(c, cx - w / 2, cy - hh / 2, w, hh);
+        c.style.borderRadius = px(lerp(28 * 1.045, 20, q));
+        tf(c, 'none');
+        c.style.zIndex = '13';
+        c.style.boxShadow = `0 ${px(lerp(50, 18, q))} ${px(lerp(90, 36, q))} ${px(lerp(-30, -22, q))} rgba(${Math.round(lerp(70, 21, q))},${Math.round(lerp(16, 20, q))},${Math.round(lerp(0, 15, q))},.6)`;
+        layoutCard(c, q, 1, 1.045);
+      }
+    }
+  }
+
+  // ── chat ──
+  const a1 = $('a1'), a2 = $('a2');
+  tf(a1, `translateY(${px((1 - spring(t - T_A1, 2.0, 0.9)) * (a1H + 30))})`);
+  [...a1.querySelectorAll('.in')].forEach((l, i) => tf(l, `translateY(${rise(t, T_A1 + 0.06 + i * 0.07).toFixed(2)}%)`));
+  tf(a2, `translateY(${px((1 - spring(t - T_A2, 2.0, 0.9)) * (a2H + 30))})`);
+  [...a2.querySelectorAll('.in')].forEach((l, i) => tf(l, `translateY(${rise(t, T_A2 + 0.06 + i * 0.07).toFixed(2)}%)`));
+  tf($('meta2'), `translateY(${rise(t, B(18.25)).toFixed(2)}%)`);
+
+  // pills, click, spinner, sent
+  const pillPop = spring(t - T_PILLS, 2.3, 0.55), morePop = spring(t - (T_PILLS + 0.07), 2.3, 0.55);
+  const clickPress = press(t - (T_CLICK - 0.04), 0.06);
+  const doneK = spring(t - (T_DONE - 0.12), 2.8, 0.8);   // pill widens just ahead of its new label
+  const yw = lerp(yesW, sentW, doneK);
+  const yes = els.yes;
+  show(yes, t >= T_PILLS);
+  const pageU = E.inOutCubic(seg(t, T_PAGE, T_PAGE1));
+  const ph = loglerp(42, 760, pageU), pw = lerp(yw, sentW + 1560, pageU);
+  const pcx = yesWorld.l + yw / 2 + (yesWorld.cx - (yesWorld.l + yw / 2)) * pageU, pcy = yesWorld.cy;
+  setBox(yes, pcx - pw / 2, pcy - ph / 2, pw, ph);
+  yes.style.borderRadius = px(ph / 2);
+  yes.style.transformOrigin = t < T_PAGE ? '0 50%' : '50% 50%';
+  tf(yes, `scale(${(pillPop * (1 - 0.06 * clickPress)).toFixed(4)})`);
+  yes.style.boxShadow = `0 ${px(14 * pillPop)} ${px(26 * pillPop)} ${px(-16 * pillPop)} rgba(21,20,15,.7)`;
+  // labels
+  $('yeslabel').style.transform = `translateY(${fall(t, T_CLICK, 0.14).toFixed(2)}%)`;
+  const sp = $('spinner');
+  const spinK = spring(t - (T_CLICK + 0.06), 2.6, 0.6) * (1 - E.inCubic(seg(t, T_DONE - 0.08, T_DONE + 0.02)));
+  show(sp, spinK > 0.001);
+  tf(sp, `rotate(${((t - T_CLICK) * 560).toFixed(1)}deg) scale(${spinK.toFixed(4)})`);
+  // sent label: rises, then grows to headline size with the page, then slides away
+  const fsW = loglerp(14.5, 40, E.inOutCubic(seg(t, T_PAGE, B(22.7))));
+  const sl = $('sentlabel');
+  sl.style.fontSize = px(fsW);
+  const lh = fsW * 2.9;
+  sl.style.lineHeight = px(lh);
+  const lw = sl.offsetWidth;
+  sl.style.left = px(lerp(20, pw / 2 - lw / 2, pageU));
+  const sm = $('sentmask');
+  sm.style.top = px(ph / 2 - lh / 2); sm.style.height = px(lh);
+  tf(sl, `translateY(${(t < T_LABEL_OUT ? rise(t, T_DONE - 0.08, 3.4) : fall(t, T_LABEL_OUT, 0.3)).toFixed(2)}%)`);
+  $('yesmask').style.top = px(ph / 2 - 21); $('yesmask').style.height = '42px';
+  // "Erst mehr zeigen" pops, then makes room for the sent label
+  const more = $('more');
+  more.style.left = px(18 + yw + 12);
+  tf(more, `scale(${morePop.toFixed(4)})`);
+
+  // cursor glides in, clicks, leaves
+  const cur = els.cursor;
+  show(cur, t >= T_CUR0 && t < B(20.9));
+  const cm = E.inOutCubic(seg(t, T_CUR0, T_CLICK - 0.06));
+  const cOut = E.inCubic(seg(t, B(19.95), B(20.9)));
+  const tx = yesWorld.l + yesW - 26, ty = yesWorld.t + 26;
+  tf(cur, `translate(${px(lerp(tx + 150, tx, cm) + 260 * cOut)},${px(lerp(ty + 210, ty, cm) + 160 * cOut)}) scale(${(1 - 0.16 * clickPress).toFixed(4)})`);
+
+  // ── HUD: outro lines, routes, mark, end card ──
+  [['L1', T_L1], ['L2', T_L2]].forEach(([id, t0]) => {
+    const words = $(id).children;
+    for (let i = 0; i < words.length; i++) {
+      const tin = t0 + i * B(0.5), tout = T_LINES_OUT + (id === 'L2' ? 0.06 : 0) + i * 0.025;
+      tf(words[i].firstChild, `translateY(${(t < tout ? rise(t, tin, 2.3) : fall(t, tout, 0.26)).toFixed(2)}%)`);
+    }
+  });
+  const rl = $('rl'), rrp = $('rr'), dl = $('dl'), dr = $('dr'), dm = $('dm');
+  const routeU = E.inOutSine(seg(t, T_ROUTE0, T_MEET));
+  const morph = spring(t - T_MEET, 2.4, 0.8);
+  const lockK = E.inOutCubic(seg(t, T_LOCK, T_LOCK + 0.55));
+  const lockupW = 140 * MARK_K + 44 + wordmarkW;
+  const markCX = lerp(MEET.x, 960 - lockupW / 2 + 70 * MARK_K, lockK);
+  const breathe = 1 + 0.012 * E.inOutSine(seg(t, T_LOCK, DUR));
+  const routesOn = t >= T_ROUTE0;
+  [rl, rrp, dl, dr, dm].forEach((el) => show(el, routesOn));
+  if (routesOn) {
+    const chev = (c) => c.map(([x, y]) => [markCX + (x - 70) * MARK_K * breathe, MEET.y + (y - 50) * MARK_K * breathe]);
+    [[ROUTE_LD, CHEV_L, rl, dl], [ROUTE_RD, CHEV_R, rrp, dr]].forEach(([route, chv, path, dotc]) => {
+      const L = polyLen(route), d = L * routeU;
+      const head = pointAt(route, d);
+      if (t < T_MEET) {
+        path.setAttribute('d', 'M' + subpath(route, d - tailLen(routeU, d), d).map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L'));
+        path.setAttribute('stroke-width', '6');
+      } else {
+        const a = resample(subpath(route, L - TAIL_END, L), 72), b = resample(chev(chv), 72);
+        // the travelled route straightens into the chevron
+        const pts = a.map((p, i) => [lerp(p[0], b[i][0], morph), lerp(p[1], b[i][1], morph)]);
+        path.setAttribute('d', 'M' + pts.map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L'));
+        path.setAttribute('stroke-width', lerp(6, 14 * MARK_K * breathe, clamp(morph)).toFixed(2));
+      }
+      dotc.setAttribute('cx', head[0].toFixed(1)); dotc.setAttribute('cy', head[1].toFixed(1));
+      show(dotc, t < T_MEET);
+    });
+    const pop = spring(t - T_MEET, 2.4, 0.45);
+    show(dm, t >= T_MEET);
+    dm.setAttribute('cx', markCX.toFixed(2)); dm.setAttribute('cy', MEET.y);
+    dm.setAttribute('r', (6 * MARK_K * breathe * lerp(2.4, 1, pop)).toFixed(2));
+  }
+  // wordmark wipes out from behind the mark
+  const wm = $('wmask'), wl = markCX + 70 * MARK_K * breathe + 4;
+  wm.style.left = px(wl); wm.style.width = px(wordmarkW + 80);
+  const wordShift = (1 - spring(t - (T_LOCK + 0.05), 1.6, 0.92)) * (wordmarkW + 60);
+  tf($('wordmark'), `translateX(${px(44 - 4 - wordShift)}) scale(${breathe.toFixed(4)})`);
+  $('wordmark').style.transformOrigin = '0 50%';
+  show(wm, t >= T_LOCK);
+  tf($('dein'), `translateY(${rise(t, T_END_TXT).toFixed(2)}%)`);
+  tf($('copilot'), `translateY(${rise(t, T_END_TXT + 0.09, 2.0).toFixed(2)}%)`);
+}
+
+// Card layout: q = 0 big card, q = 1 compact chat card. best = lift progress of the pill.
+function layoutCard(c, q, best, s0 = 1) {
+  const k = lerp(s0, 1, q);
+  const ph = c.querySelector('.ph');
+  setBox(ph, lerp(10 * k, 8, q), lerp(10 * k, 8, q), lerp(310 * k, 284, q), lerp(232 * k, 100, q));
+  ph.style.borderRadius = px(lerp(20 * k, 14, q));
+  ph.firstChild.style.fontSize = px(lerp(84 * k, 44, q));
+  const at = (sel, x0, y0, x1, y1, f0, f1, qx = q) => {
+    const el = c.querySelector(sel);
+    el.style.left = px(lerp(x0 * k, x1, qx)); el.style.top = px(lerp(y0 * k, y1, q));
+    if (f0) el.style.fontSize = px(lerp(f0 * k, f1, q));
+    return el;
+  };
+  at('.nm', 24, 262, 18, 120, 25, 17);
+  at('.rl', 24, 299, 18, 146, 11.5, 9.5);
+  // description and commitment chip wipe away (bottom-up) as the card compacts
+  at('.ds', 24, 324, 18, 196).style.clipPath = `inset(0 0 ${(clamp(q * 3.2) * 100).toFixed(2)}% 0)`;
+  const ft = at('.ft', 24, 388, 228, 121, 0, 0, E.outCubic(q));
+  tf(ft, `scale(${lerp(k, 0.8, q).toFixed(4)})`);
+  at('.ch', 224, 392, 196, 230).style.clipPath = `inset(0 0 ${(clamp(q * 3.2) * 100).toFixed(2)}% 0)`;
+  const b = c.querySelector('.best');
+  if (b) {
+    b.style.left = px(lerp(22 * k, 16, q)); b.style.top = px(lerp(22 * k, 16, q));
+    tf(b, `scale(${(lerp(k, 0.74, q) * best).toFixed(4)})`);
+  }
+}
+
+// ── Init ────────────────────────────────────────────────────────────────────
+window.DUR = DUR; window.FPS = FPS; window.BEAT = BEAT;
+window.seek = seek;
+// Event times for the sound design (seconds), read by tools/synth.py.
+window.EVENTS = { typing: TYPED, send: T_SEND, tosses: TOSSES, drop: T_DROP, swoosh: (T_SLIDE0 + T_SLIDE1) / 2, click: T_CLICK, success: T_DONE, page: B(22.2), sparkle: T_MEET, beat: BEAT, dur: DUR };
+document.fonts.ready.then(() => {
+  build();
+  els.ring = $('ring');
+  seek(0);
+  document.body.dataset.ready = '1';
+  const q = new URLSearchParams(location.search);
+  if (q.has('t')) seek(parseFloat(q.get('t')));
+  if (q.has('b')) seek(B(parseFloat(q.get('b'))));
+  if (q.has('play')) { const t0 = performance.now(); const loop = () => { seek(((performance.now() - t0) / 1000) % DUR); requestAnimationFrame(loop); }; loop(); }
+});
+</script>
+</body>
+</html>
