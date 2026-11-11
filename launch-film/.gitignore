@@ -1,0 +1,4 @@
+# intermediate audio stems (rebuilt by tools/synth.py)
+audio/music.wav
+audio/sfx.wav
+audio/mix.wav
